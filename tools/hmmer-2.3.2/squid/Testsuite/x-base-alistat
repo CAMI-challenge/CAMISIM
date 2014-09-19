@@ -1,0 +1,14 @@
+#! /usr/bin/perl
+
+use testsuite;
+
+testsuite::description("x-base-alistat", "basic tests of alistat");
+testsuite::run("../alistat ../Formats/a2m         > /dev/null");
+testsuite::run("../alistat ../Formats/clustal     > /dev/null");
+testsuite::run("../alistat ../Formats/msf         > /dev/null");
+testsuite::run("../alistat ../Formats/phylip      > /dev/null");
+testsuite::run("../alistat ../Formats/selex.1     > /dev/null");
+testsuite::run("../alistat ../Formats/selex.2     > /dev/null");
+testsuite::run("../alistat ../Formats/stockholm.1 > /dev/null");
+testsuite::run("../alistat ../Formats/stockholm.2 > /dev/null");
+testsuite::done();

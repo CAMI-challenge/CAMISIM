@@ -1,0 +1,27 @@
+Easel - a library of C functions for biological sequence analysis
+Copyright (C) 2010 Howard Hughes Medical Institute.
+
+Additional copyrights apply to the package:
+Copyright (C) 2004-2009 Sean R. Eddy
+Copyright (C) 2006-2009 Howard Hughes Medical Institute
+
+Easel also includes pieces of copyrighted and licensed code from a
+variety of sources and contributors, as noted in the appropriate
+places in individual files. Copyright holders and contributors
+include:
+
+  Free Software Foundation, Inc.    configure
+  Matteo Frigo                      aclocal.m4
+  Steven G. Johnson                 aclocal.m4
+  Stephen Moshier                   esl_sse.c,esl_vmx.c   
+  Julien Pommier                    esl_sse.c,esl_vmx.c   
+  Christophe Tournayre              aclocal.m4
+  David Wheeler                     easel.c::esl_tmpfile()
+  University of Toronto             esl_regexp.c
+
+The Easel library is freely modifiable and redistributable under the
+Janelia Farm Software License, a BSD license. See the file LICENSE for
+details.
+
+
+

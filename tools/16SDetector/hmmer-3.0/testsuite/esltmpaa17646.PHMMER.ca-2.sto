@@ -1,0 +1,144 @@
+# STOCKHOLM 1.0
+#=GF ID HBB_HUMAN-i2
+
+#=GS HBB_HUMAN        DE Human beta hemoglobin.
+#=GS HBB_MANSP/1-146  DE [subseq from] HBB_MANSP
+#=GS HBB_URSMA/1-146  DE [subseq from] HBB_URSMA
+#=GS HBB_RABIT/1-146  DE [subseq from] HBB_RABIT
+#=GS HBB_SUNMU/1-146  DE [subseq from] HBB_SUNMU
+#=GS HBB_COLLI/1-146  DE [subseq from] HBB_COLLI
+#=GS HBB_CALAR/1-146  DE [subseq from] HBB_CALAR
+#=GS HBB_TACAC/1-146  DE [subseq from] HBB_TACAC
+#=GS HBE_PONPY/1-146  DE [subseq from] HBE_PONPY
+#=GS HBB_EQUHE/1-146  DE [subseq from] HBB_EQUHE
+#=GS HBB_SPECI/1-146  DE [subseq from] HBB_SPECI
+#=GS HBB_SPETO/1-146  DE [subseq from] HBB_SPETO
+#=GS HBB_TRIIN/1-146  DE [subseq from] HBB_TRIIN
+#=GS HBB_ORNAN/1-146  DE [subseq from] HBB_ORNAN
+#=GS HBB_LARRI/1-146  DE [subseq from] HBB_LARRI
+#=GS HBB_TUPGL/1-146  DE [subseq from] HBB_TUPGL
+#=GS HBB1_VAREX/1-146 DE [subseq from] HBB1_VAREX
+#=GS HBBL_RANCA/1-146 DE [subseq from] HBBL_RANCA
+#=GS HBA_MESAU/2-140  DE [subseq from] HBA_MESAU
+#=GS HBB2_XENTR/1-145 DE [subseq from] HBB2_XENTR
+#=GS HBA_PONPY/2-140  DE [subseq from] HBA_PONPY
+#=GS HBA_MACFA/2-140  DE [subseq from] HBA_MACFA
+#=GS HBA_MACSI/2-140  DE [subseq from] HBA_MACSI
+#=GS HBA_AILME/2-140  DE [subseq from] HBA_AILME
+#=GS HBA_PHACO/2-140  DE [subseq from] HBA_PHACO
+#=GS HBA_FRAPO/2-140  DE [subseq from] HBA_FRAPO
+#=GS HBA2_GALCR/2-140 DE [subseq from] HBA2_GALCR
+#=GS HBA2_BOSMU/2-140 DE [subseq from] HBA2_BOSMU
+#=GS HBA_ERIEU/2-140  DE [subseq from] HBA_ERIEU
+#=GS HBA_ANSSE/2-140  DE [subseq from] HBA_ANSSE
+#=GS HBA_PROLO/2-140  DE [subseq from] HBA_PROLO
+#=GS HBA_PAGLA/2-140  DE [subseq from] HBA_PAGLA
+#=GS HBA_TRIOC/2-140  DE [subseq from] HBA_TRIOC
+#=GS HBAD_CHLME/2-140 DE [subseq from] HBAD_CHLME
+#=GS HBAZ_HORSE/2-140 DE [subseq from] HBAZ_HORSE
+#=GS HBAD_PASMO/2-140 DE [subseq from] HBAD_PASMO
+#=GS HBA_COLLI/2-140  DE [subseq from] HBA_COLLI
+#=GS MYG_SAISC/2-146  DE [subseq from] MYG_SAISC
+#=GS MYG_LYCPI/2-146  DE [subseq from] MYG_LYCPI
+#=GS MYG_PROGU/2-146  DE [subseq from] MYG_PROGU
+#=GS MYG_ESCGI/2-146  DE [subseq from] MYG_ESCGI
+#=GS MYG_HORSE/2-146  DE [subseq from] MYG_HORSE
+#=GS MYG_MOUSE/2-146  DE [subseq from] MYG_MOUSE
+#=GS HBA4_SALIR/2-141 DE [subseq from] HBA4_SALIR
+#=GS HBB2_TRICR/1-145 DE [subseq from] HBB2_TRICR
+#=GS MYG_MUSAN/2-141  DE [subseq from] MYG_MUSAN
+
+HBB_HUMAN                VHLTPEEKSAVTALWGKV--NVD--EVG--GEALGRLLVVYPWTQRFFESFGDLSTPDAVMGNPKVKAHGKKVLGAFSDGLAHLDNLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH
+HBB_MANSP/1-146          VHLTPEEKTAVTTLWGKV--NVD--EVG--GEALGRLLVVYPWTQRFFDSFGDLSSPDAVMGNPKVKAHGKKVLGAFSDGLNHLDNLKGTFAQLSELHCDKLHVDPENFKLLGNVLVCVLAHHFGKEFTPQVQAAYQKVVAGVANALAHKYH
+#=GR HBB_MANSP/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_URSMA/1-146          VHLTGEEKSLVTGLWGKV--NVD--EVG--GEALGRLLVVYPWTQRFFDSFGDLSSADAIMNNPKVKAHGKKVLNSFSDGLKNLDNLKGTFAKLSELHCDKLHVDPENFKLLGNVLVCVLAHHFGKEFTPQVQAAYQKVVAGVANALAHKYH
+#=GR HBB_URSMA/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_RABIT/1-146          VHLSSEEKSAVTALWGKV--NVE--EVG--GEALGRLLVVYPWTQRFFESFGDLSSANAVMNNPKVKAHGKKVLAAFSEGLSHLDNLKGTFAKLSELHCDKLHVDPENFRLLGNVLVIVLSHHFGKEFTPQVQAAYQKVVAGVANALAHKYH
+#=GR HBB_RABIT/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_SUNMU/1-146          VHLSGEEKACVTGLWGKV--NED--EVG--AEALGRLLVVYPWTQRFFDSFGDLSSASAVMGNPKVKAHGKKVLHSLGEGVANLDNLKGTFAKLSELHCDKLHVDPENFRLLGNVLVVVLASKFGKEFTPPVQAAFQKVVAGVANALAHKYH
+#=GR HBB_SUNMU/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_COLLI/1-146          VHWSAEEKQLITSIWGKV--NVA--DCG--AEALARLLIVYPWTQRFFSSFGNLSSATAISGNPNVKAHGKKVLTSFGDAVKNLDNIKGTFAQLSELHCDKLHVDPENFRLLGDILVIILAAHFGKDFTPECQAAWQKLVRVVAHALARKYH
+#=GR HBB_COLLI/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_CALAR/1-146          VHLTGEEKSAVTALWGKV--NVD--EVG--GEALGRLLVVYPWTQRFFESFGDLSTPDAVMNNPKVKAHGKKVLGAFSDGLTHLDNLKGTFAHLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPVVQAAYQKVVAGVANALAHKYH
+#=GR HBB_CALAR/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_TACAC/1-146          VHLSGSEKTAVTNLWGHV--NVN--ELG--GEALGRLLVVYPWTQRFFESFGDLSSADAVMGNAKVKAHGAKVLTSFGDALKNLDNLKGTFAKLSELHCDKLHVDPENFNRLGNVLVVVLARHFSKEFTPEAQAAWQKLVSGVSHALAHKYH
+#=GR HBB_TACAC/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBE_PONPY/1-146          VHFTAEEKAAVTSLWSKM--NVE--EAG--GEALGRLLVVYPWTQRFFDSFGNLSSPSAILGNPKVKAHGKKVLTSFGDAIKNMDNLKTTFAKLSELHCDKLHVDPENFKLLGNVMVIILATHFGKEFTPEVQAAWQKLVSAVAIALAHKYH
+#=GR HBE_PONPY/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_EQUHE/1-146          VQLSGEEKAAVLALWDKV--NEE--EVG--GEALGRLLVVYPWTQRFFDSFGDLSNPAAVMGNPKVKAHGKKVLHSFGEGVHHLDNLKGTFAQLSELHCDKLHVDPENFRLLGNVLVVVLARHFGKDFTPELQASYQKVVAGVANALAHKYH
+#=GR HBB_EQUHE/1-146  PP 689***************..***..***..*************************************************************************************************************************8
+HBB_SPECI/1-146          VHLSDGEKNAISTAWGKV--HAA--EVG--AEALGRLLVVYPWTQRFFDSFGDLSSASAVMGNAKVKAHGKKVIDSFSNGLKHLDNLKGTFASLSELHCDKLHVDPENFKLLGNMIVIVMAHHLGKDFTPEAQAAFQKVVAGVANALAHKYH
+#=GR HBB_SPECI/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_SPETO/1-146          VHLTDGEKNAISTAWGKV--NAA--EIG--AEALGRLLVVYPWTQRFFDSFGDLSSASAVMGNAKVKAHGKKVIDSFSNGLKHLDNLKGTFASLSELHCDKLHVDPENFKLLGNMIVIVMAHHLGKDFTPEAQAAFQKVVAGVANALSHKYH
+#=GR HBB_SPETO/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_TRIIN/1-146          VHLTPEEKALVIGLWAKV--NVK--EYG--GEALGRLLVVYPWTQRFFEHFGDLSSASAIMNNPKVKAHGEKVFTSFGDGLKHLEDLKGAFAELSELHCDKLHVDPENFRLLGNVLVCVLARHFGKEFSPEAQAAYQKVVAGVANALAHKYH
+#=GR HBB_TRIIN/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_ORNAN/1-146          VHLSGGEKSAVTNLWGKV--NIN--ELG--GEALGRLLVVYPWTQRFFEAFGDLSSAGAVMGNPKVKAHGAKVLTSFGDALKNLDDLKGTFAKLSELHCDKLHVDPENFNRLGNVLIVVLARHFSKDFSPEVQAAWQKLVSGVAHALGHKYH
+#=GR HBB_ORNAN/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_LARRI/1-146          VHWSAEEKQLITGLWGKV--NVA--DCG--AEALARLLIVYPWTQRFFASFGNLSSPTAINGNPMVRAHGKKVLTSFGEAVKNLDNIKNTFAQLSELHCDKLHVDPENFRLLGDILIIVLAAHFAKDFTPDSQAAWQKLVRVVAHALARKYH
+#=GR HBB_LARRI/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB_TUPGL/1-146          VHLSGEEKAAVTGLWGKV--DLE--KVG--GQSLGSLLIVYPWTQRFFDSFGDLSSPSAVMSNPKVKAHGKKVLTSFSDGLNHLDNLKGTFAKLSELHCDKLHVDPENFRLLGNVLVRVLACNFGPEFTPQVQAAFQKVVAGVANALAHKYH
+#=GR HBB_TUPGL/1-146  PP 8*****************..***..***..*************************************************************************************************************************8
+HBB1_VAREX/1-146         VHWTAEEKQLICSLWGKI--DVG--LIG--GETLAGLLVIYPWTQRQFSHFGNLSSPTAIAGNPRVKAHGKKVLTSFGDAIKNLDNIKDTFAKLSELHCDKLHVDPTNFKLLGNVLVIVLADHHGKEFTPAHHAAYQKLVNVVSHSLARRYH
+#=GR HBB1_VAREX/1-146 PP 8*****************..***..***..*************************************************************************************************************************8
+HBBL_RANCA/1-146         VHWTAEEKAVINSVWQKV--DVE--QDG--HEALTRLFIVYPWTQRYFSTFGDLSSPAAIAGNPKVHAHGKKILGAIDNAIHNLDDVKGTLHDLSEEHANELHVDPENFRRLGEVLIVVLGAKLGKAFSPQVQHVWEKFIAVLVDALSHSYH
+#=GR HBBL_RANCA/1-146 PP 8*****************..***..***..*************************************************************************************************************************8
+HBA_MESAU/2-140          --LSAKDKTNISEAWGKIGGHAG--EYG--AEALERMFFVYPTTKTYFPHF-DVS-----HGSAQVKGHGKKVADALTNAVGHLDDLPGALSALSDLHAHKLRVDPVNFKLLSHCLLVTLANHHPADFTPAVHASLDKFFASVSTVLTSKY-
+#=GR HBA_MESAU/2-140  PP ..79**************98899..***..*********************.999.....9******************************************************************************************.
+HBB2_XENTR/1-145         VHWTAEEKATIASVWGKV--DIE--QDG--HDALSRLLVVYPWTQRYFSSFGNLSNVSAVSGNVKVKAHGNKVLSAVGSAIQHLDDVKSHLKGLSKSHAEDLHVDPENFKRLADVLVIVLAAKLGSAFTPQVQAVWEKLNATLVAALSHGY-
+#=GR HBB2_XENTR/1-145 PP 8*****************..***..***..************************************************************************************************************************9.
+HBA_PONPY/2-140          --LSPADKTNVKTAWGKVGAHAG--DYG--AEALERMFLSFPTTKTYFPHF-DLS-----HGSAQVKDHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKY-
+#=GR HBA_PONPY/2-140  PP ..7899************87789..***..*********************.**9.....9******************************************************************************************.
+HBA_MACFA/2-140          --LSPADKTNVKAAWGKVGGHAG--EYG--AEALERMFLSFPTTKTYFPHF-DLS-----HGSAQVKGHGKKVADALTLAVGHVDDMPQALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKY-
+#=GR HBA_MACFA/2-140  PP ..7899************98899..***..*********************.**9.....9******************************************************************************************.
+HBA_MACSI/2-140          --LSPADKTNVKDAWGKVGGHAG--EYG--AEALERMFLSFPTTKTYFPHF-DLS-----HGSAQVKGHGKKVADALTLAVGHVDDMPQALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKY-
+#=GR HBA_MACSI/2-140  PP ..7899************98899..***..*********************.**9.....9******************************************************************************************.
+HBA_AILME/2-140          --LSPADKTNVKATWDKIGGHAG--EYG--GEALERTFASFPTTKTYFPHF-DLS-----PGSAQVKAHGKKVADALTTAVGHLDDLPGALSALSDLHAHKLRVDPVNFKLLSHCLLVTLASHHPAEFTPAVHASLDKFFSAVSTVLTSKY-
+#=GR HBA_AILME/2-140  PP ..7899************98899..***..*********************.**9.....9******************************************************************************************.
+HBA_PHACO/2-140          --LSAADKNNVKGIFTKIAGHAE--EYG--AEALERMFITYPSTKTYFPHF-DLS-----HGSAQIKGHGKKVVAALIEAVNHIDDITGTLSKLSDLHAHKLRVDPVNFKLLGQCFLVVVAIHHPSALTPEVHASLDKFLCAVGTVLTAKY-
+#=GR HBA_PHACO/2-140  PP ..799*************9889*..***..*********************.**9.....9******************************************************************************************.
+HBA_FRAPO/2-140          --LSAADKNNVKGIFGKISSHAE--DYG--AEALERMFITYPSTKTYFPHF-DLS-----HGSAQVKGHGKKVVAALIEAANHIDDIAGTLSKLSDLHAHKLRVDPVNFKLLGQCFLVVVAIHHPSALTPEVHASLDKFLCAVGNVLTAKY-
+#=GR HBA_FRAPO/2-140  PP ..799*************88899..***..*********************.**9.....9******************************************************************************************.
+HBA2_GALCR/2-140         --LSPTDKSNVKAAWEKVGAHAG--DYG--AEALERMFLSFPTTKTYFPHF-DLS-----HGSTQVKGHGKKVADALTNAVLHVDDMPSALSALSDLHAHKLRVDPVNFKLLRHCLLVTLACHHPAEFTPAVHASLDKFMASVSTVLTSKY-
+#=GR HBA2_GALCR/2-140 PP ..7899************87789..***..*********************.**9.....9******************************************************************************************.
+HBA2_BOSMU/2-140         --LSAADKGNVKAAWGKVGGHAA--EYG--AEALERMFLSFPTTKTYFPHF-DLS-----HGSAQVKGHGAKVAAALTKAVGHLDDLPGALSELSDLHAHKLRVDPVNFKLLSHSLLVTLASHLPSDFTPAVHASLDKFLANVSTVLTSKY-
+#=GR HBA2_BOSMU/2-140 PP ..799*************88899..***..*********************.**9.....9******************************************************************************************.
+HBA_ERIEU/2-140          --LSATDKANVKTFWGKLGGHGG--EYG--GEALDRMFQAHPTTKTYFPHF-DLN-----PGSAQVKGHGKKVADALTTAVNNLDDVPGALSALSDLHAHKLRVDPVNFKLLSHCLLVTLALHHPADFTPAVHASLDKFLATVATVLTSKY-
+#=GR HBA_ERIEU/2-140  PP ..799*************87789..***..*********************.**8.....9******************************************************************************************.
+HBA_ANSSE/2-140          --LSAADKGNVKTVFGKIGGHAE--EYG--AETLQRMFQTFPQTKTYFPHF-DLQ-----PGSAQIKAHGKKVAAALVEAANHIDDIAGALSKLSDLHAQKLRVDPVNFKFLGHCFLVVLAIHHPSLLTPEVHASMDKFLCAVATVLTAKY-
+#=GR HBA_ANSSE/2-140  PP ..799*************9889*..***..*********************.**8.....9******************************************************************************************.
+HBA_PROLO/2-140          --LSPADKANIKATWDKIGGHAG--EYG--GEALERTFASFPTTKTYFPHF-DLS-----PGSAQVKAHGKKVADALTLAVGHLDDLPGALSALSDLHAYKLRVDPVNFKLLSHCLLVTLACHHPAEFTPAVHASLDKFFTSVSTVLTSKY-
+#=GR HBA_PROLO/2-140  PP ..7899************98899..***..*********************.**9.....9******************************************************************************************.
+HBA_PAGLA/2-140          --LSSADKNNIKATWDKIGSHAG--EYG--AEALERTFISFPTTKTYFPHF-DLS-----HGSAQVKAHGKKVADALTLAVGHLEDLPNALSALSDLHAYKLRVDPVNFKLLSHCLLVTLACHHPAEFTPAVHSALDKFFSAVSTVLTSKY-
+#=GR HBA_PAGLA/2-140  PP ..7899************88899..***..*********************.**9.....9******************************************************************************************.
+HBA_TRIOC/2-140          --LSANDKTNVKTVFTKITGHAE--DYG--AETLERMFITYPPTKTYFPHF-DLH-----HGSAQIKAHGKKVVGALIEAVNHIDDIAGALSKLSDLHAQKLRVDPVNFKLLGQCFLVVVAIHHPSVLTPEVHASLDKFLCAVGNVLSAKY-
+#=GR HBA_TRIOC/2-140  PP ..79**************8889*..***..*********************.997.....9******************************************************************************************.
+HBAD_CHLME/2-140         --LTADDKKLLTQLWEKVAGHQE--EFG--SEALQRMFLTYPQTKTYFPHF-DLH-----PGSEQVRGHGKKVAAALGNAVKSLDNLSQALSELSNLHAYNLRVDPANFKLLAQCFQVVLATHLGKDYSPEMHAAFDKFLSAVAAVLAEKY-
+#=GR HBAD_CHLME/2-140 PP ..89**************88899..***..*********************.997.....9******************************************************************************************.
+HBAZ_HORSE/2-140         --LTKAERTMVVSIWGKISMQAD--AVG--TEALQRLFSSYPQTKTYFPHF-DLH-----EGSPQLRAHGSKVAAAVGDAVKSIDNVAGALAKLSELHAYILRVDPVNFKFLSHCLLVTLASRLPADFTADAHAAWDKFLSIVSSVLTEKY-
+#=GR HBAZ_HORSE/2-140 PP ..799*************66689..***..*********************.997.....9******************************************************************************************.
+HBAD_PASMO/2-140         --LTAEDKKLIQQIWGKLGGAEE--EIG--ADALWRMFHSYPSTKTYFPHF-DLS-----QGSDQIRGHGKKVVAALSNAIKNLDNLSQALSELSNLHAYNLRVDPVNFKFLSQCLQVSLATRLGKEYSPEVHSAVDKFMSAVASVLAEKY-
+#=GR HBAD_PASMO/2-140 PP ..89**************64468..9**..*********************.**9.....9******************************************************************************************.
+HBA_COLLI/2-140          --LSANDKSNVKAVFAKIGGQAG--DLG--GEALERLFITYPQTKTYFPHF-DLS-----HGSAQIKGHGKKVAEALVEAANHIDDIAGALSKLSDLHAQKLRVDPVNFKLLGHCFLVVVAVHFPSLLTPEVHASLDKFVLAVGTVLTAKY-
+#=GR HBA_COLLI/2-140  PP ..79**************77789..***..*********************.**9.....9******************************************************************************************.
+MYG_SAISC/2-146          --LSDGEWQLVLNIWGKV--EADIPSHG--QEVLISLFKGHPETLEKFDKFKHLKSEDEMKASEELKKHGTTVLTALGGILKKKGQHEAELKPLAQSHATKHKIPVKYLELISDAIVHVLQKKHPGDFGADAQGAMKKALELFRNDMAAKY-
+#=GR MYG_SAISC/2-146  PP ..68899***********..999779**..*************************************************************************************************************************.
+MYG_LYCPI/2-146          --LSDGEWQIVLNIWGKV--ETDLAGHG--QEVLIRLFKNHPETLDKFDKFKHLKTEDEMKGSEDLKKHGNTVLTALGGILKKKGHHEAELKPLAQSHATKHKIPVKYLEFISDAIIQVLQNKHSGDFHADTEAAMKKALELFRNDIAAKY-
+#=GR MYG_LYCPI/2-146  PP ..68899***********..99933466..*************************************************************************************************************************.
+MYG_PROGU/2-146          --LSDGEWQLVLNVWGKV--EGDLSGHG--QEVLIRLFKGHPETLEKFDKFKHLKAEDEMRASEELKKHGTTVLTALGGILKKKGQHAAELAPLAQSHATKHKIPVKYLEFISEAIIQVLQSKHPGDFGADAQGAMSKALELFRNDIAAKY-
+#=GR MYG_PROGU/2-146  PP ..68899***********..98833577..*************************************************************************************************************************.
+MYG_ESCGI/2-146          --LSDAEWQLVLNIWAKV--EADVAGHG--QDILIRLFKGHPETLEKFDKFKHLKTEAEMKASEDLKKHGNTVLTALGGILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISDAIIHVLHSRHPGDFGADAQAAMNKALELFRKDIAAKY-
+#=GR MYG_ESCGI/2-146  PP ..7899************..99833466..*************************************************************************************************************************.
+MYG_HORSE/2-146          --LSDGEWQQVLNVWGKV--EADIAGHG--QEVLIRLFTGHPETLEKFDKFKHLKTEAEMKASEDLKKHGTVVLTALGGILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISDAIIHVLHSKHPGNFGADAQGAMTKALELFRNDIAAKY-
+#=GR MYG_HORSE/2-146  PP ..68899***********..99933466..*************************************************************************************************************************.
+MYG_MOUSE/2-146          --LSDGEWQLVLNVWGKV--EAD--LAGHGQEVLIGLFKTHPETLDKFDKFKNLKSEEDMKGSEDLKKHGCTVLTALGTILKKKGQHAAEIQPLAQSHATKHKIPVKYLEFISEIIIEVLKKRHSGDFGADAQGAMSKALELFRNDIAAKY-
+#=GR MYG_MOUSE/2-146  PP ..68899***********..*99..64444*************************************************************************************************************************.
+HBA4_SALIR/2-141         --LSAKDKANVKAIWGKILPKSD--EIG--EQALSRMLVVYPQTKAYFSHWASVA-----PGSAPVKKHGITIMNQIDDCVGHMDDLFGFLTKLSELHATKLRVDPTNFKILAHNLIVVIAAYFPAEFTPEIHLSVDKFLQQLALALAEKY-
+#=GR HBA4_SALIR/2-141 PP ..89**************999**..***..*********************7775.....9******************************************************************************************.
+HBB2_TRICR/1-145         VHLTAEDRKEIAAILGKV--NVD--SLG--GQCLARLIVVNPWSRRYFHDFGDLSSCDAICRNPKVLAHGAKVMRSIVEATKHLDNLREYYADLSVTHSLKFYVDPENFKLFSGIVIVCLALTLQTDFSCHKQLAFEKLMKGVSHALGHGY-
+#=GR HBB2_TRICR/1-145 PP 8*****************..***..***..***********************************************************************************************************************99.
+MYG_MUSAN/2-141          ------DWEKVNSVWSAV--ESDLTAIG--QNILLRLFEQYPESQNHFPKFKNKS-LGELKDTADIKAQADTVLSALGNIVKKKGSHSQPVKALAATHITTHKIPPHYFTKITTIAVDVLSEMYPSEMNAQVQAAFSGAFKIICSDIEKEY-
+#=GR MYG_MUSAN/2-141  PP ......7899********..988668**..*********************9998.677****************************************************************************************9999.
+#=GC PP_cons             8*899*************..999..9**..************************9************************************************************************************************8
+#=GC RF                  xxxxxxxxxxxxxxxxxx..xxx..xxx..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//

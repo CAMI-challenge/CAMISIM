@@ -1,0 +1,4 @@
+../binaries/hmmbuild ./HMM3/dnaG.hmm ./amphoraMGenS/dnaG.aln
+
+
+../binaries/hmmsearch --domtblout ./out/dnaG.hmmsearch.dom -E 0.01 -o ./out/dnaG.hmmsearch.out ./HMM3/dnaG.hmm ./inputTW.fas.ids.prot

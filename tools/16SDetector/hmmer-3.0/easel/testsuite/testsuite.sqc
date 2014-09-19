@@ -1,0 +1,71 @@
+# Easel's test suite, in sqc command format
+#
+# SRE, Wed Mar 22 11:27:39 2006
+# SVN $Id: testsuite.sqc 509 2010-02-07 22:56:55Z eddys $
+#
+
+#################################################################
+# Test drivers for each module.
+################################################################
+
+1 exercise alphabet-utest     @esl_alphabet_utest@
+1 exercise cluster-utest      @esl_cluster_utest@
+1 exercise dirichlet-utest    @esl_dirichlet_utest@
+1 exercise distance-utest     @esl_distance_utest@
+1 exercise dmatrix-utest      @esl_dmatrix_utest@
+1 exercise easel-utest        @easel_utest@
+1 exercise exponential-utest  @esl_exponential_utest@
+1 exercise fileparser-utest   @esl_fileparser_utest@
+1 exercise gamma-utest        @esl_gamma_utest@
+1 exercise getopts-utest      @esl_getopts_utest@
+1 exercise gumbel-utest       @esl_gumbel_utest@
+1 exercise histogram-utest    @esl_histogram_utest@
+1 exercise hyperexp-utest     @esl_hyperexp_utest@
+1 exercise keyhash-utest      @esl_keyhash_utest@
+1 exercise msa-utest          @esl_msa_utest@
+1 exercise msacluster-utest   @esl_msacluster_utest@
+1 exercise msaweight-utest    @esl_msaweight_utest@
+1 exercise random-utest       @esl_random_utest@
+1 exercise randomseq-utest    @esl_randomseq_utest@
+1 exercise ratematrix-utest   @esl_ratematrix_utest@
+1 exercise regexp-utest       @esl_regexp_utest@
+1 exercise rootfinder-utest   @esl_rootfinder_utest@
+1 exercise scorematrix-utest  @esl_scorematrix_utest@
+1 exercise sq-utest           @esl_sq_utest@
+1 exercise sqio-utest         @esl_sqio_utest@
+1 exercise sse-utest          @esl_sse_utest@
+1 exercise ssi-utest          @esl_ssi_utest@
+1 exercise stack-utest        @esl_stack_utest@
+1 exercise stats-utest        @esl_stats_utest@
+1 exercise stretchexp-utest   @esl_stretchexp_utest@
+1 exercise tree-utest         @esl_tree_utest@
+1 exercise vectorops-utest    @esl_vectorops_utest@
+1 exercise weibull-utest      @esl_weibull_utest@
+1 exercise wuss-utest         @esl_wuss_utest@
+
+1 exercise e2                 !testsuite/e2.sh! @miniapps/esl-seqstat@ !formats/stockholm.1!
+
+1 exercise degen-residues     !testsuite/i1-degen-residues.pl! @@ !! %TESTPFX%
+1 exercise ncbi-indices       !testsuite/i2-ncbi-indices.pl!   @@ !! %TESTPFX%
+
+1 exercise esl-alimanip       !miniapps/esl-alimanip.itest.pl!  @miniapps/esl-alimanip@  %TESTPFX%
+1 exercise esl-alimap         !miniapps/esl-alimap.itest.pl!    @miniapps/esl-alimap@    %TESTPFX%
+1 exercise esl-alimask        !miniapps/esl-alimask.itest.pl!   @miniapps/esl-alimask@   %TESTPFX%
+1 exercise esl-alimerge       !miniapps/esl-alimerge.itest.pl!  @miniapps/esl-alimerge@  %TESTPFX%
+1 exercise esl-alistat        !miniapps/esl-alistat.itest.pl!   @miniapps/esl-alistat@   %TESTPFX%
+1 exercise esl-compalign      !miniapps/esl-compalign.itest.pl! @miniapps/esl-compalign@ %TESTPFX%
+1 exercise esl-construct      !miniapps/esl-construct.itest.pl! @miniapps/esl-construct@ %TESTPFX%
+1 exercise esl-mask           !miniapps/esl-mask.itest.pl!      @miniapps/esl-mask@      %TESTPFX%
+1 exercise esl-shuffle        !miniapps/esl-shuffle.itest.pl!   @miniapps/esl-shuffle@   %TESTPFX%
+
+
+# Still to do:
+# gev
+# minimizer
+# mixgev
+# mpi
+# normal
+# paml
+# swat
+# interface_gsl
+# interface_lapack

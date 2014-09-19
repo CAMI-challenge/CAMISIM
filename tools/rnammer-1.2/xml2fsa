@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+# Peter Hallin 2007-02-06, to be used with RNAmmer v1.2
+
+use XML::Simple;
+use strict;
+sub err {
+	print "$_\n";
+	exit 1;
+}
+
+# create object
+my $xml = new XML::Simple (ForceArray => 1);
+
+# read XML file
+my $data = $xml->XMLin($ARGV[0]) or err ("error loading input:$!");
+
+foreach my $entry (@{$data->{entries}[0]->{entry}}) {
+	print ">rRNA_$entry->{sequenceEntry}[0]_$entry->{start}[0]-$entry->{stop}[0]_DIR$entry->{direction}[0] /molecule=$entry->{mol}[0] /score=$entry->{score}[0]\n";
+	for ( my $x = 0 ; $x < length ( $entry->{sequence}[0] ) ; $x+= 60 ) {
+		print substr ( $entry->{sequence}[0] , $x , 60 ) , "\n";
+	}
+}

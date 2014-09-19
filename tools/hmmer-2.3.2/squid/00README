@@ -1,0 +1,39 @@
+SQUID - library of functions for biological sequence analysis
+Copyright (C) 1992-2002 Washington University School of Medicine
+
+SQUID is a freely redistributable library of C code functions for
+sequence analysis. SQUID also includes a number of small utility
+programs.
+
+To install squid, see the file:
+  INSTALL      -- instructions for installing the programs
+
+If you have any questions about redistributing squid or using 
+squid code in your own work, see the files:
+  COPYRIGHT    -- copyright notice, and information on my distribution policy
+  LICENSE      -- version 2 of the GNU Public License (see COPYRIGHT)
+
+For a web page with more information on squid, see:
+  http://www.genetics.wustl.edu/eddy/software/#squid
+
+You can always download the latest stable release of squid from:
+  ftp://ftp.genetics.wustl.edu/pub/eddy/software/squid.tar.gz
+
+The development codebase is available by anonymous CVS:
+  cvs -d :pserver:anonymous@skynet.wustl.edu:/repository/sre login
+   (password "anonymous")
+  cvs -d :pserver:anonymous@skynet.wustl.edu:/repository/sre checkout squid
+
+If you encounter any bugs in this library, or you have any questions
+or comments, please e-mail me at the address below. Due to limited
+personal time, I may not respond, but I do read all my mail.
+
+   Sean Eddy
+   eddy@genetics.wustl.edu
+
+   HHMI/Dept. of Genetics
+   Washington University School of Medicine
+   660 South Euclid Box 8232
+   Saint Louis Missouri 63110
+   USA
+

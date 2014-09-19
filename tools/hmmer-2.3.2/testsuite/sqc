@@ -1,0 +1,521 @@
+#! /usr/bin/perl
+
+# sqc 
+# quality control script for exercising code, regression testing, 
+# and benchmarking.
+#
+# Usage: sqc [options] <level> <command file> <bindir> [<bindir>...]
+#    level          - an integer >= 0. Higher = more testing, more time.
+#    command file   - an sqc command file. See below for format.
+#    bindir         - path to executables to test. Optionally, more
+#                     than one bindir may be given.
+#
+# Available options:
+#    -m             - "exercise" tests are examined for memory leaks,
+#                     in addition to testing exit status. Executables
+#                     must be compiled with ccmalloc for leaks to be detected.
+#                     If ccmalloc instrumentation is not present,
+#                     this has no effect.
+#    -p <prepdir>   - optional path to binaries for "prep" commands
+#                     (more than one -p can be used)
+#    -r <olddir>    - path to old binaries for regression tests.
+#                     mandatory if >=1 regression test is in the
+#                     command file; unused for other tests.
+#                     (More than one -r can be used; the list
+#                     should mirror the list of bindirs in the command
+#                     line, for the new version of the binaries.)
+# Example: 
+#    sqc -p ../squid 2 exercises.sqc ../src
+#    sqc -p ../squid -r ../infernal-0.3/src 2 regressions.sqc ../src
+#
+# For each (non-prep) test in the command file, a one-line summary
+#   of the result is printed. The format of this line is:
+#     <testtype> <test #> [<test name>]...   <status>
+#   where <testtype> is exercise, regression, benchmark, or fail;
+#   <test #> is a counter, separate for each type;
+#   <test name> is the one-word name for this test;
+#   and <status> is the result of the test. The format for <status>
+#   is described later.
+# 
+# Format of sqc file:
+#    Blank lines are ignored. Lines beginning with # are comments and
+#    are ignored. All other lines have format:
+#    <level>  <type>  <name>  <command>
+#
+#    level:   an integer >= 0. If the sqc level is less than this test's 
+#             level, the command is skipped. This allows quick, less
+#             extensive tests and long, extensive tests to be configured
+#             in one command file.
+#
+#    type:    One of the following keywords: 
+#             prep, exercise, regression, benchmark, fail
+#             See below for description of each.
+# 
+#    name:    One word, <=20 characters, naming this test.
+#             Makes it easier to track down a failed test.
+#             sqc does not verify that names are unique, but it's
+#             a good idea.
+#
+#    command: Command template to run. (remainder of line, usually
+#             more than one token/word).
+#             A command template is subjected to: filename substitution,
+#             regression filename substitution, path substitution,
+#             and output redirection:
+#             
+#         filename substitution:
+#             Any token enclosed in %% in the template is interpreted
+#             as a temporary file that is created by the sqc run,
+#             which sqc is responsible for deleting. sqc substitutes
+#             a unique tmp file name for each unique token. A given
+#             token will always map to the same real file name, so
+#             a token may be used in more than one command (for example,
+#             a "prep" command can create a file that subsequent
+#             "exercise" commands need as input).
+#             For example, %FOO% might be substituted by /tmp/sqc-FOO. 
+#
+#             No token may contain the string REGRESSION; this is
+#             reserved for regression tests (see below).
+#
+#             In general, a command template should not explicitly name any 
+#             tmp files; if it does, they won't be deleted properly by sqc.
+#
+#         regression filename substitution:
+#             A "regression" command must be able to take a command
+#             line argument "--regress <f>", where <f> is the name of
+#             a regression datafile (e.g. a datafile that should be 
+#             absolutely identical between releases of the code).
+#             Filename substitution is performed as if the command
+#             template contained "--regress %REGRESSION%" immediately
+#             after the first token (which is assumed to be the name
+#             of the executable).
+#
+#         path substitution:
+#             Any token enclosed in @@ in the template is subjected
+#             to path substitution.
+#             The <bindir> argument(s) set one or more possible paths
+#             to executables to be tested. Prep commands might also
+#             be found in <prepdir>, or in the $PATH. Regression commands
+#             are found in <bindir> for the new code, and <olddir> for
+#             the old code. 
+#             A @token@ in the command template is assumed to
+#             be the name of an executable. This executable is searched
+#             for in one or more directories, as above, until it is
+#             found, and the @token@ is replaced by the fully qualified path.
+#             Normally the first token in the template is a @@ token:
+#                  @cmbuild@ %TRNA.CM% test.sto
+#             An exception is bug driving scripts, which need to have
+#             full executable paths passed to them:
+#                  ./bug1 @cmbuild@ @cmsearch@
+#             The order of search is:
+#             for prep:           <prepdir>, <bindir>, then $PATH
+#             for regression:     <bindir> for new version; <olddir> for old
+#             for others:         <bindir> only
+#
+#         output redirection:
+#             ">/dev/null 2> [tmpfile]" are appended to the command
+#             template, to redirect all output away, and save 
+#             STDERR diagnostics to a tmpfile (for instance, ccmalloc
+#             report goes to this file).
+#             If the command template already includes a ">", only
+#             the STDERR redirection is done; it is assumed that the command
+#             is deliberately keeping its output (probably in a tmpfile).
+#             If redirection is done explicitly in the command template,
+#             the template is responsible for stdout. sqc always handles
+#             stderr itself.
+#             
+# Types of tests:
+#
+# prep:       Creates tmp files that other tests will need.
+#             If a prep command fails for any reason with nonzero
+#             exit status, sqc dies at that point. 
+#             prep commands create no output lines.
+#
+# exercise:   Run a command that is expected to succeed with zero
+#             exit status.
+#             Return status is tested; if nonzero, a failure is
+#             recorded. Crashes versus clean failures are reported 
+#             differently in the output message.
+#             If -m option is selected, ccmalloc instrumentation is
+#             assumed to be present; ccmalloc report is examined for
+#             memory leaks.
+#             The format for the status in the output line is:
+#                ok.
+#                FAILED [nonzero code %d]
+#                FAILED [leak, %d bytes]     (only with sqc -m)
+#                FAILED [crash!] 
+#
+# regression: Runs a command twice: once using a new binary in
+#             <bindir>, then again using old binary in <olddir>,
+#             saving regression data files from each run. Tests
+#             that the two data files are identical. 
+#             Records a failure if either command fails, or if
+#             the data files are not identical.
+#             Possible results for output line status are:
+#                 ok.
+#                 FAILED [regressions differ]
+#                 FAILED [new code %d]
+#                 FAILED [old code %d]
+#                 FAILED [new crashed!]
+#                 FAILED [old crashed!]
+#
+# benchmark:  Runs a command in <bindir> and measures how long it takes.
+#             The output status field is the user CPU time in seconds.
+#             Like a prep command, if a benchmark command fails, sqc
+#             dies immediately at that point.
+#
+# fail:       Run a command that is expected to exit cleanly with
+#             *nonzero* exit status (for example, testing that a program
+#             successfully detects bad input, rather than crashing).
+#             Possible results for output line status are:
+#                  ok.
+#                  FAILED [0 status]
+#                  FAILED [crash!]
+#
+#
+################################################################
+# SRE, Tue Aug  6 11:16:39 2002
+# CVS $Id: sqc,v 1.3 2003/01/05 23:40:57 eddy Exp $
+
+require "getopts.pl";
+require "importenv.pl";
+
+# Parse our command line
+#
+&Getopts('mp:r:v');
+if ($opt_m) { $do_memtest = 1;    }
+if ($opt_p) { push @prepdirs, $opt_p; }
+if ($opt_r) { push @olddirs,  $opt_r; }
+if ($opt_v) { $verbose = 1;           }
+
+if ($#ARGV < 2) {
+   die "Usage: sqc [options] <level> <commandfile> <bindir>...\n";
+}
+
+$setlevel    = shift;
+$commandfile = shift;
+@bindirs     = @ARGV;
+
+$tmp = &tempname;
+$|   = 1;
+
+print "sqc: running $commandfile.\n" if $verbose;
+
+open(COMMANDS, $commandfile) || die;
+$nmem = $nbench = $ntest = $badtest = 0;
+$tot_benchtime = 0.;
+$linenum = 0;
+while (<COMMANDS>) {
+    $linenum++;
+    if (/^\#/)   { next; }
+    if (/^\s*$/) { next; }
+
+
+    chomp;
+    print "sqc: evaluating line: $_\n" if $verbose;
+    ($testlevel, $testtype, $testname, $cmdtemplate) = split(' ', $_, 4);
+    if ($setlevel < $testlevel) { next; }
+
+
+    # Make sure it's a valid test type;
+    # print the first part of the output line.
+    #
+    if ($testtype eq "exercise"   || 
+	$testtype eq "regression" ||
+	$testtype eq "fail"       ||
+	$testtype eq "benchmark") 
+    {
+	$ntest++;
+	printf("  %10s %4d [%20s] ...     ", $testtype, $ntest, $testname);
+    } 
+    elsif ($testtype ne "prep") 
+    {
+	die "No such test type $testtype at line $linenum of command file\n";
+    }
+
+    # Filename substitution.
+    $cmd = &filename_substitution($tmp, $cmdtemplate);
+    print "sqc: after filename subst, cmd is: $cmd\n" if $verbose;
+
+    # Regression substitutions, $cmd splits into $cmd (new) and $cmd2 (old)
+    if ($testtype eq "regression") {
+	($cmd, $cmd2) = &regression_substitution($tmp, $cmd);
+    }
+
+    # Path substitutions.
+    if ($testtype eq "prep") {
+	($foundit, $cmd) = &path_substitution($cmd, @bindirs, @prepdirs);
+    } elsif ($testtype eq "regression") {
+	($foundit, $cmd) = &path_substitution($cmd, @bindirs);
+	if (! $foundit) {
+	    die("\nDidn't find new executable for cmd at line $linenum\n");
+	}
+	($foundit, $cmd2) = &path_substitution($cmd2, @olddirs);
+	if (! $foundit) {
+	    die("\nDidn't find old executable for cmd at line $linenum\n");
+	}
+    } else {
+	($foundit, $cmd) = &path_substitution($cmd, @bindirs);
+	if (! $foundit) {
+	    die("\nDidn't find executable for cmd at line $linenum\n");
+	}
+    }
+    print "sqc: after path subst, cmd is: $cmd\n" if $verbose;
+
+    # Output redirection substitution.
+    # stdout is sent to /dev/null unless command already is handling it.
+    # stderr is saved in a tmp file.
+    # (stderr from the old cmd2 of a regression test is sent to /dev/null)
+    #
+    if ($cmd !~ />/) { 
+	$cmd  = "$cmd  > /dev/null";
+	$cmd2 = "$cmd2 > /dev/null"  if ($testtype eq "regression");
+    }
+    $cmd  = "$cmd  2> $tmp.stderr";
+    $cmd2 = "$cmd2 2> /dev/null"     if ($testtype eq "regression");
+    print "sqc: after output subst, cmd is: $cmd\n" if $verbose;
+
+    # Run the commands and collect exit status.
+    $startclock = (times)[2];
+    print "sqc: running cmd: $cmd\n" if $verbose;
+    system "$cmd";
+    $status1 = $?;
+    if ($testtype eq "regression") {
+	system "$cmd2";
+	$status2 = $?;
+    }
+    $stopclock = (times)[2];
+	
+
+    # Deal with exit status and output.
+    if ($testtype eq "prep") {
+	if ($status1 != 0) {
+	    die "prep command at line $linenum failed with status $status1\n";
+	}
+    } elsif ($testtype eq "exercise") {
+	if ($do_memtest) {
+	    ($have_ccmalloc, $garbage) = &check_ccmalloc_status("$tmp.stderr");
+	    $nmem++ if ($have_ccmalloc);
+	    if ($garbage != 0) {
+		print "FAILED [leak, $garbage bytes]\n";
+		$badtest++;
+		next;
+	    }
+	} elsif (($status1&255) != 0) {
+	    print "FAILED [crash!]\n";
+	    $badtest++;
+	    next;
+	} elsif (($status1>>8) != 0) {
+	    $code = ($status1 >>8);
+	    print "FAILED [nonzero code $code]\n";
+	    $badtest++;
+	    next;
+	}
+	print "ok.\n";
+    } elsif ($testtype eq "regression") {
+	if (($status1&255) != 0) {
+	    print "FAILED [new crashed!]\n";
+	    $badtest++;
+	    next;
+	} elsif (($status1>>8) != 0) {
+	    $code = ($status1 >>8);
+	    print "FAILED [new code $code]\n";
+	    $badtest++;
+	    next;
+	} elsif (($status2&255) != 0) {
+	    print "FAILED [old crashed!]\n";
+	    $badtest++;
+	    next;
+	} elsif (($status2>>8) != 0) {
+	    $code = ($status2 >>8);
+	    print "FAILED [old code $code]\n";
+	    $badtest++;
+	    next;
+	}
+	
+	system("diff $tmp.REGRESSION.1 $tmp.REGRESSION.2 > /dev/null");
+	if ($? != 0) {
+	    print "FAILED [regressions differ]\n";
+	    $badtest++;
+	    next;
+	}
+	print "ok.\n";
+    } elsif ($testtype eq "benchmark") {
+	if ($status1 != 0) {
+	    die "benchmark at line $linenum failed with status $status1\n";
+	}
+	$elapsed = $stopclock - $startclock;
+	printf "%5.1f sec\n", $elapsed;
+	$tot_benchtime += $elapsed;
+	$nbench++;
+    } elsif ($testtype eq "fail") {
+	if (($status1&255) != 0) {
+	    print "FAILED [crash!]\n";
+	    $badtest++;
+	    next;
+	} elsif (($status1>>8) == 0) {
+	    print "FAILED [0 status]\n";
+	    $badtest++;
+	    next;
+	}
+	print "ok.\n";
+    }
+}
+
+# Summarize output.
+if ($badtest > 0) {
+    print "\n$badtest of $ntest exercises at level <= $setlevel FAILED.\n";
+} else {
+    print "\nAll $ntest exercises at level <= $setlevel passed.\n";
+}
+if ($nbench > 0) {
+    printf "\nTotal of %d benchmarks: %.1f sec\n", $nbench, $tot_benchtime;
+}
+if ($do_memtest && $nmem == 0) {
+    print "warning: -m selected, but no ccmalloc reports found\n";
+}
+
+# Print info on system, date, etc.
+#
+print "\n\nSystem information:\n";
+print `date`;
+print `uname -a`;
+
+
+# Clean up.
+#
+foreach $tmpfile (keys(%used_tmpfile)) {
+    unlink $tmpfile if -e $tmpfile;
+}
+unlink $tmp if -e $tmp;
+unlink "$tmp.stderr" if -e "$tmp.stderr";
+
+
+
+# filename_substitution(tmpprefix, command_template)
+# 
+# Uses a global, %used_tmpfile, which is a hash
+# that is TRUE for each tmpfile names that we'll 
+# try to delete upon exit.
+sub
+filename_substitution
+{
+    my ($tmp, $com) = @_;
+    my ($token, $newname);
+    
+    while ($com =~ /%(\S+)%/) {
+	$token    = $1;
+	$newname  = "$tmp.$token";
+	$com =~ s/%$token%/$newname/g;
+	$used_tmpfile{$newname} = 1;
+    }
+    return $com;
+}
+    
+sub
+regression_substitution 
+{
+    my ($tmp, $com) = @_;
+    my ($executable, $args, $cmd1, $cmd2);
+    
+    ($executable, $args) = split(' ', $com, 2);
+    $cmd1 = "$executable --regress $tmp.REGRESSION.1 $args";
+    $cmd2 = "$executable --regress $tmp.REGRESSION.2 $args";
+    $used_tmpfile{"$tmp.REGRESSION.1"} = 1;
+    $used_tmpfile{"$tmp.REGRESSION.2"} = 1;
+    return ($cmd1, $cmd2);
+}
+    
+sub
+path_substitution
+{
+    my ($com, @dirs) = @_;
+    
+    $foundit = 0;
+    while ($com =~ /\@(\S+)\@/) {
+	$token    = $1;
+	$foundit  = 0;
+	foreach $dir (@dirs) {
+	    if (-x "$dir/$token") {
+		$newname = "$dir/$token";
+		$com =~ s/\@$token\@/$newname/;
+		$foundit = 1;
+		last;
+	    }
+	}
+	if (! $foundit) { last; }
+    }
+    return ($foundit, $com);
+}
+    
+# Function: check_ccmalloc_status
+# 
+# Look at a file containing stderr from an executed command;
+# find ccmalloc report; if present, parse out the number of 
+# bytes leaked (e.g. garbage). 
+#
+# Return ($has_ccmalloc, $garbage):
+#    $has_ccmalloc:  1 if report is present; else 0
+#    $garbage:       number of bytes leaked (0 if none)
+#
+# If $file isn't present, returns (0,0) - e.g. that problem is
+# silently ignored. The caller may realize that something's wrong
+# if it expected $has_ccmalloc to be 1. 
+#
+# We can't check ccmalloc on all sqc exercises, because some
+# of them (particularly bug tests) are scripts that cannot be
+# instrumented by ccmalloc.
+sub
+check_ccmalloc_status
+{
+    my ($file) = @_;
+    my ($has_ccmalloc, $has_garbage, $garbage);
+
+    open(CCMALLOC, "$file") || return (0,0);
+    $has_ccmalloc = $has_garbage = $garbage = 0;
+    while (<CCMALLOC>) {
+	if (/^\|=+ *ccmalloc-/) { $has_ccmalloc = 1; }
+	if (/^\|\s*bytes\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*(\d+)\s*\|/) {
+	    $has_garbage = 1;
+	    $garbage = $1;
+	}
+    }
+    close CCMALLOC;
+
+    # must have successfully parsed garbage line, in addition to 
+    # ccmalloc header, to count as a present ccmalloc report.
+    #
+    if (! $has_garbage) { $has_ccmalloc = 0; } 
+    return ($has_ccmalloc, $garbage);
+}
+
+# Function: tempname
+#
+# Returns a unique temporary filename. 
+#
+# Should be robust. Uses the pid as part of the temp name
+# to prevent other processes from clashing. A two-letter
+# code is also added, so a given process can request
+# up to 676 temp file names (26*26). An "sre" code is
+# also added to distinguish these temp files from those
+# made by other programs.
+#
+# Returns nothing if it fails to get a temp file name.
+#
+# If TMPDIR is set, that directory is prepended to the
+# name.
+#
+sub tempname {
+    my ($dir, $name, $suffix);
+    if ($TMPDIR) { $dir = $TMPDIR."/"; } else {$dir = "";}
+
+    foreach $suffix ("aa".."zz") {
+        $name = "$dir"."sre".$suffix.$$;
+        if (! (-e $name)) { 
+            open(TMP,">$name") || die; # Touch it to reserve it.
+            close(TMP);
+            return "$name"; 
+        }
+    }                           
+}
+
+

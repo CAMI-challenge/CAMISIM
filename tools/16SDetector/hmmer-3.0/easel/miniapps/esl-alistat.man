@@ -1,0 +1,187 @@
+.TH "esl-alistat" 1  "@RELEASEDATE@" "@PACKAGE@ @RELEASE@" "@PACKAGE@ Manual"
+
+.SH NAME
+.TP
+esl-alistat - summarize a multiple sequence alignment file
+
+.SH SYNOPSIS
+
+.B esl-alistat
+.I [options]
+.I msafile
+
+.SH DESCRIPTION
+
+.pp
+.B esl-alistat 
+summarizes the contents of the multiple sequence alignment(s) in 
+.I msafile, 
+such as the alignment name, format, alignment length (number of
+aligned columns), number of sequences, average pairwise % identity,
+and mean, smallest, and largest raw (unaligned) lengths of the
+sequences.
+
+If 
+.I msafile
+is - (a single dash),
+multiple alignment input is read from
+.I stdin.
+
+The alignments can be of protein or DNA/RNA sequences. All alignments
+in the same 
+.I msafile
+must be either protein or DNA/RNA. The alphabet will be autodetected
+unless one of the options 
+.I --amino,
+.I --dna,
+or 
+.I --rna 
+are given. These options may be useful in automated
+pipelines to make 
+.B esl-alistat 
+more robust; alphabet autodetection is not infallible.
+
+The 
+.B --list,
+.B --icinfo,
+.B --rinfo,
+.B --pcinfo,
+.B --psinfo,
+and
+.B --iinfo,
+options allow dumping various statistics on the alignment to optional
+output files as described for each of those options below.
+
+The 
+.B --small
+option allows summarizing alignments without storing them in memory
+and can be useful for large alignment files with sizes that approach
+or exceed the amount of available RAM.  When
+.B --small
+is used, 
+.B esl-alistat
+will print fewer statistics on the alignment, omitting data on the
+smallest and largest sequences and the average identity of the
+alignment.
+.B --small
+only works on Pfam formatted alignments (a special type of
+non-interleaved Stockholm alignment in which each sequence occurs on a
+single line) and 
+.BI --informat " pfam"
+must be given with
+.B --small.
+Further, when 
+.B --small
+is used, the alphabet must be specified with
+.I --amino,
+.I --dna,
+or 
+.I --rna.
+
+.SH OPTIONS
+
+.TP
+.B -h 
+Print brief help;  includes version number and summary of
+all options, including expert options.
+
+.TP 
+.B -1
+Use a tabular output format with one line of statistics per alignment
+in 
+.I msafile.
+This is most useful when
+.I msafile
+contains many different alignments (such as a Pfam database in
+Stockholm format).
+
+
+.SH EXPERT OPTIONS
+
+.TP
+.BI --informat " <s>"
+Specify that the input alignment is in 
+.I <s>
+format. At present, valid formats are limited to
+Stockholm, Pfam, and AFA (aligned FASTA).
+
+.TP
+.B --amino
+Assert that the 
+.I msafile 
+contains protein sequences. 
+
+.TP 
+.B --dna
+Assert that the 
+.I msafile 
+contains DNA sequences. 
+
+.TP 
+.B --rna
+Assert that the 
+.I msafile 
+contains RNA sequences. 
+
+.TP 
+.B --small
+Operate in small memory mode for Pfam formatted alignments.
+.BI --informat " pfam"
+and one of
+.B --amino,
+.B --dna,
+or
+.B --rna
+must be given as well.
+
+.TP 
+.BI --list " <f>"
+List the names of all sequences in the alignment to file
+.I <f>.
+Each name is written on its own line. Lines prefixed with "#" are
+comment lines with potentially useful information about the file.
+
+.TP 
+.BI --icinfo " <f>"
+Dump the information content per position in tabular format to file
+.I <f>.
+Lines prefixed with "#" are comment lines, which explain the
+meanings of each of the tab-delimited fields.
+
+.TP 
+.BI --rinfo " <f>"
+Dump information on the frequency of gaps versus nongap residues per position in tabular format to file
+.I <f>.
+Lines prefixed with "#" are comment lines, which explain the
+meanings of each of the tab-delimited fields.
+
+.TP 
+.BI --pcinfo " <f>"
+Dump per column information on posterior probabilities in tabular format to file
+.I <f>.
+Lines prefixed with "#" are comment lines, which explain the
+meanings of each of the tab-delimited fields.
+
+.TP 
+.BI --psinfo " <f>"
+Dump per sequence information on posterior probabilities in tabular format to file
+.I <f>.
+Lines prefixed with "#" are comment lines, which explain the
+meanings of each of the tab-delimited fields.
+
+.TP 
+.BI --iinfo " <f>"
+Dump information on inserted residues in tabular format to file
+.I <f>.
+Insert columns of the alignment are those that are gaps in the
+reference (#=GC RF) annotation. This option only works if the input
+file is in Stockholm format with reference annotation.
+Lines prefixed with "#" are comment lines, which explain the
+meanings of each of the tab-delimited fields. 
+
+.SH AUTHOR
+
+Easel and its documentation are @EASEL_COPYRIGHT@.
+@EASEL_LICENSE@.
+See COPYING in the source code distribution for more details.
+The Easel home page is: @EASEL_URL@

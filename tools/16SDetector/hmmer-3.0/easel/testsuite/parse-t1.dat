@@ -1,0 +1,8 @@
+# Test file for parse-t1 test.
+# First field is total # of tokens in file (not counting first two)
+# Second field is value of the last token in the file.
+
+7 42
+1
+2 3
+4 5 6 42
