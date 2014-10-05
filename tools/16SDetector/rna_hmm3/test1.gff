@@ -1,5 +1,0 @@
-##seq_name	method	feature	start	end	evalue	strand	frame	attribute
-seq3	rna_hmm3	rRNA	3	97	5.4e-12	+	NA	23S_rRNA
-seq2	rna_hmm3	rRNA	1	298	3.2e-71	-	NA	16S_rRNA
-seq3	rna_hmm3	rRNA	252	366	4.8e-21	+	NA	5S_rRNA
-seq1	rna_hmm3	rRNA	1	399	3.1e-104	+	NA	23S_rRNA
