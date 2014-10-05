@@ -1,0 +1,66 @@
+ID              e4
+TITLE           Long options called ambiguous abbreviation, if a prefix of another option
+AFFECTS         HMMER 3.0b3 (and earlier)
+FIXED_IN        -
+STATUS          CLOSED
+XREF            J5/116
+REPORTED_BY     Maufrais Corinne <maufrais@pasteur.fr>; 27 Nov 2009
+OPENED_DATE     SRE, Tue Dec  1 11:24:43 2009
+CLOSED_DATE     SRE, Tue Dec  1 11:24:46 2009
+DESCRIPTION     
+  hmmsim --s gives
+  "Failed to parse command line: Abbreviated option "--s" is ambiguous"
+  because esl_getopts thinks --s is an abbreviation for --seed or --stall.
+  
+  get_optidx_abbrev() revised to allow exact matches to long options.
+  esl_getopts unit test revised to catch this bug.
+//
+
+ID              e3
+TITLE           esl-sfetch should allow simpler fetching from small files
+AFFECTS         -
+FIXED_IN        -
+STATUS          OPEN
+XREF            J4/81
+REPORTED_BY     SRE
+OPENED_DATE     13 Feb 2009
+CLOSED_DATE     -
+DESCRIPTION     
+  esl-sfetch should allow simpler fetching from a small seqfile of one
+  or a few sequences. It should not require an SSI index. It should allow
+  a . argument to mean "from first sequence in file". (Or perhaps it should
+  allow seqs to be fetched by number, as well as name.)
+//
+ID              e2
+TITLE           esl-seqstat can't read alignment file from stdin
+AFFECTS         -
+FIXED_IN        -
+STATUS          CLOSED
+XREF            J4/84
+REPORTED_BY     SRE
+OPENED_DATE     16 Feb 2009
+CLOSED_DATE     16 Feb 2009
+DESCRIPTION     
+  sqfile_open tries to guess file format; then when msafile_open is called
+  in GuessAlphabet, stdin is already feof(). Using current design, MSA can't
+  be read sequentially (through sqio interface) unless format is known.
+  SQFILE has a recording buffer mechanism, but it only works in sqio proper,
+  not through interface to esl_msa. Added e2.sh to test for the bug.
+//
+ID              e1
+TITLE           esl-alistat fails to read Pfam seed in MUL format
+AFFECTS         -
+FIXED_IN        -
+STATUS          CLOSED
+XREF            J4/81; J4/93
+REPORTED_BY     Rob Finn
+OPENED_DATE     13 Feb 2009
+CLOSED_DATE     13 Feb 2009
+DESCRIPTION     
+  SELEX/MUL format parser was present, but not hooked up to anything.
+  
+  Added --informat to several esl miniapps, to allow --informat selex.
+//
+#
+# Started Easel BUGTRAX file: SRE, Tue Dec  1 11:08:31 2009
+# xref J5/116

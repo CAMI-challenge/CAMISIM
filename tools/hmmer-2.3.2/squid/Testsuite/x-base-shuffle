@@ -1,0 +1,7 @@
+#! /usr/bin/perl
+
+use testsuite;
+
+testsuite::description("x-base-shuffle", "basic tests of shuffle");
+testsuite::run("../shuffle ../Formats/fasta       > /dev/null");
+testsuite::done();

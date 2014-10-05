@@ -1,0 +1,36 @@
+Format:              FASTA
+Alphabet type:       amino
+Number of sequences: 1
+Total # residues:    53
+Smallest:            53
+Largest:             53
+Average length:      53.0
+
+Residue composition:
+residue: A            2  0.0377   -1.0622
+residue: C            2  0.0377    1.3157
+residue: D            2  0.0377   -0.5042
+residue: E            2  0.0377   -0.8246
+residue: F            2  0.0377   -0.0734
+residue: G            2  0.0377   -0.8812
+residue: H            2  0.0377    0.7193
+residue: I            2  0.0377   -0.6450
+residue: K            2  0.0377   -0.6556
+residue: L            2  0.0377   -1.3527
+residue: M            2  0.0377    0.6667
+residue: N            2  0.0377   -0.1350
+residue: P            2  0.0377   -0.3558
+residue: Q            2  0.0377   -0.0682
+residue: R            2  0.0377   -0.5196
+residue: S            2  0.0377   -0.8567
+residue: T            2  0.0377   -0.5189
+residue: V            2  0.0377   -0.8356
+residue: W            2  0.0377    1.7252
+residue: Y            2  0.0377    0.3112
+residue: B            2  0.0377
+residue: J            2  0.0377
+residue: Z            2  0.0377
+residue: O            2  0.0377
+residue: U            2  0.0377
+residue: X            2  0.0377
+residue: *            1  0.0189

@@ -1,0 +1,173 @@
+.TH "esl-mask" 1 "@EASEL_DATE@" "Easel @PACKAGE_VERSION@" "Easel miniapps"
+
+.SH NAME
+.TP 
+esl-mask - mask sequence residues with X's (or other characters)
+
+.SH SYNOPSIS
+.B esl-mask
+.I [options]
+.I seqfile
+.I maskfile
+
+
+.SH DESCRIPTION
+
+.B esl-mask
+reads lines from 
+.I maskfile 
+that give start/end coordinates for
+regions in each sequence in 
+.I seqfile,
+masks these residues (changes
+them to X's), and outputs the masked sequence.
+
+The
+.I maskfile
+is a space-delimited file. Blank lines and lines that start with '#'
+(comments) are ignored. Each data line contains at least three
+fields:
+.I seqname,
+.I start,
+and
+.I end. 
+The 
+.I seqname 
+is the name of a sequence in the 
+.I seqfile,
+and 
+.I start
+and 
+.I end 
+are coordinates defining a region in that sequence.
+The coordinates are indexed <1..L> with respect to a
+sequence of length <L>.
+
+By default, the sequence names must appear in exactly the same order
+and number as the sequences in the
+.I seqfile. 
+This is easy to enforce, because the format of
+.I maskfile 
+is also legal as a list of names for 
+.B esl-sfetch, 
+so you can always fetch a temporary sequence file with 
+.B esl-sfetch 
+and pipe that to 
+.B esl-mask.
+(Alternatively, see the 
+.B -R
+option for fetching from an SSI-indexed
+.I seqfile.)
+
+The default is to mask the region indicated by 
+.I <start>..<end>.
+Alternatively, everything but this region can be masked;
+see the
+.B -r
+reverse masking option.
+
+The default is to mask residues by converting them to X's.
+Any other masking character can be chosen (see
+.B -m
+option),
+or alternatively, masked residues can be lowercased (see
+.B -l
+option).
+
+The
+.I seqfile
+can be in any sequence file format that Easel reads, such as FASTA
+format. The format will be autodetected. Alternatively, for increased reliability,
+you can specify the input format; see the
+.B --informat
+option.
+
+
+
+.SH OPTIONS
+
+.TP
+.B -h
+Print brief help; includes version number and summary of
+all options, including expert options.
+
+.TP
+.B -l
+Lowercase; mask by converting masked characters to lower case and
+unmasked characters to upper case.
+
+.TP
+.BI -m " <c>"
+Mask by converting masked residues to 
+.I <c>
+instead of the default X.
+
+.TP
+.BI -o  " <f>"
+Send output to file
+.I <f>
+instead of stdout.
+
+.TP
+.B -r
+Reverse mask; mask everything outside the region
+.I start..end, 
+as opposed to the default of masking that region.
+
+.TP
+.B -R
+Random access; 
+fetch sequences from 
+.I <seqfile>
+rather than requiring that sequence names in
+.I <maskfile>
+and
+.I <seqfile>
+come in exactly the same order and number.  The
+.I <seqfile> must be SSI indexed (see
+.B esl-sfetch --index.)
+
+.TP
+.BI -x " <n>"
+Extend all masked regions by up to <n> residues on each side. 
+For normal masking, this means masking
+.I <start>-<n>..<end>+<n>. 
+For reverse masking, this means masking
+.I 1..<start>-1+<n>
+and
+.I <end>+1-<n>..L
+in a srquence of length L.
+
+
+.TP
+.BI --informat " <s>"
+Specify that the sequence file is in format 
+.I <s>,
+rather than allowing the program to autodetect
+the file format. 
+
+
+
+.SH AUTHOR
+
+Easel and its documentation are @EASEL_COPYRIGHT@.
+@EASEL_LICENSE@.
+See COPYING in the source code distribution for more details.
+The Easel home page is: @EASEL_URL@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

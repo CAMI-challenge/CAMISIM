@@ -1,0 +1,4 @@
+#                                                                            --- full sequence --- -------------- this domain -------------   hmm coord   ali coord   env coord
+# target name        accession   tlen query name           accession   qlen   E-value  score  bias   #  of  c-Evalue  i-Evalue  score  bias  from    to  from    to  from    to  acc description of target
+#------------------- ---------- ----- -------------------- ---------- ----- --------- ------ ----- --- --- --------- --------- ------ ----- ----- ----- ----- ----- ----- ----- ---- ---------------------
+test2                -             21 test                 -             20   2.3e-22   64.6   0.1   1   1   2.6e-22   2.6e-22   64.5   0.0     1    20     1    21     1    21 0.99 -

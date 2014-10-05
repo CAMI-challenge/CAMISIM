@@ -1,0 +1,34 @@
+Easel - a library of C functions for biological sequence analysis
+http://easel.janelia.org/
+Version h3.0; March 2010
+Copyright (C) 2010 Howard Hughes Medical Institute.
+------------------------------------------------------------------
+
+Easel is a C code library for computational analysis of biological
+sequences using probabilistic models. Easel is used by HMMER, the
+profile hidden Markov model software that underlies the Pfam protein
+families database, and by Infernal, the profile stochastic
+context-free grammar software that underlies the Rfam RNA family
+database. Like any code library, Easel aims to make applications more
+robust and easier to develop, by providing a set of reusable,
+documented, and well-tested functions.
+
+Other files to read in the top-level source directory:
+
+    INSTALL          Brief installation instructions.
+    Userguide.pdf    The Easel User's Guide.
+    RELEASE-NOTES    Notes for this release.
+    COPYRIGHT        Copyright and license information.
+    LICENSE          The Janelia Farm Software License.
+
+To get started after installation, see the Easel User's Guide
+(Userguide.pdf).
+
+------------------------------------------------------------------
+Sean Eddy
+HHMI Janelia Farm Research Campus
+
+
+
+
+
