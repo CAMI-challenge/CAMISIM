@@ -67,7 +67,7 @@ input:
 - file containing a list of fasta file paths, for example the genomes that someone wants to cluster.
 - file containing a list of reference fasta file paths or alternatively, a fasta formated file containing the already extracted marker genes of the reference genomes.
 - working directory where the results will be saved (intermediate files will be worked on in the designated /tmp folder)
-- the number of processors that are available for paralell processing. The program "parallel" is used to process several genomes at the same time.
+- the number of processors that are available for parallel processing. The program "parallel" is used to process several genomes at the same time.
 output:
 - fasta formatted file containing the extracted marker genes of all genomes
 """
@@ -124,14 +124,16 @@ All is done using "mothur".
 The alignment requires a high quality reference alignment (e.g. from SILVA) and
 is done using the "gotoh" algorithm. (needleman, and blast are possible alternatives, but not implemented here)
 Also using "mothur", empty or uninformative columns are removed.
-When calculating distances (similar to DNADist) multi nucleotide gaps will be counted as one and gaps at the end are ignored.
-The clustering will be done based on the distance between the sequences using the "Furthest neighbor" algorithm.
-Mothur outputs cluster in steps up to a cutoff. The size of the steps can be choosen, by default 0.01 steps.
+When calculating distances (similar to DNADist) multi nucleotide gaps will be counted as one, gaps at the end are ignored.
+To add even more references, the distances of the reference alignment will be merged with those of the working data.
+These were precalculated and only the missing distances between the working data to the reference alignment need to be calculated.
+The clustering will be done based on the final distances using the "Furthest neighbor" algorithm.
+Mothur outputs cluster in steps up to a cutoff. The size of the steps can be chosen, by default 0.01 steps.
 input:
 - fasta formatted reference alignment (e.g. from SILVA)
 - a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
 - working directory where the results will be saved and which contains the fasta formatted file with the extracted marker genes of all genomes
-- the number of processors that are available for paralell processing. The program "mothur" can use several cores for the alignments and distance calculations.
+- the number of processors that are available for parallel processing. The program "mothur" can use several cores for the alignments and distance calculations.
 output:
 - a mothur formatted file containing the clusters, from unique up to the given threshold
 """
@@ -194,10 +196,10 @@ def classification_of_genomes_and_novelty_prediction(parser):
 	"""As the third step, the unpublished genomes are classified based on the clusters they are found in.
 Since clusters were made in 0.01 distance steps, the classification can be done using the smallest clusters first, using bigger ones if a classification can not be made.
 If a marker gene of an unpublished genome is found in a cluster together with references, a common taxon that 90% of sequences agree with will be the predicted taxon.
-The 90% is arbitrary choosen and is required because of taxonomic inconsitencies.
+The 90% is arbitrary chosen and is required because of taxonomic inconsistencies.
 When a specific rank is checked for agreement, sequences with unknown classification on that rank are ignored.
 TODO: check for taxonomic consitency on higher ranks for those!
-Novelty prediction is based on the predicted taxon's rank. a high rank (phylum, order, class) with low distance can be a strong indicator for taxonomic inconsitencies.
+Novelty prediction is based on the predicted taxon's rank. a high rank (phylum, order, class) with low distance can be a strong indicator for taxonomic inconsistencies.
 But it could also be caused by sequences that are not fully classified, yet.
 input:
 - meta data table with a list of the genomes that are to be classified
@@ -348,13 +350,13 @@ def my_main():
 
 DESCRIPTION
 Script for extracting 16S rRNA sequences from a set of genomes (new ones and reference genomes),
-clustering of 16S sequences by first doing a multiple alignment, and then calulation the distance.
+clustering of 16S sequences by first doing a multiple alignment, and then calculation the distance.
 If the marker genes of the unpublished genomes clustered with one or more of the reference genomes, a taxonomic id is assign to them.
 Finally the ani is calculated for those unpublished genomes, that got clustered with reference genomes.
 
 The three stages in short:
 1. Extraction of 16S sequences
-2. Creation of a mulitple alignment of 16S sequences, distance matrix calculation and clustering
+2. Creation of a multiple alignment of 16S sequences, distance matrix calculation and clustering
 3. Classification of genomes based on clustering and novelty prediction.
 4. ANI calculation and novelty prediction.
 
@@ -364,7 +366,7 @@ input:
 - a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
 - meta data table with a list of the genomes that are to be classified
 - working directory where results of each stage will be saved
-- the number of processors that are available for paralell processing.
+- the number of processors that are available for parallel processing.
 output:
 - meta data table with a list of the genomes, with columns added that contain tax predictions, average nucleotide identity and novelty predictions
 
@@ -403,7 +405,7 @@ TODO
 						help="path to a file containing tab separated list of genomes and their file paths: <id>\\t<path>. NO COLUMN NAMES!")
 
 	parser.add_argument("-wd", "--working_directory", default=None, type=str,
-						help="folder that will contain the found marker genes and also cluster in mothur format")
+						help="folder that will contain the log-files, found marker genes and also a file in mothur format containing the clustering")
 	parser.add_argument("-th", "--threshold", default=0.03, type=float,
 						help="threshold for clustering. Default: 0.03")
 	#parser.add_argument("-db", "--alignments_reference_db", default=None, type=str,
@@ -412,11 +414,12 @@ TODO
 	parser.add_argument("-p", "--processors", default=2, type=int,
 						help="number of processors to be used. Default: 2")
 	parser.add_argument("-s", "--step", default=0, type=int,
-						help='''available options: 0-2:
+						help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
 2 -> Gene alignment and clustering,
 3 -> Classification of Genomes and novelty prediction
+4 -> Average Nucleotide Identity calculation
 Default: 0
 ''')
 
