@@ -34,7 +34,7 @@ def detect_marker_genes(input_file, input_reference_file, output_folder, process
 		subprocess.call([executable, str(input_file), str(input_reference_file), output_folder, str(processors)])
 
 
-def cluster_marker_genes(output_folder, alignments_reference_db, threshold, distance_method, processors):
+def cluster_marker_genes(output_folder, folder_database, threshold, distance_method, processors):
 	suffix23s = "23S_rRNA.fna"
 	suffix16s = "16S_rRNA.fna"
 	suffix05s = "5S_rRNA.fna"
@@ -48,7 +48,7 @@ def cluster_marker_genes(output_folder, alignments_reference_db, threshold, dist
 	#TODO: globaly declare such file name
 	output_file = output_folder + "/" + suffix16s + ".otu.txt"
 	#print "\n", executable, str(input_file), str(output_file), str(alignments_reference_db), str(threshold), str(distance_method), str(processors), "\n"
-	subprocess.call([executable, str(input_file), str(output_file), str(alignments_reference_db), str(threshold), str(distance_method), str(processors)])
+	subprocess.call([executable, str(input_file), str(output_file), str(folder_database), str(threshold), str(distance_method), str(processors)])
 
 	#input_file = output_folder + "/" + suffix05s
 	#if os.path.isfile(input_file):
@@ -177,19 +177,11 @@ output:
 		print "The taxonomy (databaseFile) is not specified."
 		return False
 
-	alignments_reference_db = None
-	if os.path.isdir(folder_database):
-		alignments_reference_db = os.path.join(os.path.normpath(folder_database), 'mothur_alignment_ref.fasta')
-		#alignments_reference_db = os.path.join(os.path.normpath(folder_database), 'silva.archaea_bacteria.fasta')
-		if not os.path.isfile(alignments_reference_db):
-			print("The directory '{}' doesn't contain the reference file 'mothur_alignment_ref.fasta'".format(folder_database))
-			return False
-
-	if not os.path.isfile(alignments_reference_db):
-		print("SILVA database file not found at:", alignments_reference_db)
+	if not os.path.isdir(folder_database):
+		print("SILVA database file not found at:", folder_database)
 		return False
 
-	return cluster_marker_genes(working_directory, alignments_reference_db, threshold, distance_method, processors)
+	return cluster_marker_genes(working_directory, folder_database, threshold, distance_method, processors)
 
 
 def classification_of_genomes_and_novelty_prediction(parser):
@@ -382,7 +374,7 @@ TODO
 {0} \
 -i id_to_path_unknown_genomes.txt \
 -irf 16S_rRNA_refereces.fna \
--wd "my_output/" \
+-wd "my_output/subfolder" \
 -th 0.10 \
 -im metadata_table_test.csv \
 -om metadata_table_test.out.csv \
@@ -390,7 +382,7 @@ TODO
 -s 0
 '''.format(sys.argv[0])
 	description = "taxonomic classify genomes by obtaining cluster based on 16S marker genes from genomes"
-	parser = argparse.ArgumentParser(description=description)
+	parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 	#parser = argparse.ArgumentParser(description=description, epilog=epilog)
 
 	#parser.add_argument("-i", "--input_file", default=None, type=str,
@@ -437,17 +429,17 @@ Default: 0
 			#parser.print_help()
 			sys.exit(1)
 
-	if args.step == 0 or args.step == 2:
+	if args.step == 0 or args.step <= 2:
 		if not gene_alignment_and_clustering(parser):
 			#parser.print_help()
 			sys.exit(1)
 
-	if args.step == 0 or args.step == 3:
+	if args.step == 0 or args.step <= 3:
 		if not classification_of_genomes_and_novelty_prediction(parser):
 			#parser.print_help()
 			sys.exit(1)
 
-	if args.step == 0 or args.step == 4:
+	if args.step == 0 or args.step <= 4:
 		if not ani_of_genomes_and_novelty_prediction(parser):
 			#parser.print_help()
 			sys.exit(1)
