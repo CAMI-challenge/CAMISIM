@@ -22,7 +22,7 @@ def my_main():
 	-db reference_db/nobackup/2014_02_01_ncbitax_sqlite.db
 '''
 
-	description = "Using otu clustering to make a prediction that is added to a metatable"
+	description = "Using clustering to make a taxonomic prediction that are added to a metatable"
 	parser = argparse.ArgumentParser(description=description)
 	#parser = argparse.ArgumentParser(description=description, epilog=epilog)
 
@@ -36,32 +36,32 @@ def my_main():
 						help="path to file containing tab separated list of genomes and their file path")
 	#parser.add_argument("-db", "--taxonomy_db", default=None, type=str,
 	#					help="path to a taxonomy sqlite database file")
-	parser.add_argument("-th", "--threshold", default=0.02, type=float,
-						help="threshold for clustering. Default: 0.03")
-	parser.add_argument("-minth", "--min_threshold", default=0.03, type=float,
-						help="minimum threshold for clustering. Default: 0.02")
-	args = parser.parse_args()
+	parser.add_argument("-th", "--otu_threshold", default=0.03, type=float,
+						help="threshold used to determine otus. Default: 0.03")
+	parser.add_argument("-minth", "--min_threshold", default=0.02, type=float,
+						help="minimum threshold for classification. Default: 0.02")
+	options = parser.parse_args()
 
-	if args.input_file is None:
+	if options.input_file is None:
 		print "Error -i: Please pass a file containing a list of genome paths: <id>\t<path>"
 		#parser.print_help()
 		sys.exit(1)
 	else:
-		input_file = args.input_file
+		input_file = options.input_file
 		if not os.path.isabs(input_file):
 			input_file = os.getcwd() + "/" + input_file
 
-	if args.output_file is None:
+	if options.output_file is None:
 		print "Error -o: Please pass a file location for the results"
 		#parser.print_help()
 		sys.exit(1)
 	else:
-		output_file = args.output_file
+		output_file = options.output_file
 		if not os.path.isabs(output_file):
 			#output_file = os.path.realpath(__file__)+"/"+output_file
 			output_file = os.getcwd() + "/" + output_file
 
-	cluster_file = args.cluster_file
+	cluster_file = options.cluster_file
 	if cluster_file is None or not os.path.isfile(cluster_file):
 		print "Error -cl: Please pass a file containing a list of clusters in mothur format"
 		#parser.print_help()
@@ -123,29 +123,30 @@ def my_main():
 	#print mothur_otus.to_string("0.002")
 	#sys.exit()
 
-	otu_cutoff_column = metadata_table.get_column(otu_cutoff_column_name)
-	if otu_cutoff_column is None:
-		otu_cutoff_column = [''] * metadata_table.number_of_rows
+	#otu_cutoff_column = metadata_table.get_column(otu_cutoff_column_name)
+	#if otu_cutoff_column is None or True:
+	otu_cutoff_column = [''] * metadata_table.number_of_rows
 
 	otu_id_column = metadata_table.get_column(otu_id_column_name)
 	if otu_id_column is None:
 		otu_id_column = [''] * metadata_table.number_of_rows
 
-	otu_ncbi_column = metadata_table.get_column(otu_prediction_column_name)
-	if otu_ncbi_column is None:
-		otu_ncbi_column = [''] * metadata_table.number_of_rows
+	#otu_ncbi_column = metadata_table.get_column(otu_prediction_column_name)
+	#if otu_ncbi_column is None:
+	otu_ncbi_column = [''] * metadata_table.number_of_rows
 
-	otu_name_column = metadata_table.get_column(otu_prediction_sname_column_name)
-	if otu_name_column is None:
-		otu_name_column = [''] * metadata_table.number_of_rows
+	#otu_name_column = metadata_table.get_column(otu_prediction_sname_column_name)
+	#if otu_name_column is None:
+	otu_name_column = [''] * metadata_table.number_of_rows
 
-	otu_novelty_column = metadata_table.get_column(otu_prediction_novelty_column_name)
-	if otu_novelty_column is None:
-		otu_novelty_column = [''] * metadata_table.number_of_rows
+	#otu_novelty_column = metadata_table.get_column(otu_prediction_novelty_column_name)
+	#if otu_novelty_column is None:
+	otu_novelty_column = [''] * metadata_table.number_of_rows
 
 	unpublished_genomes_id_column = metadata_table.get_column(unpublished_genomes_id_column_name)
 	number_of_unpublished = len(unpublished_genomes_id_column)
-	min_cutoff = str(args.min_threshold)
+	min_cutoff = str(options.min_threshold)
+	otu_threshold = options.otu_threshold
 	all_done = False
 	for cluster_cutoff in sorted(mothur_otus.lists_of_cluster_by_cutoff_raw):
 		if all_done:
@@ -158,6 +159,7 @@ def my_main():
 		#print "\nget {0} ncbis of ids in otus using cutoff {1}".format(rank, otu_cutoff)
 		mothur_otus.set_cutoff_raw(cluster_cutoff)
 		all_done = True
+		# TODO: separate otu from classification
 		for row_index in range(0, number_of_unpublished):
 			unpublished_genome_ids = unpublished_genomes_id_column[row_index]
 			#metadata_table.get_entry_index(unknown_genomes_id_column_name, unknown_genomes_id)
@@ -186,7 +188,8 @@ def my_main():
 				otu_ncbi_column[row_index] = separator.join(otu_ncbi)
 				otu_name_column[row_index] = separator.join(otu_name)
 				otu_novelty_column[row_index] =separator.join(otu_novelty)
-				otu_id_column[row_index] = separator.join(otu_id)
+				if float(cluster_cutoff) == otu_threshold:
+					otu_id_column[row_index] = separator.join(otu_id)
 						#else:
 						#	print otu, "unknown species ncbi"
 					#else:
