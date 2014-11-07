@@ -37,7 +37,7 @@ class NcbiTaxonomy(object):
 		if scientific_name in NcbiTaxonomy.name_to_taxids:
 			return NcbiTaxonomy.name_to_taxids[scientific_name]
 		if self._logger:
-			self._logger.error("get_taxids_by_name KeyError: {}".format(scientific_name))
+			self._logger.debug("get_taxids_by_name KeyError: {}".format(scientific_name))
 		return None
 
 	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None):
@@ -122,7 +122,7 @@ class NcbiTaxonomy(object):
 				# e.g. Ovis aries platyura ('species'), Oves aries ('species')
 		except KeyError:
 			if self._logger:
-				self._logger.error('__add_nodes KeyError: {}'.format(parent_taxid))
+				self._logger.debug('__add_nodes KeyError: {}'.format(parent_taxid))
 			pass
 		# add new node to parent's all_child_nodes
 		#while parent_taxid in Node.byname:
@@ -141,7 +141,7 @@ class NcbiTaxonomy(object):
 		""" parse NCBI taxonomy files."""
 		self._has_node_tree = build_node_tree
 		if self._logger:
-			self._logger.info('reading NCBI taxonomy files and building taxonomy tree...')
+			self._logger.info('Reading NCBI taxonomy files and building taxonomy tree...')
 		if build_node_tree:
 			TaxonomyNode.by_name.clear()
 
@@ -211,9 +211,8 @@ class NcbiTaxonomy(object):
 	# read NCBI names file
 	def __read_names_file(self):
 		with open(self._ncbi_names_file) as fin:
-			#print >> P.logfile, 'NCBI namesfile: %s ' % P.ncbi_names_file
 			if self._logger:
-				self._logger.info("NCBI namesfile: {}".format(self._ncbi_names_file))
+				self._logger.info("Reading NCBI namesfile: {}".format(self._ncbi_names_file))
 			for line in fin:
 				#65      |       Herpetosiphon aurantiacus       |               |       scientific name |
 				taxid, name, disambiguation, nametype, more = line.strip().split('|')
@@ -223,9 +222,8 @@ class NcbiTaxonomy(object):
 	# read NCBI merged file
 	def __read_merged_file(self):
 		with open(self._ncbi_merged_file) as fin:
-			#print >> P.logfile, 'NCBI mergedfile (deprecated taxon IDs): %s ' % P.ncbi_merged_file
 			if self._logger:
-				self._logger.info("NCBI mergedfile (deprecated taxon IDs): {}".format(self._ncbi_merged_file))
+				self._logger.info("Reading NCBI mergedfile (deprecated taxon IDs): {}".format(self._ncbi_merged_file))
 			for line in fin:
 				#5085       |       746128  |
 				old_taxid, new_taxid, sonst = line.strip().split('|')

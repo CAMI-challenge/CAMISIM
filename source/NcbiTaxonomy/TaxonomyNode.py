@@ -26,7 +26,7 @@ class TaxonomyNode(object):
 	
 	def __set_scientific_name(self, name):
 		#~ print name
-		self.scientific_name = name
+		self._scientific_name = name
 		key = name.lower()
 		if not key:
 			return
@@ -58,7 +58,7 @@ class TaxonomyNode(object):
 			TaxonomyNode.by_scientific_name[key] = [TaxonomyNode.by_scientific_name[key], self.taxid]
 
 	def __get_scientific_name(self):
-		return self.scientific_name
+		return self._scientific_name
 	scientific_name = property(__get_scientific_name, __set_scientific_name)
 
 	def __init__(self, taxid, parent_taxid, rank='', name='', unique_name=''):
