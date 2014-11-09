@@ -70,12 +70,13 @@ remove.seqs(accnos=$BAD_SEQ_FILE, fasta=current, name=current)
 dist.seqs(oldfasta=$REF_FASTA, column=$LOCAL_ALIGN_DIST, cutoff=$CLUSTER_CUTOFF, processors=$PROCESSORS, calc=onegap, countends=F)
 merge.files(input=$INPUT_NAMES_FILE-$REF_UNIQUE_NAMES, output=$MERGED_NAMES)
 merge.files(input=$INPUT_PICK_NAMES_FILE-$REF_UNIQUE_NAMES, output=$MERGED_NAMES)
-set.current(name=$MERGED_NAMES)
+set.current(name=$MERGED_NAMES, column=$LOCAL_ALIGN_DIST)
 cluster(cutoff=$CLUSTER_CUTOFF, method=furthest, precision=100)"
 echo -e "$mothur_commands" | "$MOTHUR"
 
 if mv *.list "$OUTPUT_FOLDER/mothur_otu.txt"; then
 # 2>/dev/null
+	#echo "debug, clean up yourself!"
 	echo "clean up folders"
 	rm -rf "$TMP_DIR"
 else
