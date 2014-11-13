@@ -2,10 +2,7 @@
 
 __author__ = 'hofmann'
 
-import sys
 import os
-import argparse
-import re
 
 
 class MetaTable:
