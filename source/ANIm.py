@@ -1,6 +1,14 @@
 __author__ = 'hofmann'
+#original prototype:
+#   http://armchairbiology.blogspot.de/2013/11/ani-are-you-okay-are-you-okay-ani.html
+#   (c) The James Hutton Institute 2013
+#   Author: Leighton Pritchard
+#
+#   Contact:
+#   leighton.pritchard@hutton.ac.uk
+#   GNU General Public License
 
-#import logging
+
 import os
 import sys
 import traceback
@@ -43,8 +51,7 @@ class ANIm:
 			#return
 			shutil.rmtree(self.out_dir_name)
 
-	def get_total_organism_length(self, otus={}):
-		#sub_referene_file_names = set()
+	def get_total_organism_length(self):
 		self.get_organism_lengths(self.reference_file_names)
 		self.get_organism_lengths(self.candidate_file_names)
 
