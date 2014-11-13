@@ -39,6 +39,7 @@ OUTPUT_DIR="$TMP_DIR/output"
 #MARKER_GENES_DIR="$TMP_DIR/marker_genes"
 DETECTOR16S_PATH="$TOOL_DIR/16SDetector"
 
+# better as argument
 SUFFIX28S="28S_rRNA.fna"
 SUFFIX18S="18S_rRNA.fna"
 SUFFIX08S="8S_rRNA.fna"
