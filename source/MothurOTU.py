@@ -73,7 +73,7 @@ class MothurOTU:
 		self.list_of_cluster = self.lists_of_cluster_by_cutoff_raw[self.cluster_cutoff]["otu"]
 		print "loading finished"
 
-	def cluster_to_other_rank(self, cluster, rank, list_of_excluded_genomes_ids, unpublished_sequence_id=None):
+	def cluster_to_other_rank(self, cluster, rank, list_of_excluded_genomes_ids, unpublished_sequence_id=None, debug=False):
 		if rank not in self.tmp_tax_list_by_rank:
 			self.tmp_tax_list_by_rank[rank] = {}
 		ncbi_id_list = []
@@ -97,7 +97,7 @@ class MothurOTU:
 				ncbi_id_list.append(str(ncbi_higher_rank))
 				if rank == "genus" or rank == "species":
 					ncbi_id_list_details.append(str(element) + " -> " + str(ncbi_higher_rank))
-		if unpublished_sequence_id is not None and len(ncbi_id_list) > 0:
+		if debug and unpublished_sequence_id is not None and len(ncbi_id_list) > 0:
 			print unpublished_sequence_id, rank
 			self.cluster_list_to_stdout(Counter(ncbi_id_list), True)
 			if rank == "genus" or rank == "species":
@@ -163,7 +163,9 @@ class MothurOTU:
 				self.list_of_cluster.append([])
 				#print "No rank for otu:", otu
 
-	def set_cutoff_rank(self, cluster_cutoff, rank, unpublished_genomes_id_column=[]):
+	def set_cutoff_rank(self, cluster_cutoff, rank, unpublished_genomes_id_column=None):
+		if unpublished_genomes_id_column is None:
+			unpublished_genomes_id_column = []
 		self.cluster_cutoff = cluster_cutoff
 		self.set_rank(rank, unpublished_genomes_id_column)
 
@@ -172,6 +174,7 @@ class MothurOTU:
 		self.list_of_cluster = self.lists_of_cluster_by_cutoff_raw[self.cluster_cutoff]["otu"]
 
 	def genome_id_exists(self, genome_id):
+		genome_id = ".".join(genome_id.split("_")[0].split(".")[:2])
 		if genome_id not in self.genome_id_to_index_mapping[self.cluster_cutoff]:
 			print "Warning: genome_id not found in clusters", self.cluster_cutoff, genome_id
 			return False
