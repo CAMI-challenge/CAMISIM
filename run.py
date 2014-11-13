@@ -210,11 +210,11 @@ output:
 	#pool_size = options.processors
 	#mothur_cluster_file = os.path.join(project_directory, options.file_cluster_mg_16s)
 	#ranks = "family,genus,species"
-	ani_prediction_to_meta_table.my_main(options)
+
 	#executable = os.path.dirname(os.path.realpath(__file__)) + "/ani_prediction_to_meta_table.py"
 	#print executable, "-i", metadata_table_in, "-o", metadata_table_out, "-cl", mothur_otu_file
 	#subprocess.call([executable, "-i", metadata_table_in, "-o", metadata_table_out, "-ir", input_reference_file, "-iq", input_genomes_file, "-cl", mothur_cluster_file, "-r", ranks, "-p", str(pool_size)])
-	return True
+	return ani_prediction_to_meta_table.my_main(options)
 
 
 def create_meta_table_from_fasta_path_file(options):
