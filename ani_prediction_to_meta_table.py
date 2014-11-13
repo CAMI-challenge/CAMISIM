@@ -9,9 +9,8 @@ from source.Logger import Logger
 import sys
 import os
 
-
 def my_main(options, logger=None):
-	if logger == None:
+	if logger is None:
 		logger = Logger("ANI prediction")
 	#ranks = args.ranks.strip().split(',')
 
@@ -20,8 +19,12 @@ def my_main(options, logger=None):
 	column_name_ani_scientific_name = options.column_name_ani_scientific_name
 	column_name_ani = options.column_name_ani
 
-	logger.info("Reading metadata table file: '{}".format(options.metadata_table_in))
-	metadata_table = MetaTable(options.metadata_table_in)
+	if not os.path.isfile(options.metadata_table_out):
+		logger.error("Mothur file with list of clusters not found at: '{}'".format(options.metadata_table_out))
+		return False
+
+	logger.info("Reading metadata table file: '{}".format(options.metadata_table_out))
+	metadata_table = MetaTable(options.metadata_table_out)
 
 	logger.info("Loading taxonomic database: '{}'".format(options.ncbi_reference_directory))
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
@@ -72,4 +75,4 @@ def my_main(options, logger=None):
 	metadata_table.set_column(column_name_ani_scientific_name, ani_scientific_name_column)
 	metadata_table.write(options.metadata_table_out)
 	logger.info("ANI prediction finished")
-	sys.exit(0)
+	return True
