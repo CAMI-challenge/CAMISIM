@@ -74,7 +74,7 @@ set.current(name=$MERGED_NAMES, column=$LOCAL_ALIGN_DIST)
 cluster(cutoff=$CLUSTER_CUTOFF, method=furthest, precision=100)"
 echo -e "$mothur_commands" | "$MOTHUR"
 
-if mv *.list "$OUTPUT_FOLDER/mothur_otu.txt"; then
+if mv *.list "$OUTPUT_FILE"; then
 # 2>/dev/null
 	#echo "debug, clean up yourself!"
 	echo "clean up folders"
