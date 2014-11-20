@@ -16,8 +16,9 @@ class RRNA16S():
 		self._folder_tools = folder_tools
 		self._config = config
 		self._workingDir = workingDir
-		self._refDir = os.path.normpath(s16Database)
-		self._refDict = csv.getMappingTuple(os.path.join(self._refDir, 'content.csv'), (0, 1), (2,), '\t')
+		if s16Database is not None:
+			self._refDir = os.path.normpath(s16Database)
+			self._refDict = csv.getMappingTuple(os.path.join(self._refDir, 'content.csv'), (0, 1), (2,), '\t')
 
 	def runHMM(self, inputFastaFile, outLog=None, hmmer=3, moltypes="ssu", kingdoms="arc,bac"):
 		"""
