@@ -207,7 +207,7 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.silva_reference_directory is None:
-			self._logger.error("'-sivla' SILVA reference directory is required!")
+			self._logger.error("'-silva' SILVA reference directory is required!")
 			self._valid_args = False
 			return
 		if not os.path.isabs(ArgumentHandler.silva_reference_directory):
