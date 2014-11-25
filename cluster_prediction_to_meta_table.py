@@ -22,7 +22,7 @@ def my_main(options):
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
 	logger.info("Reading mothur cluster file: '{}'".format(cluster_file))
-	mothur_cluster = MothurCluster()
+	mothur_cluster = MothurCluster(logger=logger)
 	with open(cluster_file, 'r') as file_handle:
 		mothur_cluster.read_mothur_clustering_file(file_handle)
 
@@ -63,22 +63,19 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 		for row_index in range(0, number_of_genomes):
 			unpublished_genome_ids = column_name_unpublished_genomes_id[row_index]
 			if not mothur_cluster.element_exists(cluster_cutoff, unpublished_genome_ids):
-				#logger.warning("{}: No cluster found for id '{}'".format(cluster_cutoff, unpublished_genome_ids))
+				# if no marker gene was found it will not be in the clustering
 				continue
 			if unpublished_genome_ids == "" or column_ncbi_prediction[row_index] != "":
 				continue
 			all_done = False
 			separator = ""
 			list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_cutoff_of_element(cluster_cutoff, unpublished_genome_ids)
-			if len(list_of_cluster_id) > 1:
+			if len(list_of_cluster) > 1:
 				separator = ";"
 			otu_ncbi = []
 			otu_name = []
 			otu_novelty = []
-			for index in range(0, len(list_of_cluster_id)):
-				cluster = list_of_cluster[index]
-				if cluster is None:
-					continue
+			for cluster in list_of_cluster:
 				ncbi_prediction, novelty = taxonomy_cluster.get_cluster_ncbi_tax_prediction(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
 				if ncbi_prediction is not None and ncbi_prediction not in otu_ncbi:
 					column_cutoff[row_index] = str(cluster_cutoff)
