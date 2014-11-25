@@ -122,7 +122,7 @@ class RRNA16S():
 				elif strand == "-":
 					subseq = seq[start-1:stop].reverse_complement()
 				else:
-					sys.stderr.write(" analysis16s: invalid strand symbol")
+					sys.stderr.write("ERROR: analysis16s: invalid strand symbol")
 					exit(1)
 
 				outfile = open(trunkoutputfilename + "." + gene + ".fna", "a")
