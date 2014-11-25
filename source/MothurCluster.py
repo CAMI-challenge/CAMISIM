@@ -136,7 +136,7 @@ class MothurCluster:
 		list_of_index = self.element_to_index_mapping[cutoff][element]
 		if len(set(list_of_index)) > 1:
 			if self._logger:
-				self._logger.warning("[MothurCluster] {}: Multiple elements found. {}: {}".format(cutoff, element, ", ".join(set(list_of_index))))
+				self._logger.debug("[MothurCluster] {}: Multiple elements found. {}: {}".format(cutoff, element, ", ".join([str(item) for item in set(list_of_index)])))
 				#print "Warning: multiple marker genes in different clusters", cutoff, element, set(list_of_index)
 		return list_of_index, [self._cluster_by_cutoff[cutoff]["cluster"][index] for index in list_of_index]
 
