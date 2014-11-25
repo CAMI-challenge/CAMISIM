@@ -54,7 +54,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 			continue
 		if float(cluster_cutoff) < float(classification_distance):
 			continue
-		logger.info("#cutoff {}".format(cluster_cutoff))
+		logger.info("#threshold {}".format(cluster_cutoff))
 		all_done = True
 		for row_index in range(0, number_of_genomes):
 			unpublished_genome_ids = column_name_unpublished_genomes_id[row_index]
@@ -90,6 +90,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 
 
 def set_otu_id(options, metadata_table, mothur_cluster, logger):
+	list_of_unclustered_elements = set()
 	column_name_unpublished_genomes_id = metadata_table.get_column(options.column_name_unpublished_genomes_id)
 	number_of_genomes = len(column_name_unpublished_genomes_id)
 	otu_distance = options.otu_distance
@@ -101,12 +102,14 @@ def set_otu_id(options, metadata_table, mothur_cluster, logger):
 		for row_index in range(0, number_of_genomes):
 			unpublished_genome_ids = column_name_unpublished_genomes_id[row_index]
 			if not mothur_cluster.element_exists(cluster_cutoff, unpublished_genome_ids):
-				logger.warning("{}: No cluster found for id '{}'".format(cluster_cutoff, unpublished_genome_ids))
+				# if no marker gene was found it will not be in the clustering
+				list_of_unclustered_elements.add(unpublished_genome_ids)
 				continue
 			separator = ""
 			list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_cutoff_of_element(cluster_cutoff, unpublished_genome_ids)
 			if len(list_of_cluster_id) > 1:
 				separator = ";"
-			column_otu_id[row_index] = separator.join([str(otu_id) for otu_id in list_of_cluster_id])
+			column_otu_id[row_index] = separator.join([str(otu_id) for otu_id in sorted(set(list_of_cluster_id))])
 	metadata_table.set_column(column_otu_id, options.column_name_otu_id)
+	logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
 	logger.info("OTU finished")
