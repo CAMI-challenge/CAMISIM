@@ -32,8 +32,10 @@ class MetaTable:
 		self.clear()
 		if not os.path.isfile(file_path):
 			if self._logger:
-				self._logger.error("MetaTable: no file found at: '{}'".format(file_path))
+				self._logger.error("[MetaTable] No file found at: '{}'".format(file_path))
 			return
+		if self._logger:
+			self._logger.info("[MetaTable] Reading file '{}'".format(file_path))
 		with open(file_path) as file_handler:
 			if head:
 				self._header = file_handler.readline().strip().split(self._separator)
@@ -112,7 +114,7 @@ class MetaTable:
 		diff = set(self._header).difference(set(row.keys()))
 		if len(diff) != 0:
 			if self._logger:
-				self._logger.error("MetaTable: Bad header, could not add row!")
+				self._logger.error("[MetaTable] Bad header, could not add row!")
 			return
 		self._number_of_rows += 1
 		for head in self._header:
@@ -138,7 +140,7 @@ class MetaTable:
 		if strict:
 			if not self.are_valid_header(meta_table.get_header()) or not meta_table.are_valid_header(self._header):
 				if self._logger:
-					self._logger.error("MetaTable: header are not identical!")
+					self._logger.error("[MetaTable] header are not identical!")
 				return
 			for header in self._header:
 				self._meta_table[header].extend(meta_table.get_column(header))

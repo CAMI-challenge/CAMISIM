@@ -23,17 +23,15 @@ def my_main(options, logger=None):
 		logger.error("Mothur file with list of clusters not found at: '{}'".format(options.metadata_table_out))
 		return False
 
-	logger.info("Reading metadata table file: '{}".format(options.metadata_table_out))
-	metadata_table = MetaTable(options.metadata_table_out)
+	metadata_table = MetaTable(logger=logger)
+	metadata_table.read(options.metadata_table_in)
 
 	logger.info("Loading taxonomic database: '{}'".format(options.ncbi_reference_directory))
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	logger.info("Reading mothur cluster file: '{}'".format(cluster_file))
-	mothur_cluster = MothurCluster()
-	with open(cluster_file, 'r') as file_handle:
-		mothur_cluster.read_mothur_clustering_file(file_handle)
+	mothur_cluster = MothurCluster(logger=logger)
+	mothur_cluster.read(cluster_file)
 
 	ani_scientific_name_column = metadata_table.get_empty_column()
 	ani_prediction_novelty_column = metadata_table.get_empty_column()

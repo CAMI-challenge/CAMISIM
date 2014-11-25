@@ -12,19 +12,15 @@ import os
 
 def my_main(options):
 	logger = Logger()
-	logger.info("Reading metadata table file: '{}'".format(options.metadata_table_in))
-	metadata_table = MetaTable('\t', logger)
+	metadata_table = MetaTable(logger=logger)
 	metadata_table.read(options.metadata_table_in)
 	metadata_table.remove_empty_columns()
 
-	logger.info("Loading taxonomic database: '{}'".format(options.ncbi_reference_directory))
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	logger.info("Reading mothur cluster file: '{}'".format(cluster_file))
 	mothur_cluster = MothurCluster(logger=logger)
-	with open(cluster_file, 'r') as file_handle:
-		mothur_cluster.read_mothur_clustering_file(file_handle)
+	mothur_cluster.read(cluster_file)
 
 	taxonomy_cluster = TaxonomicCluster(mothur_cluster, taxonomy, logger)
 
