@@ -2,6 +2,7 @@ __author__ = 'hofmann'
 # original from Dmitrij Turaev
 
 import os
+import time
 from TaxonomyNode import TaxonomyNode
 
 
@@ -15,6 +16,7 @@ class NcbiTaxonomy(object):
 	taxid_old_to_taxid_new = {}
 
 	def __init__(self, taxonomy_directory='', build_node_tree=False, logger=None):
+		start = time.time()
 		self._logger = logger
 		self._ncbi_names_file = os.path.join(taxonomy_directory, "names.dmp")
 		self._ncbi_merged_file = os.path.join(taxonomy_directory, "merged.dmp")
@@ -23,6 +25,9 @@ class NcbiTaxonomy(object):
 		self.__build_ncbi_taxonomy(build_node_tree)
 		self.__read_names_file()
 		self.__read_merged_file()
+		end = time.time()
+		if self._logger:
+			self._logger.info("[taxonomy] Done ({}s)".format(round(end - start), 1))
 
 	def get_scientific_name(self, taxid):
 		if taxid in NcbiTaxonomy.taxid_old_to_taxid_new:
@@ -30,14 +35,14 @@ class NcbiTaxonomy(object):
 		if taxid in NcbiTaxonomy.taxid_to_name:
 			return NcbiTaxonomy.taxid_to_name[taxid]
 		if self._logger:
-			self._logger.error("get_scientific_name KeyError: {}".format(taxid))
+			self._logger.error("[taxonomy] get_scientific_name KeyError: {}".format(taxid))
 		return None
 
 	def get_taxids_by_scientific_name(self, scientific_name):
 		if scientific_name in NcbiTaxonomy.name_to_taxids:
 			return NcbiTaxonomy.name_to_taxids[scientific_name]
 		if self._logger:
-			self._logger.debug("get_taxids_by_name KeyError: {}".format(scientific_name))
+			self._logger.debug("[taxonomy] get_taxids_by_name KeyError: {}".format(scientific_name))
 		return None
 
 	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None):
@@ -57,7 +62,7 @@ class NcbiTaxonomy(object):
 			if rank in ranks:
 				lineage[ranks.index(rank)] = taxid
 		if count == 50 and self._logger:
-			self._logger.error("Bad lineage?: {}".format(lineage))
+			self._logger.error("[taxonomy] Bad lineage?: {}".format(lineage))
 		return lineage
 
 	def get_lineage(self, taxid):
@@ -73,7 +78,7 @@ class NcbiTaxonomy(object):
 				taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
 				lineage.append(taxid)
 			if count == 50 and self._logger:
-				self._logger.error("Bad lineage?: {}".format(lineage))
+				self._logger.error("[taxonomy] Bad lineage?: {}".format(lineage))
 		return lineage
 
 	@staticmethod
@@ -122,7 +127,7 @@ class NcbiTaxonomy(object):
 				# e.g. Ovis aries platyura ('species'), Oves aries ('species')
 		except KeyError:
 			if self._logger:
-				self._logger.debug('__add_nodes KeyError: {}'.format(parent_taxid))
+				self._logger.debug('[taxonomy] __add_nodes KeyError: {}'.format(parent_taxid))
 			pass
 		# add new node to parent's all_child_nodes
 		#while parent_taxid in Node.byname:
@@ -141,7 +146,7 @@ class NcbiTaxonomy(object):
 		""" parse NCBI taxonomy files."""
 		self._has_node_tree = build_node_tree
 		if self._logger:
-			self._logger.info('Reading NCBI taxonomy files and building taxonomy tree...')
+			self._logger.info('[taxonomy] Building taxonomy tree...')
 		if build_node_tree:
 			TaxonomyNode.by_name.clear()
 
@@ -160,6 +165,8 @@ class NcbiTaxonomy(object):
 		#	1382	|	Streptococcus parvulus (Weinberg et al. 1937) Cato 1983	|		|	synonym	|
 		#	1382	|	not "Streptococcus parvulus" Levinthal 1928	|		|	synonym	|
 
+		if self._logger:
+			self._logger.info("[taxonomy] Reading 'nodes' file:\t'{}'".format(self._ncbi_nodes_file))
 		with open(self._ncbi_nodes_file) as file_handler:
 			for line in file_handler:
 				elements = [el.strip() for el in line.split('|')]
@@ -185,7 +192,7 @@ class NcbiTaxonomy(object):
 					assert taxid == my_node.taxid
 				except KeyError:
 					if self._logger:
-						self._logger.error('build_ncbi_taxonomy KeyError: {}'.format(taxid))
+						self._logger.error('[taxonomy] build_ncbi_taxonomy KeyError: {}'.format(taxid))
 					continue
 
 				if name_class == 'scientific name':
@@ -211,8 +218,9 @@ class NcbiTaxonomy(object):
 	# read NCBI names file
 	def __read_names_file(self):
 		with open(self._ncbi_names_file) as fin:
+			#print >> P.logfile, 'NCBI namesfile: %s ' % P.ncbi_names_file
 			if self._logger:
-				self._logger.info("Reading NCBI namesfile: {}".format(self._ncbi_names_file))
+				self._logger.info("[taxonomy] Reading 'names' file:\t'{}'".format(self._ncbi_names_file))
 			for line in fin:
 				#65      |       Herpetosiphon aurantiacus       |               |       scientific name |
 				taxid, name, disambiguation, nametype, more = line.strip().split('|')
@@ -222,8 +230,9 @@ class NcbiTaxonomy(object):
 	# read NCBI merged file
 	def __read_merged_file(self):
 		with open(self._ncbi_merged_file) as fin:
+			#print >> P.logfile, 'NCBI mergedfile (deprecated taxon IDs): %s ' % P.ncbi_merged_file
 			if self._logger:
-				self._logger.info("Reading NCBI mergedfile (deprecated taxon IDs): {}".format(self._ncbi_merged_file))
+				self._logger.info("[taxonomy] Reading 'merged' file:\t'{}'".format(self._ncbi_merged_file))
 			for line in fin:
 				#5085       |       746128  |
 				old_taxid, new_taxid, sonst = line.strip().split('|')
