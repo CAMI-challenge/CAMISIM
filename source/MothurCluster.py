@@ -44,7 +44,7 @@ class MothurCluster:
 	def read_mothur_clustering_file(self, file_handler):
 		self.element_to_index_mapping = {}
 		if self.logger:
-			self.logger.info("loading mothur cluster file")
+			self.logger.info("[MothurCluster] Reading cluster file")
 
 		for line in file_handler:
 			if line.startswith('#') or line.startswith("label") or len(line) < 2:
@@ -53,9 +53,11 @@ class MothurCluster:
 			list_of_cluster = []
 			row = line.split(self.cluster_separator)
 			cutoff = row[0]
+			if cutoff.isdigit():
+				cutoff = str(float(cutoff))
 			cluster_amount = row[1]
 			if self.logger:
-				self.logger.info("cutoff: {}".format(cutoff))
+				self.logger.info("[MothurCluster] Reading threshold: {}".format(cutoff))
 			self.element_to_index_mapping[cutoff] = {}
 			cluster_index = 0
 			for cluster_as_string in row[2:]:
@@ -69,12 +71,13 @@ class MothurCluster:
 				cluster_index += 1
 			self._cluster_by_cutoff[cutoff] = {"count": cluster_amount, "cluster": list_of_cluster}
 		if self.logger:
-			self.logger.info("loading finished")
+			self.logger.info("[MothurCluster] Reading finished")
 
 	def get_sorted_lists_of_cutoffs(self, precision=2, reverse=False):
 		lists_of_cutoff = list(self._cluster_by_cutoff.keys())
-		del lists_of_cutoff[lists_of_cutoff.index("unique")]
-		lists_of_cutoff = sorted(set([str(round(float(cutoff), precision)) for cutoff in lists_of_cutoff]), reverse=reverse)
+		lists_of_cutoff.remove("unique")
+		#lists_of_cutoff = sorted(set([str(round(float(cutoff), precision)) for cutoff in lists_of_cutoff]), reverse=reverse)
+		lists_of_cutoff = sorted(lists_of_cutoff, reverse=reverse)
 		if not reverse:
 			tmp = lists_of_cutoff
 			lists_of_cutoff = ["unique"]
@@ -92,6 +95,11 @@ class MothurCluster:
 			handle.write(textwrap.fill(line, width)+'\n')
 
 	def element_exists(self, cutoff, element):
+		if cutoff not in self.element_to_index_mapping:
+			if self.logger:
+				self.logger.error("[MothurCluster] Cutoff key error: {}\nAvailable keys: '{}'".format(cutoff, ','.join(self.element_to_index_mapping.keys())))
+			return False
+
 		#element = ".".join(element.split("_")[0].split(".")[:2])
 		if element not in self.element_to_index_mapping[cutoff]:
 			#if self.logger:
@@ -102,41 +110,41 @@ class MothurCluster:
 	def get_cluster_of_cutoff_of_index(self, cutoff, cluster_index):
 		if cutoff not in self._cluster_by_cutoff:
 			if self.logger:
-				self.logger.error("MothurCluster: bad cutoff {}".format(cutoff))
+				self.logger.error("[MothurCluster] Bad cutoff {}".format(cutoff))
 			return None
 		if cluster_index >= len(self._cluster_by_cutoff[cutoff]["cluster"]):
 			if self.logger:
-				self.logger.error("MothurCluster: bad cluster index".format(cluster_index))
+				self.logger.error("[MothurCluster] Bad cluster index".format(cluster_index))
 			return None
 		return self._cluster_by_cutoff[cutoff]["cluster"][cluster_index]
 
 	def get_cluster_of_cutoff_of_element(self, cutoff, element):
 		if cutoff not in self._cluster_by_cutoff:
 			if self.logger:
-				self.logger.error("Bad cutoff: {}".format(cutoff))
+				self.logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
 			return [], []
 		if not self.element_exists(cutoff, element) or element.strip() == '' or cutoff.strip() == '':
 			if self.logger:
-				self.logger.warning("Bad element: {} in {}".format(element, cutoff))
+				self.logger.warning("[MothurCluster] Bad element: {} in {}".format(element, cutoff))
 			return [], []
 		list_of_index = self.element_to_index_mapping[cutoff][element]
 		if len(set(list_of_index)) > 1:
 			if self.logger:
-				self.logger.warning("{}: Multiple elements found. {}: {}".format(cutoff, element, ", ".join(set(list_of_index))))
+				self.logger.warning("[MothurCluster] {}: Multiple elements found. {}: {}".format(cutoff, element, ", ".join(set(list_of_index))))
 				#print "Warning: multiple marker genes in different clusters", cutoff, element, set(list_of_index)
 		return list_of_index, [self._cluster_by_cutoff[cutoff]["cluster"][index] for index in list_of_index]
 
 	def get_cluster_of_cutoff(self, cutoff="unique"):
 		if cutoff not in self._cluster_by_cutoff:
 			if self.logger:
-				self.logger.error("Bad cutoff: {}".format(cutoff))
+				self.logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
 			return None
 		return self._cluster_by_cutoff[cutoff]["cluster"]
 
 	def get_cluster_count_of_cutoff(self, cutoff="unique"):
 		if cutoff not in self._cluster_by_cutoff:
 			if self.logger:
-				self.logger.error("Bad cutoff: {}".format(cutoff))
+				self.logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
 			return None
 		return self._cluster_by_cutoff[cutoff]["count"]
 
@@ -144,7 +152,7 @@ class MothurCluster:
 		result_string = "{}\n".format(cutoff)
 		if cutoff not in self._cluster_by_cutoff:
 			if self.logger:
-				self.logger.error("Bad cutoff: {}".format(cutoff))
+				self.logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
 			return None
 		for otu_group in self._cluster_by_cutoff[cutoff]["cluster"]:
 			result_string += ", ".join(otu_group)+'\n'
