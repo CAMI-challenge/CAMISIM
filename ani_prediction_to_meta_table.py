@@ -24,7 +24,8 @@ def my_main(options, logger=None):
 		return False
 
 	metadata_table = MetaTable(logger=logger)
-	metadata_table.read(options.metadata_table_in)
+	# metadata_table_out, need data from previous steps
+	metadata_table.read(options.metadata_table_out)
 
 	logger.info("Loading taxonomic database: '{}'".format(options.ncbi_reference_directory))
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
