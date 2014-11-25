@@ -60,10 +60,11 @@ TODO
 	logger = Logger("taxonomic classification and otu")
 	pipeline_directory = os.path.dirname( os.path.realpath(__file__) )
 	options = ArgumentHandler(pipeline_directory=pipeline_directory, stages=5, logger=logger)
+	if options._verbose:
+		logger.info(options.to_string())
 	if not options.is_valid():
 		logger.info("Abort")
 		sys.exit(1)
-	logger.info(options.to_string())
 
 	if options.stage == 0 or options.stage == 1:
 		if not marker_gene_extraction(options):

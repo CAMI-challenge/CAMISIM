@@ -215,15 +215,15 @@ def main():
 		return
 
 	# exclude mg from the reference ?
-	s16_database = os.path.normpath(config.get('s16Database'))
+	s16_database = None  # os.path.normpath(config.get('s16Database'))
 	exclude_ref_mg_rank = config.get('excludeRefMgRank')
 	#s16_database = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/reference_db/nobackup/silva111" #config.get('s16Database')
-	mg_database = os.path.normpath(config.get('mgDatabase'))
+	mg_database = None # os.path.normpath(config.get('mgDatabase'))
 
-	if not os.path.isabs(s16_database):
+	if s16_database is not None and not os.path.isabs(s16_database):
 		s16_database = os.path.normpath(folder_tools + "/" + s16_database)
 
-	if not os.path.isabs(mg_database):
+	if mg_database is not None and not os.path.isabs(mg_database):
 		mg_database = os.path.normpath(folder_tools + "/" + mg_database)
 
 	#######################################################

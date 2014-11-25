@@ -207,20 +207,20 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.silva_reference_directory is None:
-			self._logger.error("'-sivla' SILVA reference directory is required!")
+			self._logger.error("'-silva' SILVA reference directory is required!")
 			self._valid_args = False
 			return
 		if not os.path.isabs(ArgumentHandler.silva_reference_directory):
 			ArgumentHandler.silva_reference_directory = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.silva_reference_directory)
 		if not os.path.isdir(ArgumentHandler.silva_reference_directory):
-			self._logger.error("'-sivla' Directory does not exist: '{}'".format(ArgumentHandler.silva_reference_directory))
+			self._logger.error("'-silva' Directory does not exist: '{}'".format(ArgumentHandler.silva_reference_directory))
 			self._valid_args = False
 			return
 
 		for sub_directory in ArgumentHandler._silva_ref_files:
 			file_path = os.path.join(ArgumentHandler.silva_reference_directory, sub_directory)
 			if not os.path.isfile(file_path):
-				self._logger.error("'-sivla' File does not exist: '{}'".format(file_path))
+				self._logger.error("'-silva' File does not exist: '{}'".format(file_path))
 				self._valid_args = False
 				return
 
@@ -427,6 +427,8 @@ class ArgumentHandler(object):
 
 		if ArgumentHandler.silva_reference_directory is None:
 			ArgumentHandler.silva_reference_directory = self._get_config_value("MarkerGeneClustering", "silva_reference_directory")
+		else:
+			self._logger.error("Not getting SILVA config for stupid reason!!")
 
 		if ArgumentHandler.ncbi_reference_directory is None:
 			ArgumentHandler.ncbi_reference_directory = self._get_config_value("MarkerGeneClassification", "ncbi_reference_directory")

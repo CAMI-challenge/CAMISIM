@@ -24,6 +24,8 @@ class TaxonomicCluster:
 				continue
 			ncbi_id = element.split('.')[0]
 			if not ncbi_id.isdigit():
+				if self.logger:
+					self.logger.debug("[TaxonomicCluster] Bad tax id: {id}".format(id=ncbi_id))
 				continue
 			if not element in self.taxids_by_element:
 				#self.taxonomy.get_ncbi_of_rank(rank, int(float(ncbi_id)))
@@ -36,15 +38,15 @@ class TaxonomicCluster:
 			self.mothur_cluster.cluster_list_to_handle(Counter(ncbi_id_list), sys.stderr)
 		return ncbi_id_list
 
-	def get_cluster_ncbi_tax_prediction(self, cluster, unpublished_genome_ids_column, unpublished_id=None):
+	def get_cluster_ncbi_tax_prediction(self, cluster_raw, unpublished_genome_ids_column, unpublished_id=None):
 		rank_index = 1
-		cluster = self.cluster_to_other_rank(cluster, self.ranks[rank_index], unpublished_genome_ids_column, unpublished_id)
+		cluster = self.cluster_to_other_rank(cluster_raw, self.ranks[rank_index], unpublished_genome_ids_column, unpublished_id)
 		while len(cluster) > 0 \
 				and float(max(Counter(cluster).iteritems(), key=operator.itemgetter(1))[1])/len(cluster) < .9 \
 				and (rank_index + 1) < len(self.ranks):
 			#print self.ranks[rank_index], Counter(otu)
 			rank_index += 1
-			tmp = self.cluster_to_other_rank(cluster, self.ranks[rank_index], unpublished_genome_ids_column, unpublished_id)
+			tmp = self.cluster_to_other_rank(cluster_raw, self.ranks[rank_index], unpublished_genome_ids_column, unpublished_id)
 			if len(tmp) == 0:
 				del tmp
 				break

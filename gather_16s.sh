@@ -111,6 +111,7 @@ fi
 
 
 echo -e "finding markergenes with hmmsearch\n"
+print "cat $COMMANDS_FILE | parallel -j $PROCESSORS --no-notice 2> $ERROR_LOG_FILE > $LOG_FILE"
 cat "$COMMANDS_FILE" | parallel -j "$PROCESSORS" --no-notice 2> "$ERROR_LOG_FILE" > "$LOG_FILE"
 
 # gather all marker genes into single files
