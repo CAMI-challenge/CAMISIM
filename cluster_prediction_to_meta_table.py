@@ -72,7 +72,8 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 			otu_name = []
 			otu_novelty = []
 			for cluster in list_of_cluster:
-				ncbi_prediction, novelty = taxonomy_cluster.get_cluster_ncbi_tax_prediction(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
+				#ncbi_prediction, novelty = taxonomy_cluster.get_cluster_ncbi_tax_prediction(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
+				ncbi_prediction, novelty = taxonomy_cluster.predict_tax_id_of(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
 				if ncbi_prediction is not None and ncbi_prediction not in otu_ncbi:
 					column_cutoff[row_index] = str(cluster_cutoff)
 					otu_ncbi.append(ncbi_prediction)
@@ -111,5 +112,6 @@ def set_otu_id(options, metadata_table, mothur_cluster, logger):
 				separator = ";"
 			column_otu_id[row_index] = separator.join([str(otu_id) for otu_id in sorted(set(list_of_cluster_id))])
 	metadata_table.set_column(column_otu_id, options.column_name_otu_id)
-	logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
+	if len(list_of_unclustered_elements) > 0:
+		logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
 	logger.info("OTU finished")
