@@ -54,10 +54,10 @@ class TaxonomicCluster:
 			for child_node in node["c"]:
 				if max_child_node is not None and node["c"][child_node]["count"] == max_child_node["count"]:
 					max_node_count += 1
-				if max_child_node == None or node["c"][child_node]["count"] > max_child_node["count"]:
+				if max_child_node is None or node["c"][child_node]["count"] > max_child_node["count"]:
 					max_child_node = node["c"][child_node]
 					max_node_count = 1
-			if len(max_child_node["c"]) == 0 or max_node_count > 1:
+			if max_child_node is None or len(max_child_node["c"]) == 0 or max_node_count > 1:
 				#if max_node_count > 1:
 				# impossible to get over 50% support
 				#	self.logger.warning("[TaxonomicCluster] max_node_count > 1: {id}, {count}".format(id=max_child_node["id"], count=max_node_count))
@@ -71,7 +71,7 @@ class TaxonomicCluster:
 		#sys.exit()
 		if max_child_node is None:
 			#print 'root', root
-			return None, ""
+			return None, "", 0
 
 		#print 'max_child_node', max_child_node
 		list_of_candidate = [max_child_node]
@@ -82,8 +82,8 @@ class TaxonomicCluster:
 
 		for node in list_of_candidate:
 			if float(node["count"]) / total_count[node['r']] > 0.9:
-				return node["id"], self.ranks[node['r'] - 1]
-		return None, ""
+				return node["id"], self.ranks[node['r'] - 1], node["count"]
+		return None, "", 0
 
 	def cluster_to_other_rank(self, list_of_valid_elements, index_of_rank, unpublished_sequence_id=None, debug=False):
 		list_of_none_elements = []
