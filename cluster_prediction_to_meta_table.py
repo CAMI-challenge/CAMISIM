@@ -43,6 +43,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	if column_name_unpublished_genomes_id is None:
 		logger.error("Meta data file does not contain the required header '{}'".format(column_name_unpublished_genomes_id))
 		sys.exit(1)
+	#_____statistic = {}
 	number_of_genomes = len(column_name_unpublished_genomes_id)
 	classification_distance = str(options.classification_distance_minimum)
 	all_done = False
@@ -55,6 +56,10 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 		if float(cluster_cutoff) < float(classification_distance):
 			continue
 		logger.info("#threshold {}".format(cluster_cutoff))
+
+		#if cluster_cutoff not in _____statistic:
+		#	_____statistic[cluster_cutoff] = {"sname": metadata_table.get_empty_column(), "novelty": metadata_table.get_empty_column(), "support": metadata_table.get_empty_column() }
+
 		all_done = True
 		for row_index in range(0, number_of_genomes):
 			unpublished_genome_ids = column_name_unpublished_genomes_id[row_index]
@@ -68,25 +73,46 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 			list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_cutoff_of_element(cluster_cutoff, unpublished_genome_ids)
 			if len(list_of_cluster) > 1:
 				separator = ";"
-			otu_ncbi = []
-			otu_name = []
-			otu_novelty = []
+			predicted__ncbi = []
+			predicted_science_name = []
+			predicted_novelty = []
+			#list_support = []
 			for cluster in list_of_cluster:
 				#ncbi_prediction, novelty = taxonomy_cluster.get_cluster_ncbi_tax_prediction(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
-				ncbi_prediction, novelty = taxonomy_cluster.predict_tax_id_of(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
-				if ncbi_prediction is not None and ncbi_prediction not in otu_ncbi:
+				ncbi_prediction, novelty, support = taxonomy_cluster.predict_tax_id_of(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
+				if ncbi_prediction is not None and ncbi_prediction not in predicted__ncbi:
 					column_cutoff[row_index] = str(cluster_cutoff)
-					otu_ncbi.append(ncbi_prediction)
-					otu_name.append(taxonomy.get_scientific_name(ncbi_prediction))
-					otu_novelty.append("new_" + novelty)
-			column_ncbi_prediction[row_index] = separator.join(otu_ncbi)
-			column_science_name[row_index] = separator.join(otu_name)
-			column_novelty[row_index] = separator.join(otu_novelty)
+					predicted__ncbi.append(ncbi_prediction)
+					predicted_science_name.append(taxonomy.get_scientific_name(ncbi_prediction))
+					predicted_novelty.append("new_" + novelty)
+
+			#		list_support.append(support)
+			#_____statistic[cluster_cutoff]["sname"][row_index] = separator.join(predicted_science_name)
+			#_____statistic[cluster_cutoff]["novelty"][row_index] = separator.join(predicted_novelty)
+			#_____statistic[cluster_cutoff]["support"][row_index] = separator.join(list_support)
+
+			column_ncbi_prediction[row_index] = separator.join(predicted__ncbi)
+			column_science_name[row_index] = separator.join(predicted_science_name)
+			column_novelty[row_index] = separator.join(predicted_novelty)
 
 	metadata_table.set_column(column_cutoff, options.column_name_cutoff)
 	metadata_table.set_column(column_ncbi_prediction, options.column_name_cluster_prediction)
 	metadata_table.set_column(column_science_name, options.column_name_cluster_scientific_name)
 	metadata_table.set_column(column_novelty, options.column_name_cluster_novelty)
+
+	#for cluster_cutoff in sorted_lists_of_cutoffs:
+	#	if cluster_cutoff == "unique":
+	#		continue
+	#	metadata_table.set_column(_____statistic[cluster_cutoff]["support"], "{}_support".format(cluster_cutoff))
+	#for cluster_cutoff in sorted_lists_of_cutoffs:
+	#	if cluster_cutoff == "unique":
+	#		continue
+	#	metadata_table.set_column(_____statistic[cluster_cutoff]["sname"], "{}_name".format(cluster_cutoff))
+	#for cluster_cutoff in sorted_lists_of_cutoffs:
+	#	if cluster_cutoff == "unique":
+	#		continue
+	#	metadata_table.set_column(_____statistic[cluster_cutoff]["novelty"], "{}_novelty".format(cluster_cutoff))
+
 	logger.info("Taxonomic prediction finished")
 
 
