@@ -55,6 +55,10 @@ class NcbiTaxonomy(object):
 		#if self._has_node_tree:
 		#	lineage = TaxonomyNode.by_name[taxid].get_lineage()
 		#else:
+		original_rank = self.get_rank_of_taxid(taxid)
+		if original_rank is not None and original_rank in ranks:
+			lineage[ranks.index(original_rank)] = taxid
+
 		while taxid != "1" and count < 50:
 			count += 1
 			taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
