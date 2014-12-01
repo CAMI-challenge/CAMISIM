@@ -29,7 +29,7 @@ class TaxonomicCluster:
 			list_of_valid_elements.add(element)
 		return list_of_valid_elements
 
-	def predict_tax_id_of(self, cluster_raw, unpublished_genome_ids_column, unpublished_id=None):
+	def predict_tax_id_of(self, cluster_raw, unpublished_genome_ids_column, unpublished_id=None, lowest_predicted_novelty=''):
 		list_of_valid_elements = self.load_lineages(cluster_raw, unpublished_genome_ids_column)
 		root = {"count": 0, "c": {}, 'p': None}
 
@@ -82,7 +82,10 @@ class TaxonomicCluster:
 
 		for node in list_of_candidate:
 			if float(node["count"]) / total_count[node['r']] > 0.9:
-				return node["id"], self.ranks[node['r'] - 1], node["count"]
+				novelty = self.ranks[node['r'] - 1]
+				if lowest_predicted_novelty in self.ranks and self.ranks.index(lowest_predicted_novelty)+1 < node['r']:
+					novelty = lowest_predicted_novelty
+				return node["id"], novelty, node["count"]
 		return None, "", 0
 
 	def cluster_to_other_rank(self, list_of_valid_elements, index_of_rank, unpublished_sequence_id=None, debug=False):
