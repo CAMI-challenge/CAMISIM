@@ -507,6 +507,7 @@ class ArgumentHandler(object):
 		self.parser.add_argument("-verbose", "--verbose", action='store_true', default=False, help="display more information!")
 		self.parser.add_argument("-debug", "--debug_mode", action='store_true', default=False, help="activate DEBUG modus. tmp folders will not be deleted!")
 		self.parser.add_argument("-log", "--logging", action='store_true', default=False, help="pipeline output will written to a log file")
+		#self.parser.add_argument("-qc", "--quality_check", action='store_true', default=False, help="")
 		self.parser.add_argument("-p", "--processors", default=None, type=int,
 							help="number of processors to be used. >40 recommended.")
 		self.parser.add_argument("-s", "--stage", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
@@ -545,7 +546,7 @@ No column names!""")
 							help="path to file containing tab separated list of genomes and their file path")
 
 		group_clustering = self.parser.add_argument_group("clustering")
-		group_clustering.add_argument("-th", "--threshold", default=0.05, type=float,
+		group_clustering.add_argument("-th", "--threshold", default=0.04, type=float,
 							help="only distances up to the threshold will be calculated. Default: 0.05")
 		group_clustering.add_argument("-otu", "--otu_distance", default=0.03, type=float,
 							help="genetic distances at which cluster will be used as otus. Default: 0.03")
