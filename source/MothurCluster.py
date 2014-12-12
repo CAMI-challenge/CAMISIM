@@ -79,7 +79,27 @@ class MothurCluster:
 			if self._logger:
 				self._logger.info("[MothurCluster] Reading finished")
 
-	def get_sorted_lists_of_cutoffs(self, precision=2, reverse=False):
+	def get_prediction_thresholds(self, minimum=0, precision=2):
+		subset = set()
+		list_of_cutoff = list(self._cluster_by_cutoff.keys())
+		list_as_float = []
+		for cutoff in list_of_cutoff:
+			if not '.' in cutoff:
+				continue
+			list_as_float.append(float(cutoff))
+
+
+		for cutoff in list_of_cutoff:
+			if not '.' in cutoff:
+				continue
+			threshold = round(float(cutoff), precision)
+			#print "threshold", threshold, "minimum", minimum, "list_as_float", list_as_float
+			if threshold >= minimum and threshold in list_as_float:
+				subset.add(threshold)
+		#print "subset", subset
+		return subset
+
+	def get_sorted_lists_of_cutoffs(self, reverse=False):
 		lists_of_cutoff = list(self._cluster_by_cutoff.keys())
 		lists_of_cutoff.remove("unique")
 		#lists_of_cutoff = sorted(set([str(round(float(cutoff), precision)) for cutoff in lists_of_cutoff]), reverse=reverse)
