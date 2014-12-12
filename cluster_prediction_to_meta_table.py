@@ -35,6 +35,13 @@ def my_main(options):
 
 
 def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, logger):
+	reference_map_table = MetaTable(logger=logger)
+	reference_map_table.read(options.input_reference_file, False)
+	ref_genome_ids = reference_map_table.get_column(0)
+	#ref_genome_taxids = set([gid.split('.')[0] for gid in ref_genome_ids])
+	column_minimum_threshold = metadata_table.get_empty_column()
+	column_novely_threshold = metadata_table.get_empty_column()
+	column_support = metadata_table.get_empty_column()
 	column_cutoff = metadata_table.get_empty_column()
 	column_ncbi_prediction = metadata_table.get_empty_column()
 	column_science_name = metadata_table.get_empty_column()
@@ -45,10 +52,14 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 		sys.exit(1)
 	#_____statistic = {}
 	number_of_genomes = len(column_name_unpublished_genomes_id)
-	lowest_predicted_novelty = [''] * number_of_genomes
-	classification_distance = str(options.classification_distance_minimum)
+	lowest_predicted_novelty = {}
+	classification_distance = float(options.classification_distance_minimum)
 	all_done = False
 	sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
+	prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance, precision=3)
+	#print sorted_lists_of_cutoffs
+	#print prediction_thresholds
+	#sys.exit()
 	for cluster_cutoff in sorted_lists_of_cutoffs:
 		if all_done:
 			break
@@ -61,11 +72,13 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 
 		all_done = True
 		for row_index in range(0, number_of_genomes):
+			if row_index not in lowest_predicted_novelty:
+				lowest_predicted_novelty[row_index] = {"novelty": '', "support": '', "threshold": '', "minimum": ''}
 			unpublished_genome_id = column_name_unpublished_genomes_id[row_index]
 			if not mothur_cluster.element_exists(cluster_cutoff, unpublished_genome_id):
 				# if no marker gene was found it will not be in the clustering
 				continue
-			if unpublished_genome_id == "" or column_ncbi_prediction[row_index] != "":
+			if unpublished_genome_id == "":
 				continue
 			all_done = False
 			separator = ""
@@ -78,30 +91,40 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 			#list_support = []
 			for cluster in list_of_cluster:
 				#ncbi_prediction, novelty = taxonomy_cluster.get_cluster_ncbi_tax_prediction(cluster, column_name_unpublished_genomes_id, unpublished_genome_ids)
-				ncbi_prediction, novelty, support = taxonomy_cluster.predict_tax_id_of(cluster, column_name_unpublished_genomes_id, unpublished_genome_id, lowest_predicted_novelty[row_index])
-				if ncbi_prediction is not None:
-					lowest_predicted_novelty[row_index] = novelty
-					if float(cluster_cutoff) < float(classification_distance) or ncbi_prediction in predicted__ncbi:
-						continue
-					column_cutoff[row_index] = str(cluster_cutoff)
-					predicted__ncbi.append(ncbi_prediction)
-					predicted_science_name.append(taxonomy.get_scientific_name(ncbi_prediction))
-					#predicted_novelty.append("new_" + novelty)
+				ncbi_prediction, novelty, support = taxonomy_cluster.predict_tax_id_of(cluster, column_name_unpublished_genomes_id, unpublished_genome_id, lowest_predicted_novelty[row_index], cluster_cutoff, ref_genome_ids)
+				if ncbi_prediction is None:
+					continue
+				#print unpublished_genome_id, novelty
+				if float(cluster_cutoff) not in prediction_thresholds or ncbi_prediction in predicted__ncbi or column_ncbi_prediction[row_index] != "":
+					continue
+				column_cutoff[row_index] = str(cluster_cutoff)
+				predicted__ncbi.append(ncbi_prediction)
+				predicted_science_name.append(taxonomy.get_scientific_name(ncbi_prediction))
+				#predicted_novelty.append("new_" + novelty)
 
 			#		list_support.append(support)
 			#_____statistic[cluster_cutoff]["sname"][row_index] = separator.join(predicted_science_name)
 			#_____statistic[cluster_cutoff]["novelty"][row_index] = separator.join(predicted_novelty)
 			#_____statistic[cluster_cutoff]["support"][row_index] = separator.join(list_support)
-
+			if column_ncbi_prediction[row_index] != "":
+				continue
 			column_ncbi_prediction[row_index] = separator.join(predicted__ncbi)
 			column_science_name[row_index] = separator.join(predicted_science_name)
-			if lowest_predicted_novelty[row_index] is not '':
-				column_novelty[row_index] = separator.join("new_" + lowest_predicted_novelty[row_index])
+
+	for row_index in range(0, number_of_genomes):
+		if lowest_predicted_novelty[row_index]["novelty"] is not '':
+			column_novelty[row_index] = "new_" + lowest_predicted_novelty[row_index]["novelty"]
+			column_novely_threshold[row_index] = lowest_predicted_novelty[row_index]["threshold"]
+			column_support[row_index] = lowest_predicted_novelty[row_index]["support"]
+			column_minimum_threshold[row_index] = lowest_predicted_novelty[row_index]["minimum"]
 
 	metadata_table.set_column(column_cutoff, options.column_name_cutoff)
 	metadata_table.set_column(column_ncbi_prediction, options.column_name_cluster_prediction)
 	metadata_table.set_column(column_science_name, options.column_name_cluster_scientific_name)
 	metadata_table.set_column(column_novelty, options.column_name_cluster_novelty)
+	metadata_table.set_column(column_novely_threshold, "novelty threshold")
+	metadata_table.set_column(column_support, "novelty support")
+	metadata_table.set_column(column_minimum_threshold, "minimum threshold")
 
 	#for cluster_cutoff in sorted_lists_of_cutoffs:
 	#	if cluster_cutoff == "unique":
