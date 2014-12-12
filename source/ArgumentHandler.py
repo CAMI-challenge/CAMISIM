@@ -61,13 +61,13 @@ class ArgumentHandler(object):
 
 	#meta table columns
 	column_name_unpublished_genomes_id = "genome_ID"
-	column_name_cutoff = "cutoff"
+	column_name_cutoff = "prediction_threshold"
 	column_name_otu_id = "OTU_ID"
 	column_name_cluster_prediction = "NCBI_TAXONOMIC_PREDICTION"
 	column_name_cluster_scientific_name = "SCIENTIFIC_NAME"
-	column_name_cluster_novelty = "NOVELTY_PREDICTION"
+	column_name_cluster_novelty = "NOVELTY_CATEGORY"
 	column_name_ani = "ANI"
-	column_name_ani_novelty = "ANI_NOVELTY_PREDICTION"
+	column_name_ani_novelty = "ANI_NOVELTY_CATEGORY"
 	column_name_ani_compare = "ANI_TAXONOMIC_COMPARE"
 	column_name_ani_scientific_name = "ANI_SCIENTIFIC_NAME"
 
