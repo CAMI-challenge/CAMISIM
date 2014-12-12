@@ -29,8 +29,9 @@ class TaxonomicCluster:
 			list_of_valid_elements.add(element)
 		return list_of_valid_elements
 
-	def predict_tax_id_of(self, cluster_raw, unpublished_genome_ids_column, unpublished_id=None, lowest_predicted_novelty=''):
+	def predict_tax_id_of(self, cluster_raw, unpublished_genome_ids_column, unpublished_id='', lowest_predicted_novelty=None, threshold='', ref_genome_ids=set()):
 		list_of_valid_elements = self.load_lineages(cluster_raw, unpublished_genome_ids_column)
+		#valid_elements_taxids = set([self.taxids_by_element[element][1] for element in list_of_valid_elements])
 		root = {"count": 0, "c": {}, 'p': None}
 
 		total_count = [0] * len(self.ranks)
@@ -83,8 +84,17 @@ class TaxonomicCluster:
 		for node in list_of_candidate:
 			if float(node["count"]) / total_count[node['r']] > 0.9:
 				novelty = self.ranks[node['r'] - 1]
-				if lowest_predicted_novelty in self.ranks and self.ranks.index(lowest_predicted_novelty)+1 < node['r']:
-					novelty = lowest_predicted_novelty
+				# if previous novelty lower
+				if lowest_predicted_novelty["novelty"] in self.ranks and self.ranks.index(lowest_predicted_novelty["novelty"])+1 <= node['r']:
+					#print unpublished_id, novelty, "->", lowest_predicted_novelty["threshold"]["support"]
+					novelty = lowest_predicted_novelty["novelty"]
+				elif len(ref_genome_ids.intersection(set(list_of_valid_elements))) > 0:  # or float(threshold) == 0.1
+					#print unpublished_id, novelty, "->", lowest_predicted_novelty["novelty"]
+					lowest_predicted_novelty["support"] = node["count"]
+					lowest_predicted_novelty["threshold"] = threshold
+					lowest_predicted_novelty["novelty"] = novelty
+					if lowest_predicted_novelty["minimum"] == '':
+						lowest_predicted_novelty["minimum"] = threshold
 				return node["id"], novelty, node["count"]
 		return None, "", 0
 
