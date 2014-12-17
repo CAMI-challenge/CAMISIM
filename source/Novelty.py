@@ -94,7 +94,7 @@ class Novelty():
 		"""
 			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
 			(Note that the metafile must include a header with column name 'NCBI_ID'
-								  whereas novelty_category is added if it does not exist)
+								whereas novelty_category is added if it does not exist)
 			@param in_meta_file: usually file named 'metadata_table_[version].csv'#
 			@param out_meta_file:  file for the output
 		"""
@@ -109,7 +109,7 @@ class Novelty():
 		"""
 			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
 			(Note that the metafile must include a header with column name 'NCBI_ID'
-								  whereas novelty_category is added if it does not exist)
+								whereas novelty_category is added if it does not exist)
 			@param in_meta_file: usually file named 'metadata_table_[version].csv'#
 			@param out_meta_file:  file for the output
 		"""
@@ -121,15 +121,23 @@ class Novelty():
 
 		number_of_rows = metatable.get_number_of_rows()
 		for row_index in range(number_of_rows):
-			new_ncbi_id = column_ncbi_id[row_index]
-			if not new_ncbi_id.isdigit() or column_novelty_category[row_index] != '':
+			list_novelty = []
+			if column_ncbi_id[row_index] == '':
 				continue
-			novelty = self.get_novelty(new_ncbi_id)
+			if column_novelty_category[row_index] != '':
+				list_novelty.append(column_novelty_category[row_index][4:])
+			list_ncbi_id = column_ncbi_id[row_index].split(';')
+			for new_ncbi_id in list_ncbi_id:
+				if not new_ncbi_id.isdigit():
+					continue
+				novelty = self.get_novelty(new_ncbi_id)
+				if novelty is None:
+					continue
+				list_novelty.append(novelty)
+				#self._logger.info("[Novelty] {} is not included at rank {}".format(new_ncbi_id, novelty))
+			#column_novelty_category[row_index] = ','.join(["new_" + str(novelty) for novelty in list_novelty])
+			column_novelty_category[row_index] = "new_" + self.get_lowest_rank(set(list_novelty))
 
-			if novelty is None:
-				continue
-			#self._logger.info("[Novelty] {} is not included at rank {}".format(new_ncbi_id, novelty))
-			column_novelty_category[row_index] = "new_" + str(novelty)
 		metatable.set_column(column_novelty_category, self._column_name_novelty)
 
 	def get_novelty(self, ncbi_id):
@@ -173,6 +181,17 @@ class Novelty():
 			tax_ids.add(tid)
 
 		return tax_ids
+
+	def get_lowest_rank(self, list_of_ranks=set(), ranks=None):
+		if ranks is None:
+			ranks = self._ranks
+		if len(list_of_ranks) == 0:
+			return ''
+		lowest_rank = list_of_ranks.pop()
+		for rank in list_of_ranks:
+			if ranks.index(rank) < ranks.index(lowest_rank):
+				lowest_rank = rank
+		return lowest_rank
 
 
 #***************** Main ************************
