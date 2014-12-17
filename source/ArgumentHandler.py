@@ -63,7 +63,7 @@ class ArgumentHandler(object):
 	column_name_unpublished_genomes_id = "genome_ID"
 	column_name_cutoff = "prediction_threshold"
 	column_name_otu_id = "OTU"
-	column_name_cluster_prediction = "NCBI_TAXONOMIC_PREDICTION"
+	column_name_cluster_prediction = "NCBI_ID"
 	column_name_cluster_scientific_name = "SCIENTIFIC_NAME"
 	column_name_cluster_novelty = "novelty_category"
 	column_name_ani = "ANI"
