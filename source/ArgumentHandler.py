@@ -59,13 +59,13 @@ class ArgumentHandler(object):
 	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta"]
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
-	#meta table columns
+	#meta table columns  'OTU', 'novelty_category'
 	column_name_unpublished_genomes_id = "genome_ID"
 	column_name_cutoff = "prediction_threshold"
-	column_name_otu_id = "OTU_ID"
+	column_name_otu_id = "OTU"
 	column_name_cluster_prediction = "NCBI_TAXONOMIC_PREDICTION"
 	column_name_cluster_scientific_name = "SCIENTIFIC_NAME"
-	column_name_cluster_novelty = "NOVELTY_CATEGORY"
+	column_name_cluster_novelty = "novelty_category"
 	column_name_ani = "ANI"
 	column_name_ani_novelty = "ANI_NOVELTY_CATEGORY"
 	column_name_ani_compare = "ANI_TAXONOMIC_COMPARE"
@@ -145,8 +145,7 @@ class ArgumentHandler(object):
 		OTU dist.:\t\t{otu}
 		Min. Clas. dist.:\t{mcd}
 
-""".format(
-			config=ArgumentHandler._config_file_path,
+""".format(	config=ArgumentHandler._config_file_path,
 			pipe=ArgumentHandler.pipeline_directory,
 			out=ArgumentHandler.output_directory,
 			stage=stages[ArgumentHandler.stage],
