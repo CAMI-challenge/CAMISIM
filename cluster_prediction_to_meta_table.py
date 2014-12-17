@@ -37,8 +37,8 @@ def my_main(options):
 def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, logger):
 	reference_map_table = MetaTable(logger=logger)
 	reference_map_table.read(options.input_reference_file, False)
-	ref_genome_ids = reference_map_table.get_column(0)
-	#ref_genome_taxids = set([gid.split('.')[0] for gid in ref_genome_ids])
+	ref_genome_ids = set(reference_map_table.get_column(0))
+
 	column_minimum_threshold = metadata_table.get_empty_column()
 	column_novely_threshold = metadata_table.get_empty_column()
 	column_support = metadata_table.get_empty_column()
@@ -111,20 +111,38 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 			column_ncbi_prediction[row_index] = separator.join(predicted__ncbi)
 			column_science_name[row_index] = separator.join(predicted_science_name)
 
+	unknown_novelty = False
 	for row_index in range(0, number_of_genomes):
 		if lowest_predicted_novelty[row_index]["novelty"] is not '':
 			column_novelty[row_index] = "new_" + lowest_predicted_novelty[row_index]["novelty"]
 			column_novely_threshold[row_index] = lowest_predicted_novelty[row_index]["threshold"]
 			column_support[row_index] = lowest_predicted_novelty[row_index]["support"]
 			column_minimum_threshold[row_index] = lowest_predicted_novelty[row_index]["minimum"]
+		#else:
+		#	unknown_novelty = True
 
-	metadata_table.set_column(column_cutoff, options.column_name_cutoff)
+	#metadata_table.set_column(column_cutoff, options.column_name_cutoff)
 	metadata_table.set_column(column_ncbi_prediction, options.column_name_cluster_prediction)
 	metadata_table.set_column(column_science_name, options.column_name_cluster_scientific_name)
 	metadata_table.set_column(column_novelty, options.column_name_cluster_novelty)
-	metadata_table.set_column(column_novely_threshold, "novelty threshold")
-	metadata_table.set_column(column_support, "novelty support")
-	metadata_table.set_column(column_minimum_threshold, "minimum threshold")
+	#metadata_table.set_column(column_novely_threshold, "novelty threshold")
+	#metadata_table.set_column(column_support, "novelty support")
+	#metadata_table.set_column(column_minimum_threshold, "minimum threshold")
+
+	#if unknown_novelty:
+	from source.Novelty import Novelty
+	#novelty = Novelty(taxonomy,
+	#				  logger=logger,
+	#				  column_name_ncbi_id=options.column_name_cluster_prediction,
+	#				  column_name_novelty="NOVELTY_CATEGORY_Jessika")
+	novelty = Novelty(taxonomy,
+					  logger=logger,
+					  column_name_ncbi_id=options.column_name_cluster_prediction,
+					  column_name_novelty=options.column_name_cluster_novelty)
+	refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
+	novelty.read_reference(refernce_ncbi_id_set)
+	novelty.compute_novelty(metadata_table)
+	logger.info("[Novelty] Done")
 
 	#for cluster_cutoff in sorted_lists_of_cutoffs:
 	#	if cluster_cutoff == "unique":
