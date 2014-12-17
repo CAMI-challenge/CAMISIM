@@ -17,6 +17,9 @@ class TaxonomicCluster:
 	def load_lineages(self, cluster, list_of_excluded_elements):
 		list_of_valid_elements = set()
 		for element in cluster:
+			# for older data with wrong ref IDs
+			if "1.fna" in element:
+				element = element.split('.')[0]+".1"
 			if element in list_of_excluded_elements:
 				continue
 			ncbi_id = element.split('.')[0]
