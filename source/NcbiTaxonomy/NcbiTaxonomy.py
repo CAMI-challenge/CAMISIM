@@ -47,14 +47,21 @@ class NcbiTaxonomy(object):
 
 	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None):
 		count = 0
+		taxid = str(taxid)
 		if taxid in NcbiTaxonomy.taxid_old_to_taxid_new:
 			taxid = NcbiTaxonomy.taxid_old_to_taxid_new[taxid]
+		if taxid not in NcbiTaxonomy.taxid_to_parent_taxid:
+			if self._logger:
+				self._logger.error("[taxonomy] Unknown taxonomic id {}".format(taxid))
+			return None
+
 		if ranks is None:
 			ranks = NcbiTaxonomy.default_ordered_legal_ranks
-		lineage = [default_value] * len(ranks)
 		#if self._has_node_tree:
 		#	lineage = TaxonomyNode.by_name[taxid].get_lineage()
 		#else:
+
+		lineage = [default_value] * len(ranks)
 		original_rank = self.get_rank_of_taxid(taxid)
 		if original_rank is not None and original_rank in ranks:
 			lineage[ranks.index(original_rank)] = taxid
