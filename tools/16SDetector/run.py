@@ -50,7 +50,7 @@ def main():
 						help='run hidden markov model and classify according to the "31" marker genes',
 						dest='g')
 
-	parser.add_argument("-hmm", "--hmmer", default=3, type=int,
+	parser.add_argument("-hmmer", "--hmmer", default=3, type=int,
 						help="'2': rnammer; '3': hmmsearch using hmmer 3.0")
 
 	# push down predictions to more specific clades (sc)
@@ -67,7 +67,7 @@ def main():
 		pipeline_dir = os.path.normpath(config.get('pipelineDir'))
 	else:
 		pipeline_dir = os.path.normpath(args.out[0])
-	print "output folder:", pipeline_dir
+	#print "output folder:", pipeline_dir
 	if not os.path.isdir(pipeline_dir):
 		print("Pipeline directory doesn't exist: ", pipeline_dir)
 		return
