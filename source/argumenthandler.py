@@ -32,7 +32,7 @@ class ArgumentHandler(object):
 	#[MarkerGeneClustering]
 	metadata_table_in = None
 	metadata_table_out = None
-	threshold = None
+	distance_cutoff = None
 	silva_reference_directory = None
 
 	#[MarkerGeneClassification]
@@ -41,10 +41,10 @@ class ArgumentHandler(object):
 	ncbi_reference_directory = None
 
 	#[Binary]
-	mothur = None
-	hmmer3 = None
-	rnammer = None
-	mummer = None
+	binary_mothur = None
+	binary_hmmer3 = None
+	binary_rnammer = None
+	binary_mummer = None
 
 	#subfolder_names
 	# name of folder containing all tools
@@ -146,7 +146,7 @@ class ArgumentHandler(object):
 		Ref. SILVA:\t\t'{silva}
 		Metadata Table in:\t'{im}
 		Metadata Table out:\t'{om}
-		Threshold:\t\t{th}
+		Distance Cutoff:\t\t{th}
 
 		_MarkerGeneClassification_
 		Ref. NCBI:\t\t'{ncbi}'
@@ -164,7 +164,7 @@ class ArgumentHandler(object):
 			project=ArgumentHandler.project_directory,
 			im=ArgumentHandler.metadata_table_in,
 			om=ArgumentHandler.metadata_table_out,
-			th=ArgumentHandler.threshold,
+			th=ArgumentHandler.distance_cutoff,
 			silva=ArgumentHandler.silva_reference_directory,
 			ncbi=ArgumentHandler.ncbi_reference_directory,
 			otu=ArgumentHandler.otu_distance,
@@ -181,7 +181,7 @@ class ArgumentHandler(object):
 			self._valid_args = False
 			return
 
-		if ArgumentHandler.output_directory is not None:
+		if ArgumentHandler.output_directory is not None and ArgumentHandler.project_directory is None:
 			directory_out = ArgumentHandler.output_directory.rstrip('/')
 			if not os.path.isdir(directory_out):
 				directory_out = os.path.dirname(directory_out)
@@ -191,10 +191,35 @@ class ArgumentHandler(object):
 				self._valid_args = False
 				return
 			if ArgumentHandler.project_directory is None:
-				ts = time.time()
-				folder_name = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d__%H_%M_%S')
-				ArgumentHandler.project_directory = os.path.join(ArgumentHandler.output_directory, folder_name)
-				os.mkdir(ArgumentHandler.project_directory)
+				if ArgumentHandler.stage < 2:
+					ts = time.time()
+					folder_name = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d__%H_%M_%S')
+					ArgumentHandler.project_directory = os.path.join(ArgumentHandler.output_directory, folder_name)
+					os.mkdir(ArgumentHandler.project_directory)
+					self._logger.info("Project directory created: '{}'".format(ArgumentHandler.project_directory))
+				else:
+					# search previous project
+					list_of_items = os.listdir(ArgumentHandler.output_directory)
+					list_of_folder_directories = []
+					for item in list_of_items:
+						folder_item = os.path.join(ArgumentHandler.output_directory, item)
+						if os.path.isdir(folder_item):
+							mg_fasta = os.path.join(folder_item, ArgumentHandler.file_mg_16s)
+							if os.path.isfile(mg_fasta):
+								list_of_folder_directories.append(folder_item)
+
+					if len(list_of_folder_directories) == 0:
+						self._logger.error("'-o' No valid Project directory found at '{}'".format(directory_out))
+						self._valid_args = False
+						return
+					elif len(list_of_folder_directories) == 1:
+						ArgumentHandler.project_directory = list_of_folder_directories[0]
+						self._logger.info("Selected project directory: '{}'".format(ArgumentHandler.project_directory))
+					else:
+						self._logger.error("'-o' Several valid project directories found at '{}'. Please specify!".format(directory_out))
+						self._valid_args = False
+						return
+
 
 		if not os.path.isdir(ArgumentHandler.project_directory) and ArgumentHandler.stage == 0:
 			os.mkdir(ArgumentHandler.project_directory)
@@ -310,12 +335,12 @@ class ArgumentHandler(object):
 			self._valid_args = False
 			return
 
-		if ArgumentHandler.threshold is None:
-			self._logger.error("'-th' A threshold is required!")
+		if ArgumentHandler.distance_cutoff is None:
+			self._logger.error("'-th' A distance cutoff is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.threshold > 0 or not ArgumentHandler.threshold < 1:
-			self._logger.error("'-th' The number of processors must be a positive number: '{}'".format(ArgumentHandler.threshold))
+		elif not ArgumentHandler.distance_cutoff > 0 or not ArgumentHandler.distance_cutoff < 1:
+			self._logger.error("'-th' The distance cutoff must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
 			self._valid_args = False
 			return
 
@@ -431,6 +456,9 @@ class ArgumentHandler(object):
 		if ArgumentHandler.input_genomes_file is None:
 			ArgumentHandler.input_genomes_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
 
+		if ArgumentHandler.binary_mothur is None:
+			ArgumentHandler.binary_mothur = self._config.get_value("MarkerGeneClustering", "mothur")
+
 		if ArgumentHandler.metadata_table_in is None:
 			ArgumentHandler.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
 
@@ -485,7 +513,7 @@ class ArgumentHandler(object):
 		ArgumentHandler.project_directory = options.project_directory
 		ArgumentHandler.metadata_table_in = options.metadata_table_in
 		ArgumentHandler.metadata_table_out = options.metadata_table_out
-		ArgumentHandler.threshold = options.threshold
+		ArgumentHandler.distance_cutoff = options.threshold
 		ArgumentHandler.otu_distance = options.otu_distance
 		ArgumentHandler.classification_distance_minimum = options.classification_distance
 		#ArgumentHandler.ncbi_reference_directory = options.ncbi_reference_directory
