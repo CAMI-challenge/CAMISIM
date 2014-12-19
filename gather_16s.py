@@ -17,7 +17,7 @@ def main(options):
 					   filename_query_genome_file_paths=options.input_genomes_file,
 					   filename_reference_genome_file_paths=options.input_reference_file,
 					   filename_reference_marker_genes=options.input_reference_fna_file,
-					   out_file_path=os.path.join(options.output_directory, options.file_mg_16s),
+					   out_file_path=os.path.join(options.project_directory, options.file_mg_16s),
 					   hmmer=options.hmmer,
 					   config_path=options.config_file_path,
 					   max_processors=options.processors,
@@ -38,19 +38,26 @@ def gather_markergenes(detector_exe, mg_type, filename_query_genome_file_paths, 
 		dst = local_genome_file_paths[genome_id]
 		if not os.path.exists(src):
 			print "File does not exist: '{}".format(src)
+			if not debug:
+				shutil.rmtree(workingdir)
+			else:
+				print "Remove manually: '{}".format(workingdir)
 			sys.exit(1)
 		os.symlink(src, dst)
 
 	#cmd_file_path = os.path.join(workingdir, "cmd_list.txt")
 	#create_cmd_file(detector_exe, config_path=config_path, hmmer=hmmer, list_of_fasta=local_genome_file_paths.values(), out_dir=workingdir, cmd_file_path=cmd_file_path)
 	cmd_task_list = create_cmd_task_list(detector_exe, config_path=config_path, hmmer=hmmer, list_of_fasta=local_genome_file_paths.values(), out_dir=workingdir)
-	parallel.runCmdParallel(cmd_task_list, max_processors)
+	fail_list = parallel.runCmdParallel(cmd_task_list, max_processors)
 
 	tmp_out_file_path = tempfile.mktemp()
-	tmp_out_file_bin_path = tmp_out_file_path + "_below_min_length.fna"
-	merge_marker_genes_files(local_genome_file_paths, out_file_path, out_bin_file=tmp_out_file_bin_path, mg_type=mg_type, working_dir=workingdir)
-	shutil.move(tmp_out_file_path, out_file_path)
-	shutil.move(tmp_out_file_bin_path, out_file_path+".bin.fna")
+	tmp_out_file_bin_path = tempfile.mktemp(suffix="bin")
+	print "merge"
+	merge_marker_genes_files(local_genome_file_paths, tmp_out_file_path, out_bin_file=tmp_out_file_bin_path, mg_type=mg_type, working_dir=workingdir)
+	if os.path.exists(tmp_out_file_path):
+		shutil.copy2(tmp_out_file_path, out_file_path)
+	if os.path.exists(tmp_out_file_bin_path):
+		shutil.copy2(tmp_out_file_bin_path, out_file_path+".rejected.fna")
 
 	if filename_reference_marker_genes is not None:
 		# append reference genome marker genes
@@ -60,10 +67,12 @@ def gather_markergenes(detector_exe, mg_type, filename_query_genome_file_paths, 
 
 	if not debug:
 		shutil.rmtree(workingdir)
+	else:
+		print "Remove manually: '{}".format(workingdir)
 
 
 def create_cmd_task_list(detector_exe, config_path, hmmer, list_of_fasta, out_dir):
-	cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}'"
+	cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}' > /dev/null"
 	cmd_list = [cmd.format(exe=detector_exe, config=config_path, hmmer=hmmer, input_file=file_path, out_dir=out_dir) for file_path in list_of_fasta]
 	return [parallel.TaskCmd(cmd, out_dir) for cmd in cmd_list]
 
@@ -112,16 +121,16 @@ def merge_marker_genes_files(dict_genome_id_to_path, out_file_path, out_bin_file
 				"18S": "18S_rRNA",
 				"28S": "28S_rRNA"}
 
-	min_lengths = {"5S": "100",
-				"16S": "900",
-				"23S": "1000",
-				"8S": "100",
-				"18S": "900",
-				"28S": "1000"}
+	min_lengths = {"5S": 100,
+				"16S": 900,
+				"23S": 1000,
+				"8S": 100,
+				"18S": 900,
+				"28S": 1000}
 	suffix = suffixes[mg_type]
 	min_length = min_lengths[mg_type]
 	assert isinstance(dict_genome_id_to_path, dict)
-	for genome_id, genome_path in dict_genome_id_to_path.itervalues():
+	for genome_id, genome_path in dict_genome_id_to_path.iteritems():
 		input_filename = os.path.basename(genome_path)
 		input_filepath = "{prefix}.ids.{suffix}.fna".format(prefix=input_filename,
 															suffix=suffix)
