@@ -19,6 +19,7 @@ def main(options):
 						   config_path=options.config_file_path,
 						   max_processors=options.processors,
 						   debug=options._debug_mode)
+
 	return mg_extract.gather_markergenes(hmmer=options.hmmer,
 										 mg_type="16S",
 										 output_file=os.path.join(options.project_directory, options.file_mg_16s))
