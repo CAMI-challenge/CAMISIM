@@ -23,9 +23,6 @@ parser.add_option("-i", "--input", dest="input_fasta", action="store",
 parser.add_option("-r", "--rnammer", dest="rnammer", action="store",
         help="path to rnammer executable")
 
-parser.add_option("-x", "--bash_rnammer", dest="bash_rnammer", action="store",
-        help="path to rnammer executable")
-
 #parser.add_option("-L", "--LibHmm", dest="hmm_path", action="store",
 #        default="HMM3", help="path of hmm database")
 
@@ -60,12 +57,6 @@ if options.input_fasta is None:
 
 rnammer = options.rnammer
 if rnammer is None:
-    print "no executable for rnammer given"
-    parser.print_help()
-    sys.exit(1)
-
-bash_rnammer = options.bash_rnammer
-if bash_rnammer is None:
     print "no executable for rnammer given"
     parser.print_help()
     sys.exit(1)
@@ -137,14 +128,11 @@ for kingdom in options.kingdoms.split(','):
         out_fasta = out_prefix_fname + "." + dict_rRNA['{0}_{1}'.format(kingdom, moltype)] + ".fna"
         out_gff = out_prefix_fname + "." + dict_rRNA['{0}_{1}'.format(kingdom, moltype)] + ".gff"
         #cmd = "{0} -S {1} -m {2} -gff {3} -f {4} - < {5}".format(rnammer, kingdom, moltype, out_gff, out_fasta, in_fasta)
-        #cmd = [str(bash_rnammer), str(rnammer), str(kingdom), str(moltype), str(out_gff), str(out_fasta), str(in_fasta), str(temp_dir_path)]
-        #cmd = str(bash_rnammer), str(rnammer), str(kingdom), str(moltype), str(out_gff), str(out_fasta), str(in_fasta), str(temp_dir_path)
-        #print str(bash_rnammer), str(rnammer), str(kingdom), str(moltype), str(out_gff), str(out_fasta), str(in_fasta), str(temp_dir_path)
+        cmd = "{0} -S {1} -T {6} -m {2} -gff {3} -f {4} - < {5}".format(rnammer, kingdom, moltype, out_gff, out_fasta, in_fasta, temp_dir_path)
         #subprocess.call(cmd)
-        cmd = "{0} {1} {2} {3} {4} {5} {6} {7}".format(str(bash_rnammer), str(rnammer), str(kingdom), str(moltype), str(out_gff), str(out_fasta), str(in_fasta), str(temp_dir_path))
-        print cmd
-        hmm_proc = subprocess.Popen(cmd, shell=True, bufsize=-1, cwd=temp_dir_path)
-        hmm_proc.wait()
+        #cmd = "{0} {1} {2} {3} {4} {5} {6} {7}".format(str(bash_rnammer), str(rnammer), str(kingdom), str(moltype), str(out_gff), str(out_fasta), str(in_fasta), str(temp_dir_path))
+        #print cmd
+        hmm_proc = subprocess.call(cmd, shell=True, bufsize=-1, cwd=temp_dir_path)
         #cmd = 'hmmsearch --cpu %d -o %s --domtblout %s -E %g %s/%s_%s.hmm %s' % \
         #    (options.p, hmm_out_fname, dom_out_fname,
         #        options.evalue, os.path.abspath(options.hmm_path), kingdom, moltype, out_fname + '.fa')

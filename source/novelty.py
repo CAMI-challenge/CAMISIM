@@ -2,9 +2,9 @@
 import sys
 import os
 import argparse
-from NcbiTaxonomy import NcbiTaxonomy
-from MetaTable import MetaTable
-from Logger import Logger
+from taxonomy import ncbitaxonomy
+import metatable
+from logger import Logger
 
 __author__ = 'jessika'
 
@@ -100,12 +100,12 @@ class Novelty():
 		"""
 
 		self._logger.info("[Novelty] Processing information from metafile: '{}'".format(in_meta_file))
-		metatable = MetaTable(logger=self._logger)
-		metatable.read(in_meta_file)
-		self.compute_novelty(metatable)
-		metatable.write(out_meta_file)
+		meta_table = metatable.MetaTable(logger=self._logger)
+		meta_table.read(in_meta_file)
+		self.compute_novelty(meta_table)
+		meta_table.write(out_meta_file)
 
-	def compute_novelty(self, metatable):
+	def compute_novelty(self, meta_table):
 		"""
 			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
 			(Note that the metafile must include a header with column name 'NCBI_ID'
@@ -114,12 +114,12 @@ class Novelty():
 			@param out_meta_file:  file for the output
 		"""
 
-		column_ncbi_id = metatable.get_column(self._column_name_ncbi_id)
-		column_novelty_category = metatable.get_column(self._column_name_novelty)
+		column_ncbi_id = meta_table.get_column(self._column_name_ncbi_id)
+		column_novelty_category = meta_table.get_column(self._column_name_novelty)
 		if column_novelty_category is None:
-			column_novelty_category = metatable.get_empty_column()
+			column_novelty_category = meta_table.get_empty_column()
 
-		number_of_rows = metatable.get_number_of_rows()
+		number_of_rows = meta_table.get_number_of_rows()
 		for row_index in range(number_of_rows):
 			list_novelty = []
 			if column_ncbi_id[row_index] == '':
@@ -138,7 +138,7 @@ class Novelty():
 			#column_novelty_category[row_index] = ','.join(["new_" + str(novelty) for novelty in list_novelty])
 			column_novelty_category[row_index] = "new_" + self.get_lowest_rank(set(list_novelty))
 
-		metatable.set_column(column_novelty_category, self._column_name_novelty)
+		meta_table.set_column(column_novelty_category, self._column_name_novelty)
 
 	def get_novelty(self, ncbi_id):
 		"""
@@ -206,7 +206,7 @@ if __name__ =='__main__':
 
 	logger = Logger("Novelty")
 
-	taxonomy = NcbiTaxonomy.NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
+	taxonomy = ncbitaxonomy.NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
 	Nov = Novelty(taxonomy, logger=logger)
 	refernceIdsSet = Nov.get_taxonomic_ids_from_directory(options.dref)

@@ -3,7 +3,7 @@ __author__ = 'hofmann'
 
 import os
 import time
-from TaxonomyNode import TaxonomyNode
+from taxonomynode import TaxonomyNode
 
 
 class NcbiTaxonomy(object):

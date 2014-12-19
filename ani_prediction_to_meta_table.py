@@ -1,12 +1,11 @@
 __author__ = 'hofmann'
 
 #from source.ArgumentHandler import ArgumentHandler
-from source.MothurCluster import MothurCluster
-from source.NcbiTaxonomy.NcbiTaxonomy import NcbiTaxonomy
-from source.MetaTable import MetaTable
-from source.ANIm import ANIm
-from source.Logger import Logger
-import sys
+from source.mothurcluster import MothurCluster
+from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
+from source.metaTable import MetaTable
+from source.anim import ANIm
+from source.logger import Logger
 import os
 
 def my_main(options, logger=None):

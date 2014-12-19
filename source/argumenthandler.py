@@ -4,17 +4,17 @@ import os
 import argparse
 import time
 import datetime
-from ConfigParser import SafeConfigParser, NoOptionError
-from Logger import Logger
+from config import Config
+from logger import Logger
 
 
 class ArgumentHandler(object):
 	"""Reading pipeline configuration from file and from passed arguments"""
-	_config_file_path = None
 	_stages = 0
 	_logging = False
 	_debug_mode = False
 	_verbose = True
+	config_file_path = None
 	pipeline_directory = None
 
 	#[main]
@@ -22,6 +22,7 @@ class ArgumentHandler(object):
 	processors = 1
 
 	#[MarkerGeneExtraction]
+	hmmer = None
 	input_reference_file = None
 	input_reference_fna_file = None
 	input_genomes_file = None
@@ -38,6 +39,12 @@ class ArgumentHandler(object):
 	otu_distance = None
 	classification_distance_minimum = None
 	ncbi_reference_directory = None
+
+	#[Binary]
+	mothur = None
+	hmmer3 = None
+	rnammer = None
+	mummer = None
 
 	#subfolder_names
 	# name of folder containing all tools
@@ -145,7 +152,7 @@ class ArgumentHandler(object):
 		OTU dist.:\t\t{otu}
 		Min. Clas. dist.:\t{mcd}
 
-""".format(	config=ArgumentHandler._config_file_path,
+""".format(	config=ArgumentHandler.config_file_path,
 			pipe=ArgumentHandler.pipeline_directory,
 			out=ArgumentHandler.output_directory,
 			stage=stages[ArgumentHandler.stage],
@@ -381,56 +388,57 @@ class ArgumentHandler(object):
 				self._valid_args = False
 				return
 
-		if ArgumentHandler._config_file_path is None:
-			ArgumentHandler._config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, ArgumentHandler._filename_config_default)
-		if not os.path.isfile(ArgumentHandler._config_file_path):
-			self._logger.error("'-c' File does not exist: '{}'".format(ArgumentHandler._config_file_path))
+		if ArgumentHandler.config_file_path is None:
+			ArgumentHandler.config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, ArgumentHandler._filename_config_default)
+		if not os.path.isfile(ArgumentHandler.config_file_path):
+			self._logger.error("'-c' File does not exist: '{}'".format(ArgumentHandler.config_file_path))
 			self._valid_args = False
 			return
 
-		self._config = SafeConfigParser()
-		self._config.read(ArgumentHandler._config_file_path)
+		self._config = Config.Config(ArgumentHandler.config_file_path, self._logger)
 		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
-		for section in sections:
-			if self._config.has_section(section):
-				continue
-			self._logger.error("Missing section '{}' in the configuration file.".format(section))
+		missing_section = self._config.has_missing_section(sections)
+		if missing_section:
+			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
 			self._valid_args = False
 			return
 		#if ArgumentHandler.pipeline_directory is None:
 		#	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if ArgumentHandler.output_directory is None:
-			ArgumentHandler.output_directory = self._get_config_value("Main", "output_directory")
+			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory")
 
 		if ArgumentHandler.project_directory is None:
-			ArgumentHandler.project_directory = self._get_config_value("Main", "project_directory")
+			ArgumentHandler.project_directory = self._config.get_value("Main", "project_directory")
 
 		if ArgumentHandler.processors is None:
-			ArgumentHandler.processors = self._get_config_value("Main", "processors", is_digit=True)
+			ArgumentHandler.processors = self._config.get_value("Main", "processors", is_digit=True)
 
 		if ArgumentHandler.input_reference_file is None:
-			ArgumentHandler.input_reference_file = self._get_config_value("MarkerGeneExtraction", "input_reference_file")
+			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
 
-		if ArgumentHandler.input_reference_fna_file is None:
-			ArgumentHandler.input_reference_fna_file = self._get_config_value("MarkerGeneExtraction", "input_reference_fna_file")
+		if ArgumentHandler.input_reference_file is None:
+			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+
+		if ArgumentHandler.hmmer is None:
+			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer")
 
 		if ArgumentHandler.input_genomes_file is None:
-			ArgumentHandler.input_genomes_file = self._get_config_value("MarkerGeneExtraction", "input_genomes_file")
+			ArgumentHandler.input_genomes_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
 
 		if ArgumentHandler.metadata_table_in is None:
-			ArgumentHandler.metadata_table_in = self._get_config_value("MarkerGeneClustering", "metadata_table_in")
+			ArgumentHandler.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
 
 		if ArgumentHandler.metadata_table_out is None:
-			ArgumentHandler.metadata_table_out = self._get_config_value("MarkerGeneClustering", "metadata_table_out")
+			ArgumentHandler.metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out")
 
 		if ArgumentHandler.silva_reference_directory is None:
-			ArgumentHandler.silva_reference_directory = self._get_config_value("MarkerGeneClustering", "silva_reference_directory")
+			ArgumentHandler.silva_reference_directory = self._config.get_value("MarkerGeneClustering", "silva_reference_directory")
 		else:
 			self._logger.error("Not getting SILVA config for stupid reason!!")
 
 		if ArgumentHandler.ncbi_reference_directory is None:
-			ArgumentHandler.ncbi_reference_directory = self._get_config_value("MarkerGeneClassification", "ncbi_reference_directory")
+			ArgumentHandler.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
 
 		#if ArgumentHandler.genome_sample_size is None or not ArgumentHandler.genome_sample_size > 0:
 		#	ArgumentHandler.genome_sample_size = self._get_config_value("sample", "num_genomes", True)
@@ -448,27 +456,6 @@ class ArgumentHandler(object):
 		expected_output_size = 0
 		return expected_output_size
 
-	@staticmethod
-	def _string_to_digit(value):
-		try:
-			if '.' in value:
-				return float(value)
-			return int(value)
-		except ValueError:
-			return None
-
-	def _get_config_value(self, section, option, is_digit=False):
-		try:
-			return_value = self._config.get(section, option)
-		except NoOptionError:
-			#self.logger.error("Config.".format(NoSectionError.message))
-			return None
-		if return_value == '':
-			return None
-		if is_digit:
-			return self._string_to_digit(return_value)
-		return return_value
-
 	def _read_options(self, options):
 		config_file = options.config_file
 		if config_file is not None:
@@ -479,7 +466,7 @@ class ArgumentHandler(object):
 				self._logger.error("File does not exist: '{}'".format(options.config_file))
 				self._valid_args = False
 				return
-		ArgumentHandler._config_file_path = config_file
+		ArgumentHandler.config_file_path = config_file
 		ArgumentHandler._verbose = options.verbose
 		ArgumentHandler._debug_mode = options.debug_mode
 		ArgumentHandler._logging = options.logging

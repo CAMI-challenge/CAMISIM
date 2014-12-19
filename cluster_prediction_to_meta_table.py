@@ -1,11 +1,11 @@
 __author__ = 'hofmann'
 
 #from source.ArgumentHandler import ArgumentHandler
-from source.MothurCluster import MothurCluster
-from source.TaxonomicCluster import TaxonomicCluster
-from source.NcbiTaxonomy.NcbiTaxonomy import NcbiTaxonomy
-from source.MetaTable import MetaTable
-from source.Logger import Logger
+from source.mothurcluster import MothurCluster
+from source.taxonomiccluster import TaxonomicCluster
+from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
+from source.metatable import MetaTable
+from source.logger import Logger
 import sys
 import os
 
@@ -130,7 +130,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	#metadata_table.set_column(column_minimum_threshold, "minimum threshold")
 
 	#if unknown_novelty:
-	from source.Novelty import Novelty
+	from source.novelty import Novelty
 	#novelty = Novelty(taxonomy,
 	#				  logger=logger,
 	#				  column_name_ncbi_id=options.column_name_cluster_prediction,

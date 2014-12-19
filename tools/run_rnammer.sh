@@ -1,3 +1,5 @@
+#!/bin/bash
+
 EXECUTABLE="$1"
 KINGDOM="$2"
 MOLTYPE="$3"

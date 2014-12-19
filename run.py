@@ -5,9 +5,9 @@ __author__ = 'hofmann'
 import sys
 import os
 import subprocess
-from source.Logger import Logger
-from source.MetaTable import MetaTable
-from source.ArgumentHandler import ArgumentHandler
+from source.logger import Logger
+from source.metatable import MetaTable
+from source.argumenthandler import ArgumentHandler
 import cluster_prediction_to_meta_table
 import ani_prediction_to_meta_table
 

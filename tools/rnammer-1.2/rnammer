@@ -34,7 +34,6 @@ my ($TEMP_WORKING_DIR , $multi,@MOL,%MOL_KEYS,$mol,$kingdom,%FLANK,$gff, $xml , 
 ## PROGRAM CONFIGURATION BEGIN
 
 # the path of the program
-#my $INSTALL_PATH = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/tools/rnammer-1.2";
 my $INSTALL_PATH = dirname(abs_path($0));
 
 # The library in which HMMs can be found
@@ -51,8 +50,6 @@ my $HMMSEARCH_BINARY;
 my $PERL;
 if ( $uname eq "Linux" ) {
 	$HMMSEARCH_BINARY = "$INSTALL_PATH/../hmmer-2.3.2/src/hmmsearch";
-#	$HMMSEARCH_BINARY = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/tools/hmmer-2.3.2/src/hmmsearch";
-#	$HMMSEARCH_BINARY = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/tools/hmmer2_hmmsearch";
 	$PERL = "/usr/bin/perl";
 } elsif ( $uname eq "IRIX64" ) {
 	$HMMSEARCH_BINARY = "/usr/cbs/bio/bin/irix64/hmmsearch";

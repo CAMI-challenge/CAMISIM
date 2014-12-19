@@ -48,8 +48,9 @@ class RRNA16S():
 		# + "." + gene + ".fna"
 		#inputFastaFile + '.5S_rRNA.fna'
 		rnammer_executable = self._folder_tools + "/rnammer-1.2/rnammer"
-		rnammer_bash = self._folder_tools + "/run_rnammer.sh"
-		cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable + ' -x ' + rnammer_bash
+		#rnammer_bash = self._folder_tools + "/run_rnammer.sh"
+		#cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable + ' -x ' + rnammer_bash
+		cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable
 		 + ' -m ' + moltypes + ' -k ' + kingdoms)
 
 		if os.name == 'posix':
