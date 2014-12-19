@@ -9,13 +9,20 @@ class Config(object):
 					   '0': False, 'no': False, 'false': False, 'off': False,
 					   'y': True, 't': True, 'n': False, 'f': False}
 
-	def __init__(self, config_file_path, logger=None):
+	def __init__(self, config_file, logger=None):
 		self._logger = logger
 		if not self._logger:
 			self._logger = Logger("Config")
-		self._config_file_path = config_file_path
 		self._config = SafeConfigParser()
-		self._config.read(config_file_path)
+		if isinstance(config_file, str):
+			self._config.read(config_file)
+			self._config_file_path = config_file
+		elif isinstance(config_file, file):
+			self._config.readfp(config_file)
+			self._config_file_path = config_file.name
+		else:
+			self._logger.error("[Config] Bad config file type '{}'".format(config_file))
+			return
 
 	def has_missing_section(self, list_sections):
 		for section in list_sections:
@@ -23,12 +30,14 @@ class Config(object):
 				return section
 		return False
 
-	def get_value(self, section, option, is_digit=False, is_boolean=False):
+	def get_value(self, section, option, is_digit=False, is_boolean=False, verbose=True):
 		if not self._config.has_section(section):
-			self._logger.error("[Config] Bad section '{}'".format(section))
+			if verbose:
+				self._logger.error("[Config] Bad section '{}'".format(section))
 			return None
 		if not self._config.has_option(section, option):
-			self._logger.error("[Config] Bad option '{}': {}".format(section, option))
+			if verbose:
+				self._logger.error("[Config] Bad option '{}': {}".format(section, option))
 			return None
 
 		value = self._config.get(section, option)
