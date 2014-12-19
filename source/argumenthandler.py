@@ -87,7 +87,8 @@ class ArgumentHandler(object):
 			ArgumentHandler.pipeline_directory = pipeline_directory
 
 		if not os.path.isabs(ArgumentHandler.pipeline_directory):
-			ArgumentHandler.pipeline_directory = os.path.abspath(ArgumentHandler.pipeline_directory)
+			ArgumentHandler.pipeline_directory = os.path.expanduser(ArgumentHandler.pipeline_directory)
+			ArgumentHandler.pipeline_directory = os.path.realpath(ArgumentHandler.pipeline_directory)
 
 		self._logger = logger
 		if self._logger is None:
@@ -202,22 +203,25 @@ class ArgumentHandler(object):
 			ArgumentHandler.output_directory = os.path.dirname(ArgumentHandler.project_directory.rstrip('/'))
 
 		if not os.path.isabs(ArgumentHandler.project_directory):
-			ArgumentHandler.project_directory = os.path.abspath(ArgumentHandler.project_directory)
+			ArgumentHandler.project_directory = os.path.expanduser(ArgumentHandler.project_directory)
+			ArgumentHandler.project_directory = os.path.realpath(ArgumentHandler.project_directory)
 
 		if not os.path.isabs(ArgumentHandler.output_directory):
-			ArgumentHandler.output_directory = os.path.abspath(ArgumentHandler.output_directory)
+			ArgumentHandler.output_directory = os.path.expanduser(ArgumentHandler.output_directory)
+			ArgumentHandler.output_directory = os.path.realpath(ArgumentHandler.output_directory)
 
 		if not os.path.isdir(ArgumentHandler.project_directory):
 			self._logger.error("'-o' Directory does not exist: '{}'".format(ArgumentHandler.project_directory))
 			self._valid_args = False
 			return
 
+		ArgumentHandler.silva_reference_directory = os.path.expanduser(ArgumentHandler.silva_reference_directory)
 		if ArgumentHandler.silva_reference_directory is None:
 			self._logger.error("'-silva' SILVA reference directory is required!")
 			self._valid_args = False
 			return
 		if not os.path.isabs(ArgumentHandler.silva_reference_directory):
-			ArgumentHandler.silva_reference_directory = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.silva_reference_directory)
+			ArgumentHandler.silva_reference_directory = os.path.realpath(ArgumentHandler.silva_reference_directory)
 		if not os.path.isdir(ArgumentHandler.silva_reference_directory):
 			self._logger.error("'-silva' Directory does not exist: '{}'".format(ArgumentHandler.silva_reference_directory))
 			self._valid_args = False
@@ -235,6 +239,7 @@ class ArgumentHandler(object):
 			self._valid_args = False
 			return
 
+		ArgumentHandler.ncbi_reference_directory = os.path.expanduser(ArgumentHandler.ncbi_reference_directory)
 		if not os.path.isabs(ArgumentHandler.ncbi_reference_directory):
 			ArgumentHandler.ncbi_reference_directory = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.ncbi_reference_directory)
 
@@ -388,14 +393,14 @@ class ArgumentHandler(object):
 				self._valid_args = False
 				return
 
-		if ArgumentHandler.config_file_path is None:
-			ArgumentHandler.config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, ArgumentHandler._filename_config_default)
+		#if ArgumentHandler.config_file_path is None:
+		#	ArgumentHandler.config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler._filename_config_default)
 		if not os.path.isfile(ArgumentHandler.config_file_path):
 			self._logger.error("'-c' File does not exist: '{}'".format(ArgumentHandler.config_file_path))
 			self._valid_args = False
 			return
 
-		self._config = Config.Config(ArgumentHandler.config_file_path, self._logger)
+		self._config = Config(ArgumentHandler.config_file_path, self._logger)
 		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
 		missing_section = self._config.has_missing_section(sections)
 		if missing_section:
@@ -406,10 +411,10 @@ class ArgumentHandler(object):
 		#	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if ArgumentHandler.output_directory is None:
-			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory")
+			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory", verbose=False)
 
 		if ArgumentHandler.project_directory is None:
-			ArgumentHandler.project_directory = self._config.get_value("Main", "project_directory")
+			ArgumentHandler.project_directory = self._config.get_value("Main", "project_directory", verbose=False)
 
 		if ArgumentHandler.processors is None:
 			ArgumentHandler.processors = self._config.get_value("Main", "processors", is_digit=True)
@@ -421,7 +426,7 @@ class ArgumentHandler(object):
 			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
 
 		if ArgumentHandler.hmmer is None:
-			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer")
+			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer", is_digit=True)
 
 		if ArgumentHandler.input_genomes_file is None:
 			ArgumentHandler.input_genomes_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
@@ -461,7 +466,7 @@ class ArgumentHandler(object):
 		if config_file is not None:
 			if not os.path.isabs(config_file):
 				#config_file = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, config_file)
-				config_file = os.path.abspath(config_file)
+				config_file = os.path.realpath(config_file)
 			if not os.path.isfile(config_file):
 				self._logger.error("File does not exist: '{}'".format(options.config_file))
 				self._valid_args = False
