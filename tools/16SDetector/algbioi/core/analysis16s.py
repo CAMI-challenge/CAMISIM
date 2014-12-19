@@ -34,20 +34,20 @@ class RRNA16S():
 			Run the hidden markov model to get regions in the input sequences where the 16S and 23S genes are located.
 		"""
 		hmmInstallDir = os.path.normpath(self._config.get('rnaHmmInstallDir'))
-		hmmerBinDir = os.path.normpath(self._config.get('hmmerBinDir'))
+		#hmmerBinDir = os.path.normpath(self._config.get('hmmerBinDir'))
 
 		if not os.path.isabs(hmmInstallDir):
 			hmmInstallDir = os.path.normpath(self._folder_tools + "/" + hmmInstallDir)
 
-		if not os.path.isabs(hmmerBinDir):
-			hmmerBinDir = os.path.normpath(self._folder_tools + "/" + hmmerBinDir)
+		#if not os.path.isabs(hmmerBinDir):
+		#	hmmerBinDir = os.path.normpath(self._folder_tools + "/" + hmmerBinDir)
 
 		#regionsFile = os.path.join(self._workingDir, str(os.path.basename(inputFastaFile) + '.gff'))
 		trunk_output_file_name = os.path.join(self._workingDir, os.path.basename(inputFastaFile))
 		out_file_name_prefix = trunk_output_file_name
 		# + "." + gene + ".fna"
 		#inputFastaFile + '.5S_rRNA.fna'
-		rnammer_executable = self._folder_tools + "/rnammer-1.2/rnammer"
+		rnammer_executable = self._config.get('rnammer')
 		#rnammer_bash = self._folder_tools + "/run_rnammer.sh"
 		#cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable + ' -x ' + rnammer_bash
 		cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable
@@ -59,7 +59,7 @@ class RRNA16S():
 			else:
 				stdoutLog = subprocess.STDOUT  # stdout=subprocess.STDOUT
 
-			print 'run cmd:', cmd
+			#print 'run cmd:', cmd
 			hmm_proc = subprocess.Popen(cmd, shell=True, bufsize=-1, cwd=hmmInstallDir, stdout=stdoutLog)
 
 			hmm_proc.wait()
@@ -94,7 +94,7 @@ class RRNA16S():
 			else:
 				stdoutLog = subprocess.STDOUT  # stdout=subprocess.STDOUT
 			hmmProc = subprocess.Popen(cmd, shell=True, bufsize=-1, cwd=hmmInstallDir, stdout=stdoutLog)
-			print 'run cmd:', cmd
+			#print 'run cmd:', cmd
 			hmmProc.wait()
 			if outLog is not None:
 				stdoutLog.close()
