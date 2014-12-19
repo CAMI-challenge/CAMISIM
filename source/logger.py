@@ -5,11 +5,14 @@ import logging
 
 
 class Logger(object):
-    _message_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    message_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    _logger = None
 
     def __init__(self, label="", verbose=True, logfile=None):
-        self.logger = logging.getLogger(label)
-        self.logger.setLevel(logging.DEBUG)
+        if Logger._logger is not None:
+            return
+        Logger._logger = logging.getLogger(label)
+        Logger._logger.setLevel(logging.DEBUG)
         self._add_log_stderr(verbose)
         if logfile is not None:
             self._add_log_file(logfile)
@@ -17,45 +20,54 @@ class Logger(object):
     def add_log_file(self, logfile):
         self._add_log_file(logfile)
 
-    def info(self, message):
-        self.logger.info(message)
+    @staticmethod
+    def info(message):
+        Logger._logger.info(message)
 
-    def error(self, message):
-        self.logger.error(message)
+    @staticmethod
+    def error(message):
+        Logger._logger.error(message)
 
-    def debug(self, message):
-        self.logger.debug(message)
+    @staticmethod
+    def debug(message):
+        Logger._logger.debug(message)
 
-    def critical(self, message):
-        self.logger.critical(message)
+    @staticmethod
+    def critical(message):
+        Logger._logger.critical(message)
 
-    def exception(self, message):
-        self.logger.exception(message)
+    @staticmethod
+    def exception(message):
+        Logger._logger.exception(message)
 
-    def warning(self, message):
-        self.logger.warning(message)
+    @staticmethod
+    def warning(message):
+        Logger._logger.warning(message)
 
-    def set_debug(self):
-        self.logger.setLevel(logging.DEBUG)
+    @staticmethod
+    def set_debug():
+        Logger._logger.setLevel(logging.DEBUG)
 
-    def _add_log_stderr(self, verbose=True):
+    @staticmethod
+    def _add_log_stderr(verbose=True):
         err_handler = logging.StreamHandler(sys.stderr)
-        err_handler.setFormatter(Logger._message_formatter)
+        err_handler.setFormatter(Logger.message_formatter)
         if verbose:
             err_handler.setLevel(logging.INFO)
         else:
             err_handler.setLevel(logging.WARNING)
-        self.logger.addHandler(err_handler)
+        Logger._logger.addHandler(err_handler)
 
-    def _add_log_file(self, filename):
+    @staticmethod
+    def _add_log_file(filename):
         if filename is None:
-            self.logger.error("Could not add logfile!".format(filename))
+            Logger._logger.error("Could not add logfile!".format(filename))
             return
         try:
             err_handler_file = logging.FileHandler(filename, 'w')
-            err_handler_file.setFormatter(Logger._message_formatter)
+            err_handler_file.setFormatter(Logger.message_formatter)
             err_handler_file.setLevel(logging.INFO)
-            self.logger.addHandler(err_handler_file)
+            Logger._logger.addHandler(err_handler_file)
         except Exception:
-            self.logger.error("Could not open %s for logging".format(filename))
+            Logger._logger.error("Could not open %s for logging".format(filename))
             return
