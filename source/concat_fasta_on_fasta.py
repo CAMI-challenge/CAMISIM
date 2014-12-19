@@ -64,6 +64,7 @@ def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None
 		unique_id = os.path.splitext(basename)[0]
 
 	counter = 0
+	counter_small = 0
 	for seq_record in SeqIO.parse(input_file, "fasta"):
 		seq_length = len(seq_record.seq)
 		if seq_length >= min_length:
@@ -72,18 +73,20 @@ def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None
 				file_handler.write(">{}_{}\n".format(unique_id, seq_record.id))
 				file_handler.writelines(seq_record.seq + "\n")
 		else:
-			sys.stderr.write("WARNING: [merge] marker gene size below cutoff. Size: {size} ID: '{uid}', File: '{file}'\n".format(
-							size=str(seq_length),
-							uid=unique_id,
-							file=os.path.basename(input_file)))
+			counter_small += 1
+			#sys.stderr.write("WARNING: [merge] sequence too small. Size: {size} ID: '{uid}', File: '{file}'\n".format(
+			#				size=str(seq_length),
+			#				uid=unique_id,
+			#				file=os.path.basename(input_file)))
 			if out_bin_file:
 				with open(out_bin_file, "a") as file_handler:
 					file_handler.write(">{}_{}\n".format(unique_id, seq_record.id))
 					file_handler.writelines(seq_record.seq + "\n")
 
 	if counter == 0:
-		sys.stderr.write("WARNING: [merge] marker gene not found for {}: {}\n".format(unique_id, input_file))
-	sys.exit(0)
+		sys.stderr.write("WARNING: [merge] No valid marker gene found for {}: {}\n".format(unique_id, input_file))
+	if counter_small > 0:
+		sys.stderr.write("WARNING: [merge] {} marker genes rejected from {}\n".format(counter_small, unique_id))
 
 if __name__ == "__main__":
 	#help(start_process)
