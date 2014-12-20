@@ -71,12 +71,12 @@ TODO
 			#parser.print_help()
 			sys.exit(1)
 
-	if options.stage == 0 or options.stage <= 2:
+	if options.stage == 0 or options.stage == 2:
 		if not gene_alignment_and_clustering(options, logger):
 			#parser.print_help()
 			sys.exit(1)
 
-	if options.stage == 0 or options.stage <= 3:
+	if options.stage == 0 or options.stage == 3:
 		if not classification_of_genomes_and_novelty_prediction(options, logger):
 			#parser.print_help()
 			sys.exit(1)
@@ -101,18 +101,8 @@ output:
 - fasta formatted file containing the extracted marker genes of all genomes
 """
 
-	input_genomes_file = options.input_genomes_file
-	input_reference_fna_file = options.input_reference_fna_file
-	input_reference_file = options.input_reference_file
-	project_directory = options.project_directory
-	processors = options.processors
-
-	executable = os.path.dirname(os.path.realpath(__file__)) + "/gather_16s.sh"
-	if input_reference_fna_file is None:
-		subprocess.call([executable, str(input_genomes_file), str(input_reference_file), project_directory, str(processors)])
-	else:
-		subprocess.call([executable, str(input_genomes_file), str(input_reference_file), project_directory, str(processors), "true"])
-	return True
+	import gather_16s
+	return gather_16s.main(options)
 
 
 def gene_alignment_and_clustering(options, logger=None):
@@ -135,19 +125,20 @@ output:
 - a mothur formatted file containing the clusters, from unique up to the given threshold
 """
 	project_directory = options.project_directory
-	distance_method = 2  # no longer used
-	threshold = options.threshold
-	silva_reference_directory = options.silva_reference_directory
+	#distance_method = 2  # no longer used
+	#threshold = options.threshold
+	#silva_reference_directory = options.silva_reference_directory
 
 	input_file = os.path.join(project_directory, options.file_mg_16s)
 	if not os.path.isfile(input_file):
 		if logger:
 			logger.error("'-o': File not found: {}".format(input_file))
 		return False
-	output_file = os.path.join(project_directory, options.file_cluster_mg_16s)
-	executable = os.path.dirname(os.path.realpath(__file__)) + "/cluster.sh"
-	subprocess.call([executable, str(input_file), str(output_file), str(silva_reference_directory), str(threshold), str(distance_method), str(options.processors)])
-	return True
+	#output_file = os.path.join(project_directory, options.file_cluster_mg_16s)
+	#executable = os.path.dirname(os.path.realpath(__file__)) + "/cluster.sh"
+	#subprocess.call([executable, str(input_file), str(output_file), str(silva_reference_directory), str(threshold), str(distance_method), str(options.processors)])
+	import cluster
+	return cluster.main(options)
 
 
 def classification_of_genomes_and_novelty_prediction(options, logger=None):
