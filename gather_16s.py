@@ -89,7 +89,8 @@ class MGExtract(object):
 
 	def _create_cmd_task_list(self, hmmer, list_of_fasta):
 		out_dir = self._working_dir
-		cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}' > /dev/null"
+		# TODO: use logfile instead of /dev/null
+		cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}' > /dev/null 2> /dev/null"
 		cmd_list = [cmd.format(exe=self._mg_analyse_executable, config=self._config_path, hmmer=hmmer, input_file=file_path, out_dir=out_dir) for file_path in list_of_fasta]
 		return [parallel.TaskCmd(cmd, out_dir) for cmd in cmd_list]
 
