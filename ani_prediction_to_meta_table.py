@@ -3,7 +3,7 @@ __author__ = 'hofmann'
 #from source.ArgumentHandler import ArgumentHandler
 from source.mothurcluster import MothurCluster
 from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
-from source.metaTable import MetaTable
+from source.metatable import MetaTable
 from source.anim import ANIm
 from source.logger import Logger
 import os
