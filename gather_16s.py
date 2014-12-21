@@ -52,11 +52,11 @@ class MGExtract(object):
 		for genome_id, src in query_genome_file_paths.iteritems():
 			dst = local_genome_file_paths[genome_id]
 			if not os.path.exists(src):
-				self._logger.error("[MGExtract] File does not exist: '{}".format(src))
+				self._logger.error("[MGExtract] File does not exist: '{}'".format(src))
 				if not self._debug:
 					shutil.rmtree(self._working_dir)
 				else:
-					self._logger.warning("[MGExtract] Remove manually: '{}".format(self._working_dir))
+					self._logger.warning("[MGExtract] Remove manually: '{}'".format(self._working_dir))
 				return False
 			os.symlink(src, dst)
 
@@ -84,7 +84,7 @@ class MGExtract(object):
 		if not self._debug:
 			shutil.rmtree(self._working_dir)
 		else:
-			self._logger.warning("[MGExtract] Remove manually: '{}".format(self._working_dir))
+			self._logger.warning("[MGExtract] Remove manually: '{}'".format(self._working_dir))
 		return success
 
 	def _create_cmd_task_list(self, hmmer, list_of_fasta):
