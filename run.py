@@ -4,7 +4,6 @@ __author__ = 'hofmann'
 
 import sys
 import os
-import subprocess
 from source.logger import Logger
 from source.metatable import MetaTable
 from source.argumenthandler import ArgumentHandler
@@ -100,7 +99,7 @@ input:
 output:
 - fasta formatted file containing the extracted marker genes of all genomes
 """
-
+	assert isinstance(options, ArgumentHandler)
 	import gather_16s
 	return gather_16s.main(options)
 
@@ -124,19 +123,15 @@ input:
 output:
 - a mothur formatted file containing the clusters, from unique up to the given threshold
 """
+	assert isinstance(options, ArgumentHandler)
 	project_directory = options.project_directory
-	#distance_method = 2  # no longer used
-	#threshold = options.threshold
-	#silva_reference_directory = options.silva_reference_directory
 
 	input_file = os.path.join(project_directory, options.file_mg_16s)
 	if not os.path.isfile(input_file):
 		if logger:
 			logger.error("'-o': File not found: {}".format(input_file))
 		return False
-	#output_file = os.path.join(project_directory, options.file_cluster_mg_16s)
-	#executable = os.path.dirname(os.path.realpath(__file__)) + "/cluster.sh"
-	#subprocess.call([executable, str(input_file), str(output_file), str(silva_reference_directory), str(threshold), str(distance_method), str(options.processors)])
+
 	import cluster
 	return cluster.main(options)
 
@@ -157,23 +152,8 @@ output:
 - meta data table with a list of the genomes, with columns added that contain cluster based tax prediction, rank and novelty prediction
 """
 
-	#project_directory = options.project_directory
-	#metadata_table_out = options.metadata_table_out
-	#metadata_table_in = options.metadata_table_in
-	#if metadata_table_in is None:
-	#	metadata_table_in = metadata_table_out
-	#	input_file = options.input_genomes_file
-	#	if input_file is None or not os.path.isfile(input_file):
-	#		logger.error("'-im': Please pass a metatable as input")
-	#		return False
-	#	if not create_meta_table_from_fasta_path_file(input_file, metadata_table_in):
-	#		logger.error("'-i': could not read file input")
-	#		return False
-
+	assert isinstance(options, ArgumentHandler)
 	cluster_prediction_to_meta_table.my_main(options)
-	#mothur_cluster_file = os.path.join(project_directory, options.file_cluster_mg_16s)
-	#executable = os.path.join(os.path.dirname(os.path.realpath(__file__)), "/cluster_prediction_to_meta_table.py")
-	#subprocess.call([executable, "-i", metadata_table_in, "-o", metadata_table_out, "-cl", mothur_cluster_file, "-th", str(options.threshold)])
 	return True
 
 
@@ -193,19 +173,7 @@ input:
 output:
 - meta data table with a list of the genomes, with columns added that contain ani based tax prediction, rank and novelty prediction
 """
-	#project_directory = options.project_directory
-	#metadata_table_out = options.metadata_table_out
-	#metadata_table_in = metadata_table_out
-
-	#input_genomes_file = options.input_genomes_file
-	#input_reference_file = options.input_reference_file
-	#pool_size = options.processors
-	#mothur_cluster_file = os.path.join(project_directory, options.file_cluster_mg_16s)
-	#ranks = "family,genus,species"
-
-	#executable = os.path.dirname(os.path.realpath(__file__)) + "/ani_prediction_to_meta_table.py"
-	#print executable, "-i", metadata_table_in, "-o", metadata_table_out, "-cl", mothur_otu_file
-	#subprocess.call([executable, "-i", metadata_table_in, "-o", metadata_table_out, "-ir", input_reference_file, "-iq", input_genomes_file, "-cl", mothur_cluster_file, "-r", ranks, "-p", str(pool_size)])
+	assert isinstance(options, ArgumentHandler)
 	return ani_prediction_to_meta_table.my_main(options)
 
 
