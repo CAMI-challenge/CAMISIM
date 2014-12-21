@@ -55,13 +55,14 @@ def my_main():
 
 def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None):
 	#print input_file
-	if not os.path.exists(input_file):
-		sys.stderr.write("WARNING: [merge] File not found: '{file}'\n".format(file=input_file))
-		return
-
 	if unique_id is None:
 		basename = os.path.basename(input_file)
 		unique_id = os.path.splitext(basename)[0]
+
+	if not os.path.exists(input_file):
+		#sys.stderr.write("WARNING: [merge] File not found: '{file}'\n".format(file=input_file))
+		sys.stderr.write("WARNING: [merge] No marker genes found for: '{unique_id}'\n".format(unique_id=unique_id))
+		return
 
 	counter = 0
 	counter_small = 0
