@@ -322,9 +322,12 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.metadata_table_out is None:
-			self._logger.error("'-im' Metadata file is required!")
-			self._valid_args = False
-			return
+			basename = os.path.basename(ArgumentHandler.metadata_table_in)
+			ArgumentHandler.metadata_table_out = os.path.join(ArgumentHandler.project_directory, basename+".out.csv")
+			self._logger.warning("'-om' Metadata output: '{}'".format(ArgumentHandler.metadata_table_out))
+			#self._logger.error("'-om' Metadata file is required!")
+			#self._valid_args = False
+			#return
 
 		if ArgumentHandler.processors is None:
 			self._logger.error("'-p' A number of processors is required!")
@@ -339,7 +342,7 @@ class ArgumentHandler(object):
 			self._logger.error("'-th' A distance cutoff is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.distance_cutoff > 0 or not ArgumentHandler.distance_cutoff < 1:
+		elif not ArgumentHandler.distance_cutoff > 0 or not ArgumentHandler.distance_cutoff <= 1:
 			self._logger.error("'-th' The distance cutoff must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
 			self._valid_args = False
 			return
@@ -566,7 +569,7 @@ No column names!""")
 
 		group_clustering = self.parser.add_argument_group("clustering")
 		group_clustering.add_argument("-th", "--threshold", default=0.04, type=float,
-							help="only distances up to the threshold will be calculated. Default: 0.05")
+							help="only distances up to the threshold will be calculated. Default: 0.04")
 		group_clustering.add_argument("-otu", "--otu_distance", default=0.03, type=float,
 							help="genetic distances at which cluster will be used as otus. Default: 0.03")
 		group_clustering.add_argument("-cth", "--classification_distance", default=0.02, type=float,
