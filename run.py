@@ -70,12 +70,12 @@ TODO
 			#parser.print_help()
 			sys.exit(1)
 
-	if options.stage == 0 or options.stage == 2:
+	if options.stage == 0 or options.stage < 2:
 		if not gene_alignment_and_clustering(options, logger):
 			#parser.print_help()
 			sys.exit(1)
 
-	if options.stage == 0 or options.stage == 3:
+	if options.stage == 0 or options.stage < 3:
 		if not classification_of_genomes_and_novelty_prediction(options, logger):
 			#parser.print_help()
 			sys.exit(1)
