@@ -1,6 +1,6 @@
 __author__ = 'hofmann'
 
-#from source.ArgumentHandler import ArgumentHandler
+from source.argumenthandler import ArgumentHandler
 from source.mothurcluster import MothurCluster
 from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
 from source.metatable import MetaTable
@@ -8,10 +8,13 @@ from source.anim import ANIm
 from source.logger import Logger
 import os
 
+
 def my_main(options, logger=None):
 	if logger is None:
 		logger = Logger("ANI prediction")
 	#ranks = args.ranks.strip().split(',')
+
+	assert isinstance(options, ArgumentHandler)
 
 	column_name_ani_novelty = options.column_name_ani_novelty
 	column_name_ani_taxid = options.column_name_ani_compare
@@ -30,20 +33,20 @@ def my_main(options, logger=None):
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	mothur_cluster = MothurCluster(logger=logger)
+	mothur_cluster = MothurCluster(options.precision, logger=logger)
 	mothur_cluster.read(cluster_file)
 
 	ani_scientific_name_column = metadata_table.get_empty_column()
 	ani_prediction_novelty_column = metadata_table.get_empty_column()
 	ani_prediction_column = metadata_table.get_empty_column()
 	ani_column = metadata_table.get_empty_column()
-	cutoff_column = metadata_table.get_column(options.column_name_cutoff)
+	#cutoff_column = metadata_table.get_column(options.column_name_cutoff)
 	unpublished_genome_ids_column = metadata_table.get_column(options.column_name_unpublished_genomes_id)
 
 	# TODO: get rid of import package
 	nucmer_exe = "importpackage mummer;nucmer"
 	with ANIm(options.input_genomes_file, options.input_reference_file, None, nucmer_exe=nucmer_exe, logger=logger, pool_size=options.processors) as ani_calculator:
-		list_of_clusters = mothur_cluster.get_clusters_of_elements(cutoff_column, unpublished_genome_ids_column)
+		list_of_clusters = mothur_cluster.get_clusters_of_elements(options.otu_distance, unpublished_genome_ids_column)
 		#logger.info("OTUS: {}".format(otus))
 		#sys.exit(0)
 		for unknown_genomes_id in unpublished_genome_ids_column:
@@ -67,10 +70,10 @@ def my_main(options, logger=None):
 				if science_name is not None:
 					ani_scientific_name_column[row_index] = science_name
 
-	metadata_table.set_column(column_name_ani, ani_column)
-	metadata_table.set_column(column_name_ani_novelty, ani_prediction_novelty_column)
-	metadata_table.set_column(column_name_ani_taxid, ani_prediction_column)
-	metadata_table.set_column(column_name_ani_scientific_name, ani_scientific_name_column)
+	metadata_table.set_column(ani_column, column_name_ani)
+	metadata_table.set_column(ani_prediction_novelty_column, column_name_ani_novelty)
+	metadata_table.set_column(ani_prediction_column, column_name_ani_taxid)
+	metadata_table.set_column(ani_scientific_name_column, column_name_ani_scientific_name)
 	metadata_table.write(options.metadata_table_out)
 	logger.info("ANI prediction finished")
 	return True
