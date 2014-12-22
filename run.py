@@ -45,15 +45,11 @@ TODO
 
 	# example:
 	usage = '''Example usage:
-{0} \
--i id_to_path_unknown_genomes.txt \
--irf 16S_rRNA_refereces.fna \
--wd "my_output/subfolder" \
--th 0.10 \
--im metadata_table_test.csv \
--om metadata_table_test.out.csv \
--p 45 \
--s 0
+# do it all but ani
+{0} -c config.cfg
+
+# if marker gene extraction already finished
+{0} -c config.cfg -s 2
 '''.format(sys.argv[0])
 
 	logger = Logger("taxonomic classification and otu")
