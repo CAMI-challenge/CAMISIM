@@ -73,8 +73,6 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 		start = time.time()
 		local_marker_gene_fasta = self._get_symbolic_link_path(marker_gene_fasta)
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
-		shutil.copy2(self._ref_silva_distances, self._local_distance+"_")
-		#os.system("touch {file}".format(file=self._local_distance))
 
 		mothur_cmd = self._get_mothur_cmd(local_marker_gene_fasta, distance_cutoff, precision)
 		cmd = "echo \"{mothur_cmd}\" | {mothur_executable}".format(mothur_cmd=mothur_cmd,
