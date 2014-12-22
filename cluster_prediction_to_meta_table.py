@@ -54,7 +54,13 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	#_____statistic = {}
 	number_of_genomes = len(column_name_unpublished_genomes_id)
 	lowest_predicted_novelty = {}
+
 	classification_distance = float(options.classification_distance_minimum)
+	max_threshold = mothur_cluster.get_max_threshold()
+	if max_threshold == "unique" or float(classification_distance) > float(max_threshold):
+		classification_distance = max_threshold
+		logger.warning("Minimum classification distance unavailable, changed to {}!".format(classification_distance))
+
 	all_done = False
 	sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
 	prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance)
