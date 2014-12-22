@@ -29,10 +29,13 @@ class ArgumentHandler(object):
 	output_directory = None
 	project_directory = None
 
+	binary_rnammer = None
 	_hmmerBinDir = None  # 16S mg analysis
+	_rnaHmmInstallDir = None  # 16S mg analysis
 
 	#[MarkerGeneClustering]
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
+	binary_mothur = None
 	metadata_table_in = None
 	metadata_table_out = None
 	cluster_method = None
@@ -46,10 +49,8 @@ class ArgumentHandler(object):
 	ncbi_reference_directory = None
 
 	#[Binary]
-	binary_mothur = None
-	binary_hmmer3 = None
-	binary_rnammer = None
-	binary_mummer = None
+	#binary_hmmer3 = None
+	#binary_mummer = None
 
 	#subfolder_names
 	# name of folder containing all tools
@@ -372,11 +373,11 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.distance_cutoff is None:
-			self._logger.error("'-th' A distance cutoff is required!")
+			self._logger.error("'-th' A max distance threshold is required!")
 			self._valid_args = False
 			return
 		elif not ArgumentHandler.distance_cutoff > 0 or not ArgumentHandler.distance_cutoff <= 1:
-			self._logger.error("'-th' The distance cutoff must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
+			self._logger.error("'-th' The max distance threshold must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
 			self._valid_args = False
 			return
 
@@ -390,11 +391,11 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.classification_distance_minimum is None:
-			self._logger.error("'-cth' A threshold is required!")
+			self._logger.error("'-cth' A minimum classification distance threshold is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.classification_distance_minimum > 0 or not ArgumentHandler.classification_distance_minimum < 1:
-			self._logger.error("'-cth' The number of processors must be a positive number: '{}'".format(ArgumentHandler.classification_distance_minimum))
+		elif not ArgumentHandler.classification_distance_minimum > 0 or not ArgumentHandler.classification_distance_minimum <= 1:
+			self._logger.error("'-cth' The minimum classification distance threshold must be between 0 and 1: '{}'".format(ArgumentHandler.classification_distance_minimum))
 			self._valid_args = False
 			return
 
@@ -496,6 +497,9 @@ class ArgumentHandler(object):
 		if ArgumentHandler._hmmerBinDir is None:
 			ArgumentHandler._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
 
+		if ArgumentHandler._rnaHmmInstallDir is None:
+			ArgumentHandler._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
+
 		if ArgumentHandler.input_reference_file is None:
 			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
 
@@ -526,8 +530,15 @@ class ArgumentHandler(object):
 		if ArgumentHandler.ncbi_reference_directory is None:
 			ArgumentHandler.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
 
-		#if ArgumentHandler.genome_sample_size is None or not ArgumentHandler.genome_sample_size > 0:
-		#	ArgumentHandler.genome_sample_size = self._get_config_value("sample", "num_genomes", True)
+		if ArgumentHandler.distance_cutoff is None:
+			ArgumentHandler.distance_cutoff = self._config.get_value("MarkerGeneClustering", "max_threshold", is_digit=True)
+
+		if ArgumentHandler.otu_distance is None:
+			ArgumentHandler.otu_distance = self._config.get_value("MarkerGeneClustering", "otu_distance", is_digit=True)
+
+		if ArgumentHandler.classification_distance_minimum is None:
+			ArgumentHandler.classification_distance_minimum = self._config.get_value("MarkerGeneClustering", "classification_distance", is_digit=True)
+
 
 	@staticmethod
 	def _free_space_in_giga_bytes(directory="/tmp"):
@@ -570,9 +581,6 @@ class ArgumentHandler(object):
 		ArgumentHandler.distance_cutoff = options.threshold
 		ArgumentHandler.otu_distance = options.otu_distance
 		ArgumentHandler.classification_distance_minimum = options.classification_distance
-		#ArgumentHandler.ncbi_reference_directory = options.ncbi_reference_directory
-		#ArgumentHandler.silva_reference_directory = options.silva_reference_directory
-		#ArgumentHandler. = options.
 
 	def _get_parser_options(self, args=None):
 		description = "Pipeline for the extraction of marker genes, clustering and taxonomic classification"
@@ -609,10 +617,6 @@ No column names!""")
 							help="folder in which a subfolder will created for the output")
 		group_out.add_argument("-o", "--project_directory", default=None, type=str,
 							help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		#group_input.add_argument("-sivla", "--silva_reference_directory", default=None, type=str,
-		#					help="Directory that contains the SILVA reference files, alignment, distance-matrix and name file")
-		#group_input.add_argument("-ncbi", "--ncbi_reference_directory", default=None, type=str,
-		#					help="Directory that contains the NCBI taxonomy dump")
 		group_input.add_argument("-im", "--metadata_table_in", default=None, type=str,
 							help="path to file containing tab separated list of unidentified genomes")
 		group_input.add_argument("-om", "--metadata_table_out", default=None, type=str,
@@ -622,11 +626,11 @@ No column names!""")
 		group_clustering.add_argument("-cm", "--cluster_method", default="average",
 									  choices=ArgumentHandler._cluster_method_choices, type=str,
 									  help="Algorithm used for clustering")
-		group_clustering.add_argument("-th", "--threshold", default=0.04, type=float,
-							help="only distances up to the threshold will be calculated. Default: 0.04")
-		group_clustering.add_argument("-otu", "--otu_distance", default=0.03, type=float,
+		group_clustering.add_argument("-th", "--threshold", default=None, type=float,
+							help="only distances up to the threshold will be calculated. Default: 0.05")
+		group_clustering.add_argument("-otu", "--otu_distance", default=None, type=float,
 							help="genetic distances at which cluster will be used as otus. Default: 0.03")
-		group_clustering.add_argument("-cth", "--classification_distance", default=0.02, type=float,
+		group_clustering.add_argument("-cth", "--classification_distance", default=None, type=float,
 							help="minimum distance for classification. Default: 0.02")
 
 		if args is None:
