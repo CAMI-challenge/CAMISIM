@@ -53,7 +53,8 @@ TODO
 '''.format(sys.argv[0])
 
 	logger = Logger("taxonomic classification and otu")
-	pipeline_directory = os.path.dirname( os.path.realpath(__file__) )
+	pipeline_directory = os.path.realpath(os.path.expanduser(__file__))
+	pipeline_directory = os.path.dirname(pipeline_directory)
 	options = ArgumentHandler(pipeline_directory=pipeline_directory, stages=5, logger=logger)
 	if options._verbose:
 		logger.info(options.to_string())
