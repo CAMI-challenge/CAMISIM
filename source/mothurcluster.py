@@ -2,12 +2,16 @@ __author__ = 'hofmann'
 
 import sys
 import os
+import math
 import textwrap
 
 
 class MothurCluster:
 	"""Reading and writing a meta table"""
-	def __init__(self, otu_separator="\t", element_separator=",", logger=None):
+	def __init__(self, precision, otu_separator="\t", element_separator=",", logger=None):
+		assert isinstance(precision, int)
+
+		self._precision = int(math.log10(precision))
 		self._logger = logger
 		self.cluster_separator = otu_separator
 		self.element_separator = element_separator
@@ -21,25 +25,29 @@ class MothurCluster:
 		else:
 			return element
 
-	def get_clusters_of_elements(self, cutoffs, list_of_elements):
+	def get_clusters_of_elements(self, threshold, list_of_elements):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+		assert isinstance(list_of_elements, list)
+
 		result = {}
 		number_of_elements = len(list_of_elements)
-		for element_index in range(0, number_of_elements):
+		for element_index in xrange(0, number_of_elements):
 			element = list_of_elements[element_index]
 			if len(element.strip()) == 0:
 				result[element] = None
 				continue
-			list_of_index, list_of_clusters = self.get_cluster_of_cutoff_of_element(cutoffs[element_index], element)
+			list_of_index, list_of_clusters = self.get_cluster_of_cutoff_of_element(threshold, element)
 			if len(list_of_clusters) == 0:
 				result[element] = None
 				continue
 			result[element] = []
 			for cluster in list_of_clusters:
-				for element in cluster:
-					if element in list_of_elements:
+				for c_element in cluster:
+					if c_element in list_of_elements:
 						continue
 					#genome_id = self.element_to_genome_id(element)
-					result[element].append(element)
+					result[element].append(c_element)
 		return result
 
 	def read(self, file_path):
@@ -79,7 +87,7 @@ class MothurCluster:
 			if self._logger:
 				self._logger.info("[MothurCluster] Reading finished")
 
-	def get_prediction_thresholds(self, minimum=0, precision=2):
+	def get_prediction_thresholds(self, minimum=0):
 		subset = set()
 		list_of_cutoff = list(self._cluster_by_cutoff.keys())
 		list_as_float = []
@@ -88,15 +96,14 @@ class MothurCluster:
 				continue
 			list_as_float.append(float(cutoff))
 
-
 		for cutoff in list_of_cutoff:
 			if not '.' in cutoff:
 				continue
-			threshold = round(float(cutoff), precision)
-			#print "threshold", threshold, "minimum", minimum, "list_as_float", list_as_float
+			threshold = round(float(cutoff), self._precision)
+
 			if threshold >= minimum and threshold in list_as_float:
 				subset.add(threshold)
-		#print "subset", subset
+
 		return subset
 
 	def get_sorted_lists_of_cutoffs(self, reverse=False):
@@ -120,14 +127,18 @@ class MothurCluster:
 			line = ", ".join('{}: {}'.format(key, value) for key, value in list_of_cluster.items())
 			handle.write(textwrap.fill(line, width)+'\n')
 
-	def element_exists(self, cutoff, element):
-		if cutoff not in self.element_to_index_mapping:
+	def element_exists(self, threshold, element):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
+
+		if threshold not in self.element_to_index_mapping:
 			if self._logger:
-				self._logger.error("[MothurCluster] Cutoff key error: {}\nAvailable keys: '{}'".format(cutoff, ','.join(self.element_to_index_mapping.keys())))
+				self._logger.error("[MothurCluster] Cutoff key error: {}\nAvailable keys: '{}'".format(threshold, ','.join(self.element_to_index_mapping.keys())))
 			return False
 
 		#element = ".".join(element.split("_")[0].split(".")[:2])
-		if element not in self.element_to_index_mapping[cutoff]:
+		if element not in self.element_to_index_mapping[threshold]:
 			#if self.logger:
 			#	self.logger.warning("{} not found in {}".format(element, cutoff))
 			return False
@@ -144,42 +155,58 @@ class MothurCluster:
 			return None
 		return self._cluster_by_cutoff[cutoff]["cluster"][cluster_index]
 
-	def get_cluster_of_cutoff_of_element(self, cutoff, element):
-		if cutoff not in self._cluster_by_cutoff:
+	def get_cluster_of_cutoff_of_element(self, threshold, element):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
+
+		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
+				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
 			return [], []
-		if not self.element_exists(cutoff, element) or element.strip() == '' or cutoff.strip() == '':
+		if not self.element_exists(float(threshold), element) or element.strip() == '' or threshold.strip() == '':
 			if self._logger:
-				self._logger.warning("[MothurCluster] Bad element: {} in {}".format(element, cutoff))
+				self._logger.warning("[MothurCluster] Bad element: {} in {}".format(element, threshold))
 			return [], []
-		list_of_index = self.element_to_index_mapping[cutoff][element]
+		list_of_index = self.element_to_index_mapping[threshold][element]
 		if len(set(list_of_index)) > 1:
 			if self._logger:
-				self._logger.debug("[MothurCluster] {}: Multiple elements found. {}: {}".format(cutoff, element, ", ".join([str(item) for item in set(list_of_index)])))
+				self._logger.debug("[MothurCluster] {}: Multiple elements found. {}: {}".format(threshold, element, ", ".join([str(item) for item in set(list_of_index)])))
 				#print "Warning: multiple marker genes in different clusters", cutoff, element, set(list_of_index)
-		return list_of_index, [self._cluster_by_cutoff[cutoff]["cluster"][index] for index in list_of_index]
+		return list_of_index, [self._cluster_by_cutoff[threshold]["cluster"][index] for index in list_of_index]
 
-	def get_cluster_of_cutoff(self, cutoff="unique"):
-		if cutoff not in self._cluster_by_cutoff:
-			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
-			return None
-		return self._cluster_by_cutoff[cutoff]["cluster"]
+	def get_cluster_of_cutoff(self, threshold="unique"):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
 
-	def get_cluster_count_of_cutoff(self, cutoff="unique"):
-		if cutoff not in self._cluster_by_cutoff:
+		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
+				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
 			return None
-		return self._cluster_by_cutoff[cutoff]["count"]
+		return self._cluster_by_cutoff[threshold]["cluster"]
 
-	def to_string_cutoff(self, cutoff="unique"):
-		result_string = "{}\n".format(cutoff)
-		if cutoff not in self._cluster_by_cutoff:
+	def get_cluster_count_of_cutoff(self, threshold="unique"):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
+
+		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(cutoff))
+				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
 			return None
-		for otu_group in self._cluster_by_cutoff[cutoff]["cluster"]:
+		return self._cluster_by_cutoff[threshold]["count"]
+
+	def to_string_cutoff(self, threshold="unique"):
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float))
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
+
+		result_string = "{}\n".format(threshold)
+		if threshold not in self._cluster_by_cutoff:
+			if self._logger:
+				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
+			return None
+		for otu_group in self._cluster_by_cutoff[threshold]["cluster"]:
 			result_string += ", ".join(otu_group)+'\n'
 		return result_string
