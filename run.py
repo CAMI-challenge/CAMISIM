@@ -80,7 +80,7 @@ TODO
 			#parser.print_help()
 			sys.exit(1)
 
-	if options.stage == 0 or options.stage == 4:
+	if options.stage == 4:
 		if not ani_of_genomes_and_novelty_prediction(options, logger):
 			#parser.print_help()
 			sys.exit(1)
