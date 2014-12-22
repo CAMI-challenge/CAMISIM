@@ -34,6 +34,7 @@ class ArgumentHandler(object):
 	metadata_table_out = None
 	distance_cutoff = None
 	silva_reference_directory = None
+	precision = 1000
 
 	#[MarkerGeneClassification]
 	otu_distance = None
