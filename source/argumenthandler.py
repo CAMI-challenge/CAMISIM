@@ -30,8 +30,10 @@ class ArgumentHandler(object):
 	project_directory = None
 
 	#[MarkerGeneClustering]
+	_cluster_method_choices = ['average', 'furthest', 'nearest']
 	metadata_table_in = None
 	metadata_table_out = None
+	cluster_method = None
 	distance_cutoff = None
 	silva_reference_directory = None
 	precision = 1000
@@ -352,7 +354,7 @@ class ArgumentHandler(object):
 			self._logger.error("'-otu' A threshold is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.otu_distance > 0 or not ArgumentHandler.otu_distance < 1:
+		elif not ArgumentHandler.otu_distance > 0 or not ArgumentHandler.otu_distance <= 1:
 			self._logger.error("'-otu' The number of processors must be a positive number: '{}'".format(ArgumentHandler.otu_distance))
 			self._valid_args = False
 			return
@@ -363,6 +365,16 @@ class ArgumentHandler(object):
 			return
 		elif not ArgumentHandler.classification_distance_minimum > 0 or not ArgumentHandler.classification_distance_minimum < 1:
 			self._logger.error("'-cth' The number of processors must be a positive number: '{}'".format(ArgumentHandler.classification_distance_minimum))
+			self._valid_args = False
+			return
+
+		if ArgumentHandler.cluster_method is None:
+			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(ArgumentHandler._cluster_method_choices)))
+			self._valid_args = False
+			return
+
+		if ArgumentHandler.cluster_method not in ArgumentHandler._cluster_method_choices:
+			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(ArgumentHandler._cluster_method_choices)))
 			self._valid_args = False
 			return
 
@@ -471,8 +483,9 @@ class ArgumentHandler(object):
 
 		if ArgumentHandler.silva_reference_directory is None:
 			ArgumentHandler.silva_reference_directory = self._config.get_value("MarkerGeneClustering", "silva_reference_directory")
-		else:
-			self._logger.error("Not getting SILVA config for stupid reason!!")
+
+		if ArgumentHandler.cluster_method is None:
+			ArgumentHandler.cluster_method = self._config.get_value("MarkerGeneClustering", "cluster_method")
 
 		if ArgumentHandler.ncbi_reference_directory is None:
 			ArgumentHandler.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
@@ -517,6 +530,7 @@ class ArgumentHandler(object):
 		ArgumentHandler.project_directory = options.project_directory
 		ArgumentHandler.metadata_table_in = options.metadata_table_in
 		ArgumentHandler.metadata_table_out = options.metadata_table_out
+		ArgumentHandler.cluster_method = options.cluster_method
 		ArgumentHandler.distance_cutoff = options.threshold
 		ArgumentHandler.otu_distance = options.otu_distance
 		ArgumentHandler.classification_distance_minimum = options.classification_distance
@@ -569,6 +583,9 @@ No column names!""")
 							help="path to file containing tab separated list of genomes and their file path")
 
 		group_clustering = self.parser.add_argument_group("clustering")
+		group_clustering.add_argument("-cm", "--cluster_method", default="average",
+									  choices=ArgumentHandler._cluster_method_choices, type=str,
+									  help="Algorithm used for clustering")
 		group_clustering.add_argument("-th", "--threshold", default=0.04, type=float,
 							help="only distances up to the threshold will be calculated. Default: 0.04")
 		group_clustering.add_argument("-otu", "--otu_distance", default=0.03, type=float,
