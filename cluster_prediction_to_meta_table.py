@@ -57,7 +57,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	classification_distance = float(options.classification_distance_minimum)
 	all_done = False
 	sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
-	prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance, precision=3)
+	prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance)
 	#print sorted_lists_of_cutoffs
 	#print prediction_thresholds
 	#sys.exit()
