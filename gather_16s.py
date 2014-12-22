@@ -3,7 +3,7 @@ __author__ = 'hofmann'
 import os
 import shutil
 import tempfile
-
+import time
 import source.concat_fasta_on_fasta as concat_fasta_on_fasta
 import source.parallel as parallel
 from source.argumenthandler import ArgumentHandler
@@ -41,6 +41,8 @@ class MGExtract(object):
 		self._working_dir = tempfile.mkdtemp()
 
 	def gather_markergenes(self, hmmer, mg_type, output_file):
+		self._logger.info("[MGExtract] Searching and extracting marker genes")
+		start = time.time()
 		success = True
 		query_genome_file_paths = self._parse_genome_file_path_file(self._filename_query_genome_file_paths)
 		if self._filename_reference_marker_genes is not None:
@@ -80,6 +82,8 @@ class MGExtract(object):
 				shutil.copy(output_file, output_file+".no_ref")
 				with open(output_file, 'a') as write_handler, open(self._filename_reference_marker_genes) as read_handler:
 					write_handler.writelines(read_handler)
+		end = time.time()
+		self._logger.info("[MGExtract] Done ({}s)".format(round(end - start), 1))
 
 		if not self._debug:
 			shutil.rmtree(self._working_dir)
