@@ -29,6 +29,8 @@ class ArgumentHandler(object):
 	output_directory = None
 	project_directory = None
 
+	_hmmerBinDir = None  # 16S mg analysis
+
 	#[MarkerGeneClustering]
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
 	metadata_table_in = None
@@ -284,6 +286,24 @@ class ArgumentHandler(object):
 				return
 
 		if ArgumentHandler.stage < 2:
+			if ArgumentHandler.hmmer == 3 and ArgumentHandler._hmmerBinDir is None:
+				self._logger.error("'hmmerBinDir' is required for marker gene extraction, a path to the directory can be set in the config file!")
+				self._valid_args = False
+				return
+			if ArgumentHandler.hmmer == 2 and ArgumentHandler.binary_rnammer is None:
+				self._logger.error("'rnammer' is required for marker gene extraction, a path to the directory can be set in the config file!")
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.hmmer == 3 and not os.path.isdir(ArgumentHandler._hmmerBinDir):
+				self._logger.error("'hmmerBinDir', bad path to directory! '{}'".format(ArgumentHandler._hmmerBinDir))
+				self._valid_args = False
+				return
+			if ArgumentHandler.hmmer == 2 and not os.path.isfile(ArgumentHandler.binary_rnammer):
+				self._logger.error("'rnammer', bad path to binary! '{}'".format(ArgumentHandler.binary_rnammer))
+				self._valid_args = False
+				return
+
 			if ArgumentHandler.input_reference_file is None and ArgumentHandler.input_reference_fna_file is None:
 				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
 				self._valid_args = False
@@ -298,6 +318,16 @@ class ArgumentHandler(object):
 					self._logger.error("'-ir','-irf' File does not exist: '{}'".format(file_path))
 					self._valid_args = False
 					return
+
+		if ArgumentHandler.stage <= 2:
+			if ArgumentHandler.binary_mothur is None:
+				self._logger.error("'mothur' is required for clustering, a path to the binary can be set in in the config file!")
+				self._valid_args = False
+				return
+			if not os.path.isfile(ArgumentHandler.binary_mothur):
+				self._logger.error("'mothur', bad path to binary! '{bin}'".format(bin=ArgumentHandler.binary_mothur))
+				self._valid_args = False
+				return
 
 		if ArgumentHandler.stage > 2:
 			cluster_file = os.path.join(ArgumentHandler.project_directory, ArgumentHandler.file_cluster_mg_16s)
@@ -460,11 +490,17 @@ class ArgumentHandler(object):
 		if ArgumentHandler.processors is None:
 			ArgumentHandler.processors = self._config.get_value("Main", "processors", is_digit=True)
 
-		if ArgumentHandler.input_reference_file is None:
-			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+		if ArgumentHandler.binary_rnammer is None:
+			ArgumentHandler.binary_rnammer = self._config.get_value("MarkerGeneExtraction", "rnammer")
+
+		if ArgumentHandler._hmmerBinDir is None:
+			ArgumentHandler._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
 
 		if ArgumentHandler.input_reference_file is None:
 			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+
+		if ArgumentHandler.input_reference_fna_file is None:
+			ArgumentHandler.input_reference_fna_file = self._config.get_value("MarkerGeneExtraction", "input_reference_fna_file")
 
 		if ArgumentHandler.hmmer is None:
 			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer", is_digit=True)
