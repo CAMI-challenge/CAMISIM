@@ -3,6 +3,7 @@ __author__ = 'hofmann'
 
 import os
 import glob
+import time
 import shutil
 import tempfile
 from source.argumenthandler import ArgumentHandler
@@ -19,7 +20,7 @@ def main(options):
 	return mg_cluster.cluster(marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
 						output_cluster_file=os.path.join(options.project_directory, options.file_cluster_mg_16s),
 						distance_cutoff=options.distance_cutoff,
-						precision=1000)
+						precision=options.precision)
 
 
 class MGCluster(object):
@@ -68,6 +69,8 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 		self._local_distance = "ref.align.dist"
 
 	def cluster(self, marker_gene_fasta, output_cluster_file, distance_cutoff, precision):
+		self._logger.info("[MGCluster] Starting clustering process")
+		start = time.time()
 		local_marker_gene_fasta = self._get_symbolic_link_path(marker_gene_fasta)
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 		shutil.copy2(self._ref_silva_distances, self._local_distance+"_")
@@ -84,7 +87,7 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 		if len(list_of_files) == 0:
 			self._logger.error("[MGCluster] Clustering failed")
 			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
-			return False
+			result = False
 		elif len(list_of_files) == 1:
 			local_distance = os.path.join(self._working_dir, "ref.align.dist")
 			if os.path.exists(local_distance):
@@ -96,11 +99,14 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 				shutil.rmtree(self._working_dir)
 			else:
 				self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
-			return True
+			result = True
 		else:
 			self._logger.error("[MGCluster] Clustering with odd result, several files found!")
 			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
-			return False
+			result = False
+		end = time.time()
+		self._logger.info("[MGCluster] Done ({}s)".format(round(end - start), 1))
+		return result
 
 	def _get_symbolic_link_path(self, original_file_path):
 		basename = os.path.basename(original_file_path)
