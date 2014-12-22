@@ -1,6 +1,6 @@
 __author__ = 'hofmann'
 
-#from source.ArgumentHandler import ArgumentHandler
+from source.argumenthandler import ArgumentHandler
 from source.mothurcluster import MothurCluster
 from source.taxonomiccluster import TaxonomicCluster
 from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
@@ -11,6 +11,7 @@ import os
 
 
 def my_main(options):
+	assert isinstance(options, ArgumentHandler)
 	logger = Logger()
 	metadata_table = MetaTable(logger=logger)
 	metadata_table.read(options.metadata_table_in)
@@ -19,7 +20,7 @@ def my_main(options):
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	mothur_cluster = MothurCluster(logger=logger)
+	mothur_cluster = MothurCluster(options.precision, logger=logger)
 	mothur_cluster.read(cluster_file)
 
 	taxonomy_cluster = TaxonomicCluster(mothur_cluster, taxonomy, logger)
@@ -66,6 +67,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 		if cluster_cutoff == "unique":
 			continue
 		logger.info("#threshold {}".format(cluster_cutoff))
+		cluster_cutoff = float(cluster_cutoff)
 
 		#if cluster_cutoff not in _____statistic:
 		#	_____statistic[cluster_cutoff] = {"sname": metadata_table.get_empty_column(), "novelty": metadata_table.get_empty_column(), "support": metadata_table.get_empty_column() }
@@ -95,7 +97,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 				if ncbi_prediction is None:
 					continue
 				#print unpublished_genome_id, novelty
-				if float(cluster_cutoff) not in prediction_thresholds or ncbi_prediction in predicted__ncbi or column_ncbi_prediction[row_index] != "":
+				if cluster_cutoff not in prediction_thresholds or ncbi_prediction in predicted__ncbi or column_ncbi_prediction[row_index] != "":
 					continue
 				column_cutoff[row_index] = str(cluster_cutoff)
 				predicted__ncbi.append(ncbi_prediction)
@@ -170,6 +172,7 @@ def set_otu_id(options, metadata_table, mothur_cluster, logger):
 	for cluster_cutoff in sorted_lists_of_cutoffs:
 		if cluster_cutoff == "unique" or float(cluster_cutoff) != float(otu_distance):
 			continue
+		cluster_cutoff = float(cluster_cutoff)
 		for row_index in range(0, number_of_genomes):
 			unpublished_genome_id = column_name_unpublished_genomes_id[row_index]
 			if not mothur_cluster.element_exists(cluster_cutoff, unpublished_genome_id):
