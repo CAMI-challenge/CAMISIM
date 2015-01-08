@@ -117,8 +117,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		basename = os.path.basename(marker_gene_fasta)
 		filename, extension = os.path.splitext(basename)
 		#
-		#mothur_cmd = MGCluster._mothur_cmd_ref_dist
-		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
+		mothur_cmd = MGCluster._mothur_cmd_ref_dist
+		#mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
 		return mothur_cmd.format(wd=self._working_dir,
 								 debug=self._working_dir,
 								 #filename=os.path.join(self._working_dir, filename),
