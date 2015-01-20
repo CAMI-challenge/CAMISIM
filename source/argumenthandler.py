@@ -623,7 +623,7 @@ No column names!""")
 							help="path to file containing tab separated list of genomes and their file path")
 
 		group_clustering = self.parser.add_argument_group("clustering")
-		group_clustering.add_argument("-cm", "--cluster_method", default="average",
+		group_clustering.add_argument("-cm", "--cluster_method", default=None,
 									  choices=ArgumentHandler._cluster_method_choices, type=str,
 									  help="Algorithm used for clustering")
 		group_clustering.add_argument("-th", "--threshold", default=None, type=float,
