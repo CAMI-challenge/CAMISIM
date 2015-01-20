@@ -20,7 +20,8 @@ def main(options):
 	return mg_cluster.cluster(marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
 						output_cluster_file=os.path.join(options.project_directory, options.file_cluster_mg_16s),
 						distance_cutoff=options.distance_cutoff,
-						precision=options.precision)
+						precision=options.precision,
+						method=options.cluster_method)
 
 
 class MGCluster(object):
@@ -33,7 +34,7 @@ merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.na
 set.current(name={filename}.merged.names, column={local_dist})
 dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)
 set.current(column={local_dist})
-cluster.split(cutoff={cutoff}, method=furthest, precision={precision}, column={local_dist}, name={filename}.merged.names)"""
+cluster.split(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)"""
 
 	_mothur_cmd_ref_dist = """unique.seqs(fasta={mg_fasta})
 align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
@@ -43,7 +44,7 @@ merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.na
 set.current(name={filename}.merged.names, column={local_dist})
 dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)
 set.current(column={local_dist})
-cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}.merged.names)"""
+cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}.merged.names)"""
 
 	def __init__(self, mothur_executable, directory_silva_reference, max_processors=1, debug=False, logger=None):
 		self._logger = logger
@@ -68,13 +69,13 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 		#local_distance = os.path.join(self._working_dir, "ref.align.dist")
 		self._local_distance = "ref.align.dist"
 
-	def cluster(self, marker_gene_fasta, output_cluster_file, distance_cutoff, precision):
+	def cluster(self, marker_gene_fasta, output_cluster_file, distance_cutoff, precision=1000, method="average"):
 		self._logger.info("[MGCluster] Starting clustering process")
 		start = time.time()
 		local_marker_gene_fasta = self._get_symbolic_link_path(marker_gene_fasta)
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 
-		mothur_cmd = self._get_mothur_cmd(local_marker_gene_fasta, distance_cutoff, precision)
+		mothur_cmd = self._get_mothur_cmd(local_marker_gene_fasta, distance_cutoff, precision, method=method)
 		cmd = "echo \"{mothur_cmd}\" | {mothur_executable}".format(mothur_cmd=mothur_cmd,
 																   mothur_executable=self._mothur_executable)
 		os.system(cmd)
@@ -112,12 +113,12 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 		os.symlink(original_file_path, new_path)
 		return new_path
 
-	def _get_mothur_cmd(self, marker_gene_fasta, cutoff, precision):
+	def _get_mothur_cmd(self, marker_gene_fasta, cutoff, precision, method="average"):
 		basename = os.path.basename(marker_gene_fasta)
 		filename, extension = os.path.splitext(basename)
 		#
-		#mothur_cmd = MGCluster._mothur_cmd_ref_dist
-		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
+		mothur_cmd = MGCluster._mothur_cmd_ref_dist
+		#mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
 		return mothur_cmd.format(wd=self._working_dir,
 								 debug=self._working_dir,
 								 #filename=os.path.join(self._working_dir, filename),
@@ -128,4 +129,5 @@ cluster(cutoff={cutoff}, method=furthest, precision={precision}, name={filename}
 								 local_dist=self._local_distance,
 								 processors=self._max_processors,
 								 cutoff=cutoff,
-								 precision=precision)
+								 precision=precision,
+								 method=method)

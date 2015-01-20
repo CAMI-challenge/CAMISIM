@@ -17,6 +17,7 @@ class MothurCluster:
 		self.element_separator = element_separator
 		self._cluster_by_cutoff = {}
 		self.element_to_index_mapping = {}
+		self._unique_threshold = "unique"
 
 	@staticmethod
 	def element_to_genome_id(element):
@@ -24,6 +25,14 @@ class MothurCluster:
 			return ".".join(element.split("_")[0].split(".")[:2])
 		else:
 			return element
+
+	def get_max_threshold(self):
+		lists_of_thresholds = list(self._cluster_by_cutoff.keys())
+		lists_of_thresholds.remove(self._unique_threshold)
+		lists_of_thresholds = sorted(lists_of_thresholds)
+		if len(lists_of_thresholds) == 0:
+			return self._unique_threshold
+		return lists_of_thresholds[-1]
 
 	def get_clusters_of_elements(self, threshold, list_of_elements):
 		if not threshold == "unique":

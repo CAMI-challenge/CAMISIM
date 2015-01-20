@@ -29,9 +29,16 @@ class ArgumentHandler(object):
 	output_directory = None
 	project_directory = None
 
+	binary_rnammer = None
+	_hmmerBinDir = None  # 16S mg analysis
+	_rnaHmmInstallDir = None  # 16S mg analysis
+
 	#[MarkerGeneClustering]
+	_cluster_method_choices = ['average', 'furthest', 'nearest']
+	binary_mothur = None
 	metadata_table_in = None
 	metadata_table_out = None
+	cluster_method = None
 	distance_cutoff = None
 	silva_reference_directory = None
 	precision = 1000
@@ -42,10 +49,8 @@ class ArgumentHandler(object):
 	ncbi_reference_directory = None
 
 	#[Binary]
-	binary_mothur = None
-	binary_hmmer3 = None
-	binary_rnammer = None
-	binary_mummer = None
+	#binary_hmmer3 = None
+	#binary_mummer = None
 
 	#subfolder_names
 	# name of folder containing all tools
@@ -282,6 +287,24 @@ class ArgumentHandler(object):
 				return
 
 		if ArgumentHandler.stage < 2:
+			if ArgumentHandler.hmmer == 3 and ArgumentHandler._hmmerBinDir is None:
+				self._logger.error("'hmmerBinDir' is required for marker gene extraction, a path to the directory can be set in the config file!")
+				self._valid_args = False
+				return
+			if ArgumentHandler.hmmer == 2 and ArgumentHandler.binary_rnammer is None:
+				self._logger.error("'rnammer' is required for marker gene extraction, a path to the directory can be set in the config file!")
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.hmmer == 3 and not os.path.isdir(ArgumentHandler._hmmerBinDir):
+				self._logger.error("'hmmerBinDir', bad path to directory! '{}'".format(ArgumentHandler._hmmerBinDir))
+				self._valid_args = False
+				return
+			if ArgumentHandler.hmmer == 2 and not os.path.isfile(ArgumentHandler.binary_rnammer):
+				self._logger.error("'rnammer', bad path to binary! '{}'".format(ArgumentHandler.binary_rnammer))
+				self._valid_args = False
+				return
+
 			if ArgumentHandler.input_reference_file is None and ArgumentHandler.input_reference_fna_file is None:
 				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
 				self._valid_args = False
@@ -296,6 +319,16 @@ class ArgumentHandler(object):
 					self._logger.error("'-ir','-irf' File does not exist: '{}'".format(file_path))
 					self._valid_args = False
 					return
+
+		if ArgumentHandler.stage <= 2:
+			if ArgumentHandler.binary_mothur is None:
+				self._logger.error("'mothur' is required for clustering, a path to the binary can be set in in the config file!")
+				self._valid_args = False
+				return
+			if not os.path.isfile(ArgumentHandler.binary_mothur):
+				self._logger.error("'mothur', bad path to binary! '{bin}'".format(bin=ArgumentHandler.binary_mothur))
+				self._valid_args = False
+				return
 
 		if ArgumentHandler.stage > 2:
 			cluster_file = os.path.join(ArgumentHandler.project_directory, ArgumentHandler.file_cluster_mg_16s)
@@ -340,11 +373,11 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.distance_cutoff is None:
-			self._logger.error("'-th' A distance cutoff is required!")
+			self._logger.error("'-th' A max distance threshold is required!")
 			self._valid_args = False
 			return
 		elif not ArgumentHandler.distance_cutoff > 0 or not ArgumentHandler.distance_cutoff <= 1:
-			self._logger.error("'-th' The distance cutoff must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
+			self._logger.error("'-th' The max distance threshold must be between 0 and 1".format(ArgumentHandler.distance_cutoff))
 			self._valid_args = False
 			return
 
@@ -352,17 +385,27 @@ class ArgumentHandler(object):
 			self._logger.error("'-otu' A threshold is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.otu_distance > 0 or not ArgumentHandler.otu_distance < 1:
+		elif not ArgumentHandler.otu_distance > 0 or not ArgumentHandler.otu_distance <= 1:
 			self._logger.error("'-otu' The number of processors must be a positive number: '{}'".format(ArgumentHandler.otu_distance))
 			self._valid_args = False
 			return
 
 		if ArgumentHandler.classification_distance_minimum is None:
-			self._logger.error("'-cth' A threshold is required!")
+			self._logger.error("'-cth' A minimum classification distance threshold is required!")
 			self._valid_args = False
 			return
-		elif not ArgumentHandler.classification_distance_minimum > 0 or not ArgumentHandler.classification_distance_minimum < 1:
-			self._logger.error("'-cth' The number of processors must be a positive number: '{}'".format(ArgumentHandler.classification_distance_minimum))
+		elif not ArgumentHandler.classification_distance_minimum > 0 or not ArgumentHandler.classification_distance_minimum <= 1:
+			self._logger.error("'-cth' The minimum classification distance threshold must be between 0 and 1: '{}'".format(ArgumentHandler.classification_distance_minimum))
+			self._valid_args = False
+			return
+
+		if ArgumentHandler.cluster_method is None:
+			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(ArgumentHandler._cluster_method_choices)))
+			self._valid_args = False
+			return
+
+		if ArgumentHandler.cluster_method not in ArgumentHandler._cluster_method_choices:
+			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(ArgumentHandler._cluster_method_choices)))
 			self._valid_args = False
 			return
 
@@ -448,11 +491,20 @@ class ArgumentHandler(object):
 		if ArgumentHandler.processors is None:
 			ArgumentHandler.processors = self._config.get_value("Main", "processors", is_digit=True)
 
-		if ArgumentHandler.input_reference_file is None:
-			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+		if ArgumentHandler.binary_rnammer is None:
+			ArgumentHandler.binary_rnammer = self._config.get_value("MarkerGeneExtraction", "rnammer")
+
+		if ArgumentHandler._hmmerBinDir is None:
+			ArgumentHandler._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
+
+		if ArgumentHandler._rnaHmmInstallDir is None:
+			ArgumentHandler._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
 
 		if ArgumentHandler.input_reference_file is None:
 			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+
+		if ArgumentHandler.input_reference_fna_file is None:
+			ArgumentHandler.input_reference_fna_file = self._config.get_value("MarkerGeneExtraction", "input_reference_fna_file")
 
 		if ArgumentHandler.hmmer is None:
 			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer", is_digit=True)
@@ -471,14 +523,22 @@ class ArgumentHandler(object):
 
 		if ArgumentHandler.silva_reference_directory is None:
 			ArgumentHandler.silva_reference_directory = self._config.get_value("MarkerGeneClustering", "silva_reference_directory")
-		else:
-			self._logger.error("Not getting SILVA config for stupid reason!!")
+
+		if ArgumentHandler.cluster_method is None:
+			ArgumentHandler.cluster_method = self._config.get_value("MarkerGeneClustering", "cluster_method")
 
 		if ArgumentHandler.ncbi_reference_directory is None:
 			ArgumentHandler.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
 
-		#if ArgumentHandler.genome_sample_size is None or not ArgumentHandler.genome_sample_size > 0:
-		#	ArgumentHandler.genome_sample_size = self._get_config_value("sample", "num_genomes", True)
+		if ArgumentHandler.distance_cutoff is None:
+			ArgumentHandler.distance_cutoff = self._config.get_value("MarkerGeneClustering", "max_threshold", is_digit=True)
+
+		if ArgumentHandler.otu_distance is None:
+			ArgumentHandler.otu_distance = self._config.get_value("MarkerGeneClustering", "otu_distance", is_digit=True)
+
+		if ArgumentHandler.classification_distance_minimum is None:
+			ArgumentHandler.classification_distance_minimum = self._config.get_value("MarkerGeneClustering", "classification_distance", is_digit=True)
+
 
 	@staticmethod
 	def _free_space_in_giga_bytes(directory="/tmp"):
@@ -517,12 +577,10 @@ class ArgumentHandler(object):
 		ArgumentHandler.project_directory = options.project_directory
 		ArgumentHandler.metadata_table_in = options.metadata_table_in
 		ArgumentHandler.metadata_table_out = options.metadata_table_out
+		ArgumentHandler.cluster_method = options.cluster_method
 		ArgumentHandler.distance_cutoff = options.threshold
 		ArgumentHandler.otu_distance = options.otu_distance
 		ArgumentHandler.classification_distance_minimum = options.classification_distance
-		#ArgumentHandler.ncbi_reference_directory = options.ncbi_reference_directory
-		#ArgumentHandler.silva_reference_directory = options.silva_reference_directory
-		#ArgumentHandler. = options.
 
 	def _get_parser_options(self, args=None):
 		description = "Pipeline for the extraction of marker genes, clustering and taxonomic classification"
@@ -559,21 +617,20 @@ No column names!""")
 							help="folder in which a subfolder will created for the output")
 		group_out.add_argument("-o", "--project_directory", default=None, type=str,
 							help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		#group_input.add_argument("-sivla", "--silva_reference_directory", default=None, type=str,
-		#					help="Directory that contains the SILVA reference files, alignment, distance-matrix and name file")
-		#group_input.add_argument("-ncbi", "--ncbi_reference_directory", default=None, type=str,
-		#					help="Directory that contains the NCBI taxonomy dump")
 		group_input.add_argument("-im", "--metadata_table_in", default=None, type=str,
 							help="path to file containing tab separated list of unidentified genomes")
 		group_input.add_argument("-om", "--metadata_table_out", default=None, type=str,
 							help="path to file containing tab separated list of genomes and their file path")
 
 		group_clustering = self.parser.add_argument_group("clustering")
-		group_clustering.add_argument("-th", "--threshold", default=0.04, type=float,
-							help="only distances up to the threshold will be calculated. Default: 0.04")
-		group_clustering.add_argument("-otu", "--otu_distance", default=0.03, type=float,
+		group_clustering.add_argument("-cm", "--cluster_method", default="average",
+									  choices=ArgumentHandler._cluster_method_choices, type=str,
+									  help="Algorithm used for clustering")
+		group_clustering.add_argument("-th", "--threshold", default=None, type=float,
+							help="only distances up to the threshold will be calculated. Default: 0.05")
+		group_clustering.add_argument("-otu", "--otu_distance", default=None, type=float,
 							help="genetic distances at which cluster will be used as otus. Default: 0.03")
-		group_clustering.add_argument("-cth", "--classification_distance", default=0.02, type=float,
+		group_clustering.add_argument("-cth", "--classification_distance", default=None, type=float,
 							help="minimum distance for classification. Default: 0.02")
 
 		if args is None:

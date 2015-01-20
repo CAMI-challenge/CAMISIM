@@ -37,7 +37,7 @@ class Config(object):
 			return None
 		if not self._config.has_option(section, option):
 			if verbose:
-				self._logger.error("[Config] Bad option '{}': {}".format(section, option))
+				self._logger.error("[Config] Bad option in '{}': {}".format(section, option))
 			return None
 
 		value = self._config.get(section, option)

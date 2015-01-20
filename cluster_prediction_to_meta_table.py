@@ -54,7 +54,13 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	#_____statistic = {}
 	number_of_genomes = len(column_name_unpublished_genomes_id)
 	lowest_predicted_novelty = {}
+
 	classification_distance = float(options.classification_distance_minimum)
+	max_threshold = mothur_cluster.get_max_threshold()
+	if max_threshold == "unique" or float(classification_distance) > float(max_threshold):
+		classification_distance = max_threshold
+		logger.warning("Minimum classification distance unavailable, changed to {}!".format(classification_distance))
+
 	all_done = False
 	sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
 	prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance)
@@ -167,10 +173,15 @@ def set_otu_id(options, metadata_table, mothur_cluster, logger):
 	column_name_unpublished_genomes_id = metadata_table.get_column(options.column_name_unpublished_genomes_id)
 	number_of_genomes = len(column_name_unpublished_genomes_id)
 	otu_distance = options.otu_distance
+	max_threshold = mothur_cluster.get_max_threshold()
+	if max_threshold == "unique" or float(otu_distance) > float(max_threshold):
+		otu_distance = max_threshold
+		logger.warning("OTU distance unavailable, changed to {}!".format(otu_distance))
+
 	column_otu_id = metadata_table.get_empty_column()
 	sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
 	for cluster_cutoff in sorted_lists_of_cutoffs:
-		if cluster_cutoff == "unique" or float(cluster_cutoff) != float(otu_distance):
+		if cluster_cutoff == "unique" or otu_distance == "unique" or float(cluster_cutoff) != float(otu_distance):
 			continue
 		cluster_cutoff = float(cluster_cutoff)
 		for row_index in range(0, number_of_genomes):
