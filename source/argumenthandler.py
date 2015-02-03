@@ -32,6 +32,7 @@ class ArgumentHandler(object):
 	binary_rnammer = None
 	_hmmerBinDir = None  # 16S mg analysis
 	_rnaHmmInstallDir = None  # 16S mg analysis
+	_databaseFile = None  # 16S mg analysis
 
 	#[MarkerGeneClustering]
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
@@ -287,6 +288,24 @@ class ArgumentHandler(object):
 				return
 
 		if ArgumentHandler.stage < 2:
+			if ArgumentHandler._databaseFile is None:
+				self._logger.error("'databaseFile', bad argument!")
+				self._valid_args = False
+				return
+			elif not os.path.isdir(ArgumentHandler._databaseFile):
+				self._logger.error("'databaseFile', bad path to directory! '{}'".format(ArgumentHandler._databaseFile))
+				self._valid_args = False
+				return
+			elif not os.path.isfile(os.path.join(ArgumentHandler._databaseFile, "ncbitax_sqlite.db")):
+				self._logger.error("'databaseFile', directory does not contain file: 'ncbitax_sqlite.db'! '{}'".format(ArgumentHandler._databaseFile))
+				self._valid_args = False
+				return
+
+			if not os.path.isdir(ArgumentHandler._rnaHmmInstallDir):
+				self._logger.error("'rnaHmmInstallDir', bad path to directory! '{}'".format(ArgumentHandler._rnaHmmInstallDir))
+				self._valid_args = False
+				return
+
 			if ArgumentHandler.hmmer == 3 and ArgumentHandler._hmmerBinDir is None:
 				self._logger.error("'hmmerBinDir' is required for marker gene extraction, a path to the directory can be set in the config file!")
 				self._valid_args = False
@@ -302,6 +321,22 @@ class ArgumentHandler(object):
 				return
 			if ArgumentHandler.hmmer == 2 and not os.path.isfile(ArgumentHandler.binary_rnammer):
 				self._logger.error("'rnammer', bad path to binary! '{}'".format(ArgumentHandler.binary_rnammer))
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.hmmer == 3:
+				executable = os.path.join(ArgumentHandler._hmmerBinDir, "hmmsearch")
+				rnaHmmWrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm3.py")
+			else:
+				executable = ArgumentHandler.binary_rnammer
+				rnaHmmWrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm2.py")
+
+			if not os.access(executable, os.X_OK):
+				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(ArgumentHandler.hmmer, executable))
+				self._valid_args = False
+				return
+			if not os.access(rnaHmmWrapper, os.X_OK):
+				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(ArgumentHandler.hmmer, rnaHmmWrapper))
 				self._valid_args = False
 				return
 
@@ -327,6 +362,10 @@ class ArgumentHandler(object):
 				return
 			if not os.path.isfile(ArgumentHandler.binary_mothur):
 				self._logger.error("'mothur', bad path to binary! '{bin}'".format(bin=ArgumentHandler.binary_mothur))
+				self._valid_args = False
+				return
+			if not os.access(ArgumentHandler.binary_mothur, os.X_OK):
+				self._logger.error("'mothur', no permission to execute! '{}'".format(ArgumentHandler.binary_mothur))
 				self._valid_args = False
 				return
 
@@ -496,6 +535,9 @@ class ArgumentHandler(object):
 
 		if ArgumentHandler._hmmerBinDir is None:
 			ArgumentHandler._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
+
+		if ArgumentHandler._databaseFile is None:
+			ArgumentHandler._databaseFile = self._config.get_value("MarkerGeneExtraction", "databaseFile")
 
 		if ArgumentHandler._rnaHmmInstallDir is None:
 			ArgumentHandler._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
