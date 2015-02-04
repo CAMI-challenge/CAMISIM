@@ -129,7 +129,7 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 		#else:
 		#	unknown_novelty = True
 
-	#metadata_table.set_column(column_cutoff, options.column_name_cutoff)
+	metadata_table.set_column(column_cutoff, options.column_name_cutoff)
 	metadata_table.set_column(column_ncbi_prediction, options.column_name_cluster_prediction)
 	metadata_table.set_column(column_science_name, options.column_name_cluster_scientific_name)
 	metadata_table.set_column(column_novelty, options.column_name_cluster_novelty)
