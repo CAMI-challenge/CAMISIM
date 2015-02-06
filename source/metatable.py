@@ -29,6 +29,7 @@ class MetaTable:
 		self._header = new_header
 
 	def read(self, file_path, head=True):
+		# TODO: check column number consistency
 		self.clear()
 		if not os.path.isfile(file_path):
 			if self._logger:
