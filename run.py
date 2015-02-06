@@ -7,6 +7,7 @@ import os
 from source.logger import Logger
 from source.metatable import MetaTable
 from source.argumenthandler import ArgumentHandler
+from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
 import cluster_prediction_to_meta_table
 import ani_prediction_to_meta_table
 
@@ -61,6 +62,19 @@ TODO
 	if not options.is_valid():
 		logger.info("Abort")
 		sys.exit(1)
+
+	if options.novelty_only:
+		reference_map_table = MetaTable(logger=logger)
+		reference_map_table.read(options.input_reference_file, False)
+		ref_genome_ids = set(reference_map_table.get_column(0))
+		metadata_table = MetaTable(logger=logger)
+		metadata_table.read(options.metadata_table_in)
+		taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
+		refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
+		cluster_prediction_to_meta_table.establish_novelty_categorisation(taxonomy, refernce_ncbi_id_set, metadata_table, options.column_name_cluster_prediction, options.column_name_cluster_novelty, logger)
+		metadata_table.write(options.metadata_table_out)
+		return
+
 
 	if options.stage == 0 or options.stage == 1:
 		if not marker_gene_extraction(options):
