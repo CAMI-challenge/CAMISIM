@@ -19,6 +19,7 @@ class ArgumentHandler(object):
 
 	#[main]
 	stage = 0
+	novelty_only = None
 	processors = 1
 
 	#[MarkerGeneExtraction]
@@ -183,6 +184,52 @@ class ArgumentHandler(object):
 		return self._valid_args
 
 	def _check_values(self):
+		if ArgumentHandler.novelty_only:
+			if ArgumentHandler.input_reference_file is None:
+				self._logger.error("'-ir' Reference genome mapping file is required!")
+				self._valid_args = False
+				return
+			elif not os.path.isfile(ArgumentHandler.input_reference_file):
+				self._logger.error("'-ir' File does not exist: '{}'".format(ArgumentHandler.input_reference_file))
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.metadata_table_out is None:
+				self._logger.error("'-om' Metadata file is required!")
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.metadata_table_in is None:
+				self._logger.error("'-im' Metadata file is required!")
+				self._valid_args = False
+				return
+			elif not os.path.isfile(ArgumentHandler.metadata_table_in):
+				self._logger.error("'-im' File does not exist: '{}'".format(ArgumentHandler.metadata_table_in))
+				self._valid_args = False
+				return
+
+			if ArgumentHandler.ncbi_reference_directory is None:
+				self._logger.error("'-ncbi' NCBI reference directory is required!")
+				self._valid_args = False
+				return
+
+			ArgumentHandler.ncbi_reference_directory = os.path.expanduser(ArgumentHandler.ncbi_reference_directory)
+			if not os.path.isabs(ArgumentHandler.ncbi_reference_directory):
+				ArgumentHandler.ncbi_reference_directory = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.ncbi_reference_directory)
+
+			if not os.path.isdir(ArgumentHandler.ncbi_reference_directory):
+				self._logger.error("'-ncbi' Directory does not exist: '{}'".format(ArgumentHandler.ncbi_reference_directory))
+				self._valid_args = False
+				return
+
+			for sub_directory in ArgumentHandler._ncbi_ref_files:
+				file_path = os.path.join(ArgumentHandler.ncbi_reference_directory, sub_directory)
+				if not os.path.isfile(file_path):
+					self._logger.error("'-ncbi' File does not exist: '{}'".format(file_path))
+					self._valid_args = False
+					return
+			return
+
 		if ArgumentHandler.output_directory is None and ArgumentHandler.project_directory is None:
 			self._logger.error("'-od' Output directory or '-o' project directory is required!")
 			self._valid_args = False
@@ -226,7 +273,6 @@ class ArgumentHandler(object):
 						self._logger.error("'-o' Several valid project directories found at '{}'. Please specify!".format(directory_out))
 						self._valid_args = False
 						return
-
 
 		if not os.path.isdir(ArgumentHandler.project_directory) and ArgumentHandler.stage == 0:
 			os.mkdir(ArgumentHandler.project_directory)
@@ -521,6 +567,24 @@ class ArgumentHandler(object):
 		#if ArgumentHandler.pipeline_directory is None:
 		#	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
+		if ArgumentHandler.novelty_only is None:
+			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True)
+
+		if ArgumentHandler.novelty_only:
+			if ArgumentHandler.input_reference_file is None:
+				ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+
+			if ArgumentHandler.metadata_table_in is None:
+				ArgumentHandler.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
+
+			if ArgumentHandler.metadata_table_out is None:
+				ArgumentHandler.metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out")
+
+			if ArgumentHandler.ncbi_reference_directory is None:
+				ArgumentHandler.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
+
+			return
+
 		if ArgumentHandler.output_directory is None:
 			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory", verbose=False)
 
@@ -611,6 +675,7 @@ class ArgumentHandler(object):
 		ArgumentHandler._logging = options.logging
 		ArgumentHandler.stage = options.stage
 		ArgumentHandler.processors = options.processors
+		ArgumentHandler.novelty_only = options.novelty_only
 
 		ArgumentHandler.input_reference_file = options.input_reference_file
 		ArgumentHandler.input_reference_fna_file = options.input_reference_fna_file
@@ -641,6 +706,7 @@ class ArgumentHandler(object):
 4 -> Average Nucleotide Identity calculation
 Default: 0
 ''')
+		self.parser.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
 		#group = parser.add_mutually_exclusive_group()
 		group_input = self.parser.add_argument_group("input/output")
 		group_input.add_argument("-ir", "--input_reference_file", default=None, type=str,
