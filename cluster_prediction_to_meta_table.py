@@ -138,19 +138,8 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	#metadata_table.set_column(column_minimum_threshold, "minimum threshold")
 
 	#if unknown_novelty:
-	from source.novelty import Novelty
-	#novelty = Novelty(taxonomy,
-	#				  logger=logger,
-	#				  column_name_ncbi_id=options.column_name_cluster_prediction,
-	#				  column_name_novelty="NOVELTY_CATEGORY_Jessika")
-	novelty = Novelty(taxonomy,
-					  logger=logger,
-					  column_name_ncbi_id=options.column_name_cluster_prediction,
-					  column_name_novelty=options.column_name_cluster_novelty)
 	refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
-	novelty.read_reference(refernce_ncbi_id_set)
-	novelty.compute_novelty(metadata_table)
-	logger.info("[Novelty] Done")
+	establish_novelty_categorisation(taxonomy, refernce_ncbi_id_set, metadata_table, options.column_name_cluster_prediction, options.column_name_cluster_novelty, logger)
 
 	#for cluster_cutoff in sorted_lists_of_cutoffs:
 	#	if cluster_cutoff == "unique":
@@ -166,6 +155,22 @@ def taxonomic_prediction(options, metadata_table, mothur_cluster, taxonomy_clust
 	#	metadata_table.set_column(_____statistic[cluster_cutoff]["novelty"], "{}_novelty".format(cluster_cutoff))
 
 	logger.info("Taxonomic prediction finished")
+
+
+def establish_novelty_categorisation(taxonomy, refernce_ncbi_id_set, metadata_table, column_name_cluster_prediction, column_name_cluster_novelty, logger=None):
+	from source.novelty import Novelty
+	logger.info("[Novelty] Establish novelty categorisation")
+	#novelty = Novelty(taxonomy,
+	#				  logger=logger,
+	#				  column_name_ncbi_id=options.column_name_cluster_prediction,
+	#				  column_name_novelty="NOVELTY_CATEGORY_Jessika")
+	novelty = Novelty(taxonomy,
+					  logger=logger,
+					  column_name_ncbi_id=column_name_cluster_prediction,
+					  column_name_novelty=column_name_cluster_novelty)
+	novelty.read_reference(refernce_ncbi_id_set)
+	novelty.compute_novelty(metadata_table)
+	logger.info("[Novelty] Done")
 
 
 def set_otu_id(options, metadata_table, mothur_cluster, logger):
