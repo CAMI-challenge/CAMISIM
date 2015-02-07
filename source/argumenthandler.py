@@ -568,7 +568,7 @@ class ArgumentHandler(object):
 		#	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if ArgumentHandler.novelty_only is None:
-			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True)
+			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, verbose=False)
 
 		if ArgumentHandler.novelty_only:
 			if ArgumentHandler.input_reference_file is None:
