@@ -18,8 +18,8 @@ class TaxonomicCluster:
 		list_of_valid_elements = set()
 		for element in cluster:
 			# for older data with wrong ref IDs
-			if "1.fna" in element:
-				element = element.split('.')[0]+".1"
+			#if "1.fna" in element:
+			#	element = element.split('.')[0]+".1"
 			if element in list_of_excluded_elements:
 				continue
 			ncbi_id = element.split('.')[0]
@@ -27,7 +27,7 @@ class TaxonomicCluster:
 				if self.logger:
 					self.logger.warning("[TaxonomicCluster] Bad tax id: {id}".format(id=ncbi_id))
 				continue
-			if not element in self.taxids_by_element:
+			if element not in self.taxids_by_element:
 				self.taxids_by_element[element] = self.taxonomy.get_lineage_of_legal_ranks(ncbi_id, ranks=self.ranks, default_value=None)
 			list_of_valid_elements.add(element)
 		return list_of_valid_elements
