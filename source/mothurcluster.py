@@ -22,8 +22,11 @@ class MothurCluster:
 	@staticmethod
 	def element_to_genome_id(element):
 		if '.' in element:
-			#return ".".join(element.split("_")[0].split(".")[:2])
-			return ".".join(element.split(".")[:2])
+			prefix, suffix = element.split(".", 1)
+			suffix = suffix.split("_", 1)[0]
+			return "{pre}.{suf}".format(pre=prefix, suf=suffix)
+		elif element.count('_') >= 5:
+			return element.rsplit('_', 5)[0]
 		else:
 			return element
 
@@ -86,12 +89,13 @@ class MothurCluster:
 				cluster_index = 0
 				for cluster_as_string in row[2:]:
 					list_of_elements = cluster_as_string.split(self.element_separator)
-					for element in list_of_elements:
-						genome_id = self.element_to_genome_id(element)
-						if genome_id not in self.element_to_index_mapping[cutoff]:
-							self.element_to_index_mapping[cutoff][genome_id] = []
-						self.element_to_index_mapping[cutoff][genome_id].append(cluster_index)
-					list_of_cluster.append(list_of_elements)
+					new_list_of_elements = [self.element_to_genome_id(element) for element in list_of_elements]
+					for element in new_list_of_elements:
+						#genome_id = self.element_to_genome_id(element)
+						if element not in self.element_to_index_mapping[cutoff]:
+							self.element_to_index_mapping[cutoff][element] = []
+						self.element_to_index_mapping[cutoff][element].append(cluster_index)
+					list_of_cluster.append(new_list_of_elements)
 					cluster_index += 1
 				self._cluster_by_cutoff[cutoff] = {"count": cluster_amount, "cluster": list_of_cluster}
 			if self._logger:
