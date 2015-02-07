@@ -22,7 +22,8 @@ class MothurCluster:
 	@staticmethod
 	def element_to_genome_id(element):
 		if '.' in element:
-			return ".".join(element.split("_")[0].split(".")[:2])
+			#return ".".join(element.split("_")[0].split(".")[:2])
+			return ".".join(element.split(".")[:2])
 		else:
 			return element
 
