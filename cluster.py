@@ -90,6 +90,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		elif len(list_of_files) == 1:
 			local_distance = os.path.join(self._working_dir, "ref.align.dist")
 			if os.path.exists(local_distance):
+				parent_folder = os.path.dirname(output_cluster_file)
+				shutil.copy2(local_distance, os.path.join(parent_folder, "mothur_distances.tsv"))
 				shutil.copy2(list_of_files[0], output_cluster_file)
 				self._logger.info("[MGCluster] Clustering success")
 			else:
