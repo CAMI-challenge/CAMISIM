@@ -45,9 +45,11 @@ class MGExtract(object):
 		start = time.time()
 		success = True
 		query_genome_file_paths = self._parse_genome_file_path_file(self._filename_query_genome_file_paths)
-		if self._filename_reference_marker_genes is not None:
+		if self._filename_reference_genome_file_paths is not None and self._filename_reference_marker_genes is None:
 			reference_genome_file_paths = self._parse_genome_file_path_file(self._filename_reference_genome_file_paths)
 			query_genome_file_paths.update(reference_genome_file_paths)
+		elif self._filename_reference_genome_file_paths is not None and self._filename_reference_marker_genes is not None:
+			self._logger.warning("[MGExtract] Ignoring reference genome file paths and using previous reference marker genes!")
 		local_genome_file_paths = self._get_local_genome_paths(query_genome_file_paths)
 
 		# establish symbolic link to fasta files
