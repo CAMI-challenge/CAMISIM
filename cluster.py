@@ -113,11 +113,13 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		basename = os.path.basename(original_file_path)
 		new_path = os.path.join(self._working_dir, basename)
 		os.symlink(original_file_path, new_path)
-		return new_path
+		#return new_path
+		return basename
 
 	def _get_mothur_cmd(self, marker_gene_fasta, cutoff, precision, method="average"):
-		basename = os.path.basename(marker_gene_fasta)
-		filename, extension = os.path.splitext(basename)
+		#basename = os.path.basename(marker_gene_fasta)
+		#filename, extension = os.path.splitext(basename)
+		filename, extension = os.path.splitext(marker_gene_fasta)
 		#
 		#mothur_cmd = MGCluster._mothur_cmd_ref_dist
 		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
