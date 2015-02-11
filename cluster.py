@@ -127,7 +127,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 								 debug=self._working_dir,
 								 #filename=os.path.join(self._working_dir, filename),
 								 filename=filename,
-								 mg_fasta=basename,
+								 mg_fasta=marker_gene_fasta,
 								 ref_align=self._ref_silva_alignment,
 								 ref_names=self._ref_silva_names,
 								 local_dist=self._local_distance,
