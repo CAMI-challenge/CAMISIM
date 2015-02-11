@@ -83,6 +83,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		os.system(cmd)
 		os.chdir(self._old_dir)
 
+		project_folder = os.path.dirname(output_cluster_file)
 		find_mask_list = os.path.join(self._working_dir, "*.list")
 		list_of_files = glob.glob(find_mask_list)
 		if len(list_of_files) == 0:
@@ -92,8 +93,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		elif len(list_of_files) == 1:
 			local_distance = os.path.join(self._working_dir, "ref.align.dist")
 			if os.path.exists(local_distance):
-				parent_folder = os.path.dirname(output_cluster_file)
-				shutil.copy2(local_distance, os.path.join(parent_folder, "mothur_distances.tsv"))
+				if self._debug:
+					shutil.copy2(local_distance, os.path.join(project_folder, "mothur_distances.tsv"))
 				shutil.copy2(list_of_files[0], output_cluster_file)
 				self._logger.info("[MGCluster] Clustering success")
 			else:
@@ -108,6 +109,14 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
 			result = False
 		end = time.time()
+
+		# move logfiles
+		find_mask_list = os.path.join(self._working_dir, "*.logfile")
+		list_of_log_files = glob.glob(find_mask_list)
+		for log_file in list_of_log_files:
+			log_file_name = os.path.basename(log_file)
+			shutil.copy2(log_file, os.path.join(project_folder, log_file_name))
+
 		self._logger.info("[MGCluster] Done ({}s)".format(round(end - start), 1))
 		return result
 
