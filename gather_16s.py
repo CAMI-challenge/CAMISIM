@@ -18,6 +18,7 @@ def main(options):
 						   filename_reference_marker_genes=options.input_reference_fna_file,
 						   config_path=options.config_file_path,
 						   max_processors=options.processors,
+						   temp_directory=options.temp_directory,
 						   debug=options._debug_mode)
 
 	return mg_extract.gather_markergenes(hmmer=options.hmmer,
@@ -27,10 +28,11 @@ def main(options):
 
 class MGExtract(object):
 	def __init__(self, mg_analyse_executable, filename_query_genome_file_paths, filename_reference_genome_file_paths,
-				 filename_reference_marker_genes, config_path, max_processors=1, debug=False, logger=None):
+				 filename_reference_marker_genes, config_path, max_processors=1, temp_directory=None, debug=False, logger=None):
 		self._logger = logger
 		if not self._logger:
 			self._logger = Logger("MGExtract")
+		self._temp_directory = temp_directory
 		self._mg_analyse_executable = mg_analyse_executable
 		self._filename_query_genome_file_paths = filename_query_genome_file_paths
 		self._filename_reference_genome_file_paths = filename_reference_genome_file_paths
@@ -38,7 +40,7 @@ class MGExtract(object):
 		self._config_path = config_path
 		self._max_processors = max_processors
 		self._debug = debug
-		self._working_dir = tempfile.mkdtemp()
+		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
 
 	def gather_markergenes(self, hmmer, mg_type, output_file):
 		self._logger.info("[MGExtract] Searching and extracting marker genes")
@@ -70,8 +72,8 @@ class MGExtract(object):
 			success = False
 
 		if success:
-			tmp_out_file_path = tempfile.mktemp(suffix="_accepted")
-			tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected")
+			tmp_out_file_path = tempfile.mktemp(suffix="_accepted", dir=self._temp_directory)
+			tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._temp_directory)
 
 			self._merge_marker_genes_files(local_genome_file_paths, tmp_out_file_path, out_bin_file=tmp_out_file_bin_path, mg_type=mg_type)
 			if os.path.exists(tmp_out_file_path):

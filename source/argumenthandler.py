@@ -4,6 +4,7 @@ import os
 import argparse
 import time
 import datetime
+import tempfile
 from config import Config
 from logger import Logger
 
@@ -16,6 +17,7 @@ class ArgumentHandler(object):
 	_verbose = True
 	config_file_path = None
 	pipeline_directory = None
+	temp_directory = None
 
 	#[main]
 	stage = 0
@@ -305,6 +307,13 @@ class ArgumentHandler(object):
 			self._valid_args = False
 			return
 
+		if ArgumentHandler.temp_directory is None:
+			ArgumentHandler.temp_directory = tempfile.gettempdir()
+		if not os.path.isdir(ArgumentHandler.temp_directory):
+			self._logger.error("'-temp' Directory does not exist: '{}'".format(ArgumentHandler.temp_directory))
+			self._valid_args = False
+			return
+
 		for sub_directory in ArgumentHandler._silva_ref_files:
 			file_path = os.path.join(ArgumentHandler.silva_reference_directory, sub_directory)
 			if not os.path.isfile(file_path):
@@ -585,6 +594,9 @@ class ArgumentHandler(object):
 
 			return
 
+		if ArgumentHandler.temp_directory is None:
+			ArgumentHandler.temp_directory = self._config.get_value("Main", "temp_directory", verbose=False)
+
 		if ArgumentHandler.output_directory is None:
 			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory", verbose=False)
 
@@ -721,6 +733,8 @@ Format: <genome_id>\\t<path>
 No column names!""")
 		group_input.add_argument("-c", "--config_file", type=str, default=None, help="path to the configuration file of the pipeline")
 		group_out = group_input.add_mutually_exclusive_group()
+		group_out.add_argument("-T", "--temp_directory", default=None, type=str,
+							help="directory containing found marker genes and also a file in mothur format containing the clustering")
 		group_out.add_argument("-od", "--output_directory", default=None, type=str,
 							help="folder in which a subfolder will created for the output")
 		group_out.add_argument("-o", "--project_directory", default=None, type=str,

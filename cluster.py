@@ -15,6 +15,7 @@ def main(options):
 	mg_cluster = MGCluster(mothur_executable=options.binary_mothur,
 						   directory_silva_reference=options.silva_reference_directory,
 						   max_processors=options.processors,
+						   temp_directory=options.temp_directory,
 						   debug=options._debug_mode)
 
 	return mg_cluster.cluster(marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
@@ -46,12 +47,13 @@ dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={pro
 set.current(column={local_dist})
 cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}.merged.names)"""
 
-	def __init__(self, mothur_executable, directory_silva_reference, max_processors=1, debug=False, logger=None):
+	def __init__(self, mothur_executable, directory_silva_reference, max_processors=1, temp_directory=None, debug=False, logger=None):
 		self._logger = logger
 		if not self._logger:
 			self._logger = Logger("MGCluster")
 		self._mothur_executable = mothur_executable
-		self._working_dir = tempfile.mkdtemp()
+		self._temp_directory = temp_directory
+		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
 
 		self._old_dir = os.getcwd()
 		# required or mothur messes up the dist.seqs command
