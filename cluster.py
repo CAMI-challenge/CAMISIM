@@ -86,6 +86,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		project_folder = os.path.dirname(output_cluster_file)
 		find_mask_list = os.path.join(self._working_dir, "*.list")
 		list_of_files = glob.glob(find_mask_list)
+		result = True
 		if len(list_of_files) == 0:
 			self._logger.error("[MGCluster] Clustering failed")
 			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
@@ -99,11 +100,11 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 				self._logger.info("[MGCluster] Clustering success")
 			else:
 				self._logger.error("[MGCluster] Clustering failed!")
+				result = False
 			if not self._debug:
 				shutil.rmtree(self._working_dir)
 			else:
 				self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
-			result = True
 		else:
 			self._logger.error("[MGCluster] Clustering with odd result, several files found!")
 			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
