@@ -157,7 +157,9 @@ class MetaTable:
 
 	def get_map(self, key_header, value_header):
 		new_map = {}
+		if len(self._meta_table) < 2:
+			return new_map
 		row_keys = self._meta_table[key_header]
 		row_values = self._meta_table[value_header]
-		for index, key in enumerate(key_header):
+		for index, key in enumerate(row_keys):
 			new_map[key] = row_values[index]
