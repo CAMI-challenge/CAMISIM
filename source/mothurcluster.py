@@ -8,7 +8,7 @@ import textwrap
 
 class MothurCluster:
 	"""Reading and writing a meta table"""
-	def __init__(self, precision, otu_separator="\t", element_separator=",", logger=None):
+	def __init__(self, precision, otu_separator="\t", element_separator=",", sequence_map=None, logger=None):
 		assert isinstance(precision, int)
 
 		self._precision = int(math.log10(precision))
@@ -18,10 +18,16 @@ class MothurCluster:
 		self._cluster_by_cutoff = {}
 		self.element_to_index_mapping = {}
 		self._unique_threshold = "unique"
+		self._silva_map = {}
+		if sequence_map is not None:
+			assert isinstance(sequence_map, dict)
+			self._silva_map = sequence_map
 
-	@staticmethod
-	def element_to_genome_id(element):
-		if '.' in element:
+	# @staticmethod
+	def element_to_genome_id(self, element):
+		if element in self._silva_map:
+			return self._silva_map[element]
+		elif '.' in element:
 			prefix, suffix = element.split(".", 1)
 			suffix = suffix.split("_", 1)[0]
 			return "{pre}.{suf}".format(pre=prefix, suf=suffix)
