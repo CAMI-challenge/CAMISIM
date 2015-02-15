@@ -73,7 +73,7 @@ class ArgumentHandler(object):
 	file_cluster_mg_16s = "mothur_cluster_{}.list".format(_suffix_16S)
 
 	#subfolder/files
-	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta"]
+	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	#meta table columns  'OTU', 'novelty_category'
