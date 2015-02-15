@@ -154,3 +154,10 @@ class MetaTable:
 					new_column.extend(meta_table.get_column(header))
 					self.set_column(new_column, header)
 		self._number_of_rows += meta_table.get_number_of_rows()
+
+	def get_map(self, key_header, value_header):
+		new_map = {}
+		row_keys = self._meta_table[key_header]
+		row_values = self._meta_table[value_header]
+		for index, key in enumerate(key_header):
+			new_map[key] = row_values[index]
