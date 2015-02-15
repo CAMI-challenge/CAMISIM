@@ -19,8 +19,13 @@ def my_main(options):
 
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
+	silva_sequence_map = MetaTable(logger=logger)
+	silva_sequence_map_filename = os.path.join(options.silva_reference_directory, "map.tsv")
+	silva_sequence_map.read(silva_sequence_map_filename)
+	sequence_mapping = silva_sequence_map.get_map(0, 1)
+
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	mothur_cluster = MothurCluster(options.precision, logger=logger)
+	mothur_cluster = MothurCluster(options.precision, sequence_map=sequence_mapping, logger=logger)
 	mothur_cluster.read(cluster_file)
 
 	taxonomy_cluster = TaxonomicCluster(mothur_cluster, taxonomy, logger)
