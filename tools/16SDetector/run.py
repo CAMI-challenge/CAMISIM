@@ -94,10 +94,10 @@ def main():
 	if (input_fasta_file is None) or (input_fasta_file is not None and (not os.path.isfile(input_fasta_file))):
 		print("The input fasta file %s doesn't exist" % input_fasta_file)
 		return
-	if ('-' in input_fasta_file) or ('+' in input_fasta_file):
-		print('The input fasta file path is not allowed to contain "+" or "-" characters ' +
-			  'due to the "Mothur" software, given path:\n' + str(input_fasta_file))
-		return
+	#if ('-' in input_fasta_file) or ('+' in input_fasta_file):
+	#	print('The input fasta file path is not allowed to contain "+" or "-" characters ' +
+	#		  'due to the "Mothur" software, given path:\n' + str(input_fasta_file))
+	#	return
 
 	input_fasta_scaffolds_file = None #config.get('inputFastaScaffoldsFile')
 	if (input_fasta_scaffolds_file is not None) and (not os.path.isfile(input_fasta_scaffolds_file)):
