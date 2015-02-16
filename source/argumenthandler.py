@@ -73,7 +73,8 @@ class ArgumentHandler(object):
 	file_cluster_mg_16s = "mothur_cluster_{}.list".format(_suffix_16S)
 
 	#subfolder/files
-	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
+	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta"]
+	silva_ref_map_file = "map.tsv"
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	#meta table columns  'OTU', 'novelty_category'
@@ -320,6 +321,11 @@ class ArgumentHandler(object):
 				self._logger.error("'-silva' File does not exist: '{}'".format(file_path))
 				self._valid_args = False
 				return
+
+		file_path = os.path.join(ArgumentHandler.silva_reference_directory, ArgumentHandler.silva_ref_map_file)
+		if not os.path.isfile(file_path):
+			ArgumentHandler.silva_ref_map_file = None
+			self._logger.warning("'-silva' A sequence mapping file for the silva references was not found. Assuming it is not required!")
 
 		if ArgumentHandler.ncbi_reference_directory is None:
 			self._logger.error("'-ncbi' NCBI reference directory is required!")
