@@ -159,6 +159,4 @@ for line in hmm_resu:
     ff.write('\t'.join([header, 'rna_hmm3', 'rRNA', r_start, r_end, evalue, strand, 'NA', feature_type]) + '\n')
 ff.close()
 
-
 os.remove(out_fname + '.fa')
-
