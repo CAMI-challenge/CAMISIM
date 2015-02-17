@@ -69,6 +69,7 @@ class MGExtract(object):
 		cmd_task_list = self._create_cmd_task_list(hmmer=hmmer, list_of_fasta=local_genome_file_paths.values())
 		fail_list = parallel.runCmdParallel(cmd_task_list, self._max_processors)
 		if fail_list is not None:
+			parallel.reportFailedCmd(fail_list)
 			success = False
 
 		if success:
@@ -78,6 +79,9 @@ class MGExtract(object):
 			self._merge_marker_genes_files(local_genome_file_paths, tmp_out_file_path, out_bin_file=tmp_out_file_bin_path, mg_type=mg_type)
 			if os.path.exists(tmp_out_file_path):
 				shutil.copy2(tmp_out_file_path, output_file)
+			else:
+				self._logger.warning("[MGExtract] No valid maker gene found!")
+				success = False
 			if os.path.exists(tmp_out_file_bin_path):
 				shutil.copy2(tmp_out_file_bin_path, output_file+".rejected.fna")
 
@@ -87,7 +91,11 @@ class MGExtract(object):
 				with open(output_file, 'a') as write_handler, open(self._filename_reference_marker_genes) as read_handler:
 					write_handler.writelines(read_handler)
 		end = time.time()
-		self._logger.info("[MGExtract] Done ({}s)".format(round(end - start), 1))
+		if success:
+			self._logger.info("[MGExtract] Done ({}s)".format(round(end - start, 1)))
+			self._logger.info("[MGExtract] Output: {}".format(output_file))
+		else:
+			self._logger.info("[MGExtract] Failed ({}s)".format(round(end - start, 1)))
 
 		if not self._debug:
 			shutil.rmtree(self._working_dir)
