@@ -73,8 +73,8 @@ class MGExtract(object):
 			success = False
 
 		if success:
-			tmp_out_file_path = tempfile.mktemp(suffix="_accepted", dir=self._temp_directory)
-			tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._temp_directory)
+			tmp_out_file_path = tempfile.mktemp(suffix="_accepted", dir=self._working_dir)
+			tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._working_dir)
 
 			self._merge_marker_genes_files(local_genome_file_paths, tmp_out_file_path, out_bin_file=tmp_out_file_bin_path, mg_type=mg_type)
 			if os.path.exists(tmp_out_file_path):
