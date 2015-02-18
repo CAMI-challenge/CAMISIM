@@ -331,7 +331,7 @@ def reportFailedCmd(failList):
         msgList = []
         for task in failList:
             assert isinstance(task, dict)
-            msg = 'Task failed with return code: %s, task: %s' % (task['process'].returncode, task['task'].cmd)
+            msg = '[parallel] Task failed with return code: {}, task:{}\n'.format(task['process'].returncode, task['task'].cmd)
             msgList.append(msg)
             sys.stderr.write(msg)
         sys.stderr.flush()
