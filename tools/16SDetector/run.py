@@ -182,7 +182,7 @@ def main():
 
 	# generates working fasta files always when the configuration file is newer than particular files to be generated
 	sequences = Sequences(input_fasta_file, input_fasta_scaffolds_file, scaffolds_to_contigs_map_file, taxonomic_ranks, min_seq_len)
-	if sequences.get_sequence_count() == 0:
+	if sequences.get_sequence_count() == -1:
 		sys.stderr.write("WARNING: [16S detector] File contains no valid sequences: {}\n".format(input_fasta_file))
 		return
 
