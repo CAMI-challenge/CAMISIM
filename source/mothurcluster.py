@@ -31,8 +31,8 @@ class MothurCluster:
 			prefix, suffix = element.split(".", 1)
 			suffix = suffix.split("_", 1)[0]
 			return "{pre}.{suf}".format(pre=prefix, suf=suffix)
-		elif element.count('_') >= 5:
-			return element.rsplit('_', 5)[0]
+		#elif '+' in element or '-' in element:
+		#	return element.rsplit('_', 5)[0]
 		else:
 			return element
 
