@@ -43,6 +43,9 @@ parser.add_option("-e", "--Evalue", dest="evalue", action="store", type="float",
 parser.add_option("-p", "--pThreads", dest="p", action="store", type="int",
         default=1, help="number of threads for hmmsearch")
 
+parser.add_option("-T", "--tmp", dest="temp_folder", action="store", default=None, type=str,
+        help="temporary folder")
+
 
 try:
     (options, args) = parser.parse_args()
@@ -117,7 +120,9 @@ dict_rRNA = {'arc_lsu': '23S_rRNA', 'arc_ssu': '16S_rRNA', 'arc_tsu': '5S_rRNA',
              'bac_lsu': '23S_rRNA', 'bac_ssu': '16S_rRNA', 'bac_tsu': '5S_rRNA',
              'euk_lsu': '28S_rRNA', 'euk_ssu': '18S_rRNA', 'euk_tsu': '8S_rRNA'}
 
-temp_dir_path = tempfile.mkdtemp()
+temp_dir_path = options.temp_folder
+if temp_dir_path is None:
+    temp_dir_path = tempfile.mkdtemp(suffix="rnammer", dir=None)
 
 hmm_resu = []
 for kingdom in options.kingdoms.split(','):
@@ -143,5 +148,6 @@ for kingdom in options.kingdoms.split(','):
         #os.remove(hmm_out_fname)
         #os.remove(dom_out_fname)
 
-shutil.rmtree(temp_dir_path)
-os.remove(in_fasta)
+if options.temp_folder is None:
+    shutil.rmtree(temp_dir_path)
+    os.remove(in_fasta)
