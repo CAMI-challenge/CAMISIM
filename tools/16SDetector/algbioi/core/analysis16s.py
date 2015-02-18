@@ -50,8 +50,17 @@ class RRNA16S():
 		rnammer_executable = self._config.get('rnammer')
 		#rnammer_bash = self._folder_tools + "/run_rnammer.sh"
 		#cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable + ' -x ' + rnammer_bash
-		cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable
-		 + ' -m ' + moltypes + ' -k ' + kingdoms)
+		cmd = "time {script} -i '{input}' -o '{prefix}' -r '{rnammer}' -m '{moltypes}' -k '{kingdoms}' -T {temp}".format(
+			script=os.path.join(hmmInstallDir, 'rna_hmm2.py'),
+			input=inputFastaFile,
+			prefix=out_file_name_prefix,
+			rnammer=rnammer_executable,
+			moltypes=moltypes,
+			kingdoms=kingdoms,
+			temp=self._workingDir
+		)
+		#cmd = str('time ' + os.path.join(hmmInstallDir, 'rna_hmm2.py') + ' -i ' + inputFastaFile + ' -o ' + out_file_name_prefix + ' -r ' + rnammer_executable
+		# + ' -m ' + moltypes + ' -k ' + kingdoms)
 
 		if os.name == 'posix':
 			if outLog is not None:
