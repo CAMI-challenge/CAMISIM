@@ -168,6 +168,8 @@ class Sequences():
                     temp.append(s.id)
                     hashToSeqIdDict[h] = temp
 
+    def get_sequence_count(self):
+        return self._seqCounter
 
     def _readContigsScaffolds(self, filePath, readContigs = True):
         """
