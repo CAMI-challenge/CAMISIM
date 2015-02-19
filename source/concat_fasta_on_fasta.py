@@ -54,6 +54,7 @@ def my_main():
 
 
 def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None):
+	unique_id_set = set()
 	#print input_file
 	if unique_id is None:
 		basename = os.path.basename(input_file)
@@ -68,6 +69,10 @@ def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None
 	counter_small = 0
 	for seq_record in SeqIO.parse(input_file, "fasta"):
 		seq_length = len(seq_record.seq)
+		if seq_record.id in unique_id_set:
+			sys.stderr.write("WARNING: [merge] Remove duplicate entry of {}: {}\n".format(unique_id, seq_record.id))
+			continue
+		unique_id_set.add(seq_record.id)
 		if seq_length >= min_length:
 			counter += 1
 			with open(output_file, "a") as file_handler:
