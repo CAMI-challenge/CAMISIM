@@ -87,7 +87,7 @@ in_fasta = out_prefix_fname + '.fa'
 ff = open(in_fasta, 'w')
 for (i, rec) in enumerate(records):
     ff.write('>s' + str(i) + '\n' + format(rec.sequence) + '\n')
-    ff.write('>s' + str(i) + '|rev\n' + format(rec.sequence[::-1].translate(tr)) + '\n')
+    #ff.write('>s' + str(i) + '|rev\n' + format(rec.sequence[::-1].translate(tr)) + '\n')
 ff.close()
 #sys.exit(1)
 # a temporary fasta file, use s(int) to easy the parsing
