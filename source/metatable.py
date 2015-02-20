@@ -156,6 +156,12 @@ class MetaTable:
 		self._number_of_rows += meta_table.get_number_of_rows()
 
 	def get_map(self, key_header, value_header):
+		if key_header not in self._meta_table:
+			self._logger.error("MetaTable: key_header not available!")
+			return None
+		if value_header not in self._meta_table:
+			self._logger.error("MetaTable: value_header not available!")
+			return None
 		new_map = {}
 		if len(self._meta_table) < 2:
 			return new_map
@@ -163,3 +169,4 @@ class MetaTable:
 		row_values = self._meta_table[value_header]
 		for index, key in enumerate(row_keys):
 			new_map[key] = row_values[index]
+		return new_map
