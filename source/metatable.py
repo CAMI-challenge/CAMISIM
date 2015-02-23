@@ -158,9 +158,11 @@ class MetaTable:
 	def get_map(self, key_header, value_header):
 		if key_header not in self._meta_table:
 			self._logger.error("MetaTable: key_header not available!")
+			self._logger.error(self._header)
 			return None
 		if value_header not in self._meta_table:
 			self._logger.error("MetaTable: value_header not available!")
+			self._logger.error(self._header)
 			return None
 		new_map = {}
 		if len(self._meta_table) < 2:
