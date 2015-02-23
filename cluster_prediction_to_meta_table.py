@@ -23,7 +23,7 @@ def my_main(options):
 	if options.silva_ref_map_file is not None:
 		silva_sequence_map = MetaTable(logger=logger)
 		silva_sequence_map_filename = os.path.join(options.silva_reference_directory, options.silva_ref_map_file)
-		silva_sequence_map.read(silva_sequence_map_filename)
+		silva_sequence_map.read(silva_sequence_map_filename, head=False)
 		sequence_mapping = silva_sequence_map.get_map(0, 1)
 
 	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
