@@ -12,10 +12,11 @@ __author__ = 'hofmann'
 import os
 import sys
 import traceback
-import multiprocessing
-import subprocess
+#import multiprocessing
+#import subprocess
 import tempfile
 import shutil
+import parallel
 
 try:
 	from Bio import SeqIO
@@ -33,9 +34,12 @@ class ANIm:
 		self.logger = logger
 		self.out_dir_name = out_dir_name
 		self.clean_output = False
-		if self.out_dir_name is None:
+		if out_dir_name is None:
 			self.clean_output = True
 			self.out_dir_name = tempfile.mkdtemp()
+		else:
+			self.clean_output = True
+			self.out_dir_name = tempfile.mkdtemp(dir=out_dir_name)
 		self.cmd_lines = []
 		self.reference_file_names = self.get_organism_file_names(references)
 		self.candidate_file_names = self.get_organism_file_names(candidates)
@@ -123,7 +127,12 @@ class ANIm:
 		"""
 		#self.logger.info("add_nucmer_cmd_lines: %s %s" % (candidate_ids, reference_ids))
 		unique_set = set()
+		# print "C", candidate_ids
+		# print ""
 		for candidate_id in candidate_ids:
+			# print "R", reference_ids
+			# print ""
+			# print "RF", self.reference_file_names.keys()
 			for reference_id in reference_ids:
 				tupel = (candidate_id, reference_id)
 				if tupel in unique_set:
@@ -155,17 +164,23 @@ class ANIm:
 		"""
 		self.logger.info("Running {} jobs with multiprocessing".format(len(self.cmd_lines)))
 		#return
-		pool = multiprocessing.Pool(self.pool_size)
-		completed = []
-		if verbose:
-			callback_fn = self.logger_callback
-		else:
-			callback_fn = completed.append
-		[pool.apply_async(subprocess.call, (str(cmd_line), ), {'stderr': subprocess.PIPE, 'shell': sys.platform != "win32"}, callback=callback_fn)
-			for cmd_line in self.cmd_lines]
-		pool.close()        # Run jobs
-		pool.join()         # Collect output
-		self.logger.info("Multiprocessing jobs completed:\n%s" % completed)
+		cmd_task_list = [parallel.TaskCmd(cmd, self.out_dir_name) for cmd in self.cmd_lines]
+		fail_list = parallel.runCmdParallel(cmd_task_list, self.pool_size)
+		if fail_list is not None:
+			parallel.reportFailedCmd(fail_list)
+			self._CUM_RETVALS = -1 * len(fail_list)
+		# pool = multiprocessing.Pool(self.pool_size)
+		# completed = []
+		# if verbose:
+		# 	callback_fn = self.logger_callback
+		# else:
+		# 	callback_fn = completed.append
+		# [pool.apply_async(subprocess.call, (str(cmd_line), ), {'stderr': subprocess.PIPE, 'shell': sys.platform != "win32"}, callback=callback_fn)
+		# 	for cmd_line in self.cmd_lines]
+		# pool.close()        # Run jobs
+		# pool.join()         # Collect output
+		# self.logger.info("Multiprocessing jobs completed:\n%s" % completed)
+		self.logger.info("Multiprocessing jobs completed")
 
 	# Run NUCmer pairwise on the input files, using multiprocessing
 	def run_cmd_lines(self):
@@ -181,6 +196,7 @@ class ANIm:
 		"""
 		if len(self.cmd_lines) < 1:
 			self.logger.warning("NUCmer command lines: No lines!")
+			self.logger.warning("Ref {} / {}".format(len(self.reference_file_names), len(self.candidate_file_names)))
 			return
 		#self.logger.info("NUCmer command lines:\n\t%s" % '\n\t'.join(self.cmd_lines[0]))
 		self.logger.info("NUCmer command lines:\n\t{}".format(self.cmd_lines[0]))
@@ -372,8 +388,9 @@ class ANIm:
 			candidate_id = candidate_id_reference_id[0]
 			reference_id = candidate_id_reference_id[1]
 			#self.logger.info("{}: candidate_id: {}; reference_id: {}".format(candidate_id_reference_id, candidate_id, reference_id))
-			ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
-			if candidate_id not in best_ani_by_candidate_id or best_ani_by_candidate_id[candidate_id] < ani_ish:
+			#ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
+			ani_ish = perc_ids[candidate_id_reference_id]
+			if candidate_id not in best_ani_by_candidate_id or (perc_aln[candidate_id_reference_id] > 0.8 and best_ani_by_candidate_id[candidate_id] < ani_ish):
 				best_ani_by_candidate_id[candidate_id] = ani_ish
 				min_lengths[candidate_id] = lengths[candidate_id_reference_id]
 				min_sim_errors[candidate_id] = sim_errors[candidate_id_reference_id]
