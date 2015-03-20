@@ -45,8 +45,8 @@ def my_main(options, logger=None):
 
 	# TODO: get rid of import package
 	nucmer_exe = "importpackage mummer;nucmer"
-	with ANIm(options.input_genomes_file, options.input_reference_file, None, nucmer_exe=nucmer_exe, logger=logger, pool_size=options.processors) as ani_calculator:
-		list_of_clusters = mothur_cluster.get_clusters_of_elements(options.otu_distance, unpublished_genome_ids_column)
+	with ANIm(options.input_genomes_file, options.input_reference_file, options.temp_directory, nucmer_exe=nucmer_exe, logger=logger, pool_size=options.processors) as ani_calculator:
+		list_of_clusters = mothur_cluster.get_clusters_of_elements(options.distance_cutoff, unpublished_genome_ids_column)
 		#logger.info("OTUS: {}".format(otus))
 		#sys.exit(0)
 		for unknown_genomes_id in unpublished_genome_ids_column:
