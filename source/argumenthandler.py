@@ -19,16 +19,17 @@ class ArgumentHandler(object):
 	pipeline_directory = None
 	temp_directory = None
 
-	#[main]
+	# [main]
 	stage = 0
 	novelty_only = None
 	processors = 1
 
-	#[MarkerGeneExtraction]
+	# [MarkerGeneExtraction]
 	hmmer = None
-	input_reference_file = None
-	input_reference_fna_file = None
-	input_genomes_file = None
+	reference_metadata_table = None
+	reference_genome_locations_file = None
+	reference_markergene_file_path = None
+	query_genomes_location_file = None
 	output_directory = None
 	project_directory = None
 
@@ -37,7 +38,7 @@ class ArgumentHandler(object):
 	_rnaHmmInstallDir = None  # 16S mg analysis
 	_databaseFile = None  # 16S mg analysis
 
-	#[MarkerGeneClustering]
+	# [MarkerGeneClustering]
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
 	binary_mothur = None
 	metadata_table_in = None
@@ -47,37 +48,38 @@ class ArgumentHandler(object):
 	silva_reference_directory = None
 	precision = 1000
 
-	#[MarkerGeneClassification]
+	# [MarkerGeneClassification]
 	otu_distance = None
 	classification_distance_minimum = None
 	ncbi_reference_directory = None
 
-	#[Binary]
-	#binary_hmmer3 = None
-	#binary_mummer = None
+	# [Binary]
+	# binary_hmmer3 = None
+	# binary_mummer = None
 
-	#subfolder_names
+	# subfolder_names
 	# name of folder containing all tools
 	folder_name_source = "source"
 	folder_name_tools = "tools"
 	# name of folder containing all log files
 	folder_name_logfiles = "logfiles"
 
-	#filenames
+	# filenames
+	filename_internal_id_map = "gid_iid.tsv"
 	_filename_config_default = "config.cfg"
 	_suffix_16S = "16S_rRNA"
 	filename_log = "pipeline.log"
-	#file_mg_23s = "23S_rRNA.fna"
+	# file_mg_23s = "23S_rRNA.fna"
 	file_mg_16s = "{}.fna".format(_suffix_16S)
-	#file_mg_05s = "5S_rRNA.fna"
+	# file_mg_05s = "5S_rRNA.fna"
 	file_cluster_mg_16s = "mothur_cluster_{}.list".format(_suffix_16S)
 
-	#subfolder/files
+	# subfolder/files
 	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta"]
 	silva_ref_map_file = "map.tsv"
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
-	#meta table columns  'OTU', 'novelty_category'
+	# meta table columns  'OTU', 'novelty_category'
 	column_name_unpublished_genomes_id = "genome_ID"
 	column_name_cutoff = "prediction_threshold"
 	column_name_otu_id = "OTU"
@@ -164,14 +166,15 @@ class ArgumentHandler(object):
 		OTU dist.:\t\t{otu}
 		Min. Clas. dist.:\t{mcd}
 
-""".format(	config=ArgumentHandler.config_file_path,
+""".format(
+			config=ArgumentHandler.config_file_path,
 			pipe=ArgumentHandler.pipeline_directory,
 			out=ArgumentHandler.output_directory,
 			stage=stages[ArgumentHandler.stage],
 			pool=ArgumentHandler.processors,
-			ir=ArgumentHandler.input_reference_file,
-			irf=ArgumentHandler.input_reference_fna_file,
-			i=ArgumentHandler.input_genomes_file,
+			ir=ArgumentHandler.reference_genome_locations_file,
+			irf=ArgumentHandler.reference_markergene_file_path,
+			i=ArgumentHandler.query_genomes_location_file,
 			project=ArgumentHandler.project_directory,
 			im=ArgumentHandler.metadata_table_in,
 			om=ArgumentHandler.metadata_table_out,
@@ -179,8 +182,8 @@ class ArgumentHandler(object):
 			silva=ArgumentHandler.silva_reference_directory,
 			ncbi=ArgumentHandler.ncbi_reference_directory,
 			otu=ArgumentHandler.otu_distance,
-			mcd=ArgumentHandler.classification_distance_minimum,
-			)
+			mcd=ArgumentHandler.classification_distance_minimum
+		)
 		return result_string
 
 	def is_valid(self):
@@ -188,12 +191,12 @@ class ArgumentHandler(object):
 
 	def _check_values(self):
 		if ArgumentHandler.novelty_only:
-			if ArgumentHandler.input_reference_file is None:
+			if ArgumentHandler.reference_genome_locations_file is None:
 				self._logger.error("'-ir' Reference genome mapping file is required!")
 				self._valid_args = False
 				return
-			elif not os.path.isfile(ArgumentHandler.input_reference_file):
-				self._logger.error("'-ir' File does not exist: '{}'".format(ArgumentHandler.input_reference_file))
+			elif not os.path.isfile(ArgumentHandler.reference_genome_locations_file):
+				self._logger.error("'-ir' File does not exist: '{}'".format(ArgumentHandler.reference_genome_locations_file))
 				self._valid_args = False
 				return
 
@@ -387,30 +390,30 @@ class ArgumentHandler(object):
 
 			if ArgumentHandler.hmmer == 3:
 				executable = os.path.join(ArgumentHandler._hmmerBinDir, "hmmsearch")
-				rnaHmmWrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm3.py")
+				rna_hmm_wrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm3.py")
 			else:
 				executable = ArgumentHandler.binary_rnammer
-				rnaHmmWrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm2.py")
+				rna_hmm_wrapper = os.path.join(ArgumentHandler._rnaHmmInstallDir, "rna_hmm2.py")
 
 			if not os.access(executable, os.X_OK):
 				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(ArgumentHandler.hmmer, executable))
 				self._valid_args = False
 				return
-			if not os.access(rnaHmmWrapper, os.X_OK):
-				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(ArgumentHandler.hmmer, rnaHmmWrapper))
+			if not os.access(rna_hmm_wrapper, os.X_OK):
+				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(ArgumentHandler.hmmer, rna_hmm_wrapper))
 				self._valid_args = False
 				return
 
-			if ArgumentHandler.input_reference_file is None and ArgumentHandler.input_reference_fna_file is None:
+			if ArgumentHandler.reference_genome_locations_file is None and ArgumentHandler.reference_markergene_file_path is None:
 				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
 				self._valid_args = False
 				return
-			elif ArgumentHandler.input_reference_file is None and ArgumentHandler.input_reference_fna_file is None:
+			elif ArgumentHandler.reference_genome_locations_file is None and ArgumentHandler.reference_markergene_file_path is None:
 				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
 				self._valid_args = False
 				return
 			else:  # if not os.path.isfile(ArgumentHandler.input_reference_file) and not os.path.isfile(ArgumentHandler.input_reference_fna_file):
-				file_path = ArgumentHandler.input_reference_file or ArgumentHandler.input_reference_fna_file
+				file_path = ArgumentHandler.reference_genome_locations_file or ArgumentHandler.reference_markergene_file_path
 				if not os.path.isfile(file_path):
 					self._logger.error("'-ir','-irf' File does not exist: '{}'".format(file_path))
 					self._valid_args = False
@@ -437,12 +440,12 @@ class ArgumentHandler(object):
 				self._valid_args = False
 				return
 
-		if ArgumentHandler.input_genomes_file is None:
+		if ArgumentHandler.query_genomes_location_file is None:
 			self._logger.error("'-i' Unidentified genome mapping file is required!")
 			self._valid_args = False
 			return
-		elif not os.path.isfile(ArgumentHandler.input_genomes_file):
-			self._logger.error("'-i' File does not exist: '{}'".format(ArgumentHandler.input_genomes_file))
+		elif not os.path.isfile(ArgumentHandler.query_genomes_location_file):
+			self._logger.error("'-i' File does not exist: '{}'".format(ArgumentHandler.query_genomes_location_file))
 			self._valid_args = False
 			return
 
@@ -457,11 +460,11 @@ class ArgumentHandler(object):
 
 		if ArgumentHandler.metadata_table_out is None:
 			basename = os.path.basename(ArgumentHandler.metadata_table_in)
-			ArgumentHandler.metadata_table_out = os.path.join(ArgumentHandler.project_directory, basename+".out.csv")
+			ArgumentHandler.metadata_table_out = os.path.join(ArgumentHandler.project_directory, basename + ".out.csv")
 			self._logger.warning("'-om' Metadata output: '{}'".format(ArgumentHandler.metadata_table_out))
-			#self._logger.error("'-om' Metadata file is required!")
-			#self._valid_args = False
-			#return
+			# self._logger.error("'-om' Metadata file is required!")
+			# self._valid_args = False
+			# return
 
 		if ArgumentHandler.processors is None:
 			self._logger.error("'-p' A number of processors is required!")
@@ -511,8 +514,8 @@ class ArgumentHandler(object):
 
 		expected_output_size = self._expected_output_size_in_giga_byte()
 		expected_tmp_size = expected_output_size
-		#if ArgumentHandler.multiple_samples:
-		#	expected_tmp_size /= ArgumentHandler.number_of_samples
+		# if ArgumentHandler.multiple_samples:
+		# 	expected_tmp_size /= ArgumentHandler.number_of_samples
 		directory_tmp = "/tmp"
 		directory_out = ArgumentHandler.project_directory
 		if not os.path.isdir(directory_out):
@@ -534,7 +537,7 @@ class ArgumentHandler(object):
 			message = "The output will require about {} GigaByte.".format(expected_output_size)
 
 		if message is not None:
-			user_input = raw_input(message+" Are you sure you want to continue? [y/n]\n>").lower()
+			user_input = raw_input(message + " Are you sure you want to continue? [y/n]\n>").lower()
 			do_loop = True
 			while do_loop:
 				if user_input == 'n' or user_input == 'no':
@@ -565,8 +568,8 @@ class ArgumentHandler(object):
 				self._valid_args = False
 				return
 
-		#if ArgumentHandler.config_file_path is None:
-		#	ArgumentHandler.config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler._filename_config_default)
+		# if ArgumentHandler.config_file_path is None:
+		# 	ArgumentHandler.config_file_path = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler._filename_config_default)
 		if not os.path.isfile(ArgumentHandler.config_file_path):
 			self._logger.error("'-c' File does not exist: '{}'".format(ArgumentHandler.config_file_path))
 			self._valid_args = False
@@ -579,15 +582,15 @@ class ArgumentHandler(object):
 			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
 			self._valid_args = False
 			return
-		#if ArgumentHandler.pipeline_directory is None:
-		#	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
+		# if ArgumentHandler.pipeline_directory is None:
+		# 	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if ArgumentHandler.novelty_only is None:
 			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, verbose=False)
 
 		if ArgumentHandler.novelty_only:
-			if ArgumentHandler.input_reference_file is None:
-				ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+			if ArgumentHandler.reference_genome_locations_file is None:
+				ArgumentHandler.reference_genome_locations_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
 
 			if ArgumentHandler.metadata_table_in is None:
 				ArgumentHandler.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
@@ -624,17 +627,17 @@ class ArgumentHandler(object):
 		if ArgumentHandler._rnaHmmInstallDir is None:
 			ArgumentHandler._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
 
-		if ArgumentHandler.input_reference_file is None:
-			ArgumentHandler.input_reference_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+		if ArgumentHandler.reference_genome_locations_file is None:
+			ArgumentHandler.reference_genome_locations_file = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
 
-		if ArgumentHandler.input_reference_fna_file is None:
-			ArgumentHandler.input_reference_fna_file = self._config.get_value("MarkerGeneExtraction", "input_reference_fna_file")
+		if ArgumentHandler.reference_markergene_file_path is None:
+			ArgumentHandler.reference_markergene_file_path = self._config.get_value("MarkerGeneExtraction", "input_reference_fna_file")
 
 		if ArgumentHandler.hmmer is None:
 			ArgumentHandler.hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer", is_digit=True)
 
-		if ArgumentHandler.input_genomes_file is None:
-			ArgumentHandler.input_genomes_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
+		if ArgumentHandler.query_genomes_location_file is None:
+			ArgumentHandler.query_genomes_location_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
 
 		if ArgumentHandler.binary_mothur is None:
 			ArgumentHandler.binary_mothur = self._config.get_value("MarkerGeneClustering", "mothur")
@@ -663,14 +666,13 @@ class ArgumentHandler(object):
 		if ArgumentHandler.classification_distance_minimum is None:
 			ArgumentHandler.classification_distance_minimum = self._config.get_value("MarkerGeneClustering", "classification_distance", is_digit=True)
 
-
 	@staticmethod
 	def _free_space_in_giga_bytes(directory="/tmp"):
 		if not os.path.isdir(directory):
 			return 0
 		statvfs = os.statvfs(directory)
 		free_space = statvfs.f_frsize * statvfs.f_bfree
-		return free_space / float(1024*1024*1024)
+		return free_space / float(1024 * 1024 * 1024)
 
 	@staticmethod
 	def _expected_output_size_in_giga_byte():
@@ -681,7 +683,7 @@ class ArgumentHandler(object):
 		config_file = options.config_file
 		if config_file is not None:
 			if not os.path.isabs(config_file):
-				#config_file = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, config_file)
+				# config_file = os.path.join(ArgumentHandler.pipeline_directory, ArgumentHandler.folder_name_tools, config_file)
 				config_file = os.path.realpath(config_file)
 			if not os.path.isfile(config_file):
 				self._logger.error("File does not exist: '{}'".format(options.config_file))
@@ -695,9 +697,9 @@ class ArgumentHandler(object):
 		ArgumentHandler.processors = options.processors
 		ArgumentHandler.novelty_only = options.novelty_only
 
-		ArgumentHandler.input_reference_file = options.input_reference_file
-		ArgumentHandler.input_reference_fna_file = options.input_reference_fna_file
-		ArgumentHandler.input_genomes_file = options.input_genomes
+		ArgumentHandler.reference_genome_locations_file = options.input_reference_file
+		ArgumentHandler.reference_markergene_file_path = options.input_reference_fna_file
+		ArgumentHandler.query_genomes_location_file = options.input_genomes
 		ArgumentHandler.output_directory = options.output_directory
 		ArgumentHandler.project_directory = options.project_directory
 		ArgumentHandler.metadata_table_in = options.metadata_table_in
@@ -713,9 +715,10 @@ class ArgumentHandler(object):
 		self.parser.add_argument("-verbose", "--verbose", action='store_true', default=False, help="display more information!")
 		self.parser.add_argument("-debug", "--debug_mode", action='store_true', default=False, help="activate DEBUG modus. tmp folders will not be deleted!")
 		self.parser.add_argument("-log", "--logging", action='store_true', default=False, help="pipeline output will written to a log file")
-		#self.parser.add_argument("-qc", "--quality_check", action='store_true', default=False, help="")
-		self.parser.add_argument("-p", "--processors", default=None, type=int,
-							help="number of processors to be used. >40 recommended.")
+		# self.parser.add_argument("-qc", "--quality_check", action='store_true', default=False, help="")
+		self.parser.add_argument(
+			"-p", "--processors", default=None, type=int,
+			help="number of processors to be used. >40 recommended.")
 		self.parser.add_argument("-s", "--stage", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
@@ -725,41 +728,53 @@ class ArgumentHandler(object):
 Default: 0
 ''')
 		self.parser.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
-		#group = parser.add_mutually_exclusive_group()
+		# group = parser.add_mutually_exclusive_group()
 		group_input = self.parser.add_argument_group("input/output")
-		group_input.add_argument("-ir", "--input_reference_file", default=None, type=str,
-							help="""path to a file containing list of reference genomes
+		group_input.add_argument(
+			"-ir", "--input_reference_file", default=None, type=str,
+			help="""path to a file containing list of reference genomes
 Format: <genome_id>\\t<path>
 No column names!""")
-		group_input.add_argument("-irf", "--input_reference_fna_file", default=None, type=str,
-							help="path to a fasta file containing the 16S marker genes of the reference genomes")
-		group_input.add_argument("-i", "--input_genomes", default=None, type=str,
-							help="""path to a file containing list of unidentified genomes
+		group_input.add_argument(
+			"-irf", "--input_reference_fna_file", default=None, type=str,
+			help="path to a fasta file containing the 16S marker genes of the reference genomes")
+		group_input.add_argument(
+			"-i", "--input_genomes", default=None, type=str,
+			help="""path to a file containing list of unidentified genomes
 Format: <genome_id>\\t<path>
 No column names!""")
 		group_input.add_argument("-c", "--config_file", type=str, default=None, help="path to the configuration file of the pipeline")
 		group_out = group_input.add_mutually_exclusive_group()
-		group_out.add_argument("-T", "--temp_directory", default=None, type=str,
-							help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		group_out.add_argument("-od", "--output_directory", default=None, type=str,
-							help="folder in which a subfolder will created for the output")
-		group_out.add_argument("-o", "--project_directory", default=None, type=str,
-							help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		group_input.add_argument("-im", "--metadata_table_in", default=None, type=str,
-							help="path to file containing tab separated list of unidentified genomes")
-		group_input.add_argument("-om", "--metadata_table_out", default=None, type=str,
-							help="path to file containing tab separated list of genomes and their file path")
+		group_out.add_argument(
+			"-T", "--temp_directory", default=None, type=str,
+			help="directory containing found marker genes and also a file in mothur format containing the clustering")
+		group_out.add_argument(
+			"-od", "--output_directory", default=None, type=str,
+			help="folder in which a subfolder will created for the output")
+		group_out.add_argument(
+			"-o", "--project_directory", default=None, type=str,
+			help="directory containing found marker genes and also a file in mothur format containing the clustering")
+		group_input.add_argument(
+			"-im", "--metadata_table_in", default=None, type=str,
+			help="path to file containing tab separated list of unidentified genomes")
+		group_input.add_argument(
+			"-om", "--metadata_table_out", default=None, type=str,
+			help="path to file containing tab separated list of genomes and their file path")
 
 		group_clustering = self.parser.add_argument_group("clustering")
-		group_clustering.add_argument("-cm", "--cluster_method", default=None,
-									  choices=ArgumentHandler._cluster_method_choices, type=str,
-									  help="Algorithm used for clustering")
-		group_clustering.add_argument("-th", "--threshold", default=None, type=float,
-							help="only distances up to the threshold will be calculated. Default: 0.05")
-		group_clustering.add_argument("-otu", "--otu_distance", default=None, type=float,
-							help="genetic distances at which cluster will be used as otus. Default: 0.03")
-		group_clustering.add_argument("-cth", "--classification_distance", default=None, type=float,
-							help="minimum distance for classification. Default: 0.02")
+		group_clustering.add_argument(
+			"-cm", "--cluster_method", default=None,
+			choices=ArgumentHandler._cluster_method_choices, type=str,
+			help="Algorithm used for clustering")
+		group_clustering.add_argument(
+			"-th", "--threshold", default=None, type=float,
+			help="only distances up to the threshold will be calculated. Default: 0.05")
+		group_clustering.add_argument(
+			"-otu", "--otu_distance", default=None, type=float,
+			help="genetic distances at which cluster will be used as otus. Default: 0.03")
+		group_clustering.add_argument(
+			"-cth", "--classification_distance", default=None, type=float,
+			help="minimum distance for classification. Default: 0.02")
 
 		if args is None:
 			return self.parser.parse_args()
