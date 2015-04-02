@@ -50,24 +50,26 @@ def my_main():
 		print "Error -i: input file does not exist"
 		sys.exit(1)
 
-	merge(input_file, output_file, options.min_length, unique_id=options.unique_id)
+	# with open(output_file, "a") as output_file_handle, open(out_bin_file, "a") as out_bin_file_handle:
+	with open(output_file, "a") as output_file_handle:
+		merge(input_file, output_file_handle, options.min_length, unique_id=options.unique_id)
 
 
-def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None):
+def merge(input_file_path, output_file_handle, min_length, unique_id=None, out_bin_file_handle=None, uid_sid_file_handle=None):
 	unique_id_set = set()
 	#print input_file
 	if unique_id is None:
-		basename = os.path.basename(input_file)
+		basename = os.path.basename(input_file_path)
 		unique_id = os.path.splitext(basename)[0]
 
-	if not os.path.exists(input_file):
+	if not os.path.exists(input_file_path):
 		#sys.stderr.write("WARNING: [merge] File not found: '{file}'\n".format(file=input_file))
 		sys.stderr.write("WARNING: [merge] No marker genes found for: '{unique_id}'\n".format(unique_id=unique_id))
 		return
 
 	counter = 0
 	counter_small = 0
-	for seq_record in SeqIO.parse(input_file, "fasta"):
+	for seq_record in SeqIO.parse(input_file_path, "fasta"):
 		seq_length = len(seq_record.seq)
 		if seq_record.id in unique_id_set:
 			sys.stderr.write("WARNING: [merge] Removed duplicate entry of {}: {}\n".format(unique_id, seq_record.id))
@@ -75,22 +77,22 @@ def merge(input_file, output_file, min_length, unique_id=None, out_bin_file=None
 		unique_id_set.add(seq_record.id)
 		if seq_length >= min_length:
 			counter += 1
-			with open(output_file, "a") as file_handler:
-				file_handler.write(">{}_{}\n".format(unique_id, seq_record.id))
-				file_handler.writelines(seq_record.seq + "\n")
+			output_file_handle.write(">{}\n".format(unique_id))
+			output_file_handle.writelines(seq_record.seq + "\n")
+			if uid_sid_file_handle:
+				uid_sid_file_handle.write(">{}_{}\n".format(unique_id, seq_record.id))
 		else:
 			counter_small += 1
 			#sys.stderr.write("WARNING: [merge] sequence too small. Size: {size} ID: '{uid}', File: '{file}'\n".format(
 			#				size=str(seq_length),
 			#				uid=unique_id,
 			#				file=os.path.basename(input_file)))
-			if out_bin_file:
-				with open(out_bin_file, "a") as file_handler:
-					file_handler.write(">{}_{}\n".format(unique_id, seq_record.id))
-					file_handler.writelines(seq_record.seq + "\n")
+			if out_bin_file_handle:
+				out_bin_file_handle.write(">{}_{}\n".format(unique_id, seq_record.id))
+				out_bin_file_handle.writelines(seq_record.seq + "\n")
 
 	if counter == 0:
-		sys.stderr.write("WARNING: [merge] No valid marker gene found for {}: {}\n".format(unique_id, input_file))
+		sys.stderr.write("WARNING: [merge] No valid marker gene found for {}: {}\n".format(unique_id, input_file_path))
 	if counter_small > 0:
 		sys.stderr.write("WARNING: [merge] {} marker genes rejected from {}\n".format(counter_small, unique_id))
 
