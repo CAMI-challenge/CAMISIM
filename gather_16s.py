@@ -13,24 +13,27 @@ from source.metatable import MetaTable
 
 def main(options):
 	assert isinstance(options, ArgumentHandler)
-	mg_extract = MGExtract(mg_analyse_executable=os.path.join(options.pipeline_directory, "tools", "16SDetector", "run.py"),
-						   filename_query_genome_file_paths=options.query_genomes_location_file,
-						   filename_reference_genome_file_paths=options.reference_genome_locations_file,
-						   filename_reference_marker_genes=options.reference_markergene_file_path,
-						   config_path=options.config_file_path,
-						   filename_iid_map=os.path.join(options.project_directory, options.filename_internal_id_map),
-						   max_processors=options.processors,
-						   temp_directory=options.temp_directory,
-						   debug=options._debug_mode)
+	mg_extract = MGExtract(
+		mg_analyse_executable=os.path.join(options.pipeline_directory, "tools", "16SDetector", "run.py"),
+		filename_query_genome_file_paths=options.query_genomes_location_file,
+		filename_reference_genome_file_paths=options.reference_genome_locations_file,
+		filename_reference_marker_genes=options.reference_markergene_file_path,
+		config_path=options.config_file_path,
+		filename_iid_map=os.path.join(options.project_directory, options.filename_internal_id_map),
+		max_processors=options.processors,
+		temp_directory=options.temp_directory,
+		debug=options.debug_mode)
 
-	return mg_extract.gather_markergenes(hmmer=options.hmmer,
-										 mg_type="16S",
-										 output_file=os.path.join(options.project_directory, options.file_mg_16s))
+	return mg_extract.gather_markergenes(
+		hmmer=options.hmmer,
+		mg_type="16S",
+		output_file=os.path.join(options.project_directory, options.file_mg_16s))
 
 
 class MGExtract(object):
-	def __init__(self, mg_analyse_executable, filename_query_genome_file_paths, filename_reference_genome_file_paths,
-				 filename_reference_marker_genes, config_path, filename_iid_map=None, max_processors=1, temp_directory=None, debug=False, logger=None):
+	def __init__(
+		self, mg_analyse_executable, filename_query_genome_file_paths, filename_reference_genome_file_paths,
+		filename_reference_marker_genes, config_path, filename_iid_map=None, max_processors=1, temp_directory=None, debug=False, logger=None):
 		assert filename_iid_map is None or (isinstance(filename_iid_map, basestring) and os.path.isfile(filename_iid_map))
 		assert os.path.isfile(filename_query_genome_file_paths)
 		assert os.path.isfile(filename_reference_genome_file_paths)
@@ -52,7 +55,7 @@ class MGExtract(object):
 		if filename_iid_map is None:
 			return
 		metadatatable = MetaTable(logger=logger)
-		metadatatable.read(head=False)
+		metadatatable.read(filename_iid_map, head=False)
 		self._iid_map = metadatatable.get_map(0, 1)
 		del metadatatable
 
@@ -97,11 +100,11 @@ class MGExtract(object):
 				self._logger.warning("[MGExtract] No valid maker gene found!")
 				success = False
 			if os.path.exists(tmp_out_file_bin_path):
-				shutil.copy2(tmp_out_file_bin_path, output_file+".rejected.fna")
+				shutil.copy2(tmp_out_file_bin_path, output_file + ".rejected.fna")
 
 			if self._filename_reference_marker_genes is not None:
 				# append reference genome marker genes
-				shutil.copy(output_file, output_file+".no_ref")
+				shutil.copy(output_file, output_file + ".no_ref")
 				with open(output_file, 'a') as write_handler, open(self._filename_reference_marker_genes) as read_handler:
 					write_handler.writelines(read_handler)
 		end = time.time()
@@ -120,7 +123,7 @@ class MGExtract(object):
 	def _create_cmd_task_list(self, hmmer, list_of_fasta):
 		out_dir = self._working_dir
 		# TODO: use logfile instead of /dev/null, idealy detect errors
-		#cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}' > /dev/null 2> /dev/null"
+		# cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}' > /dev/null 2> /dev/null"
 		cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}'"
 		cmd_list = [cmd.format(exe=self._mg_analyse_executable, config=self._config_path, hmmer=hmmer, input_file=file_path, out_dir=out_dir) for file_path in list_of_fasta]
 		return [parallel.TaskCmd(cmd, out_dir) for cmd in cmd_list]
@@ -151,27 +154,28 @@ class MGExtract(object):
 
 	# gather all marker gene sequences into single files
 	def _merge_marker_genes_files(self, dict_genome_id_to_path, out_file_path, out_bin_file, mg_type):
-		suffixes = {"5S": "5S_rRNA",
-					"16S": "16S_rRNA",
-					"23S": "23S_rRNA",
-					"8S": "8S_rRNA",
-					"18S": "18S_rRNA",
-					"28S": "28S_rRNA"}
+		suffixes = {
+			"5S": "5S_rRNA",
+			"16S": "16S_rRNA",
+			"23S": "23S_rRNA",
+			"8S": "8S_rRNA",
+			"18S": "18S_rRNA",
+			"28S": "28S_rRNA"}
 
-		min_lengths = {"5S": 100,
-					"16S": 900,
-					"23S": 1000,
-					"8S": 100,
-					"18S": 900,
-					"28S": 1000}
+		min_lengths = {
+			"5S": 100,
+			"16S": 900,
+			"23S": 1000,
+			"8S": 100,
+			"18S": 900,
+			"28S": 1000}
 		suffix = suffixes[mg_type]
 		min_length = min_lengths[mg_type]
 		assert isinstance(dict_genome_id_to_path, dict)
 		with open(out_file_path, "a") as output_file_handle, open(out_bin_file, "a") as out_bin_file_handle:
 			for genome_id, genome_path in dict_genome_id_to_path.iteritems():
 				input_filename = os.path.basename(genome_path)
-				input_filepath = "{prefix}.ids.{suffix}.fna".format(prefix=input_filename,
-																	suffix=suffix)
+				input_filepath = "{prefix}.ids.{suffix}.fna".format(prefix=input_filename, suffix=suffix)
 				input_file = os.path.join(self._working_dir, "working", input_filepath)
 				unique_id = genome_id
 				if self._iid_map is not None:
