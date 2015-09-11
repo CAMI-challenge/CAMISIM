@@ -11,7 +11,7 @@ The following software is required for the simulation pipeline to run:
 
 ####[python 2.7.10](https://www.python.org/)
 
-Python is the programming language most scripts are written in
+Python is the programming language most scripts were written in
 
 ####[Perl 5](https://www.perl.org/)
 
