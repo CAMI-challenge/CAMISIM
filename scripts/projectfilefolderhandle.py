@@ -3,6 +3,8 @@ __author__ = 'hofmann'
 import os
 import tempfile
 import shutil
+import datetime
+import time
 from scripts.Validator.validator import Validator
 
 
@@ -87,7 +89,7 @@ class ProjectFileFolderHandle(Validator):
 	_filename_log = "pipeline.log"
 	_filename_metadata = "meta_data.tsv"
 
-	def __init__(self, tmp_dir, output_dir, logfile=None, verbose=True, debug=False):
+	def __init__(self, tmp_dir, output_dir, time_stamp=None, logfile=None, verbose=True, debug=False):
 		"""
 		Constructor
 
@@ -95,15 +97,26 @@ class ProjectFileFolderHandle(Validator):
 		@type tmp_dir: str | unicode
 		@param output_dir: Directory where final data will be placed
 		@type output_dir: str | unicode
+		@param time_stamp: timestamp as string
+		@type time_stamp: str | unicode
 		@param logfile: file | FileIO | StringIO | basestring
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
 		@type verbose: bool
 		@param debug: Display debug messages
 		@type debug: bool
 		"""
+		assert isinstance(tmp_dir, basestring)
+		assert isinstance(output_dir, basestring)
+		assert time_stamp is None or isinstance(time_stamp, basestring)
 		self._tmp_dir = tempfile.mkdtemp(dir=tmp_dir)
 		self._directory_output = output_dir
+		self._time_stamp = time_stamp
+		if time_stamp is None:
+			self._time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y.%m.%d_%H.%M.%S')
 		super(ProjectFileFolderHandle, self).__init__(logfile, verbose, debug)
+
+	def get_time_stamp(self):
+		return self._time_stamp
 
 	def get_output_directory(self):
 		"""
@@ -135,6 +148,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: Nothing
 		@rtype: None
 		"""
+		assert isinstance(number_of_samples, (int, long))
 		self.make_directory_temp_structure(number_of_samples)
 		self.make_directory_output_structure(number_of_samples)
 
@@ -148,7 +162,8 @@ class ProjectFileFolderHandle(Validator):
 		@return: Nothing
 		@rtype: None
 		"""
-		self._make_directory_structure(self._tmp_dir, number_of_samples)
+		assert isinstance(number_of_samples, (int, long))
+		self._make_directory_structure(self._TMP, number_of_samples)
 
 	def make_directory_output_structure(self, number_of_samples):
 		"""
@@ -160,26 +175,30 @@ class ProjectFileFolderHandle(Validator):
 		@return: Nothing
 		@rtype: None
 		"""
-		self._make_directory_structure(self._directory_output, number_of_samples)
+		assert isinstance(number_of_samples, (int, long))
+		self._make_directory_structure(self._HardDrive, number_of_samples)
 
-	def _make_directory_structure(self, dir_main, number_of_samples):
+	def _make_directory_structure(self, is_tmp, number_of_samples):
 		"""
 		Create folder structure at temporary location
 
-		@param dir_main: Location where the directory structure is to be created.
-		@type dir_main: str | unicode
+		@param is_tmp: Location where the directory structure is to be created.
+		@type is_tmp: bool
 		@param number_of_samples: Number of samples.
 		@type number_of_samples: int | long
 
 		@return: Nothing
 		@rtype: None
 		"""
+		assert isinstance(is_tmp, bool)
+		assert isinstance(number_of_samples, (int, long))
+		dir_main = self._get_root_directory(is_tmp)
 		self._make_dir(dir_main)
 		for sub_folder in self._sub_folders_output:
 			directory = os.path.join(dir_main, sub_folder)
 			self._make_dir(directory)
 		for sample_index in range(number_of_samples):
-			dir_sample = os.path.join(dir_main, self._folder_name_sample.format(id=sample_index))
+			dir_sample = self.get_sample_dir(is_tmp, str(sample_index))
 			self._make_dir(dir_sample)
 			for sub_folder in self._sub_folders_sample:
 				sub_directory = os.path.join(dir_sample, sub_folder)
@@ -213,6 +232,8 @@ class ProjectFileFolderHandle(Validator):
 	def _get_root_directory(self, is_tmp):
 		"""
 		Get root directory baseed on whether it is at a temporary location or output location.
+
+		@type is_tmp: bool
 
 		@return: temporary working directory
 		@rtype: str | unicode
@@ -260,9 +281,12 @@ class ProjectFileFolderHandle(Validator):
 		"""
 		Get directory where bam files are located.
 
+		@type sample_id: str | unicode
+
 		@return: bam directory
 		@rtype: str | unicode
 		"""
+		assert isinstance(sample_id, basestring)
 		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
 		return os.path.join(sample_dir, self._folder_name_bam)
 
@@ -270,9 +294,15 @@ class ProjectFileFolderHandle(Validator):
 		"""
 		Get directory where fastq files are located.
 
+		@type is_input: bool
+		@type sample_id: str | unicode
+
 		@return: fastq directory
 		@rtype: str | unicode
 		"""
+		assert isinstance(is_input, bool)
+		assert isinstance(sample_id, basestring)
+
 		if is_input:
 			sample_dir = self.get_sample_dir(self._location_reads[0], sample_id)
 		else:
@@ -293,11 +323,17 @@ class ProjectFileFolderHandle(Validator):
 		"""
 		Get directory where sample files are located.
 
+		@type is_tmp: bool
+		@type sample_id: str | unicode
+
 		@return: sample directory
 		@rtype: str | unicode
 		"""
+		assert isinstance(is_tmp, bool)
+		assert isinstance(sample_id, basestring)
 		root_dir = self._get_root_directory(is_tmp)
-		return os.path.join(root_dir, self._folder_name_sample.format(id=sample_id))
+		folder_name = "{}_{}".format(self._time_stamp, self._folder_name_sample.format(id=sample_id))
+		return os.path.join(root_dir, folder_name)
 
 	# ###################
 	#   file paths
@@ -335,6 +371,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of anonymous gold standard assembly
 		@rtype: str | unicode
 		"""
+		assert isinstance(sample_id, basestring)
 		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
 		return os.path.join(sample_dir, self._filename_anonymous_gsa)
 
@@ -348,6 +385,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of anonymous gold standard assembly mapping
 		@rtype: str | unicode
 		"""
+		assert isinstance(sample_id, basestring)
 		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
 		return os.path.join(sample_dir, self._filename_gsa_mapping)
 
@@ -361,6 +399,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of anonymous gold standard assembly mapping
 		@rtype: str | unicode
 		"""
+		assert isinstance(sample_id, basestring)
 		fastq_dir = self.get_fastq_dir(self._HardDrive, sample_id)
 		return os.path.join(fastq_dir, self._filename_anonymous_reads)
 
@@ -374,6 +413,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of anonymous reads mapping
 		@rtype: str | unicode
 		"""
+		assert isinstance(sample_id, basestring)
 		fastq_dir = self.get_fastq_dir(self._HardDrive, sample_id)
 		return os.path.join(fastq_dir, self._filename_reads_mapping)
 
@@ -387,9 +427,9 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of distribution file
 		@rtype: str | unicode
 		"""
-		root_dir = self._directory_output
+		assert isinstance(sample_id, basestring)
 		return os.path.join(
-			root_dir, self._folder_name_sample.format(id=sample_id), self._filename_distribution)
+			self.get_sample_dir(self._HardDrive, sample_id), self._filename_distribution)
 
 	def get_distribution_file_path_list(self, number_of_samples):
 		"""
@@ -401,6 +441,7 @@ class ProjectFileFolderHandle(Validator):
 		@return: file location of distribution file
 		@rtype: str | unicode
 		"""
+		assert isinstance(number_of_samples, (int, long))
 		return [self.get_distribution_file_path(str(sample_index)) for sample_index in range(number_of_samples)]
 
 	def get_genome_location_file_path(self):
