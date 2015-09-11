@@ -26,5 +26,5 @@ ART is a set of simulation tools to generate synthetic next-generation sequencin
 Microbial ecology software
 
 
-##Documentation
-Developer documentation at https://github.com/CAMI-challenge/datasim_pipeline/wiki
+##Documentation 
+[Developer documentation](https://github.com/CAMI-challenge/datasim_pipeline/wiki) (outdated)
