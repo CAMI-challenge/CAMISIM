@@ -580,9 +580,9 @@ view={view}
 
 		if self._phase == 1:
 			self._phase_design_community = True
+			self._phase_move_and_clean_genomes = True
 
 		if self._phase == 2:
-			self._phase_move_and_clean_genomes = True
 			self._phase_simulate_reads = True
 
 		if self._phase == 2 and not self.validate_dir(self._directory_output, key='-o'):
