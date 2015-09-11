@@ -234,8 +234,6 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 		@rtype: None
 		"""
-		# TODO: Check if already moved!
-		# genome_id_to_path_map overwritten with new paths and saved
 		prepare_genomes = GenomePreparation(
 			logfile=self._logfile,
 			verbose=self._verbose)
