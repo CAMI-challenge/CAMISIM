@@ -1,5 +1,5 @@
 __author__ = 'hofmann'
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 import os
 import sys
@@ -46,6 +46,7 @@ class ArgumentHandler(Validator):
 	# [main]
 	# ############
 	_tmp_dir = None
+	_directory_output = None
 	_directory_pipeline = None
 	_file_path_config = None
 	_max_processors = 1
@@ -154,6 +155,7 @@ class ArgumentHandler(Validator):
 		self._project_file_folder_handler = ProjectFileFolderHandle(
 			tmp_dir=tmp_dir,
 			output_dir=self._directory_output,
+			time_stamp=None,
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug
@@ -288,7 +290,7 @@ number_of_communities={communities}
 			error_profiles=self._directory_art_error_profiles,
 			error=self._error_profile,
 			gbps=float(self._sample_size_in_base_pairs)/self._base_pairs_multiplication_factor,
-			readsim=self.read_simulator,
+			readsim=self._read_simulator_type,
 			fmean=self._fragments_size_mean_in_bp,
 			fsd=self._fragment_size_standard_deviation_in_bp,
 			# plasmid=self.plasmid_file
@@ -445,10 +447,10 @@ view={view}
 		elif not self.validate_number(self._sample_size_in_base_pairs, minimum=0, key='-bp', zero=False):
 			self._valid_arguments = False
 
-		if self.read_simulator is None:
+		if self._read_simulator_type is None:
 			self._logger.error("'-rs' No read simulator declared!")
 			self._valid_arguments = False
-		elif self.read_simulator == 'art':
+		elif self._read_simulator_type == 'art':
 			if self._directory_art_error_profiles is None:
 				self._logger.error("Art illumina error profile directory is required!")
 				self._valid_arguments = False
@@ -654,8 +656,8 @@ view={view}
 			if config_value is not None:
 				self._sample_size_in_base_pairs = long(config_value * self._base_pairs_multiplication_factor)
 
-		if self.read_simulator is None:
-			self.read_simulator = self._config.get_value(section, "type")
+		if self._read_simulator_type is None:
+			self._read_simulator_type = self._config.get_value(section, "type")
 
 		if self._executable_samtools is None:
 			self._executable_samtools = self._config.get_value(section, "samtools")
@@ -770,22 +772,23 @@ view={view}
 			self._valid_arguments = False
 			return
 		self._file_path_config = self.get_full_path(options.config_file)
-		self._phase = options.phase
 		self._verbose = options.verbose
 		self._debug = options.debug_mode
+		self._phase = options.phase
 		self._dataset_id = options.data_set_id
 		self._max_processors = options.max_processors
-		self._directory_output = options.output_directory
-		self._sample_size_in_base_pairs = options.sample_size_gbp
-		if self._sample_size_in_base_pairs is not None:
-			self._sample_size_in_base_pairs = long(options.sample_size_gbp * self._base_pairs_multiplication_factor)
-		self.read_simulator = options.read_simulator
-		self._error_profile = options.error_profile
-		self._fragment_size_standard_deviation_in_bp = options.fragment_size_standard_deviation
-		self._fragments_size_mean_in_bp = options.fragments_size_mean
+		self._seed = options.seed
+		# self._directory_output = options.output_directory
+		# self._sample_size_in_base_pairs = options.sample_size_gbp
+		# if self._sample_size_in_base_pairs is not None:
+		# 	self._sample_size_in_base_pairs = long(options.sample_size_gbp * self._base_pairs_multiplication_factor)
+		# self.read_simulator = options.read_simulator
+		# self._error_profile = options.error_profile
+		# self._fragment_size_standard_deviation_in_bp = options.fragment_size_standard_deviation
+		# self._fragments_size_mean_in_bp = options.fragments_size_mean
 		# self.plasmid_file = options.plasmid_file
-		self._number_of_samples = options.number_of_samples
-		self._phase_pooled_gsa = options.pooled_gsa
+		# self._number_of_samples = options.number_of_samples
+		# self._phase_pooled_gsa = options.pooled_gsa
 
 	@staticmethod
 	def _get_parser_options(args=None, version="Prototype"):
