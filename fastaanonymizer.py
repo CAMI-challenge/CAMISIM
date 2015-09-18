@@ -1,8 +1,10 @@
 __author__ = 'cami'
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
+import sys
 import os
 import io
+import random
 import StringIO
 import tempfile
 import subprocess
@@ -69,17 +71,8 @@ class FastaAnonymizer(SequenceValidator):
 		self._tmp_dir = tmp_dir
 		super(FastaAnonymizer, self).__init__(logfile, verbose, debug)
 
-		self._seed = seed
 		if seed is not None:
-			self._seed = str(abs(hash(seed)))
-			assert len(self._seed) > 4, "Seed '{}' is too short!".format(self._seed)
-			# file_descriptor, self._random_source_file_path = tempfile.mkstemp(
-			# 	dir=tmp_dir,
-			# 	prefix="tmp_",
-			# 	suffix="_random_source")
-			# assert isinstance(self._random_source_file_path, basestring)
-			# with os.fdopen(file_descriptor, 'w') as write_handler:
-			# 	write_handler.write(seed+'\n')
+			random.seed(seed)
 
 		script_dir = os.path.dirname(self.get_full_path(__file__))
 		self._anonymizer = os.path.join(script_dir, "anonymizer.py")
@@ -91,8 +84,10 @@ class FastaAnonymizer(SequenceValidator):
 		self._logger = None
 		if self._debug:
 			return
-		# if self._random_source_file_path is not None and os.path.isfile(self._random_source_file_path):
-		# 	os.remove(self._random_source_file_path)
+
+	@staticmethod
+	def _get_seed():
+		return random.randint(0, sys.maxsize)
 
 	def get_command(
 		self, file_path_mapping, path_input, file_path_output,
@@ -154,9 +149,8 @@ class FastaAnonymizer(SequenceValidator):
 		shuffle = ["shuf"]
 
 		shuffle_args = ["-z"]
-		if self._seed is not None:
-			# shuffle_args.append("--random-source='{}'".format(self._random_source_file_path))
-			shuffle_args.append("--random-source=<(get_seeded_random {})".format(self._seed))
+		seed = self._get_seed()
+		shuffle_args.append("--random-source=<(get_seeded_random {seed})".format(seed=seed))
 
 		# ##################
 		# anonymizer args
@@ -239,7 +233,6 @@ class FastaAnonymizer(SequenceValidator):
 			paired=False,
 			file_extension=file_extension)
 
-		# exit_status = os.system(command)
 		exit_status = subprocess.call(command, shell=True, executable="bash")
 		if not exit_status == 0:
 			msg = "Error occurred anonymizing '{}'".format(path_input)
@@ -296,7 +289,6 @@ class FastaAnonymizer(SequenceValidator):
 			paired=True,
 			file_extension=file_extension)
 
-		# exit_status = os.system(command)
 		exit_status = subprocess.call(command, shell=True, executable="bash")
 		if not exit_status == 0:
 			msg = "Error occurred anonymizing '{}'".format(path_input)
