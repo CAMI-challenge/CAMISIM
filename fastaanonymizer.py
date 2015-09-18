@@ -62,7 +62,7 @@ class FastaAnonymizer(SequenceValidator):
 		"""
 		assert isinstance(verbose, bool)
 		assert isinstance(debug, bool)
-		assert isinstance(seed, (long, int, float, basestring))
+		assert seed is None or isinstance(seed, (long, int, float, basestring))
 		assert tmp_dir is None or isinstance(tmp_dir, basestring)
 		if tmp_dir is not None:
 			assert self.validate_dir(tmp_dir)
