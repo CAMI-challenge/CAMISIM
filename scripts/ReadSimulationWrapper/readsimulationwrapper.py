@@ -60,13 +60,12 @@ class ReadSimulationWrapper(GenomePreparation):
 		else:
 			tmp_dir = tempfile.gettempdir()
 		self._tmp_dir = self.get_full_path(tmp_dir)
-		self._debug = debug
 		if seed is not None:
 			random.seed(seed)
 			# seed = abs(hash(seed))
 			# assert len(str(seed)) > 4, "Seed '{}' is too short!".format(seed)
 		# self._seed = abs(hash(seed))
-		super(ReadSimulationWrapper, self).__init__(logfile=logfile, verbose=verbose)
+		super(ReadSimulationWrapper, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._max_processes = max_processes
 		self._separator = separator
 		self._file_path_executable = file_path_executable
