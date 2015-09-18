@@ -62,9 +62,6 @@ class ReadSimulationWrapper(GenomePreparation):
 		self._tmp_dir = self.get_full_path(tmp_dir)
 		if seed is not None:
 			random.seed(seed)
-			# seed = abs(hash(seed))
-			# assert len(str(seed)) > 4, "Seed '{}' is too short!".format(seed)
-		# self._seed = abs(hash(seed))
 		super(ReadSimulationWrapper, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._max_processes = max_processes
 		self._separator = separator
@@ -141,14 +138,10 @@ class ReadSimulationWrapper(GenomePreparation):
 			assert genome_id != '', "Invalid genom id: '{}'".format(genome_id)
 			assert abundance != '', "Invalid abundance: '{}'".format(genome_id)
 			abundance = float(abundance)
-			# assert file_path_genome != '', "Invalid file path: '{}'".format(genome_id)
-			# assert self.validate_file(file_path_genome), "Invalid file path: '{}'".format(genome_id)
 			assert self.validate_number(abundance, zero=False), "Invalid abundance: '{}'".format(genome_id)
 
 			assert genome_id not in dict_id_abundance, "Genome '{}' not unique in the distribution file!".format(genome_id)
-			# dict_id_file_path[genome_id] = file_path_genome
 			dict_id_abundance[genome_id] = abundance
-		# return dict_id_abundance, dict_id_file_path, relative_size_total, max_abundance
 		return dict_id_abundance
 
 	def get_multiplication_factor(
@@ -414,11 +407,9 @@ class ReadSimulationArt(ReadSimulationWrapper):
 
 		if self._logfile:
 			arguments.append(">> '{}'".format(self._logfile))
-		# else:
-		# 	arguments.append("> /dev/null")
 
 		# art illumina only accepts integer as seed!
-		arguments.append("-rs '{}'".format(self._get_seed))
+		arguments.append("-rs '{}'".format(self._get_seed()))
 
 		cmd = "{exe} {args}".format(exe=self._file_path_executable, args=" ".join(arguments))
 		return cmd
