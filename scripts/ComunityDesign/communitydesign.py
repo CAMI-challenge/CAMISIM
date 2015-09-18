@@ -1,8 +1,9 @@
 __author__ = 'hofmann'
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 import os
 import random
+import numpy.random as np_random
 import tempfile
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.StrainSimulationWrapper.strainsimulationwrapper import StrainSimulationWrapper
@@ -174,7 +175,9 @@ class CommunityDesign(GenomePreparation):
 		super(CommunityDesign, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		if seed is not None:
 			random.seed(seed)
-		self._seed = seed
+			np_random.seed(abs(hash(seed)))
+
+		# self._seed = seed
 		# self._filename_distribution = filename_prefix_distribution + "{index}.txt"
 		self._column_name_genome_id = column_name_genome_id
 		self._column_name_otu = column_name_otu
@@ -263,7 +266,9 @@ class CommunityDesign(GenomePreparation):
 				keep_original=True,
 				max_processors=self._max_processors,
 				tmp_dir=self._tmp_dir,
-				logfile=self._logfile, verbose=self._verbose, debug=self._debug, seed=self._seed)
+				logfile=self._logfile, verbose=self._verbose, debug=self._debug,
+				# seed=self._seed
+				)
 
 			probability = None  # 1-options.communities[community_id]["evolve"]
 			genome_amounts = strain_simulation.get_genome_amounts(

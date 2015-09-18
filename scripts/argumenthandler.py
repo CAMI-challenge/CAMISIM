@@ -5,6 +5,8 @@ import os
 import sys
 import argparse
 import tempfile
+import random
+import numpy.random as np_random
 from scripts.configparserwrapper import ConfigParserWrapper
 from scripts.Validator.validator import Validator
 from scripts.ComunityDesign.communitydesign import Community
@@ -151,10 +153,18 @@ class ArgumentHandler(Validator):
 
 		# example: tmp_dir = "/tmp"
 		tmp_dir = self._tmp_dir
+		directory_output = self._directory_output
 		assert isinstance(tmp_dir, basestring)
+		assert isinstance(directory_output, basestring)
+
+		if self._seed is not None:
+			random.seed(self._seed)
+			np_random.seed(abs(hash(self._seed)))
+
+		assert isinstance(self._directory_output, basestring)
 		self._project_file_folder_handler = ProjectFileFolderHandle(
 			tmp_dir=tmp_dir,
-			output_dir=self._directory_output,
+			output_dir=directory_output,
 			time_stamp=None,
 			logfile=self._logfile,
 			verbose=self._verbose,
@@ -498,6 +508,7 @@ view={view}
 
 		expected_output_size = self._expected_output_size_in_giga_byte()
 		expected_tmp_size = expected_output_size / self._number_of_samples
+		assert isinstance(self._directory_output, basestring)
 		directory_out = self._directory_output
 		directory_tmp = self._tmp_dir
 		if not os.path.isdir(directory_out):
@@ -561,7 +572,8 @@ view={view}
 			return
 
 		if self._directory_output is None:
-			self._logger.error("'-o' Output directory is required!")
+			# self._logger.error("'-o' Output directory is required!")
+			self._logger.error("Output directory is required!")
 			self._valid_arguments = False
 			return
 
@@ -873,7 +885,7 @@ view={view}
 		# read simulator
 		# ##########
 
-		group_read_simulator = parser.add_argument_group('read simulator')
+# 		group_read_simulator = parser.add_argument_group('read simulator')
 # 		group_read_simulator.add_argument(
 # 			"-rs", "--read_simulator",
 # 			type=str,

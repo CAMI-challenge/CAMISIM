@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
 
-__author__ = 'hofmann'
+__author__ = 'Peter Hofmann'
 __original_author__ = "Aaron Daring"
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
@@ -302,8 +302,6 @@ class StrainSimulationWrapper(GenomeOrganizer):
 			random.seed(seed)
 			np_random.seed(abs(hash(seed)))
 
-		self._seed = random.randint(1000000, sys.maxsize)
-
 		assert isinstance(max_processors, (long, int))
 		self._max_processors = max_processors
 
@@ -333,6 +331,10 @@ class StrainSimulationWrapper(GenomeOrganizer):
 		self._filenames_strains = self.get_filenames_strains(file_path_template_newick_tree)
 		assert len(self._filenames_strains) > 0
 
+	@staticmethod
+	def _get_seed():
+		return random.randint(0, sys.maxsize)
+
 	def _get_simulate_cmd(self, directory_strains, filepath_genome, filepath_gff):
 		"""
 		Get system command to start simulation. Change directory to the strain directory and start simulating strains.
@@ -353,10 +355,9 @@ class StrainSimulationWrapper(GenomeOrganizer):
 			executable=self._executable_sim,
 			filepath_genome=filepath_genome,
 			filepath_gff=filepath_gff,
-			seed=self._seed,
+			seed=self._get_seed(),
 			log=os.path.join(directory_strains, os.path.basename(filepath_genome) + ".sim.log")
 		)
-		self._seed += 1
 		return cmd
 
 	def _prepare_simulation_subfolder(self, directory_strains):

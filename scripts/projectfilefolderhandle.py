@@ -57,11 +57,12 @@ class ProjectFileFolderHandle(Validator):
 	# folder_name_simulated = "simulated_genomes"
 	_folder_name_bam = "bam"
 	# _folder_name_sam = "sam"
-	_folder_name_fastq = "fastq"
+	_folder_name_reads = "reads"
+	_folder_name_contigs = "contigs"
 	# _folder_name_logfiles = "logfiles"
 	_folder_name_sample = "sample_{id}"
 
-	_sub_folders_sample = [_folder_name_bam, _folder_name_fastq, _folder_name_bam]
+	_sub_folders_sample = [_folder_name_bam, _folder_name_reads, _folder_name_contigs]
 	_sub_folders_output = [_folder_name_internal, _folder_name_distribution, _folder_name_genomes]
 
 	# ###################
@@ -247,6 +248,24 @@ class ProjectFileFolderHandle(Validator):
 	#   directories
 	# ###################
 
+	def get_bam_dirs(self):
+		"""
+		Get list of bam directories of all samples
+
+		@attention: The list includes previous runs!
+
+		@return: List of bam directories
+		@rtype: list[str|unicode]
+		"""
+		out_dir = self.get_output_directory()
+		list_of_dirs = [
+			folder_name for folder_name in os.listdir(out_dir)
+			if os.path.isdir(os.path.join(out_dir, folder_name))]
+		sample_dirs = [
+			directory for directory in list_of_dirs
+			if self.validate_dir(directory, sub_directories=self._sub_folders_sample, silent=True)]
+		return [os.path.join(sample_dir, self._folder_name_bam) for sample_dir in sample_dirs]
+
 	def get_distribution_dir(self):
 		"""
 		Get directory where distribution files are located.
@@ -290,7 +309,7 @@ class ProjectFileFolderHandle(Validator):
 		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
 		return os.path.join(sample_dir, self._folder_name_bam)
 
-	def get_fastq_dir(self, is_input, sample_id):
+	def get_reads_dir(self, is_input, sample_id):
 		"""
 		Get directory where fastq files are located.
 
@@ -307,7 +326,26 @@ class ProjectFileFolderHandle(Validator):
 			sample_dir = self.get_sample_dir(self._location_reads[0], sample_id)
 		else:
 			sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
-		return os.path.join(sample_dir, self._folder_name_fastq)
+		return os.path.join(sample_dir, self._folder_name_reads)
+
+	def get_contigs_dir(self, is_input, sample_id):
+		"""
+		Get directory where fastq files are located.
+
+		@type is_input: bool
+		@type sample_id: str | unicode
+
+		@return: fastq directory
+		@rtype: str | unicode
+		"""
+		assert isinstance(is_input, bool)
+		assert isinstance(sample_id, basestring)
+
+		if is_input:
+			sample_dir = self.get_sample_dir(self._location_reads[0], sample_id)
+		else:
+			sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
+		return os.path.join(sample_dir, self._folder_name_contigs)
 
 	def get_logfile_dir(self):
 		"""
@@ -372,8 +410,8 @@ class ProjectFileFolderHandle(Validator):
 		@rtype: str | unicode
 		"""
 		assert isinstance(sample_id, basestring)
-		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
-		return os.path.join(sample_dir, self._filename_anonymous_gsa)
+		output_dir = self.get_contigs_dir(self._HardDrive, sample_id)
+		return os.path.join(output_dir, self._filename_anonymous_gsa)
 
 	def get_anonymous_gsa_map_file_path(self, sample_id):
 		"""
@@ -386,8 +424,8 @@ class ProjectFileFolderHandle(Validator):
 		@rtype: str | unicode
 		"""
 		assert isinstance(sample_id, basestring)
-		sample_dir = self.get_sample_dir(self._HardDrive, sample_id)
-		return os.path.join(sample_dir, self._filename_gsa_mapping)
+		output_dir = self.get_contigs_dir(self._HardDrive, sample_id)
+		return os.path.join(output_dir, self._filename_gsa_mapping)
 
 	def get_anonymous_reads_file_path(self, sample_id):
 		"""
@@ -400,7 +438,7 @@ class ProjectFileFolderHandle(Validator):
 		@rtype: str | unicode
 		"""
 		assert isinstance(sample_id, basestring)
-		fastq_dir = self.get_fastq_dir(self._HardDrive, sample_id)
+		fastq_dir = self.get_reads_dir(self._HardDrive, sample_id)
 		return os.path.join(fastq_dir, self._filename_anonymous_reads)
 
 	def get_anonymous_reads_map_file_path(self, sample_id):
@@ -414,7 +452,7 @@ class ProjectFileFolderHandle(Validator):
 		@rtype: str | unicode
 		"""
 		assert isinstance(sample_id, basestring)
-		fastq_dir = self.get_fastq_dir(self._HardDrive, sample_id)
+		fastq_dir = self.get_reads_dir(self._HardDrive, sample_id)
 		return os.path.join(fastq_dir, self._filename_reads_mapping)
 
 	def get_distribution_file_path(self, sample_id):
