@@ -1,5 +1,5 @@
 __author__ = 'hofmann'
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 import os
 import glob
@@ -73,7 +73,7 @@ class Validator(DefaultLogging):
 
 		parent_directory, filename = os.path.split(file_path)
 
-		if parent_directory and not self.validate_dir(parent_directory, key=key):
+		if parent_directory and not self.validate_dir(parent_directory, key=key, silent=silent):
 			if not silent:
 				self._logger.error("{}Directory of file does not exist: '{}'".format(prefix, parent_directory))
 			return False
@@ -197,13 +197,13 @@ class Validator(DefaultLogging):
 		for sub_directory in sub_directories:
 			if not os.path.isabs(sub_directory):
 				sub_directory = os.path.join(directory, sub_directory)
-			if not self.validate_dir(sub_directory, key=key):
+			if not self.validate_dir(sub_directory, key=key, silent=silent):
 				return False
 
 		for file_name in file_names:
 			if not os.path.isabs(file_name):
 				file_name = os.path.join(directory, file_name)
-			if not self.validate_file(file_name, key=key):
+			if not self.validate_file(file_name, key=key, silent=silent):
 				return False
 		return True
 
