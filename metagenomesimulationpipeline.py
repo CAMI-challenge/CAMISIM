@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 __author__ = 'peter hofmann'
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
+import os
 import shutil
 import traceback
 from fastaanonymizer import FastaAnonymizer
@@ -90,7 +91,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				self._compress_data()
 
 		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
-			self._logger.error("\n{}\n".format(traceback.format_exc()))
+			self._logger.debug("\n{}\n".format(traceback.format_exc()))
 			self._logger.info("Metagenome simulation aborted")
 		else:
 			self._logger.info("Metagenome simulation finished")
@@ -180,7 +181,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug,
-			seed=self._seed
+			seed=None
 		)
 
 		directory_out_distributions = self._project_file_folder_handler.get_distribution_dir()
@@ -266,7 +267,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		"""
 		self._project_file_folder_handler._location_reads = [True, True]  # TODO write public method for this
 		sample_id = str(sample_index)
-		directory_output_tmp = self._project_file_folder_handler.get_fastq_dir(True, sample_id)
+		directory_output_tmp = self._project_file_folder_handler.get_reads_dir(True, sample_id)
 		directory_bam = self._project_file_folder_handler.get_bam_dir(sample_id)
 		# directory_script = os.path.dirname(__file__)
 		# file_path_executable = os.path.join(directory_script, "tools", "readsimulator", "art_illumina")
@@ -282,7 +283,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug,
-			seed=self._seed,
+			seed=None,
 			tmp_dir=self._project_file_folder_handler.get_tmp_wd())
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
@@ -306,7 +307,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 		if not self._phase_anonymize:
 			list_of_file_path = self.get_files_in_directory(directory_output_tmp, extension="fq")
-			directory_output_fastq = self._project_file_folder_handler.get_fastq_dir(False, sample_id)
+			directory_output_fastq = self._project_file_folder_handler.get_reads_dir(False, sample_id)
 			if self._phase_compress:
 				for file_path in list_of_file_path:
 					self._list_tuple_archive_files.append((file_path, directory_output_fastq))
@@ -349,11 +350,11 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		if not self._phase_anonymize:
 			if self._phase_compress:
 				for index, file_path in enumerate(list_of_output_gsa):
-					directory_output = self._project_file_folder_handler.get_sample_dir(False, str(index))
+					directory_output = self._project_file_folder_handler.get_contigs_dir(False, str(index))
 					self._list_tuple_archive_files.append((file_path, directory_output))
 			else:
 				for index, file_path in enumerate(list_of_output_gsa):
-					directory_output = self._project_file_folder_handler.get_sample_dir(False, str(index))
+					directory_output = self._project_file_folder_handler.get_contigs_dir(False, str(index))
 					shutil.move(file_path, directory_output)
 
 		return list_of_output_gsa
@@ -386,8 +387,12 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		meta_data_table.read(file_path_genome_locations)
 		dict_id_to_file_path_fasta = meta_data_table.get_map(0, 1)
 
-		list_of_directory_bam = [
-			self._project_file_folder_handler.get_bam_dir(str(sample_index)) for sample_index in range(self._number_of_samples)]
+		# list_of_directory_bam = [
+		# 	self._project_file_folder_handler.get_bam_dir(str(sample_index))
+		#  for sample_index in range(self._number_of_samples)]
+		list_of_directory_bam = self._project_file_folder_handler.get_bam_dirs()
+		list_of_sample_folders = [os.path.basename(os.path.dirname(directory_bam)) for directory_bam in list_of_directory_bam]
+		self._logger.info("Samples used for pooled assembly: '{}'".format("', '".join(list_of_sample_folders)))
 
 		file_path_output_gsa_pooled = gs_handler.pooled_gold_standard_by_dir(
 			list_of_directory_bam, dict_id_to_file_path_fasta)
@@ -428,7 +433,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		file_path_metadata = self._project_file_folder_handler.get_genome_metadata_file_path()
 
 		directories_fastq_dir_in = [
-			self._project_file_folder_handler.get_fastq_dir(True, str(sample_index))
+			self._project_file_folder_handler.get_reads_dir(True, str(sample_index))
 			for sample_index in range(self._number_of_samples)]
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
@@ -528,7 +533,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug,
-			seed=self._seed,
+			seed=None,
 			tmp_dir=self._project_file_folder_handler.get_tmp_wd()
 		)
 
@@ -562,7 +567,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug,
-			seed=self._seed,
+			seed=None,
 			tmp_dir=self._project_file_folder_handler.get_tmp_wd()
 		)
 
@@ -589,7 +594,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			logfile=self._logfile,
 			verbose=self._verbose,
 			debug=self._debug,
-			seed=self._seed,
+			seed=None,
 			tmp_dir=self._project_file_folder_handler.get_tmp_wd()
 		)
 
