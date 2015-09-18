@@ -2,17 +2,19 @@
 
 __original_author__ = 'majda'
 __author__ = 'peter hofmann'
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 
+import sys
 import os
+import random
 import argparse
 import tempfile
 import StringIO
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.GenomePreparation.genomepreparation import GenomePreparation
-import maf_converter
+# import maf_converter
 
 
 class ReadSimulationWrapper(GenomePreparation):
@@ -60,9 +62,10 @@ class ReadSimulationWrapper(GenomePreparation):
 		self._tmp_dir = self.get_full_path(tmp_dir)
 		self._debug = debug
 		if seed is not None:
-			seed = abs(hash(seed))
-			assert len(str(seed)) > 4, "Seed '{}' is too short!".format(seed)
-		self._seed = abs(hash(seed))
+			random.seed(seed)
+			# seed = abs(hash(seed))
+			# assert len(str(seed)) > 4, "Seed '{}' is too short!".format(seed)
+		# self._seed = abs(hash(seed))
 		super(ReadSimulationWrapper, self).__init__(logfile=logfile, verbose=verbose)
 		self._max_processes = max_processes
 		self._separator = separator
@@ -79,6 +82,10 @@ class ReadSimulationWrapper(GenomePreparation):
 		self._logger = None
 		# delete temporary files
 		self._remove_temporary_files()
+
+	@staticmethod
+	def _get_seed():
+		return random.randint(0, sys.maxsize)
 
 	def _remove_temporary_files(self):
 		if self._debug:
@@ -411,10 +418,8 @@ class ReadSimulationArt(ReadSimulationWrapper):
 		# else:
 		# 	arguments.append("> /dev/null")
 
-		if self._seed:
-			# hash of seed since art illumina only accepts integer as seed
-			arguments.append("-rs '{}'".format(self._seed))
-			self._seed += 1
+		# art illumina only accepts integer as seed!
+		arguments.append("-rs '{}'".format(self._get_seed))
 
 		cmd = "{exe} {args}".format(exe=self._file_path_executable, args=" ".join(arguments))
 		return cmd
@@ -435,120 +440,120 @@ class ReadSimulationArt(ReadSimulationWrapper):
 # #################
 
 
-class ReadSimulationPirs(ReadSimulationWrapper):
-	_label = "ReadSimulationPirs"
-
-	def simulate(
-		self, file_path_distributions, file_path_genome_locations, directory_output,
-		total_size, read_length, fragments_size_mean, fragment_size_standard_deviation):
-		raise Exception("Not fully implemented yet")
-		assert self.validate_number(read_length, minimum=1)
-		assert self.validate_number(fragments_size_mean, minimum=1)
-		assert self.validate_number(fragment_size_standard_deviation, minimum=0)
-		self._read_length = read_length
-		self._fragments_size_mean = fragments_size_mean
-		self._fragment_size_standard_deviation = fragment_size_standard_deviation
-
-		dict_id_abundance = self._read_distribution_file(file_path_distributions)
-		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-
-		# coverage = abundance * factor
-		# factor is calculated based on total size of sample
-		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
-		factor = self.get_multiplication_factor(
-			dict_id_file_path, dict_id_abundance, total_size, min_sequence_length,
-			file_format="fasta", sequence_type="dna", ambiguous=True)
-		self._logger.debug("Multiplication factor: {}".format(factor))
-		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
-
-	# start pIRS readsimulator
-	def _simulate_reads(self, dict_id_abundance, dict_id_file_path, factor, directory_output):
-		# tmp_directory = "./"  # just write files locally
-		# executable = os.path.join(self._directory_read_simulator, "pIRS/SimMetagenome.py")
-		executable = self._file_path_executable
-		# directory_temp = 'pIRS/nobackup/temp_abundance_file.csv'
-		temp_abundance_filename = "temp_abundance_file.csv"
-		for source_data_id in dict_id_abundance.keys():
-			file_path_input = dict_id_file_path[source_data_id]
-			abundance = dict_id_abundance[source_data_id]
-			new_abundance = float(abundance) * factor
-			with open(temp_abundance_filename, 'w') as temp_abundance_file:
-				temp_abundance_file.write(source_data_id+'\t'+str(new_abundance)+'\n')
-			with open(os.path.join(self._directory_read_simulator, 'pIRS/sampleConfig.cfg'), 'r') as config:
-				with open("new_sampleConfig.cfg", 'w') as new_config:
-					for line in config:
-						if line.startswith("referenceSeq="):
-							line = "referenceSeq=" + file_path_input + '\n'
-						elif line.startswith('frequenciesInfo='):
-							line = "frequenciesInfo=" + temp_abundance_filename + '\n'
-						new_config.write(line)
-				os.system("{} -c new_sampleConfig.cfg".format(executable))
-
-
-# #################
-# ReadSimulationPBSIM
-# #################
-
-
-class ReadSimulationPBSIM(ReadSimulationWrapper):
-	_label = "ReadSimulationPBSIM"
-
-	def simulate(
-		self, file_path_distributions, file_path_genome_locations, directory_output,
-		total_size, read_length, fragments_size_mean, fragment_size_standard_deviation):
-		raise Exception("Not fully implemented yet")
-		assert self.validate_number(read_length, minimum=1)
-		assert self.validate_number(fragments_size_mean, minimum=1)
-		assert self.validate_number(fragment_size_standard_deviation, minimum=0)
-		self._read_length = read_length
-		self._fragments_size_mean = fragments_size_mean
-		self._fragment_size_standard_deviation = fragment_size_standard_deviation
-
-		dict_id_abundance = self._read_distribution_file(file_path_distributions)
-		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-
-		# coverage = abundance * factor
-		# factor is calculated based on total size of sample
-		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
-		factor = self.get_multiplication_factor(
-			dict_id_file_path, dict_id_abundance, total_size, min_sequence_length,
-			file_format="fasta", sequence_type="dna", ambiguous=True)
-		self._logger.debug("Multiplication factor: {}".format(factor))
-		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
-
-	# start PBSIM readsimulator
-	def _simulate_reads(self, dict_id_abundance, dict_id_file_path, factor, directory_output):
-		# tmp_directory = "./"  # just write files locally
-		# os.chdir(tmp_directory)
-		# executable = os.path.join(self._directory_read_simulator, "pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim")
-		executable = self._file_path_executable
-		for source_data_id in dict_id_abundance.keys():
-			file_path_input = dict_id_file_path[source_data_id]
-			abundance = dict_id_abundance[source_data_id]
-			# file_path_input, abundance, tax_id_predict, genome_name = dict_id_abundance[source_data_id]
-			new_abundance = float(abundance) * factor
-			# if not os.path.exists(tmp_directory+seq_id):
-			#    os.mkdir(tmp_directory+seq_id)
-			prefix = os.path.join(directory_output, str(source_data_id))
-			arguments = [
-				"--data-type", "CLR",
-				"--depth", str(new_abundance),
-				"--prefix", prefix,
-				"--model_qc", os.path.join(self._directory_read_simulator, "pbsim-1.0.3-Linux-amd64/data/model_qc_clr"),
-				file_path_input]
-			# log_file.write("{} {}".format(executable, " ".join(arguments)))
-			os.system("{} {} 2> /dev/null".format(executable, " ".join(arguments)))
-
-		# if self._logger:
-		#    self._logger.error("[ReadSimulation] pbsim currently not active. Please ask developer for more information.")
-		# log_file.write(reader_folder+'pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim --data-type CLR
-		#  --depth '+str(new_abundance)+'
-		#  --model_qc '+reader_folder+'pbsim-1.0.3-Linux-amd64/data/model_qc_clr  '+address)
-		# os.system(reader_folder+'pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim --data-type CLR
-		#  --depth '+str(new_abundance)+'
-		#  --model_qc '+reader_folder+'pbsim-1.0.3-Linux-amd64/data/model_qc_clr  '+address)
-		# TODO: file_path_output = tempfile.mktemp(dir=self._tmp_dir)
-		maf_converter.main(directory_output)
+# class ReadSimulationPirs(ReadSimulationWrapper):
+# 	_label = "ReadSimulationPirs"
+#
+# 	def simulate(
+# 		self, file_path_distributions, file_path_genome_locations, directory_output,
+# 		total_size, read_length, fragments_size_mean, fragment_size_standard_deviation):
+# 		raise Exception("Not fully implemented yet")
+# 		assert self.validate_number(read_length, minimum=1)
+# 		assert self.validate_number(fragments_size_mean, minimum=1)
+# 		assert self.validate_number(fragment_size_standard_deviation, minimum=0)
+# 		self._read_length = read_length
+# 		self._fragments_size_mean = fragments_size_mean
+# 		self._fragment_size_standard_deviation = fragment_size_standard_deviation
+#
+# 		dict_id_abundance = self._read_distribution_file(file_path_distributions)
+# 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
+#
+# 		# coverage = abundance * factor
+# 		# factor is calculated based on total size of sample
+# 		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
+# 		factor = self.get_multiplication_factor(
+# 			dict_id_file_path, dict_id_abundance, total_size, min_sequence_length,
+# 			file_format="fasta", sequence_type="dna", ambiguous=True)
+# 		self._logger.debug("Multiplication factor: {}".format(factor))
+# 		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
+#
+# 	# start pIRS readsimulator
+# 	def _simulate_reads(self, dict_id_abundance, dict_id_file_path, factor, directory_output):
+# 		# tmp_directory = "./"  # just write files locally
+# 		# executable = os.path.join(self._directory_read_simulator, "pIRS/SimMetagenome.py")
+# 		executable = self._file_path_executable
+# 		# directory_temp = 'pIRS/nobackup/temp_abundance_file.csv'
+# 		temp_abundance_filename = "temp_abundance_file.csv"
+# 		for source_data_id in dict_id_abundance.keys():
+# 			file_path_input = dict_id_file_path[source_data_id]
+# 			abundance = dict_id_abundance[source_data_id]
+# 			new_abundance = float(abundance) * factor
+# 			with open(temp_abundance_filename, 'w') as temp_abundance_file:
+# 				temp_abundance_file.write(source_data_id+'\t'+str(new_abundance)+'\n')
+# 			with open(os.path.join(self._directory_read_simulator, 'pIRS/sampleConfig.cfg'), 'r') as config:
+# 				with open("new_sampleConfig.cfg", 'w') as new_config:
+# 					for line in config:
+# 						if line.startswith("referenceSeq="):
+# 							line = "referenceSeq=" + file_path_input + '\n'
+# 						elif line.startswith('frequenciesInfo='):
+# 							line = "frequenciesInfo=" + temp_abundance_filename + '\n'
+# 						new_config.write(line)
+# 				os.system("{} -c new_sampleConfig.cfg".format(executable))
+#
+#
+# # #################
+# # ReadSimulationPBSIM
+# # #################
+#
+#
+# class ReadSimulationPBSIM(ReadSimulationWrapper):
+# 	_label = "ReadSimulationPBSIM"
+#
+# 	def simulate(
+# 		self, file_path_distributions, file_path_genome_locations, directory_output,
+# 		total_size, read_length, fragments_size_mean, fragment_size_standard_deviation):
+# 		raise Exception("Not fully implemented yet")
+# 		assert self.validate_number(read_length, minimum=1)
+# 		assert self.validate_number(fragments_size_mean, minimum=1)
+# 		assert self.validate_number(fragment_size_standard_deviation, minimum=0)
+# 		self._read_length = read_length
+# 		self._fragments_size_mean = fragments_size_mean
+# 		self._fragment_size_standard_deviation = fragment_size_standard_deviation
+#
+# 		dict_id_abundance = self._read_distribution_file(file_path_distributions)
+# 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
+#
+# 		# coverage = abundance * factor
+# 		# factor is calculated based on total size of sample
+# 		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
+# 		factor = self.get_multiplication_factor(
+# 			dict_id_file_path, dict_id_abundance, total_size, min_sequence_length,
+# 			file_format="fasta", sequence_type="dna", ambiguous=True)
+# 		self._logger.debug("Multiplication factor: {}".format(factor))
+# 		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
+#
+# 	# start PBSIM readsimulator
+# 	def _simulate_reads(self, dict_id_abundance, dict_id_file_path, factor, directory_output):
+# 		# tmp_directory = "./"  # just write files locally
+# 		# os.chdir(tmp_directory)
+# 		# executable = os.path.join(self._directory_read_simulator, "pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim")
+# 		executable = self._file_path_executable
+# 		for source_data_id in dict_id_abundance.keys():
+# 			file_path_input = dict_id_file_path[source_data_id]
+# 			abundance = dict_id_abundance[source_data_id]
+# 			# file_path_input, abundance, tax_id_predict, genome_name = dict_id_abundance[source_data_id]
+# 			new_abundance = float(abundance) * factor
+# 			# if not os.path.exists(tmp_directory+seq_id):
+# 			#    os.mkdir(tmp_directory+seq_id)
+# 			prefix = os.path.join(directory_output, str(source_data_id))
+# 			arguments = [
+# 				"--data-type", "CLR",
+# 				"--depth", str(new_abundance),
+# 				"--prefix", prefix,
+# 				"--model_qc", os.path.join(self._directory_read_simulator, "pbsim-1.0.3-Linux-amd64/data/model_qc_clr"),
+# 				file_path_input]
+# 			# log_file.write("{} {}".format(executable, " ".join(arguments)))
+# 			os.system("{} {} 2> /dev/null".format(executable, " ".join(arguments)))
+#
+# 		# if self._logger:
+# 		#    self._logger.error("[ReadSimulation] pbsim currently not active. Please ask developer for more information.")
+# 		# log_file.write(reader_folder+'pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim --data-type CLR
+# 		#  --depth '+str(new_abundance)+'
+# 		#  --model_qc '+reader_folder+'pbsim-1.0.3-Linux-amd64/data/model_qc_clr  '+address)
+# 		# os.system(reader_folder+'pbsim-1.0.3-Linux-amd64/Linux-amd64/bin/pbsim --data-type CLR
+# 		#  --depth '+str(new_abundance)+'
+# 		#  --model_qc '+reader_folder+'pbsim-1.0.3-Linux-amd64/data/model_qc_clr  '+address)
+# 		# TODO: file_path_output = tempfile.mktemp(dir=self._tmp_dir)
+# 		maf_converter.main(directory_output)
 
 
 # #################
