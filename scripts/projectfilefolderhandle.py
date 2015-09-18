@@ -259,11 +259,12 @@ class ProjectFileFolderHandle(Validator):
 		"""
 		out_dir = self.get_output_directory()
 		list_of_dirs = [
-			folder_name for folder_name in os.listdir(out_dir)
+			os.path.join(out_dir, folder_name) for folder_name in os.listdir(out_dir)
 			if os.path.isdir(os.path.join(out_dir, folder_name))]
-		sample_dirs = [
+		sample_dirs = sorted([
 			directory for directory in list_of_dirs
-			if self.validate_dir(directory, sub_directories=self._sub_folders_sample, silent=True)]
+			if self.validate_dir(directory, sub_directories=self._sub_folders_sample, silent=True)])
+		print "sample_dirs", sample_dirs
 		return [os.path.join(sample_dir, self._folder_name_bam) for sample_dir in sample_dirs]
 
 	def get_distribution_dir(self):
