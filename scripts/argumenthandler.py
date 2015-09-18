@@ -127,7 +127,10 @@ class ArgumentHandler(Validator):
 		self._directory_pipeline = self._get_directory_pipeline()
 
 		options = self._get_parser_options(args, version)
-		super(ArgumentHandler, self).__init__(logfile=options.logfile)
+		logfile = options.logfile
+		if logfile is not None:
+			logfile = self.get_full_path(logfile)
+		super(ArgumentHandler, self).__init__(logfile=logfile)
 
 		self._valid_arguments = True
 
