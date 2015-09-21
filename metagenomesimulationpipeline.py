@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 __author__ = 'peter hofmann'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 import os
 import shutil
 import traceback
+import tempfile
 from fastaanonymizer import FastaAnonymizer
 from scripts.Archive.compress import Compress
 from scripts.argumenthandler import ArgumentHandler
@@ -348,14 +349,12 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			list_of_output_gsa.append(file_path_output_gs)
 
 		if not self._phase_anonymize:
-			if self._phase_compress:
-				for index, file_path in enumerate(list_of_output_gsa):
-					directory_output = self._project_file_folder_handler.get_contigs_dir(False, str(index))
-					self._list_tuple_archive_files.append((file_path, directory_output))
-			else:
-				for index, file_path in enumerate(list_of_output_gsa):
-					directory_output = self._project_file_folder_handler.get_contigs_dir(False, str(index))
-					shutil.move(file_path, directory_output)
+			for index, file_path in enumerate(list_of_output_gsa):
+				file_path_output = self._project_file_folder_handler.get_gsa_file_path(str(index))
+				if self._phase_compress:
+					self._list_tuple_archive_files.append((file_path, file_path_output+".gz"))
+				else:
+					shutil.move(file_path, file_path_output)
 
 		return list_of_output_gsa
 
@@ -398,11 +397,11 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			list_of_directory_bam, dict_id_to_file_path_fasta)
 
 		if not self._phase_anonymize:
-			directory_output = self._project_file_folder_handler.get_output_directory()
+			gsa_pooled_output = self._project_file_folder_handler.get_gsa_pooled_file_path()
 			if self._phase_compress:
-				self._list_tuple_archive_files.append((file_path_output_gsa_pooled, directory_output))
+				self._list_tuple_archive_files.append((file_path_output_gsa_pooled, gsa_pooled_output+".gz"))
 			else:
-				shutil.move(file_path_output_gsa_pooled, directory_output)
+				shutil.move(file_path_output_gsa_pooled, gsa_pooled_output)
 
 		return file_path_output_gsa_pooled
 
@@ -445,9 +444,14 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			sample_id = str(sample_index)
 			file_path_anonymous_reads_out = self._project_file_folder_handler.get_anonymous_reads_file_path(sample_id)
 			file_path_anonymous_gs_mapping_out = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
+			if self._phase_compress:
+				file_path_anonymous_gs_mapping = tempfile.mktemp(
+					dir=self._project_file_folder_handler.get_tmp_wd(),
+					prefix="anonymous_gs_mapping")
+			else:
+				file_path_anonymous_gs_mapping = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
 
-			# todo: write to tmp if compressed later
-			with open(file_path_anonymous_gs_mapping_out, 'w') as stream_output:
+			with open(file_path_anonymous_gs_mapping, 'w') as stream_output:
 				gs_mapping.gs_read_mapping(
 					file_path_genome_locations, file_path_metadata, file_path_anonymous_mapping_tmp, stream_output
 				)
@@ -455,7 +459,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				self._list_tuple_archive_files.append(
 					(file_path_anonymous_reads_tmp, file_path_anonymous_reads_out+".gz"))
 				self._list_tuple_archive_files.append(
-					(file_path_anonymous_gs_mapping_out, file_path_anonymous_gs_mapping_out+".gz"))
+					(file_path_anonymous_gs_mapping, file_path_anonymous_gs_mapping_out+".gz"))
 			else:
 				shutil.move(file_path_anonymous_reads_tmp, file_path_anonymous_reads_out)
 
@@ -474,11 +478,17 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				sample_id = str(sample_index)
 				file_path_output_anonymous_gsa_out = self._project_file_folder_handler.get_anonymous_gsa_file_path(sample_id)
 				file_path_anonymous_gsa_mapping_out = self._project_file_folder_handler.get_anonymous_gsa_map_file_path(sample_id)
+				if self._phase_compress:
+					file_path_anonymous_gsa_mapping = tempfile.mktemp(
+						dir=self._project_file_folder_handler.get_tmp_wd(),
+						prefix="anonymous_gsa_mapping")
+				else:
+					file_path_anonymous_gsa_mapping = self._project_file_folder_handler.get_anonymous_gsa_map_file_path(sample_id)
 
 				list_file_paths_read_positions = [
 					samtools.read_start_positions_from_dir_of_bam(self._project_file_folder_handler.get_bam_dir(sample_id))
 					]
-				with open(file_path_anonymous_gsa_mapping_out, 'w') as stream_output:
+				with open(file_path_anonymous_gsa_mapping, 'w') as stream_output:
 					gs_mapping.gs_contig_mapping(
 						file_path_genome_locations, file_path_metadata, file_path_anonymous_mapping_tmp,
 						list_file_paths_read_positions, stream_output
@@ -487,7 +497,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 					self._list_tuple_archive_files.append(
 						(file_path_output_anonymous_gsa, file_path_output_anonymous_gsa_out+".gz"))
 					self._list_tuple_archive_files.append(
-						(file_path_anonymous_gsa_mapping_out, file_path_anonymous_gsa_mapping_out+".gz"))
+						(file_path_anonymous_gsa_mapping, file_path_anonymous_gsa_mapping_out+".gz"))
 				else:
 					shutil.move(file_path_output_anonymous_gsa, file_path_output_anonymous_gsa_out)
 
@@ -497,12 +507,18 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				"PC")
 			file_path_output_anonymous_out = self._project_file_folder_handler.get_anonymous_gsa_pooled_file_path()
 			file_path_anonymous_gsa_mapping_out = self._project_file_folder_handler.get_anonymous_gsa_pooled_map_file_path()
+			if self._phase_compress:
+				file_path_anonymous_gsa_mapping = tempfile.mktemp(
+					dir=self._project_file_folder_handler.get_tmp_wd(),
+					prefix="anonymous_gsa_pooled_mapping")
+			else:
+				file_path_anonymous_gsa_mapping = self._project_file_folder_handler.get_anonymous_gsa_pooled_map_file_path()
 
 			list_file_paths_read_positions = [
 				samtools.read_start_positions_from_dir_of_bam(self._project_file_folder_handler.get_bam_dir(str(sample_index)))
 				for sample_index in range(self._number_of_samples)
 				]
-			with open(file_path_anonymous_gsa_mapping_out, 'w') as stream_output:
+			with open(file_path_anonymous_gsa_mapping, 'w') as stream_output:
 				gs_mapping.gs_contig_mapping(
 					file_path_genome_locations, file_path_metadata, file_path_anonymous_mapping_tmp,
 					list_file_paths_read_positions, stream_output
@@ -511,7 +527,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				self._list_tuple_archive_files.append(
 					(file_path_output_anonymous, file_path_output_anonymous_out+".gz"))
 				self._list_tuple_archive_files.append(
-					(file_path_anonymous_gsa_mapping_out, file_path_anonymous_gsa_mapping_out+".gz"))
+					(file_path_anonymous_gsa_mapping, file_path_anonymous_gsa_mapping_out+".gz"))
 			else:
 				shutil.move(file_path_output_anonymous, file_path_output_anonymous_out)
 
