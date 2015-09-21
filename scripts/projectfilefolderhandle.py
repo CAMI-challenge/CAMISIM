@@ -75,9 +75,11 @@ class ProjectFileFolderHandle(Validator):
 	_filename_anonymous_reads = "anonymous_reads.fq"
 	# filename_reads_anonymous_mapping = "reads_anonymous_mapping.tsv"
 
+	_filename_gsa = "gsa.fasta"
 	_filename_anonymous_gsa = "anonymous_gsa.fasta"
 	# filename_gsa_anonymous_mapping = "gsa_anonymous_mapping.tsv"
 
+	_filename_gsa_pooled = "gsa_pooled.fasta"
 	_filename_anonymous_gsa_pooled = "anonymous_gsa_pooled.fasta"
 	# filename_pooled_gsa_mapping = "pooled_" + filename_gsa_anonymous_mapping
 
@@ -388,6 +390,17 @@ class ProjectFileFolderHandle(Validator):
 		return os.path.join(
 			root_dir, self._filename_anonymous_gsa_pooled)
 
+	def get_gsa_pooled_file_path(self):
+		"""
+		Get file location of the gold standard assembly based on pooled sample reads.
+
+		@return: file location of pooled gold standard assembly
+		@rtype: str | unicode
+		"""
+		root_dir = self._get_root_directory(self._HardDrive)
+		return os.path.join(
+			root_dir, self._filename_gsa_pooled)
+
 	def get_anonymous_gsa_pooled_map_file_path(self):
 		"""
 		Get file location of the anonymous gold standard assembly based on pooled sample reads.
@@ -398,6 +411,21 @@ class ProjectFileFolderHandle(Validator):
 		root_dir = self._get_root_directory(self._HardDrive)
 		return os.path.join(
 			root_dir, self._filename_pooled_gsa_mapping)
+
+	def get_gsa_file_path(self, sample_id):
+		"""
+		Get file location of the anonymous gold standard assembly.
+
+		@param sample_id: sample id of a sample
+		@type sample_id: str | unicode
+
+		@return: file location of anonymous gold standard assembly
+		@rtype: str | unicode
+		"""
+		assert isinstance(sample_id, basestring)
+		output_dir = self.get_contigs_dir(self._HardDrive, sample_id)
+		return os.path.join(
+			output_dir, self._filename_gsa)
 
 	def get_anonymous_gsa_file_path(self, sample_id):
 		"""
