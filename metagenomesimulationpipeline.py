@@ -20,7 +20,6 @@ from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.ReadSimulationWrapper.readsimulationwrapper import ReadSimulationArt
 
-# TODO: Pipeline, run twice with different read sim params! New sample folder
 
 class MetagenomeSimulationPipeline(ArgumentHandler):
 	"""
