@@ -65,7 +65,7 @@ TODO
 
 	if options.novelty_only:
 		reference_map_table = MetaTable(logger=logger)
-		reference_map_table.read(options.input_reference_file, False)
+		reference_map_table.read(options.reference_genome_locations_file, False)
 		ref_genome_ids = set(reference_map_table.get_column(0))
 		metadata_table = MetaTable(logger=logger)
 		metadata_table.read(options.metadata_table_in)
