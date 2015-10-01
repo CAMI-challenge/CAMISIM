@@ -13,7 +13,7 @@ class ArgumentHandler(object):
 	"""Reading pipeline configuration from file and from passed arguments"""
 	_stages = 0
 	_logging = False
-	_debug_mode = False
+	debug_mode = False
 	_verbose = True
 	config_file_path = None
 	pipeline_directory = None
@@ -691,7 +691,7 @@ class ArgumentHandler(object):
 				return
 		ArgumentHandler.config_file_path = config_file
 		ArgumentHandler._verbose = options.verbose
-		ArgumentHandler._debug_mode = options.debug_mode
+		ArgumentHandler.debug_mode = options.debug_mode
 		ArgumentHandler._logging = options.logging
 		ArgumentHandler.stage = options.stage
 		ArgumentHandler.processors = options.processors
