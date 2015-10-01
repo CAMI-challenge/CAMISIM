@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
+
 import os
 import argparse
-from taxonomy import ncbitaxonomy
-import metatable
-from logger import Logger
+from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
+from scripts.MetaDataTable.metadatatable import MetadataTable
+from scripts.Validator.validator import Validator
 
 __author__ = 'jessika'
 
@@ -38,39 +38,39 @@ __author__ = 'jessika'
 """
 
 
-class Novelty():
-	def __init__(self, taxonomy=None, logger=None, column_name_ncbi_id="NCBI_ID", column_name_novelty="NOVELTY_CATEGORY"):
+class Novelty(Validator):
+
+	_label = "Novelty"
+	_ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
+
+	def __init__(
+		self, taxonomy=None, column_name_ncbi_id="NCBI_ID", column_name_novelty="NOVELTY_CATEGORY",
+		separator="\t", logfile=None, verbose=True, debug=False):
 		"""
-			@param sqlite_db: usually file named "ncbitax_sqlite.db"
 		"""
-		self._logger = logger
-		if logger is None:
-			self._logger = Logger("Novelty")
+		super(Novelty, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
+		self._separator = separator
 
 		if taxonomy:
+			assert isinstance(taxonomy, NcbiTaxonomy)
 			self._tax = taxonomy
 		else:
-			self._logger.error("[Novelty] No taxonomy given.")
-			sys.exit(1)
+			msg = "No taxonomy given."
+			self._logger.error(msg)
+			raise ValueError(msg)
 
 		self._column_name_ncbi_id = column_name_ncbi_id
 		self._column_name_novelty = column_name_novelty
-		#self.ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom', 'root']
-		self._ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
-		#wrapping:
+
 		self._included_parents_at_rank = dict()
-		#for rank in self._ranks:
-		#	self._included_parents_at_rank[rank] = set()
-		#self._included_parents_at_rank['no rank'] = set()  # includes no ranks and all strain ids
-		#self._included_parents_at_rank['root'].add(1)
 
 	def read_reference(self, refernce_ncbi_id_set, excluded=None):
 		"""
 			extracts all taxonomic IDs from the reference directory and stores all contained IDs for each rank
-			@param referenceIdsSet:   including reference IDs
+			@param refernce_ncbi_id_set:   including reference IDs
 		"""
 
-		self._logger.info("[Novelty] Extracting included parents at each rank for each reference ID.. This may take a while.")
+		self._logger.info("Extracting included parents at each rank for each reference ID.. This may take a while.")
 
 		for ncbi_id in refernce_ncbi_id_set:
 			if excluded is not None and ncbi_id in excluded:
@@ -88,7 +88,7 @@ class Novelty():
 					self._included_parents_at_rank[rank] = set()
 				self._included_parents_at_rank[rank].add(taxonomic_lineage[rank_index])
 
-		self._logger.info("[Novelty] Reference processing done.")
+		self._logger.info("Reference processing done.")
 
 	def compute_novelty_for_metafile(self, in_meta_file, out_meta_file):
 		"""
@@ -99,21 +99,21 @@ class Novelty():
 			@param out_meta_file:  file for the output
 		"""
 
-		self._logger.info("[Novelty] Processing information from metafile: '{}'".format(in_meta_file))
-		meta_table = metatable.MetaTable(logger=self._logger)
-		meta_table.read(in_meta_file)
+		self._logger.info("Processing information from metafile: '{}'".format(in_meta_file))
+		meta_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		meta_table.read(in_meta_file, column_names=True)
 		self.compute_novelty(meta_table)
-		meta_table.write(out_meta_file)
+		meta_table.write(out_meta_file, column_names=True)
 
 	def compute_novelty(self, meta_table):
 		"""
 			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
 			(Note that the metafile must include a header with column name 'NCBI_ID'
 								whereas novelty_category is added if it does not exist)
-			@param in_meta_file: usually file named 'metadata_table_[version].csv'#
-			@param out_meta_file:  file for the output
+			@param meta_table: usually file named 'metadata_table_[version].csv'#
+			@type meta_table: MetadataTable
 		"""
-
+		assert isinstance(meta_table, MetadataTable)
 		column_ncbi_id = meta_table.get_column(self._column_name_ncbi_id)
 		column_novelty_category = meta_table.get_column(self._column_name_novelty)
 		if column_novelty_category is None:
@@ -134,11 +134,11 @@ class Novelty():
 				if novelty is None:
 					continue
 				list_novelty.append(novelty)
-				#self._logger.info("[Novelty] {} is not included at rank {}".format(new_ncbi_id, novelty))
-			#column_novelty_category[row_index] = ','.join(["new_" + str(novelty) for novelty in list_novelty])
+				# self._logger.info("[Novelty] {} is not included at rank {}".format(new_ncbi_id, novelty))
+			# column_novelty_category[row_index] = ','.join(["new_" + str(novelty) for novelty in list_novelty])
 			column_novelty_category[row_index] = "new_" + self.get_lowest_rank(set(list_novelty))
 
-		meta_table.set_column(column_novelty_category, self._column_name_novelty)
+		meta_table.insert_column(column_novelty_category, self._column_name_novelty)
 
 	def get_novelty(self, ncbi_id):
 		"""
@@ -147,11 +147,11 @@ class Novelty():
 			@return: novelty category or None
 			@rtype: str
 		"""
-
+		assert isinstance(ncbi_id, basestring)
 		taxonomic_lineage = self._tax.get_lineage_of_legal_ranks(ncbi_id, ranks=self._ranks)
 
 		if taxonomic_lineage is None:
-			self._logger.warning("[Novelty] {} not included in the taxonomy.".format(ncbi_id))
+			self._logger.warning("{} not included in the taxonomy.".format(ncbi_id))
 			return None
 
 		for rank_index in xrange(len(self._ranks)):
@@ -159,9 +159,7 @@ class Novelty():
 				continue
 			if taxonomic_lineage[rank_index] in self._included_parents_at_rank[self._ranks[rank_index]]:
 				return self._ranks[rank_index-1]
-
 		return None
-		#return 'superkingdom'
 
 	def get_taxonomic_ids_from_directory(self, directory):
 		"""
@@ -179,10 +177,12 @@ class Novelty():
 			if '_' in tid:
 				tid = tid.split('_')[0]
 			tax_ids.add(tid)
-
 		return tax_ids
 
-	def get_lowest_rank(self, list_of_ranks=set(), ranks=None):
+	def get_lowest_rank(self, list_of_ranks=None, ranks=None):
+		assert isinstance(list_of_ranks, set)
+		if list_of_ranks is None:
+			list_of_ranks = set()
 		if ranks is None:
 			ranks = self._ranks
 		if len(list_of_ranks) == 0:
@@ -204,12 +204,9 @@ if __name__ =='__main__':
 
 	options = parser.parse_args()
 
-	logger = Logger("Novelty")
+	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False)
 
-	taxonomy = ncbitaxonomy.NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
-
-	Nov = Novelty(taxonomy, logger=logger)
+	Nov = Novelty(taxonomy)
 	refernceIdsSet = Nov.get_taxonomic_ids_from_directory(options.dref)
 	Nov.read_reference(refernceIdsSet)
 	Nov.compute_novelty_for_metafile(options.metadata_file_in, options.metadata_file_out)
-	logger.info("[Novelty] Done")
