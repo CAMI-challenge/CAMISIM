@@ -12,17 +12,19 @@ from source.logger import Logger
 
 def main(options):
 	assert isinstance(options, ArgumentHandler)
-	mg_cluster = MGCluster(mothur_executable=options.binary_mothur,
-						   directory_silva_reference=options.silva_reference_directory,
-						   max_processors=options.processors,
-						   temp_directory=options.temp_directory,
-						   debug=options._debug_mode)
+	mg_cluster = MGCluster(
+		mothur_executable=options.binary_mothur,
+		directory_silva_reference=options.silva_reference_directory,
+		max_processors=options.processors,
+		temp_directory=options.temp_directory,
+		debug=options.debug_mode)
 
-	return mg_cluster.cluster(marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
-						output_cluster_file=os.path.join(options.project_directory, options.file_cluster_mg_16s),
-						distance_cutoff=options.distance_cutoff,
-						precision=options.precision,
-						method=options.cluster_method)
+	return mg_cluster.cluster(
+		marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
+		output_cluster_file=os.path.join(options.project_directory, options.file_cluster_mg_16s),
+		distance_cutoff=options.distance_cutoff,
+		precision=options.precision,
+		method=options.cluster_method)
 
 
 class MGCluster(object):
@@ -68,7 +70,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		self._ref_silva_distances = ref_silva_distances
 		self._ref_silva_names = ref_silva_names
 		self._ref_silva_alignment = ref_silva_alignment
-		#local_distance = os.path.join(self._working_dir, "ref.align.dist")
+		# local_distance = os.path.join(self._working_dir, "ref.align.dist")
 		self._local_distance = "ref.align.dist"
 
 	def cluster(self, marker_gene_fasta, output_cluster_file, distance_cutoff, precision=1000, method="average"):
@@ -78,8 +80,9 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 
 		mothur_cmd = self._get_mothur_cmd(local_marker_gene_fasta, distance_cutoff, precision, method=method)
-		cmd = "echo \"{mothur_cmd}\" | {mothur_executable}".format(mothur_cmd=mothur_cmd,
-																   mothur_executable=self._mothur_executable)
+		cmd = "echo \"{mothur_cmd}\" | {mothur_executable}".format(
+			mothur_cmd=mothur_cmd,
+			mothur_executable=self._mothur_executable)
 		os.system(cmd)
 		os.chdir(self._old_dir)
 
@@ -125,25 +128,26 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		basename = os.path.basename(original_file_path)
 		new_path = os.path.join(self._working_dir, basename)
 		os.symlink(original_file_path, new_path)
-		#return new_path
+		# return new_path
 		return basename
 
 	def _get_mothur_cmd(self, marker_gene_fasta, cutoff, precision, method="average"):
-		#basename = os.path.basename(marker_gene_fasta)
-		#filename, extension = os.path.splitext(basename)
+		# basename = os.path.basename(marker_gene_fasta)
+		# filename, extension = os.path.splitext(basename)
 		filename, extension = os.path.splitext(marker_gene_fasta)
 		#
-		#mothur_cmd = MGCluster._mothur_cmd_ref_dist
+		# mothur_cmd = MGCluster._mothur_cmd_ref_dist
 		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
-		return mothur_cmd.format(wd=self._working_dir,
-								 debug=self._working_dir,
-								 #filename=os.path.join(self._working_dir, filename),
-								 filename=filename,
-								 mg_fasta=marker_gene_fasta,
-								 ref_align=self._ref_silva_alignment,
-								 ref_names=self._ref_silva_names,
-								 local_dist=self._local_distance,
-								 processors=self._max_processors,
-								 cutoff=cutoff,
-								 precision=precision,
-								 method=method)
+		return mothur_cmd.format(
+			wd=self._working_dir,
+			debug=self._working_dir,
+			# filename=os.path.join(self._working_dir, filename),
+			filename=filename,
+			mg_fasta=marker_gene_fasta,
+			ref_align=self._ref_silva_alignment,
+			ref_names=self._ref_silva_names,
+			local_dist=self._local_distance,
+			processors=self._max_processors,
+			cutoff=cutoff,
+			precision=precision,
+			method=method)
