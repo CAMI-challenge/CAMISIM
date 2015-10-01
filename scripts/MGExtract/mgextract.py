@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import time
-import scripts.concat_fasta_on_fasta as concat_fasta_on_fasta
+import scripts.MGExtract.concat_fasta_on_fasta as concat_fasta_on_fasta
 import scripts.parallel as parallel
 from scripts.Validator.sequencevalidator import SequenceValidator
 from scripts.MetaDataTable.metadatatable import MetadataTable
