@@ -1,47 +1,29 @@
-__author__ = 'hofmann'
+__author__ = 'Peter Hofmann'
 
 import os
 import shutil
 import tempfile
 import time
-import source.concat_fasta_on_fasta as concat_fasta_on_fasta
-import source.parallel as parallel
-from source.argumenthandler import ArgumentHandler
-from source.logger import Logger
-from source.metatable import MetaTable
+import scripts.concat_fasta_on_fasta as concat_fasta_on_fasta
+import scripts.parallel as parallel
+from scripts.Validator.sequencevalidator import SequenceValidator
+from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
-def main(options):
-	assert isinstance(options, ArgumentHandler)
-	mg_extract = MGExtract(
-		mg_analyse_executable=os.path.join(options.pipeline_directory, "tools", "16SDetector", "run.py"),
-		filename_query_genome_file_paths=options.query_genomes_location_file,
-		filename_reference_genome_file_paths=options.reference_genome_locations_file,
-		filename_reference_marker_genes=options.reference_markergene_file_path,
-		config_path=options.config_file_path,
-		filename_iid_map=os.path.join(options.project_directory, options.filename_internal_id_map),
-		max_processors=options.processors,
-		temp_directory=options.temp_directory,
-		debug=options.debug_mode)
+class MGExtract(SequenceValidator):
 
-	return mg_extract.gather_markergenes(
-		hmmer=options.hmmer,
-		mg_type="16S",
-		output_file=os.path.join(options.project_directory, options.file_mg_16s))
+	_label = "MGExtract"
 
-
-class MGExtract(object):
 	def __init__(
 		self, mg_analyse_executable, filename_query_genome_file_paths, filename_reference_genome_file_paths,
-		filename_reference_marker_genes, config_path, filename_iid_map=None, max_processors=1, temp_directory=None, debug=False, logger=None):
+		filename_reference_marker_genes, config_path, filename_iid_map=None, max_processors=1, temp_directory=None,
+		separator="\t", logfile=None, verbose=False, debug=False):
+		super(MGExtract, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		assert filename_iid_map is None or (isinstance(filename_iid_map, basestring) and os.path.isfile(filename_iid_map))
 		assert os.path.isfile(filename_query_genome_file_paths)
 		assert os.path.isfile(filename_reference_genome_file_paths)
 		assert os.path.isfile(filename_reference_marker_genes)
 		assert os.path.isfile(config_path)
-		self._logger = logger
-		if not self._logger:
-			self._logger = Logger("MGExtract")
 		self._temp_directory = temp_directory
 		self._mg_analyse_executable = mg_analyse_executable
 		self._filename_query_genome_file_paths = filename_query_genome_file_paths
@@ -54,8 +36,11 @@ class MGExtract(object):
 		self._iid_map = None
 		if filename_iid_map is None:
 			return
-		metadatatable = MetaTable(logger=logger)
-		metadatatable.read(filename_iid_map, head=False)
+		metadatatable = MetadataTable(
+			separator=separator,
+			logfile=logfile,
+			verbose=verbose)
+		metadatatable.read(filename_iid_map, column_names=False)
 		self._iid_map = metadatatable.get_map(0, 1)
 		del metadatatable
 
