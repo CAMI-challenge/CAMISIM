@@ -318,8 +318,7 @@ class Validator(DefaultLogging):
 		required_space_in_kb=None,
 		required_space_in_mb=None,
 		required_space_in_gb=None,
-		key=None, silent=False
-		):
+		key=None, silent=False):
 		"""
 			Validate that sufficient free space is available at a target directory.
 
