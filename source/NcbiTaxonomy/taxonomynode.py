@@ -10,10 +10,11 @@ class TaxonomyNode(object):
 	This class has to know: parent, children, taxid, rank, gi(?), 
 	scientific name, synonyms(?), equivalent name(?)
 	"""
-	allranks = ['root', 'superkingdom', 'kingdom', 'subkingdom','superphylum', 'phylum',\
-	'subphylum', 'superclass', 'class', 'subclass', 'infraclass', 'superorder', 'order', 'suborder',\
-	'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus',\
-	'subgenus', 'species group', 'species subgroup', 'species', 'subspecies', 'varietas', 'forma']
+	allranks = [
+		'root', 'superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum',
+		'subphylum', 'superclass', 'class', 'subclass', 'infraclass', 'superorder', 'order', 'suborder',
+		'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus',
+		'subgenus', 'species group', 'species subgroup', 'species', 'subspecies', 'varietas', 'forma']
 	by_name = {}
 	by_rank = {}
 	by_synonym = {}
@@ -22,35 +23,35 @@ class TaxonomyNode(object):
 	ambiguous = {}
 	inactive_top_nodes = []
 	user_provided = []
-	#counter = 0
+	# counter = 0
 	
 	def __set_scientific_name(self, name):
-		#~ print name
+		# ~ print name
 		self._scientific_name = name
 		key = name.lower()
 		if not key:
 			return
-		if not key in TaxonomyNode.by_scientific_name:
+		if key not in TaxonomyNode.by_scientific_name:
 			TaxonomyNode.by_scientific_name[key] = self.taxid
 			return
 		# problem: two identical scientific names; examples:
 		# Bironella / Bironella <subgenus>
 		# Bacillus <stick insect> / Bacillus <bacterium>
-		##newkey = Node.bysciname[key].unique_name.lower()
-		##if newkey:
-		##	Node.bysciname[newkey] = Node.bysciname[key]
-		##	del Node.bysciname[key]
-		##newnewkey = self.unique_name.lower()
+		# #newkey = Node.bysciname[key].unique_name.lower()
+		# #if newkey:
+		# #	Node.bysciname[newkey] = Node.bysciname[key]
+		# #	del Node.bysciname[key]
+		# #newnewkey = self.unique_name.lower()
 		# assert that there was a solution for the problem
-		##assert newkey or newnewkey
-		##if newnewkey:
-		##	assert newkey != newnewkey
-		##	Node.bysciname[newnewkey] = self
-		##else:
-		##	Node.bysciname[key] = self
-		### check if the unique name works correctly, e.g. for carma !!!!!!
+		# #assert newkey or newnewkey
+		# #if newnewkey:
+		# #	assert newkey != newnewkey
+		# #	Node.bysciname[newnewkey] = self
+		# #else:
+		# #	Node.bysciname[key] = self
+		# ## check if the unique name works correctly, e.g. for carma !!!!!!
 		# dictionary for ambiguous cases
-		##Node.ambiguous[key] = [k for k in [key, newkey, newnewkey] if Node.bysciname.get(k)]
+		# #Node.ambiguous[key] = [k for k in [key, newkey, newnewkey] if Node.bysciname.get(k)]
 		if isinstance(TaxonomyNode.by_scientific_name[key], list):
 			TaxonomyNode.by_scientific_name[key].append(self.taxid)
 		else:
@@ -65,7 +66,7 @@ class TaxonomyNode(object):
 		""" constructor. """
 		self.taxid = taxid
 		self.rank = rank
-		#~ self.sciname = name
+		# ~ self.sciname = name
 		self.scientific_name = name
 		self.synonyms = []
 		self.equivalent_name = []
@@ -75,7 +76,7 @@ class TaxonomyNode(object):
 		self.children = set()
 		self.leafs = set()
 		self.lineage = []
-		#~ self.all_child_nodes = []
+		# ~ self.all_child_nodes = []
 		self.all_child_nodes = set()  # higher performance?
 		self.node_active = True
 		self.unique_name = unique_name
@@ -92,17 +93,17 @@ class TaxonomyNode(object):
 		# replace parent taxids by the parent objects themselves
 		self.parent = TaxonomyNode.by_name[self.parent_taxid]
 		# tell parents that they have children
-		#~ import pdb; pdb.set_trace()
-		#~ if self not in self.parent.children:
-		#~ Node.counter += 1
-		#~ if Node.counter % 1000 == 0: print self.counter
+		# ~ import pdb; pdb.set_trace()
+		# ~ if self not in self.parent.children:
+		# ~ Node.counter += 1
+		# ~ if Node.counter % 1000 == 0: print self.counter
 		self.parent.children.add(self)
 		# update the "bysciname" dictionary using "parent:child" as key
-		#~ assert self.parent.sciname
-		#~ key = ':'.join([self.parent.sciname.lower(), self.sciname.lower()])
-		#~ key = self.sciname.lower()
-		#~ self.bysciname[key] = self
-		#~ print key; import pdb; pdb.set_trace()
+		# ~ assert self.parent.sciname
+		# ~ key = ':'.join([self.parent.sciname.lower(), self.sciname.lower()])
+		# ~ key = self.sciname.lower()
+		# ~ self.bysciname[key] = self
+		# ~ print key; import pdb; pdb.set_trace()
 
 	def get_leafs(self, leafs=None):
 		""" get the terminal leafs for a particular node."""
@@ -119,14 +120,14 @@ class TaxonomyNode(object):
 	def get_child_nodes(self, child_nodes=None):
 		""" get all child nodes (not only the direct children) for a particular node. """
 		if child_nodes is None:  # starting point
-			#~ del self.all_child_nodes[:]
-			#~ self.all_child_nodes.clear()
+			# ~ del self.all_child_nodes[:]
+			# ~ self.all_child_nodes.clear()
 			if self.all_child_nodes:
 				return	 # nothing to do
 			child_nodes = self.all_child_nodes
 		else:
-			##~ if self not in child_nodes:
-			#~ child_nodes.append(self)
+			# #~ if self not in child_nodes:
+			# ~ child_nodes.append(self)
 			child_nodes.add(self.taxid)
 		if self.children:
 			for child in self.children:
@@ -137,7 +138,7 @@ class TaxonomyNode(object):
 	def get_all_descendant_taxids(self):
 		""" return taxids of all descendants """
 		self.get_child_nodes()
-		#return set(node.taxid for node in self.all_child_nodes)
+		# return set(node.taxid for node in self.all_child_nodes)
 		return self.all_child_nodes
 
 	def get_lineage(self, lineage=None):
@@ -177,7 +178,7 @@ class TaxonomyNode(object):
 
 		except Exception as e:
 			print >> sys.stderr, str(e)
-			#logging.error(str(e))
+			# logging.error(str(e))
 
 		return oCurrNode
 
@@ -207,7 +208,7 @@ class TaxonomyNode(object):
 
 		except Exception as e:
 			print >> sys.stderr, str(e)
-			#logging.error(str(e))
+			# logging.error(str(e))
 
 	@staticmethod
 	def activate_branch(taxid):
