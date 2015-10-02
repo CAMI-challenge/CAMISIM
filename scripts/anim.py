@@ -1,5 +1,5 @@
 __author__ = 'hofmann'
-#original prototype:
+# original prototype:
 #   http://armchairbiology.blogspot.de/2013/11/ani-are-you-okay-are-you-okay-ani.html
 #   (c) The James Hutton Institute 2013
 #   Author: Leighton Pritchard
@@ -12,26 +12,29 @@ __author__ = 'hofmann'
 import os
 import sys
 import traceback
-#import multiprocessing
-#import subprocess
 import tempfile
 import shutil
 import parallel
+from scripts.Validator.validator import Validator
+
 
 try:
 	from Bio import SeqIO
 except ImportError:
+	SeqIO = None
 	print "Biopython required for script, but not found (exiting)"
 	sys.exit(1)
 
 
-class ANIm:
+class ANIm(Validator):
 	"""calculation average nucleotide identity"""
-	def __init__(self, candidates, references, out_dir_name=None, nucmer_exe="nucmer", logger=None, pool_size=1):
+	def __init__(
+		self, candidates, references, out_dir_name=None, nucmer_exe="nucmer", pool_size=1,
+		logfile=None, verbose=False, debug=False):
+		super(ANIm, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._CUM_RETVALS = 0
 		self.pool_size = pool_size
 		self.nucmer_exe = nucmer_exe
-		self.logger = logger
 		self.out_dir_name = out_dir_name
 		self.clean_output = False
 		if out_dir_name is None:
@@ -45,14 +48,12 @@ class ANIm:
 		self.candidate_file_names = self.get_organism_file_names(candidates)
 		self.used_file_names = {}
 		self.total_lengths = {}
-		#self.get_total_organism_length()
-
-	def __enter__(self):
-		return self
+		# self.get_total_organism_length()
 
 	def __exit__(self, type, value, traceback):
+		super(ANIm, self).__exit__(type, value, traceback)
 		if self.clean_output:
-			#return
+			# return
 			shutil.rmtree(self.out_dir_name)
 
 	def get_total_organism_length(self):
@@ -81,8 +82,8 @@ class ANIm:
 		else:
 			ref_id = candidate_id
 			queri_id = reference_id
-		#reference_name = os.path.split(reference_id)[-1]
-		#candidate_name = os.path.split(candidate_id)[-1]
+		# reference_name = os.path.split(reference_id)[-1]
+		# candidate_name = os.path.split(candidate_id)[-1]
 		out_file_name = "{}_vs_{}".format(queri_id, ref_id)
 		prefix = os.path.join(self.out_dir_name, out_file_name)
 		# Do we use the --maxmatch option?
@@ -104,19 +105,19 @@ class ANIm:
 		fi
 		""".format(prefix)
 		cmd = bash_prefix + "{} {} -p {} \"$REF_FILE\" \"$CAN_FILE\"".format(self.nucmer_exe, mode, prefix, "", "") + bash_suffix
-		#bash_prefix = """
-		#mkfifo {0};
-		#mkfifo {1};
-		#tr -d '\\015' < \"{2}\" > {0} &
-		#tr -d '\\015' < \"{3}\" > {1} &
-		#""".format(reference_id, candidate_id, self.reference_file_names[reference_id], self.candidate_file_names[candidate_id])
-		#bash_suffix = """;
-		#rm {0} {1}
-		#if [[ ! -f "{2}.delta" ]]; then
-		#	exit 1
-		#fi
-		#""".format(reference_id, candidate_id, prefix)
-		#cmd = bash_prefix + "{} {} -p {} {} {}".format(self.nucmer_exe, mode, prefix, reference_id, candidate_id) + bash_suffix
+		# bash_prefix = """
+		# mkfifo {0};
+		# mkfifo {1};
+		# tr -d '\\015' < \"{2}\" > {0} &
+		# tr -d '\\015' < \"{3}\" > {1} &
+		# """.format(reference_id, candidate_id, self.reference_file_names[reference_id], self.candidate_file_names[candidate_id])
+		# bash_suffix = """;
+		# rm {0} {1}
+		# if [[ ! -f "{2}.delta" ]]; then
+		# 	exit 1
+		# fi
+		# """.format(reference_id, candidate_id, prefix)
+		# cmd = bash_prefix + "{} {} -p {} {} {}".format(self.nucmer_exe, mode, prefix, reference_id, candidate_id) + bash_suffix
 		return cmd
 
 	# Run NUCmer pairwise on the input files, using multiprocessing
@@ -125,7 +126,7 @@ class ANIm:
 			We loop over all FASTA files in reference_file_names, generating NUCmer
 			command lines for each reference_file_names comparison
 		"""
-		#self.logger.info("add_nucmer_cmd_lines: %s %s" % (candidate_ids, reference_ids))
+		# self._logger.info("add_nucmer_cmd_lines: %s %s" % (candidate_ids, reference_ids))
 		unique_set = set()
 		# print "C", candidate_ids
 		# print ""
@@ -139,10 +140,10 @@ class ANIm:
 					continue
 				unique_set.add(tupel)
 				if reference_id in self.reference_file_names:
-					#self.cmd_lines.extend([self.get_nucmer_cmd(reference_id, candidate_id) for reference_id in reference_ids])
+					# self.cmd_lines.extend([self.get_nucmer_cmd(reference_id, candidate_id) for reference_id in reference_ids])
 					self.cmd_lines.append(self.get_nucmer_cmd(reference_id, candidate_id))
-				#else:
-				#	self.logger.warning("No genom for reference: {}".format(reference_id))
+				# else:
+				# 	self._logger.warning("No genom for reference: {}".format(reference_id))
 
 	# Multiprocessing callback to logger
 	def logger_callback(self, val):
@@ -151,19 +152,19 @@ class ANIm:
 			- val is an integer returned by multiprocessing, describing the run
 				status
 		"""
-		self.logger.info("Multiprocessing run completed with status: %s" % val)
+		self._logger.info("Multiprocessing run completed with status: %s" % val)
 		# Keep track of returned values, as these help diagnose problems
 		# for ANIm analyses
 		self._CUM_RETVALS += val
 
 	# Run a set of command lines using multiprocessing
-	def multiprocessing_run(self, verbose=False):
+	def multiprocessing_run(self):
 		""" Distributes the passed command-line jobs using multiprocessing.
 
 			- cmdlines is an iterable of command line strings
 		"""
-		self.logger.info("Running {} jobs with multiprocessing".format(len(self.cmd_lines)))
-		#return
+		self._logger.info("Running {} jobs with multiprocessing".format(len(self.cmd_lines)))
+		# return
 		cmd_task_list = [parallel.TaskCmd(cmd, self.out_dir_name) for cmd in self.cmd_lines]
 		fail_list = parallel.runCmdParallel(cmd_task_list, self.pool_size)
 		if fail_list is not None:
@@ -172,15 +173,15 @@ class ANIm:
 		# pool = multiprocessing.Pool(self.pool_size)
 		# completed = []
 		# if verbose:
-		# 	callback_fn = self.logger_callback
+		# 	callback_fn = self._logger_callback
 		# else:
 		# 	callback_fn = completed.append
 		# [pool.apply_async(subprocess.call, (str(cmd_line), ), {'stderr': subprocess.PIPE, 'shell': sys.platform != "win32"}, callback=callback_fn)
 		# 	for cmd_line in self.cmd_lines]
 		# pool.close()        # Run jobs
 		# pool.join()         # Collect output
-		# self.logger.info("Multiprocessing jobs completed:\n%s" % completed)
-		self.logger.info("Multiprocessing jobs completed")
+		# self._logger.info("Multiprocessing jobs completed:\n%s" % completed)
+		self._logger.info("Multiprocessing jobs completed")
 
 	# Run NUCmer pairwise on the input files, using multiprocessing
 	def run_cmd_lines(self):
@@ -195,15 +196,15 @@ class ANIm:
 			command lines to be run using multiprocessing.
 		"""
 		if len(self.cmd_lines) < 1:
-			self.logger.warning("NUCmer command lines: No lines!")
-			self.logger.warning("Ref {} / {}".format(len(self.reference_file_names), len(self.candidate_file_names)))
+			self._logger.warning("NUCmer command lines: No lines!")
+			self._logger.warning("Ref {} / {}".format(len(self.reference_file_names), len(self.candidate_file_names)))
 			return
-		#self.logger.info("NUCmer command lines:\n\t%s" % '\n\t'.join(self.cmd_lines[0]))
-		self.logger.info("NUCmer command lines:\n\t{}".format(self.cmd_lines[0]))
-		#return
+		# self._logger.info("NUCmer command lines:\n\t%s" % '\n\t'.join(self.cmd_lines[0]))
+		self._logger.info("NUCmer command lines:\n\t{}".format(self.cmd_lines[0]))
+		# return
 		self.multiprocessing_run()
 		if 0 < self._CUM_RETVALS:
-			self.logger.error("At least one NUCmer comparison failed. ANIm may fail.")
+			self._logger.error("At least one NUCmer comparison failed. ANIm may fail.")
 
 	# Get lengths of sequence for each organism
 	@staticmethod
@@ -223,7 +224,7 @@ class ANIm:
 
 			NOTE: ambiguity symbols are not discounted.
 		"""
-		self.logger.info("Processing organism sequence lengths")
+		self._logger.info("Processing organism sequence lengths")
 		for organism in organism_file_names:
 			self.total_lengths[organism] = sum([len(s) for s in SeqIO.parse(organism_file_names[organism], 'fasta')])
 
@@ -237,7 +238,7 @@ class ANIm:
 
 			NOTE: ambiguity symbols are not discounted.
 		"""
-		self.logger.info("Processing organism filenames")
+		self._logger.info("Processing organism filenames")
 		file_names = {}
 		with open(file_filepath_list, 'r') as file_handler:
 			for line in file_handler:
@@ -308,35 +309,36 @@ class ANIm:
 				input sequence
 		"""
 		delta_files = self.get_input_files('.delta')
-		self.logger.info("Delta files:\n\t%s" % '\n\t'.join(delta_files))
-		self.logger.info("Processing .delta files")
+		self._logger.info("Delta files:\n\t%s" % '\n\t'.join(delta_files))
+		self._logger.info("Processing .delta files")
 		# We store pairwise comparison lengths in dictionaries, keyed by organism
 		# ID pair tuples:
 		# perc_aln is useful, as it is a matrix of the minimum percentage of an
 		# organism's genome involved in a pairwise alignment
 		lengths, sim_errors, perc_ids, perc_aln = {}, {}, {}, {}
 		for delta_filename in delta_files:
-			self.logger.info("Processing %s" % delta_filename)
+			self._logger.info("Processing %s" % delta_filename)
 			qname, sname = os.path.splitext(os.path.split(delta_filename)[-1])[0].split('_vs_')
-			self.logger.info("Query organism: %s; Subject organism: %s" % (qname, sname))
+			self._logger.info("Query organism: %s; Subject organism: %s" % (qname, sname))
 			tot_length, tot_sim_error = self.parse_delta(delta_filename)
 			perc_id = 0
 			try:
-				perc_id = 1 - 1. * tot_sim_error/tot_length
+				perc_id = 1 - 1. * tot_sim_error / tot_length
 			except ZeroDivisionError:
 				# If this is thrown, the proximate cause is an empty NUCmer output
 				# The root cause may be a failed NUCmer run (when CUM_RETVALS>0)
 				# or that one or more of the sequences is too distant for NUCmer
 				# to identify a similarity.
-				self.logger.error("One or more of the NUCmer output files contains no useable output.")
+				self._logger.error("One or more of the NUCmer output files contains no useable output.")
 				if 0 < self._CUM_RETVALS:
-					self.logger.error("One or more NUCmer runs failed. Please investigate.")
-					self.logger.error("Please retry the NUCmer comparison for %s vs %s manually" % (qname, sname))
+					self._logger.error("One or more NUCmer runs failed. Please investigate.")
+					self._logger.error("Please retry the NUCmer comparison for %s vs %s manually" % (qname, sname))
 				else:
-					self.logger.error("The NUCmer comparison between %s and %s " % (qname, sname) +
-									"has no usable output. The comparison may be " +
-									"too distant for use. Consider using --maxmatch.")
-				self.logger.error(self.last_exception())
+					self._logger.error(
+						"The NUCmer comparison between %s and %s " % (qname, sname) +
+						"has no usable output. The comparison may be " +
+						"too distant for use. Consider using --maxmatch.")
+				self._logger.error(self.last_exception())
 			candidate_id = qname
 			reference_id = sname
 			if qname not in self.candidate_file_names:
@@ -345,8 +347,8 @@ class ANIm:
 			lengths[(candidate_id, reference_id)] = tot_length
 			sim_errors[(candidate_id, reference_id)] = tot_sim_error
 			perc_ids[(candidate_id, reference_id)] = perc_id
-			perc_aln[(candidate_id, reference_id)] = 1.*tot_length/self.total_lengths[candidate_id]
-			#perc_aln[sname] = 1.*tot_length/self.total_lengths[sname]
+			perc_aln[(candidate_id, reference_id)] = 1. * tot_length / self.total_lengths[candidate_id]
+			# perc_aln[sname] = 1.*tot_length/self.total_lengths[sname]
 		return lengths, sim_errors, perc_ids, perc_aln
 
 	# METHOD: ANIm
@@ -372,10 +374,9 @@ class ANIm:
 
 			The matrices are written to file in a plain text tab-separated format.
 		"""
-		if self.logger is not None:
-			self.logger.info("Running ANIm method")
+		self._logger.info("Running ANIm method")
 		self.run_cmd_lines()
-		#lengths, sim_errors, perc_ids, perc_aln = self.process_delta()
+		# lengths, sim_errors, perc_ids, perc_aln = self.process_delta()
 		return self.process_delta()
 
 	def calculate_minimum_anim(self):
@@ -387,8 +388,8 @@ class ANIm:
 		for candidate_id_reference_id in perc_ids:
 			candidate_id = candidate_id_reference_id[0]
 			reference_id = candidate_id_reference_id[1]
-			#self.logger.info("{}: candidate_id: {}; reference_id: {}".format(candidate_id_reference_id, candidate_id, reference_id))
-			#ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
+			# self._logger.info("{}: candidate_id: {}; reference_id: {}".format(candidate_id_reference_id, candidate_id, reference_id))
+			# ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
 			ani_ish = perc_ids[candidate_id_reference_id]
 			if candidate_id not in best_ani_by_candidate_id or (perc_aln[candidate_id_reference_id] > 0.8 and best_ani_by_candidate_id[candidate_id] < ani_ish):
 				best_ani_by_candidate_id[candidate_id] = ani_ish
