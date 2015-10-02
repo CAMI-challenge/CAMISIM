@@ -1,15 +1,15 @@
 __author__ = 'hofmann'
 
 import os
-import argparse
 import time
+import argparse
 import datetime
 import tempfile
-from config import Config
-from logger import Logger
+from scripts.configparserwrapper import ConfigParserWrapper
+from scripts.Validator.validator import Validator
 
 
-class ArgumentHandler(object):
+class ArgumentHandler(Validator):
 	"""Reading pipeline configuration from file and from passed arguments"""
 	_stages = 0
 	_logging = False
@@ -80,6 +80,7 @@ class ArgumentHandler(object):
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	# meta table columns  'OTU', 'novelty_category'
+	_separator = "\t"
 	column_name_unpublished_genomes_id = "genome_ID"
 	column_name_cutoff = "prediction_threshold"
 	column_name_otu_id = "OTU"
@@ -91,7 +92,7 @@ class ArgumentHandler(object):
 	column_name_ani_compare = "ANI_TAXONOMIC_COMPARE"
 	column_name_ani_scientific_name = "ANI_SCIENTIFIC_NAME"
 
-	def __init__(self, args=None, pipeline_directory=None, stages=1, logger=None):
+	def __init__(self, args=None, pipeline_directory=None, stages=1):
 		self._stages = stages
 
 		if pipeline_directory is None:
@@ -103,18 +104,23 @@ class ArgumentHandler(object):
 			ArgumentHandler.pipeline_directory = os.path.expanduser(ArgumentHandler.pipeline_directory)
 			ArgumentHandler.pipeline_directory = os.path.realpath(ArgumentHandler.pipeline_directory)
 
-		self._logger = logger
-		if self._logger is None:
-			self._logger = Logger("ArgumentHandler")
-
 		self._valid_args = True
 
 		# read parsed arguments
 		self.parser = None
 		options = self._get_parser_options(args)
+
+		logfile = options.logfile
+		if logfile is not None:
+			logfile = self.get_full_path(logfile)
+		super(ArgumentHandler, self).__init__(logfile=logfile)
+
 		self._read_options(options)
 		if not self._valid_args:
 			return
+
+		# set log level read from arguments
+		self.set_log_level(verbose=self._verbose, debug=self._debug)
 
 		# read config options
 		self._read_config()
@@ -575,9 +581,9 @@ class ArgumentHandler(object):
 			self._valid_args = False
 			return
 
-		self._config = Config(ArgumentHandler.config_file_path, self._logger)
+		self._config = ConfigParserWrapper(ArgumentHandler.config_file_path, logfile=None, verbose=True)
 		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
-		missing_section = self._config.has_missing_section(sections)
+		missing_section = self._config.validate_sections(sections)
 		if missing_section:
 			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
 			self._valid_args = False
@@ -586,7 +592,7 @@ class ArgumentHandler(object):
 		# 	ArgumentHandler.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if ArgumentHandler.novelty_only is None:
-			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, verbose=False)
+			ArgumentHandler.novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, silent=False)
 
 		if ArgumentHandler.novelty_only:
 			if ArgumentHandler.reference_genome_locations_file is None:
@@ -604,13 +610,13 @@ class ArgumentHandler(object):
 			return
 
 		if ArgumentHandler.temp_directory is None:
-			ArgumentHandler.temp_directory = self._config.get_value("Main", "temp_directory", verbose=False)
+			ArgumentHandler.temp_directory = self._config.get_value("Main", "temp_directory", silent=False)
 
 		if ArgumentHandler.output_directory is None:
-			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory", verbose=False)
+			ArgumentHandler.output_directory = self._config.get_value("Main", "output_directory", silent=False)
 
 		if ArgumentHandler.project_directory is None:
-			ArgumentHandler.project_directory = self._config.get_value("Main", "project_directory", verbose=False)
+			ArgumentHandler.project_directory = self._config.get_value("Main", "project_directory", silent=False)
 
 		if ArgumentHandler.processors is None:
 			ArgumentHandler.processors = self._config.get_value("Main", "processors", is_digit=True)
