@@ -6,28 +6,10 @@ import glob
 import time
 import shutil
 import tempfile
-from source.argumenthandler import ArgumentHandler
-from source.logger import Logger
+from scripts.Validator.validator import Validator
 
 
-def main(options):
-	assert isinstance(options, ArgumentHandler)
-	mg_cluster = MGCluster(
-		mothur_executable=options.binary_mothur,
-		directory_silva_reference=options.silva_reference_directory,
-		max_processors=options.processors,
-		temp_directory=options.temp_directory,
-		debug=options.debug_mode)
-
-	return mg_cluster.cluster(
-		marker_gene_fasta=os.path.join(options.project_directory, options.file_mg_16s),
-		output_cluster_file=os.path.join(options.project_directory, options.file_cluster_mg_16s),
-		distance_cutoff=options.distance_cutoff,
-		precision=options.precision,
-		method=options.cluster_method)
-
-
-class MGCluster(object):
+class MGCluster(Validator):
 
 	_mothur_cmd_ref_dist_split = """unique.seqs(fasta={mg_fasta})
 align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
@@ -49,10 +31,12 @@ dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={pro
 set.current(column={local_dist})
 cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}.merged.names)"""
 
-	def __init__(self, mothur_executable, directory_silva_reference, max_processors=1, temp_directory=None, debug=False, logger=None):
-		self._logger = logger
-		if not self._logger:
-			self._logger = Logger("MGCluster")
+	_label = "MGCluster"
+
+	def __init__(
+		self, mothur_executable, directory_silva_reference, max_processors=1, temp_directory=None,
+		logfile=None, verbose=False, debug=False):
+		super(MGCluster, self).__init__(logfile=logfile, verbose=verbose, debug=False)
 		self._mothur_executable = mothur_executable
 		self._temp_directory = temp_directory
 		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
