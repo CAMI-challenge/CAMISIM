@@ -4,15 +4,20 @@ import sys
 import os
 import math
 import textwrap
+from scripts.Validator.validator import Validator
 
 
-class MothurCluster:
+class MothurCluster(Validator):
 	"""Reading and writing a meta table"""
-	def __init__(self, precision, otu_separator="\t", element_separator=",", sequence_map=None, logger=None):
-		assert isinstance(precision, int)
 
+	_label = "MothurCluster"
+
+	def __init__(
+		self, precision, otu_separator="\t", element_separator=",", sequence_map=None,
+		logfile=None, verbose=False, debug=False):
+		assert isinstance(precision, int)
+		super(MothurCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._precision = int(math.log10(precision))
-		self._logger = logger
 		self.cluster_separator = otu_separator
 		self.element_separator = element_separator
 		self._cluster_by_cutoff = {}
@@ -65,17 +70,17 @@ class MothurCluster:
 				for c_element in cluster:
 					if c_element in list_of_elements:
 						continue
-					#genome_id = self.element_to_genome_id(element)
+					# genome_id = self.element_to_genome_id(element)
 					result[element].append(c_element)
 		return result
 
 	def read(self, file_path):
 		if not os.path.isfile(file_path):
 			if self._logger:
-				self._logger.error("[MothurCluster] No file found at: '{}'".format(file_path))
+				self._logger.error("No file found at: '{}'".format(file_path))
 			return
 		if self._logger:
-			self._logger.info("[MothurCluster] Reading cluster file '{}'".format(file_path))
+			self._logger.info("Reading cluster file '{}'".format(file_path))
 
 		with open(file_path) as file_handler:
 			self.element_to_index_mapping = {}
@@ -90,14 +95,14 @@ class MothurCluster:
 					cutoff = str(float(cutoff))
 				cluster_amount = row[1]
 				if self._logger:
-					self._logger.info("[MothurCluster] Reading threshold: {}".format(cutoff))
+					self._logger.info("Reading threshold: {}".format(cutoff))
 				self.element_to_index_mapping[cutoff] = {}
 				cluster_index = 0
 				for cluster_as_string in row[2:]:
 					list_of_elements = cluster_as_string.split(self.element_separator)
 					new_list_of_elements = [self.element_to_genome_id(element) for element in list_of_elements]
 					for element in new_list_of_elements:
-						#genome_id = self.element_to_genome_id(element)
+						# genome_id = self.element_to_genome_id(element)
 						if element not in self.element_to_index_mapping[cutoff]:
 							self.element_to_index_mapping[cutoff][element] = []
 						self.element_to_index_mapping[cutoff][element].append(cluster_index)
@@ -105,19 +110,19 @@ class MothurCluster:
 					cluster_index += 1
 				self._cluster_by_cutoff[cutoff] = {"count": cluster_amount, "cluster": list_of_cluster}
 			if self._logger:
-				self._logger.info("[MothurCluster] Reading finished")
+				self._logger.info("Reading finished")
 
 	def get_prediction_thresholds(self, minimum=0):
 		subset = set()
 		list_of_cutoff = list(self._cluster_by_cutoff.keys())
 		list_as_float = []
 		for cutoff in list_of_cutoff:
-			if not '.' in cutoff:
+			if '.' not in cutoff:
 				continue
 			list_as_float.append(float(cutoff))
 
 		for cutoff in list_of_cutoff:
-			if not '.' in cutoff:
+			if '.' not in cutoff:
 				continue
 			threshold = round(float(cutoff), self._precision)
 
@@ -129,7 +134,7 @@ class MothurCluster:
 	def get_sorted_lists_of_cutoffs(self, reverse=False):
 		lists_of_cutoff = list(self._cluster_by_cutoff.keys())
 		lists_of_cutoff.remove("unique")
-		#lists_of_cutoff = sorted(set([str(round(float(cutoff), precision)) for cutoff in lists_of_cutoff]), reverse=reverse)
+		# lists_of_cutoff = sorted(set([str(round(float(cutoff), precision)) for cutoff in lists_of_cutoff]), reverse=reverse)
 		lists_of_cutoff = sorted(lists_of_cutoff, reverse=reverse)
 		if not reverse:
 			tmp = lists_of_cutoff
@@ -142,10 +147,10 @@ class MothurCluster:
 	@staticmethod
 	def cluster_list_to_handle(list_of_cluster, handle=sys.stdout, width=80):
 		if not isinstance(list_of_cluster, dict):
-			handle.write(textwrap.fill(", ".join(list_of_cluster)+'\n', width))
+			handle.write(textwrap.fill(", ".join(list_of_cluster) + '\n', width))
 		else:
 			line = ", ".join('{}: {}'.format(key, value) for key, value in list_of_cluster.items())
-			handle.write(textwrap.fill(line, width)+'\n')
+			handle.write(textwrap.fill(line, width) + '\n')
 
 	def element_exists(self, threshold, element):
 		if not threshold == "unique":
@@ -154,24 +159,24 @@ class MothurCluster:
 
 		if threshold not in self.element_to_index_mapping:
 			if self._logger:
-				self._logger.error("[MothurCluster] Cutoff key error: {}\nAvailable keys: '{}'".format(threshold, ','.join(self.element_to_index_mapping.keys())))
+				self._logger.error("Cutoff key error: {}\nAvailable keys: '{}'".format(threshold, ','.join(self.element_to_index_mapping.keys())))
 			return False
 
-		#element = ".".join(element.split("_")[0].split(".")[:2])
+		# element = ".".join(element.split("_")[0].split(".")[:2])
 		if element not in self.element_to_index_mapping[threshold]:
-			#if self.logger:
-			#	self.logger.warning("{} not found in {}".format(element, cutoff))
+			# if self.logger:
+			# 	self.logger.warning("{} not found in {}".format(element, cutoff))
 			return False
 		return True
 
 	def get_cluster_of_cutoff_of_index(self, cutoff, cluster_index):
 		if cutoff not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff {}".format(cutoff))
+				self._logger.error("Bad cutoff {}".format(cutoff))
 			return None
 		if cluster_index >= len(self._cluster_by_cutoff[cutoff]["cluster"]):
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cluster index".format(cluster_index))
+				self._logger.error("Bad cluster index".format(cluster_index))
 			return None
 		return self._cluster_by_cutoff[cutoff]["cluster"][cluster_index]
 
@@ -182,17 +187,17 @@ class MothurCluster:
 
 		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
+				self._logger.error("Bad cutoff: {}".format(threshold))
 			return [], []
 		if not self.element_exists(float(threshold), element) or element.strip() == '' or threshold.strip() == '':
 			if self._logger:
-				self._logger.warning("[MothurCluster] Bad element: {} in {}".format(element, threshold))
+				self._logger.warning("Bad element: {} in {}".format(element, threshold))
 			return [], []
 		list_of_index = self.element_to_index_mapping[threshold][element]
 		if len(set(list_of_index)) > 1:
 			if self._logger:
-				self._logger.debug("[MothurCluster] {}: Multiple elements found. {}: {}".format(threshold, element, ", ".join([str(item) for item in set(list_of_index)])))
-				#print "Warning: multiple marker genes in different clusters", cutoff, element, set(list_of_index)
+				self._logger.debug("{}: Multiple elements found. {}: {}".format(threshold, element, ", ".join([str(item) for item in set(list_of_index)])))
+				# print "Warning: multiple marker genes in different clusters", cutoff, element, set(list_of_index)
 		return list_of_index, [self._cluster_by_cutoff[threshold]["cluster"][index] for index in list_of_index]
 
 	def get_cluster_of_cutoff(self, threshold="unique"):
@@ -202,7 +207,7 @@ class MothurCluster:
 
 		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
+				self._logger.error("Bad cutoff: {}".format(threshold))
 			return None
 		return self._cluster_by_cutoff[threshold]["cluster"]
 
@@ -213,7 +218,7 @@ class MothurCluster:
 
 		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
+				self._logger.error("Bad cutoff: {}".format(threshold))
 			return None
 		return self._cluster_by_cutoff[threshold]["count"]
 
@@ -225,8 +230,8 @@ class MothurCluster:
 		result_string = "{}\n".format(threshold)
 		if threshold not in self._cluster_by_cutoff:
 			if self._logger:
-				self._logger.error("[MothurCluster] Bad cutoff: {}".format(threshold))
+				self._logger.error("Bad cutoff: {}".format(threshold))
 			return None
 		for otu_group in self._cluster_by_cutoff[threshold]["cluster"]:
-			result_string += ", ".join(otu_group)+'\n'
+			result_string += ", ".join(otu_group) + '\n'
 		return result_string
