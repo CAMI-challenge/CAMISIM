@@ -11,6 +11,9 @@ from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 class MGExtract(SequenceValidator):
+	"""
+	Extracting Marker genes from fasta formatted files.
+	"""
 
 	_label = "MGExtract"
 
