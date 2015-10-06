@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-__author__ = 'hofmann'
+__author__ = 'Peter Hofmann'
+__version__ = "0.0.2"
 
 import sys
 import os
@@ -63,9 +64,9 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			self._logger.info("Abort")
 			return
 
-		if options.novelty_only:
+		if options._novelty_only:
 			reference_map_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-			reference_map_table.read(options.reference_genome_locations_file, column_names=False)
+			reference_map_table.read(options._file_path_reference_genome_locations, column_names=False)
 			ref_genome_ids = set(reference_map_table.get_column(0))
 			metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 			metadata_table.read(options.metadata_table_in)
@@ -73,24 +74,24 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
 			mgcluster = MGAnnotate()
 			mgcluster.establish_novelty_categorisation(
-				taxonomy, refernce_ncbi_id_set, metadata_table, options.column_name_cluster_prediction,
-				options.column_name_cluster_novelty)
+				taxonomy, refernce_ncbi_id_set, metadata_table, options._column_name_cluster_prediction,
+				options._column_name_cluster_novelty)
 			metadata_table.write(options.metadata_table_out)
 			return
 
-		if options.stage == 0 or options.stage == 1:
+		if options._phase == 0 or options._phase == 1:
 			if not self.marker_gene_extraction():
 				sys.exit(1)
 
-		if options.stage == 0 or options.stage == 2:
+		if options._phase == 0 or options._phase == 2:
 			if not self.gene_alignment_and_clustering():
 				sys.exit(1)
 
-		if options.stage == 0 or options.stage == 3:
+		if options._phase == 0 or options._phase == 3:
 			if not self.classification_of_genomes_and_novelty_prediction():
 				sys.exit(1)
 
-		if options.stage == 4:
+		if options._phase == 4:
 			if not self.ani_of_genomes_and_novelty_prediction():
 				sys.exit(1)
 
@@ -110,20 +111,21 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		assert isinstance(self, ArgumentHandler)
 		from scripts.MGExtract.mgextract import MGExtract
 		mg_extract = MGExtract(
-			mg_analyse_executable=os.path.join(self.pipeline_directory, "tools", "16SDetector", "run.py"),
-			filename_query_genome_file_paths=self.query_genomes_location_file,
-			filename_reference_genome_file_paths=self.reference_genome_locations_file,
-			filename_reference_marker_genes=self.reference_markergene_file_path,
-			config_path=self.config_file_path,
-			filename_iid_map=os.path.join(self.project_directory, self.filename_internal_id_map),
-			max_processors=self.processors,
-			temp_directory=self.temp_directory,
-			debug=self.debug_mode)
+			mg_analyse_executable=os.path.join(self._directory_pipeline, "tools", "16SDetector", "run.py"),
+			file_path_query_genome_file_paths=self._file_path_query_genomes_location_file,
+			file_path_reference_genome_file_paths=self._file_path_reference_genome_locations,
+			file_path_name_reference_marker_genes=self._file_path_reference_markergene,
+			config_path=self._config_file_path,
+			file_path_map_reference_genome_id_to_tax_id=self._file_path_map_reference_genome_id_to_tax_id,
+			max_processors=self._max_processors,
+			temp_directory=self._project_file_folder_handler.get_tmp_wd(),
+			debug=self._debug)
 
 		return mg_extract.gather_markergenes(
-			hmmer=self.hmmer,
+			hmmer=self._hmmer,
 			mg_type="16S",
-			output_file=os.path.join(self.project_directory, self.file_mg_16s))
+			file_path_output=self._project_file_folder_handler.get_file_path_mg_16s(),
+			file_path_map_uid_sid=self._project_file_folder_handler.get_file_path_internal_id_map())
 
 	def gene_alignment_and_clustering(self):
 		"""The second step is to align 16S sequences and clustering them.
@@ -145,24 +147,20 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 	- a mothur formatted file containing the clusters, from unique up to the given threshold
 	"""
 		assert isinstance(self, ArgumentHandler)
-		project_directory = self.project_directory
-
-		input_file = os.path.join(project_directory, self.file_mg_16s)
-		if not os.path.isfile(input_file):
-			self._logger.error("'-o': File not found: {}".format(input_file))
-			return False
+		assert self.validate_file(self._project_file_folder_handler.get_file_path_mg_16s())
+		assert self.validate_file(self._project_file_folder_handler.get_file_path_cluster_mg_16s())
 
 		from scripts.MGCluster.mgcluster import MGCluster
 		mg_cluster = MGCluster(
-			mothur_executable=self.binary_mothur,
+			mothur_executable=self._binary_mothur,
 			directory_silva_reference=self.silva_reference_directory,
-			max_processors=self.processors,
-			temp_directory=self.temp_directory,
-			debug=self.debug_mode)
+			max_processors=self._max_processors,
+			temp_directory=self._directory_temp,
+			debug=self._debug)
 
 		return mg_cluster.cluster(
-			marker_gene_fasta=os.path.join(self.project_directory, self.file_mg_16s),
-			output_cluster_file=os.path.join(self.project_directory, self.file_cluster_mg_16s),
+			marker_gene_fasta=self._project_file_folder_handler.get_file_path_mg_16s(),
+			output_cluster_file=self._project_file_folder_handler.get_file_path_cluster_mg_16s(),
 			distance_cutoff=self.distance_cutoff,
 			precision=self.precision,
 			method=self.cluster_method)
@@ -209,16 +207,19 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 	def create_meta_table_from_fasta_path_file(self):
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-		metadata_table.read(self.reference_genome_locations_file, column_names=False)
+		metadata_table.read(self._file_path_reference_genome_locations, column_names=False)
 		if metadata_table.get_number_of_rows() == 0:
 			return False
 		id_column = metadata_table.get_column(0)
 		metadata_table.clear()
-		metadata_table.insert_column(id_column, self.column_name_unpublished_genomes_id)
+		metadata_table.insert_column(id_column, self._column_name_genome_id)
 		metadata_table.write(self.metadata_table_in)
 		return True
 
 
 if __name__ == "__main__":
-	pipeline = MetagenomeSimulationPipeline()
+	pipeline = MetagenomeSimulationPipeline(
+		args=None, version=__version__, separator="\t",
+		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
+		column_name_ncbi="NCBI_ID")
 	pipeline.my_main()
