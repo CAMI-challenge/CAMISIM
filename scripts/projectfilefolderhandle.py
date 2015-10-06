@@ -33,8 +33,7 @@ class ProjectFileFolderHandle(Validator):
 	# ###################
 
 	_filename_config_default = "config.cfg"
-
-	_filename_internal_id_map = "gid_iid.tsv"
+	_filename_internal_id_map = "id_mapping.tsv"
 	_suffix_16S = "16S_rRNA"
 	# file_mg_05s = "5S_rRNA.fna"
 	_filename_mg = "{}.fna"
