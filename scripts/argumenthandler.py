@@ -11,7 +11,7 @@ from scripts.Validator.validator import Validator
 
 class ArgumentHandler(Validator):
 	"""Reading pipeline configuration from file and from passed arguments"""
-	_config_file_path = None
+	_file_path_config = None
 	_directory_pipeline = None
 	_directory_temp = None
 
@@ -169,7 +169,7 @@ class ArgumentHandler(Validator):
 		Min. Clas. dist.:\t{mcd}
 
 """.format(
-			config=self._config_file_path,
+			config=self._file_path_config,
 			pipe=self._directory_pipeline,
 			out=self._directory_output,
 			stage=stages[self._phase],
@@ -353,11 +353,11 @@ class ArgumentHandler(Validator):
 
 	# read the configuration file
 	def _read_config(self):
-		if not self.validate_file(self._config_file_path, key="Configuration file"):
+		if not self.validate_file(self._file_path_config, key="Configuration file"):
 			self._valid_args = False
 			return
 
-		self._config = ConfigParserWrapper(self._config_file_path, logfile=self._logfile, verbose=self._verbose)
+		self._config = ConfigParserWrapper(self._file_path_config, logfile=self._logfile, verbose=self._verbose)
 		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
 		missing_section = self._config.validate_sections(sections)
 		if missing_section:
@@ -462,7 +462,7 @@ class ArgumentHandler(Validator):
 				self._logger.error("File does not exist: '{}'".format(options.config_file))
 				self._valid_args = False
 				return
-		self._config_file_path = config_file
+		self._file_path_config = config_file
 		self._verbose = options.verbose
 		self.debug_mode = options.debug_mode
 		self._logging = options.logging
@@ -502,12 +502,11 @@ class ArgumentHandler(Validator):
 			formatter_class=argparse.RawTextHelpFormatter)
 		self.parser.add_argument("-verbose", "--verbose", action='store_true', default=False, help="display more information!")
 		self.parser.add_argument("-debug", "--debug_mode", action='store_true', default=False, help="activate DEBUG modus. tmp folders will not be deleted!")
-		self.parser.add_argument("-log", "--logging", action='store_true', default=False, help="pipeline output will written to a log file")
-		# self.parser.add_argument("-qc", "--quality_check", action='store_true', default=False, help="")
+		self.parser.add_argument("-log", "--logfile", action='store_true', default=False, help="pipeline output will written to a log file")
 		self.parser.add_argument(
 			"-p", "--processors", default=None, type=int,
 			help="number of processors to be used. >40 recommended.")
-		self.parser.add_argument("-s", "--stage", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
+		self.parser.add_argument("-s", "--phase", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
 2 -> Gene alignment and clustering,
@@ -516,50 +515,7 @@ class ArgumentHandler(Validator):
 Default: 0
 ''')
 		self.parser.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
-		# group = parser.add_mutually_exclusive_group()
-		group_input = self.parser.add_argument_group("input/output")
-		group_input.add_argument(
-			"-ir", "--input_reference_file", default=None, type=str,
-			help="""path to a file containing list of reference genomes
-Format: <genome_id>\\t<path>
-No column names!""")
-		group_input.add_argument(
-			"-irf", "--input_reference_fna_file", default=None, type=str,
-			help="path to a fasta file containing the 16S marker genes of the reference genomes")
-		group_input.add_argument(
-			"-i", "--input_genomes", default=None, type=str,
-			help="""path to a file containing list of unidentified genomes
-Format: <genome_id>\\t<path>
-No column names!""")
-		group_input.add_argument("-c", "--config_file", type=str, default=None, help="path to the configuration file of the pipeline")
-		group_out = group_input.add_mutually_exclusive_group()
-		group_out.add_argument(
-			"-T", "--temp_directory", default=None, type=str,
-			help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		group_out.add_argument(
-			"-o", "--output_directory", default=None, type=str,
-			help="directory containing found marker genes and also a file in mothur format containing the clustering")
-		group_input.add_argument(
-			"-im", "--metadata_table_in", default=None, type=str,
-			help="path to file containing tab separated list of unidentified genomes")
-		group_input.add_argument(
-			"-om", "--metadata_table_out", default=None, type=str,
-			help="path to file containing tab separated list of genomes and their file path")
-
-		group_clustering = self.parser.add_argument_group("clustering")
-		group_clustering.add_argument(
-			"-cm", "--cluster_method", default=None,
-			choices=self._cluster_method_choices, type=str,
-			help="Algorithm used for clustering")
-		group_clustering.add_argument(
-			"-th", "--threshold", default=None, type=float,
-			help="only distances up to the threshold will be calculated. Default: 0.05")
-		group_clustering.add_argument(
-			"-otu", "--otu_distance", default=None, type=float,
-			help="genetic distances at which cluster will be used as otus. Default: 0.03")
-		group_clustering.add_argument(
-			"-cth", "--classification_distance", default=None, type=float,
-			help="minimum distance for classification. Default: 0.02")
+		self.parser.add_argument("config_file", type=str, default=None, help="path to the configuration file of the pipeline")
 
 		if args is None:
 			return self.parser.parse_args()
