@@ -88,7 +88,6 @@ class ArgumentHandler(Validator):
 		self._valid_args = True
 
 		# read parsed arguments
-		self.parser = None
 		options = self._get_parser_options(args, version)
 
 		logfile = options.logfile
@@ -365,82 +364,45 @@ class ArgumentHandler(Validator):
 			self._valid_args = False
 			return
 
-		if self._novelty_only is None:
-			self._novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, silent=False)
-
 		if self._novelty_only:
-			if self._file_path_reference_genome_locations is None:
-				self._file_path_reference_genome_locations = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
+			self._file_path_reference_genome_locations = self._config.get_value("MarkerGeneExtraction", "input_reference_file", is_path=True)
 
-			if self.metadata_table_in is None:
-				self.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
+			self.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in", is_path=True)
 
-			if self.metadata_table_out is None:
-				self.metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out")
+			self.metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out", is_path=True)
 
-			if self.ncbi_reference_directory is None:
-				self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
+			self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
 			return
 
-		if self._directory_temp is None:
-			self._directory_temp = self._config.get_value("Main", "temp_directory", silent=False)
-
-		if self._directory_output is None:
-			self._directory_output = self._config.get_value("Main", "output_directory", silent=False)
-
+		section = "Main"
+		self._directory_temp = self._config.get_value(section, "temp_directory", is_path=True, silent=False)
+		self._directory_output = self._config.get_value(section, "output_directory", is_path=True, silent=False)
 		if self._max_processors is None:
-			self._max_processors = self._config.get_value("Main", "processors", is_digit=True)
+			self._max_processors = self._config.get_value(section, "processors", is_digit=True)
 
-		if self._binary_rnammer is None:
-			self._binary_rnammer = self._config.get_value("MarkerGeneExtraction", "rnammer")
+		section = "MarkerGeneExtraction"
+		self._binary_rnammer = self._config.get_value(section, "rnammer", is_path=True)
+		self._hmmerBinDir = self._config.get_value(section, "hmmerBinDir", is_path=True)
+		self._directory_sqlite_database = self._config.get_value(section, "databaseFile", is_path=True)
+		self._rnaHmmInstallDir = self._config.get_value(section, "rnaHmmInstallDir", is_path=True)
+		self._file_path_reference_genome_locations = self._config.get_value(section, "input_reference_file", is_path=True)
+		self._file_path_reference_markergene = self._config.get_value(section, "input_reference_fna_file", is_path=True)
+		self._hmmer = self._config.get_value(section, "hmmer", is_digit=True)
+		self._file_path_query_genomes_location_file = self._config.get_value(section, "input_genomes_file", is_path=True)
 
-		if self._hmmerBinDir is None:
-			self._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
+		section = "MarkerGeneClustering"
+		self._binary_mothur = self._config.get_value(section, "mothur", is_path=True)
+		self.metadata_table_in = self._config.get_value(section, "metadata_table_in", is_path=True)
+		self.silva_reference_directory = self._config.get_value(section, "silva_reference_directory", is_path=True)
+		self.cluster_method = self._config.get_value(section, "cluster_method", is_path=True)
+		self.distance_cutoff = self._config.get_value(section, "max_threshold", is_digit=True)
+		self.otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
+		self.classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
 
-		if self._directory_sqlite_database is None:
-			self._directory_sqlite_database = self._config.get_value("MarkerGeneExtraction", "databaseFile")
-
-		if self._rnaHmmInstallDir is None:
-			self._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
-
-		if self._file_path_reference_genome_locations is None:
-			self._file_path_reference_genome_locations = self._config.get_value("MarkerGeneExtraction", "input_reference_file")
-
-		if self._file_path_reference_markergene is None:
-			self._file_path_reference_markergene = self._config.get_value("MarkerGeneExtraction", "input_reference_fna_file")
-
-		if self._hmmer is None:
-			self._hmmer = self._config.get_value("MarkerGeneExtraction", "hmmer", is_digit=True)
-
-		if self._file_path_query_genomes_location_file is None:
-			self._file_path_query_genomes_location_file = self._config.get_value("MarkerGeneExtraction", "input_genomes_file")
-
-		if self._binary_mothur is None:
-			self._binary_mothur = self._config.get_value("MarkerGeneClustering", "mothur")
-
-		if self.metadata_table_in is None:
-			self.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in")
-
-		if self.silva_reference_directory is None:
-			self.silva_reference_directory = self._config.get_value("MarkerGeneClustering", "silva_reference_directory")
-
-		if self.cluster_method is None:
-			self.cluster_method = self._config.get_value("MarkerGeneClustering", "cluster_method")
-
-		if self.ncbi_reference_directory is None:
-			self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
-
-		if self.distance_cutoff is None:
-			self.distance_cutoff = self._config.get_value("MarkerGeneClustering", "max_threshold", is_digit=True)
-
-		if self.otu_distance is None:
-			self.otu_distance = self._config.get_value("MarkerGeneClustering", "otu_distance", is_digit=True)
-
-		if self.classification_distance_minimum is None:
-			self.classification_distance_minimum = self._config.get_value("MarkerGeneClustering", "classification_distance", is_digit=True)
+		self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
 
 	@staticmethod
-	def _free_space_in_giga_bytes(directory="/tmp"):
+	def _free_space_in_giga_bytes(directory=tempfile.gettempdir()):
 		if not os.path.isdir(directory):
 			return 0
 		statvfs = os.statvfs(directory)
@@ -480,7 +442,8 @@ class ArgumentHandler(Validator):
 		self.otu_distance = options.otu_distance
 		self.classification_distance_minimum = options.classification_distance
 
-	def _get_parser_options(self, args=None, version="Prototype"):
+	@staticmethod
+	def _get_parser_options(args=None, version="Prototype"):
 		"""
 		Parsing of passed arguments.
 
@@ -495,18 +458,34 @@ class ArgumentHandler(Validator):
 	#######################################
 
 	Pipeline for the extraction of marker genes, clustering and taxonomic classification""".format(version.ljust(25))
-		self.parser = argparse.ArgumentParser(
+		parser = argparse.ArgumentParser(
 			usage="python %(prog)s configuration_file_path",
-			version="MetagenomeSimulationPipeline {}".format(version),
+			version="MetagenomeSimulationPipeline TC {}".format(version),
 			description=description,
 			formatter_class=argparse.RawTextHelpFormatter)
-		self.parser.add_argument("-verbose", "--verbose", action='store_true', default=False, help="display more information!")
-		self.parser.add_argument("-debug", "--debug_mode", action='store_true', default=False, help="activate DEBUG modus. tmp folders will not be deleted!")
-		self.parser.add_argument("-log", "--logfile", action='store_true', default=False, help="pipeline output will written to a log file")
-		self.parser.add_argument(
-			"-p", "--processors", default=None, type=int,
-			help="number of processors to be used. >40 recommended.")
-		self.parser.add_argument("-s", "--phase", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
+		parser.add_argument(
+			"-verbose", "--verbose",
+			action='store_true',
+			default=False,
+			help="display more information!")
+		parser.add_argument(
+			"-debug", "--debug_mode",
+			action='store_true',
+			default=False,
+			help="tmp folders will not be deleted!")
+		parser.add_argument(
+			"-log", "--logfile",
+			type=str,
+			default=None,
+			help="pipeline output will written to this log file")
+
+		group_input = parser.add_argument_group('optional config arguments')
+		group_input.add_argument(
+			"-p", "--max_processors",
+			default=None,
+			type=int,
+			help="number of available processors")
+		group_input.add_argument("-s", "--phase", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
 2 -> Gene alignment and clustering,
@@ -514,10 +493,12 @@ class ArgumentHandler(Validator):
 4 -> Average Nucleotide Identity calculation
 Default: 0
 ''')
-		self.parser.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
-		self.parser.add_argument("config_file", type=str, default=None, help="path to the configuration file of the pipeline")
+		group_input.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
+
+		group_input = parser.add_argument_group('required')
+		group_input.add_argument("config_file", type=str, default=None, help="path to the configuration file of the pipeline")
 
 		if args is None:
-			return self.parser.parse_args()
+			return parser.parse_args()
 		else:
-			return self.parser.parse_args(args)
+			return parser.parse_args(args)
