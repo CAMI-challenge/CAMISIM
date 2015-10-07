@@ -31,7 +31,7 @@ class ArgumentHandler(Validator):
 	_binary_rnammer = None
 	_hmmerBinDir = None  # 16S mg analysis
 	_rnaHmmInstallDir = None  # 16S mg analysis
-	_databaseFile = None  # 16S mg analysis
+	_directory_sqlite_database = None  # 16S mg analysis
 
 	# [MarkerGeneClustering]
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
@@ -53,8 +53,7 @@ class ArgumentHandler(Validator):
 	# binary_mummer = None
 
 	# subfolder/files
-	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta"]
-	silva_ref_map_file = "map.tsv"
+	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	# meta table columns  'OTU', 'novelty_category'
@@ -192,210 +191,68 @@ class ArgumentHandler(Validator):
 		return self._valid_args
 
 	def _check_values(self):
+		if not self.validate_dir(self._directory_output, only_parent=True, key="Output directory"):
+			self._valid_args = False
+			return
+
+		if not self.validate_dir(self.ncbi_reference_directory, file_names=self._ncbi_ref_files, key="NCBI reference directory"):
+			self._valid_args = False
+			return
+
+		if not self.validate_file(self.metadata_table_in, key="Metadata file"):
+			self._valid_args = False
+			return
+
 		if self._novelty_only:
-			if self._file_path_reference_genome_locations is None:
-				self._logger.error("'-ir' Reference genome mapping file is required!")
+			if not self.validate_file(self._file_path_reference_genome_locations, key="Reference genome locations"):
 				self._valid_args = False
 				return
-			elif not os.path.isfile(self._file_path_reference_genome_locations):
-				self._logger.error("'-ir' File does not exist: '{}'".format(self._file_path_reference_genome_locations))
-				self._valid_args = False
-				return
-
-			if self.metadata_table_out is None:
-				self._logger.error("'-om' Metadata file is required!")
-				self._valid_args = False
-				return
-
-			if self.metadata_table_in is None:
-				self._logger.error("'-im' Metadata file is required!")
-				self._valid_args = False
-				return
-			elif not os.path.isfile(self.metadata_table_in):
-				self._logger.error("'-im' File does not exist: '{}'".format(self.metadata_table_in))
-				self._valid_args = False
-				return
-
-			if self.ncbi_reference_directory is None:
-				self._logger.error("'-ncbi' NCBI reference directory is required!")
-				self._valid_args = False
-				return
-
-			self.ncbi_reference_directory = os.path.expanduser(self.ncbi_reference_directory)
-			if not os.path.isabs(self.ncbi_reference_directory):
-				self.ncbi_reference_directory = os.path.join(self._directory_pipeline, self.ncbi_reference_directory)
-
-			if not os.path.isdir(self.ncbi_reference_directory):
-				self._logger.error("'-ncbi' Directory does not exist: '{}'".format(self.ncbi_reference_directory))
-				self._valid_args = False
-				return
-
-			for sub_directory in self._ncbi_ref_files:
-				file_path = os.path.join(self.ncbi_reference_directory, sub_directory)
-				if not os.path.isfile(file_path):
-					self._logger.error("'-ncbi' File does not exist: '{}'".format(file_path))
-					self._valid_args = False
-					return
 			return
 
-		if self._directory_output is None and self.project_directory is None:
-			self._logger.error("'-od' Output directory or '-o' project directory is required!")
-			self._valid_args = False
-			return
-
-		if self._directory_output is not None and self.project_directory is None:
-			directory_out = self._directory_output.rstrip('/')
-			if not os.path.isdir(directory_out):
-				directory_out = os.path.dirname(directory_out)
-
-			if not os.path.isdir(directory_out):
-				self._logger.error("'-od' Directory does not exist: '{}'".format(directory_out))
-				self._valid_args = False
-				return
-			if self._phase >= 2:
-				# search previous project
-				list_of_items = os.listdir(self._directory_output)
-				list_of_folder_directories = []
-				for item in list_of_items:
-					folder_item = os.path.join(self._directory_output, item)
-					if os.path.isdir(folder_item):
-						mg_fasta = self._project_file_folder_handler.get_file_path_mg_16s()
-						if os.path.isfile(mg_fasta):
-							list_of_folder_directories.append(folder_item)
-
-				if len(list_of_folder_directories) == 0:
-					self._logger.error("'-o' No valid Project directory found at '{}'".format(directory_out))
-					self._valid_args = False
-					return
-				elif len(list_of_folder_directories) == 1:
-					self.project_directory = list_of_folder_directories[0]
-					self._logger.info("Selected project directory: '{}'".format(self.project_directory))
-				else:
-					self._logger.error("'-o' Several valid project directories found at '{}'. Please specify!".format(directory_out))
-					self._valid_args = False
-					return
-
-		if not os.path.isdir(self.project_directory) and self._phase == 0:
-			os.mkdir(self.project_directory)
-
-		if self._directory_output is None:
-			self._directory_output = os.path.dirname(self.project_directory.rstrip('/'))
-
-		if not os.path.isabs(self.project_directory):
-			self.project_directory = os.path.expanduser(self.project_directory)
-			self.project_directory = os.path.realpath(self.project_directory)
-
-		if not os.path.isabs(self._directory_output):
-			self._directory_output = os.path.expanduser(self._directory_output)
-			self._directory_output = os.path.realpath(self._directory_output)
-
-		if not os.path.isdir(self._project_file_folder_handler.get_output_directory()):
-			self._logger.error("'-o' Directory does not exist: '{}'".format(self._project_file_folder_handler.get_output_directory()))
-			self._valid_args = False
-			return
-
-		self.silva_reference_directory = os.path.expanduser(self.silva_reference_directory)
-		if self.silva_reference_directory is None:
-			self._logger.error("'-silva' SILVA reference directory is required!")
-			self._valid_args = False
-			return
-		if not os.path.isabs(self.silva_reference_directory):
-			self.silva_reference_directory = os.path.realpath(self.silva_reference_directory)
-		if not os.path.isdir(self.silva_reference_directory):
-			self._logger.error("'-silva' Directory does not exist: '{}'".format(self.silva_reference_directory))
+		if self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
 			self._valid_args = False
 			return
 
 		if self._directory_temp is None:
 			self._directory_temp = tempfile.gettempdir()
-		if not os.path.isdir(self._directory_temp):
-			self._logger.error("'-temp' Directory does not exist: '{}'".format(self._directory_temp))
+		if not self.validate_dir(self._directory_temp, key="Temp directory"):
 			self._valid_args = False
 			return
-
-		for sub_directory in self._silva_ref_files:
-			file_path = os.path.join(self.silva_reference_directory, sub_directory)
-			if not os.path.isfile(file_path):
-				self._logger.error("'-silva' File does not exist: '{}'".format(file_path))
-				self._valid_args = False
-				return
-
-		file_path = os.path.join(self.silva_reference_directory, self.silva_ref_map_file)
-		if not os.path.isfile(file_path):
-			self.silva_ref_map_file = None
-			self._logger.warning("'-silva' A sequence mapping file for the silva references was not found. Assuming it is not required!")
-
-		if self.ncbi_reference_directory is None:
-			self._logger.error("'-ncbi' NCBI reference directory is required!")
-			self._valid_args = False
-			return
-
-		self.ncbi_reference_directory = os.path.expanduser(self.ncbi_reference_directory)
-		if not os.path.isabs(self.ncbi_reference_directory):
-			self.ncbi_reference_directory = os.path.join(self._directory_pipeline, self.ncbi_reference_directory)
-
-		if not os.path.isdir(self.ncbi_reference_directory):
-			self._logger.error("'-ncbi' Directory does not exist: '{}'".format(self.ncbi_reference_directory))
-			self._valid_args = False
-			return
-
-		for sub_directory in self._ncbi_ref_files:
-			file_path = os.path.join(self.ncbi_reference_directory, sub_directory)
-			if not os.path.isfile(file_path):
-				self._logger.error("'-ncbi' File does not exist: '{}'".format(file_path))
-				self._valid_args = False
-				return
 
 		if self._phase < 2:
-			if self._databaseFile is None:
-				self._logger.error("'databaseFile', bad argument!")
-				self._valid_args = False
-				return
-			elif not os.path.isdir(self._databaseFile):
-				self._logger.error("'databaseFile', bad path to directory! '{}'".format(self._databaseFile))
-				self._valid_args = False
-				return
-			elif not os.path.isfile(os.path.join(self._databaseFile, "ncbitax_sqlite.db")):
-				self._logger.error("'databaseFile', directory does not contain file: 'ncbitax_sqlite.db'! '{}'".format(self._databaseFile))
+			if not self.validate_dir(self._directory_sqlite_database, file_names=["ncbitax_sqlite.db"], key="databaseFile"):
 				self._valid_args = False
 				return
 
-			if not os.path.isdir(self._rnaHmmInstallDir):
-				self._logger.error("'rnaHmmInstallDir', bad path to directory! '{}'".format(self._rnaHmmInstallDir))
+			if not self.validate_dir(self._rnaHmmInstallDir, key="rnaHmmInstallDir"):
 				self._valid_args = False
 				return
 
-			if self._hmmer == 3 and self._hmmerBinDir is None:
-				self._logger.error("'hmmerBinDir' is required for marker gene extraction, a path to the directory can be set in the config file!")
-				self._valid_args = False
-				return
-			if self._hmmer == 2 and self._binary_rnammer is None:
-				self._logger.error("'rnammer' is required for marker gene extraction, a path to the directory can be set in the config file!")
+			if not self.validate_dir(self._rnaHmmInstallDir, file_names=["rna_hmm2.py", "rna_hmm3.py"]):
 				self._valid_args = False
 				return
 
-			if self._hmmer == 3 and not os.path.isdir(self._hmmerBinDir):
-				self._logger.error("'hmmerBinDir', bad path to directory! '{}'".format(self._hmmerBinDir))
-				self._valid_args = False
-				return
-			if self._hmmer == 2 and not os.path.isfile(self._binary_rnammer):
-				self._logger.error("'rnammer', bad path to binary! '{}'".format(self._binary_rnammer))
-				self._valid_args = False
-				return
-
+			directory_rna_hmm = self._rnaHmmInstallDir
+			assert isinstance(directory_rna_hmm, basestring)
+			rna_hmm_wrapper = None
 			if self._hmmer == 3:
-				executable = os.path.join(self._hmmerBinDir, "hmmsearch")
-				rna_hmm_wrapper = os.path.join(self._rnaHmmInstallDir, "rna_hmm3.py")
-			else:
-				executable = self._binary_rnammer
-				rna_hmm_wrapper = os.path.join(self._rnaHmmInstallDir, "rna_hmm2.py")
+				if not self.validate_dir(self._hmmerBinDir, file_names=["hmmsearch"]):
+					self._valid_args = False
+					return
+				directory = self._hmmerBinDir
+				assert isinstance(directory, basestring)
+				executable = os.path.join(directory, "hmmsearch")
+				if not self.validate_file(executable, executable=True):
+					self._valid_args = False
+					return
+				rna_hmm_wrapper = os.path.join(directory_rna_hmm, "rna_hmm3.py")
+			elif self._hmmer == 2:
+				if not self.validate_file(self._binary_rnammer, executable=True, key="rnammer"):
+					self._valid_args = False
+					return
+				rna_hmm_wrapper = os.path.join(directory_rna_hmm, "rna_hmm2.py")
 
-			if not os.access(executable, os.X_OK):
-				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(self._hmmer, executable))
-				self._valid_args = False
-				return
-			if not os.access(rna_hmm_wrapper, os.X_OK):
-				self._logger.error("'hmmer{}', no permission to execute! '{}'".format(self._hmmer, rna_hmm_wrapper))
+			if not self.validate_file(rna_hmm_wrapper, executable=True, key="hmmer{}".format(self._hmmer)):
 				self._valid_args = False
 				return
 
@@ -403,94 +260,59 @@ class ArgumentHandler(Validator):
 				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
 				self._valid_args = False
 				return
-			elif self._file_path_reference_genome_locations is None and self._file_path_reference_markergene is None:
-				self._logger.error("'-ir' or '-irf' Reference genome maping file is required!")
-				self._valid_args = False
-				return
 			else:  # if not os.path.isfile(self.input_reference_file) and not os.path.isfile(self.input_reference_fna_file):
 				file_path = self._file_path_reference_genome_locations or self._file_path_reference_markergene
-				if not os.path.isfile(file_path):
-					self._logger.error("'-ir','-irf' File does not exist: '{}'".format(file_path))
+				if not self.validate_file(file_path, key="reference genome"):
 					self._valid_args = False
 					return
 
-		if self._phase <= 2:
-			if self._binary_mothur is None:
-				self._logger.error("'mothur' is required for clustering, a path to the binary can be set in in the config file!")
-				self._valid_args = False
-				return
-			if not self.validate_file(self._binary_mothur, executable=True):
+			if not self.validate_file(self._binary_mothur, executable=True, key="mothur"):
 				self._valid_args = False
 				return
 
-		if self._phase > 2:
-			cluster_file = self._project_file_folder_handler.get_file_path_cluster_mg_16s()
-			if not os.path.isfile(cluster_file):
-				self._logger.error("Mothur file with list of clusters not found at: '{}'".format(cluster_file))
-				self._valid_args = False
-				return
-
-		if self._file_path_query_genomes_location_file is None:
-			self._logger.error("'-i' Unidentified genome mapping file is required!")
-			self._valid_args = False
-			return
-		elif not os.path.isfile(self._file_path_query_genomes_location_file):
-			self._logger.error("'-i' File does not exist: '{}'".format(self._file_path_query_genomes_location_file))
-			self._valid_args = False
-			return
-
-		if self.metadata_table_in is None:
-			self._logger.error("'-im' Metadata file is required!")
-			self._valid_args = False
-			return
-		elif not os.path.isfile(self.metadata_table_in):
-			self._logger.error("'-im' File does not exist: '{}'".format(self.metadata_table_in))
+		if self.validate_file(self._file_path_query_genomes_location_file, key="Query genome locations"):
 			self._valid_args = False
 			return
 
 		if self._max_processors is None:
-			self._logger.error("'-p' A number of processors is required!")
+			self._logger.error("A number of available processors is required!")
 			self._valid_args = False
 			return
-		elif not self._max_processors > 0:
-			self._logger.error("'-p' The number of processors must be a positive number: '{}'".format(self._max_processors))
+		elif not self.validate_number(self._max_processors, minimum=1, key="Available processors"):
 			self._valid_args = False
 			return
 
 		if self.distance_cutoff is None:
-			self._logger.error("'-th' A max distance threshold is required!")
+			self._logger.error("A max distance threshold is required!")
 			self._valid_args = False
 			return
-		elif not self.distance_cutoff > 0 or not self.distance_cutoff <= 1:
-			self._logger.error("'-th' The max distance threshold must be between 0 and 1".format(self.distance_cutoff))
+		elif not self.validate_number(self.distance_cutoff, minimum=0, maximum=1, zero=False, key="Max distance threshold"):
 			self._valid_args = False
 			return
 
 		if self.otu_distance is None:
-			self._logger.error("'-otu' A threshold is required!")
+			self._logger.error("A threshold is required for otus!")
 			self._valid_args = False
 			return
-		elif not self.otu_distance > 0 or not self.otu_distance <= 1:
-			self._logger.error("'-otu' The number of processors must be a positive number: '{}'".format(self.otu_distance))
+		elif not self.validate_number(self.otu_distance, minimum=0, maximum=1, zero=False, key="OTU distance threshold"):
 			self._valid_args = False
 			return
 
 		if self.classification_distance_minimum is None:
-			self._logger.error("'-cth' A minimum classification distance threshold is required!")
+			self._logger.error("A minimum classification distance threshold is required!")
 			self._valid_args = False
 			return
-		elif not self.classification_distance_minimum > 0 or not self.classification_distance_minimum <= 1:
-			self._logger.error("'-cth' The minimum classification distance threshold must be between 0 and 1: '{}'".format(self.classification_distance_minimum))
+		elif not self.validate_number(self.classification_distance_minimum, minimum=0, maximum=1, zero=False, key="Minimum classification distance threshold"):
 			self._valid_args = False
 			return
 
 		if self.cluster_method is None:
-			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(self._cluster_method_choices)))
+			self._logger.error("'-cm' A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
 			self._valid_args = False
 			return
 
 		if self.cluster_method not in self._cluster_method_choices:
-			self._logger.error("'-cm' A clustering method must be choosen: {}!".format(', '.join(self._cluster_method_choices)))
+			self._logger.error("'-cm' A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
 			self._valid_args = False
 			return
 
@@ -531,20 +353,17 @@ class ArgumentHandler(Validator):
 
 	# read the configuration file
 	def _read_config(self):
-		if not os.path.isfile(self._config_file_path):
-			self._logger.error("'-c' File does not exist: '{}'".format(self._config_file_path))
+		if not self.validate_file(self._config_file_path, key="Configuration file"):
 			self._valid_args = False
 			return
 
-		self._config = ConfigParserWrapper(self._config_file_path, logfile=None, verbose=True)
+		self._config = ConfigParserWrapper(self._config_file_path, logfile=self._logfile, verbose=self._verbose)
 		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
 		missing_section = self._config.validate_sections(sections)
 		if missing_section:
 			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
 			self._valid_args = False
 			return
-		# if self.pipeline_directory is None:
-		# 	self.pipeline_directory = self._get_config_value("main", "pipeline_dir")
 
 		if self._novelty_only is None:
 			self._novelty_only = self._config.get_value("Main", "novelty_only", is_boolean=True, silent=False)
@@ -561,7 +380,6 @@ class ArgumentHandler(Validator):
 
 			if self.ncbi_reference_directory is None:
 				self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory")
-
 			return
 
 		if self._directory_temp is None:
@@ -579,8 +397,8 @@ class ArgumentHandler(Validator):
 		if self._hmmerBinDir is None:
 			self._hmmerBinDir = self._config.get_value("MarkerGeneExtraction", "hmmerBinDir")
 
-		if self._databaseFile is None:
-			self._databaseFile = self._config.get_value("MarkerGeneExtraction", "databaseFile")
+		if self._directory_sqlite_database is None:
+			self._directory_sqlite_database = self._config.get_value("MarkerGeneExtraction", "databaseFile")
 
 		if self._rnaHmmInstallDir is None:
 			self._rnaHmmInstallDir = self._config.get_value("MarkerGeneExtraction", "rnaHmmInstallDir")
