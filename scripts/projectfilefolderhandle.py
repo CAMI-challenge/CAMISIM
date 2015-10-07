@@ -32,7 +32,6 @@ class ProjectFileFolderHandle(Validator):
 	#   file names
 	# ###################
 
-	_filename_config_default = "config.cfg"
 	_filename_internal_id_map = "id_mapping.tsv"
 	_suffix_16S = "16S_rRNA"
 	# file_mg_05s = "5S_rRNA.fna"
@@ -66,6 +65,7 @@ class ProjectFileFolderHandle(Validator):
 		if time_stamp is None:
 			self._time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y.%m.%d_%H.%M.%S')
 		super(ProjectFileFolderHandle, self).__init__(logfile, verbose, debug)
+		self._make_dir(output_dir)
 
 	def get_time_stamp(self):
 		return self._time_stamp
