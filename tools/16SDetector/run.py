@@ -29,29 +29,36 @@ def main():
 		description='''PhyloPythiaS Plus is an extension of PhyloPythiaS.''',
 		epilog='''Read the user documentation for more details.''')
 
-	parser.add_argument('-c', '--config', nargs=1, type=file, required=True, help='configuration file of the pipeline',
-						metavar='config.cfg', dest='config')
+	parser.add_argument(
+		'-c', '--config', nargs=1, type=file, required=True, help='configuration file of the pipeline',
+		metavar='config.cfg', dest='config')
 
-	parser.add_argument('-i', '--input_fasta_file', nargs=1, default=None, required=False, help='path to fasta file',
-						metavar='fasta_file.fn', dest='i')
+	parser.add_argument(
+		'-i', '--input_fasta_file', nargs=1, default=None, required=False, help='path to fasta file',
+		metavar='fasta_file.fn', dest='i')
 
-	parser.add_argument('-out', '--output_folder', nargs=1, default=None, required=False, help='path to output folder',
-						dest='out')
+	parser.add_argument(
+		'-out', '--output_folder', nargs=1, default=None, required=False, help='path to output folder',
+		dest='out')
 
-	parser.add_argument('-n', '--run-rrna16S', action='store_true',
-						help='run hidden markov model and classify according to the 16S, 23S, and 5S marker genes',
-						dest='n')
+	parser.add_argument(
+		'-n', '--run-rrna16S', action='store_true',
+		help='run hidden markov model and classify according to the 16S, 23S, and 5S marker genes',
+		dest='n')
 
-	parser.add_argument('-nn', '--runn-rrna16S', action='store_true',
-						help='run hidden markov model searching for 16S, 23S, and 5S marker genes',
-						dest='nn')
+	parser.add_argument(
+		'-nn', '--runn-rrna16S', action='store_true',
+		help='run hidden markov model searching for 16S, 23S, and 5S marker genes',
+		dest='nn')
 
-	parser.add_argument('-g', '--run-marker-gene-analysis', action='store_true',
-						help='run hidden markov model and classify according to the "31" marker genes',
-						dest='g')
+	parser.add_argument(
+		'-g', '--run-marker-gene-analysis', action='store_true',
+		help='run hidden markov model and classify according to the "31" marker genes',
+		dest='g')
 
-	parser.add_argument("-hmmer", "--hmmer", default=3, type=int,
-						help="'2': rnammer; '3': hmmsearch using hmmer 3.0")
+	parser.add_argument(
+		"-hmmer", "--hmmer", default=3, type=int,
+		help="'2': rnammer; '3': hmmsearch using hmmer 3.0")
 
 	# push down predictions to more specific clades (sc)
 	# build new OTUs (otu)
@@ -67,7 +74,7 @@ def main():
 		pipeline_dir = os.path.normpath(config.get('pipelineDir'))
 	else:
 		pipeline_dir = os.path.normpath(args.out[0])
-	#print "output folder:", pipeline_dir
+	# print "output folder:", pipeline_dir
 	if not os.path.isdir(pipeline_dir):
 		print("Pipeline directory doesn't exist: ", pipeline_dir)
 		return
@@ -76,8 +83,9 @@ def main():
 	working_dir = os.path.join(pipeline_dir, 'working')
 	mg_working_dir = os.path.join(working_dir, 'mgWorking')
 	output_dir = os.path.join(pipeline_dir, 'output')
-	dir_array = [working_dir, output_dir, os.path.join(working_dir, 'projectDir'),
-				 os.path.join(working_dir, 'sampleSpecificDir'), mg_working_dir]
+	dir_array = [
+		working_dir, output_dir, os.path.join(working_dir, 'projectDir'),
+		os.path.join(working_dir, 'sampleSpecificDir'), mg_working_dir]
 	for dirPath in dir_array:
 		if not os.path.isdir(dirPath):
 			try:
@@ -94,17 +102,17 @@ def main():
 	if (input_fasta_file is None) or (input_fasta_file is not None and (not os.path.isfile(input_fasta_file))):
 		print("The input fasta file %s doesn't exist" % input_fasta_file)
 		return
-	#if ('-' in input_fasta_file) or ('+' in input_fasta_file):
-	#	print('The input fasta file path is not allowed to contain "+" or "-" characters ' +
-	#		  'due to the "Mothur" software, given path:\n' + str(input_fasta_file))
-	#	return
+	# if ('-' in input_fasta_file) or ('+' in input_fasta_file):
+	# 	print('The input fasta file path is not allowed to contain "+" or "-" characters ' +
+	# 		  'due to the "Mothur" software, given path:\n' + str(input_fasta_file))
+	# 	return
 
-	input_fasta_scaffolds_file = None #config.get('inputFastaScaffoldsFile')
+	input_fasta_scaffolds_file = None  # config.get('inputFastaScaffoldsFile')
 	if (input_fasta_scaffolds_file is not None) and (not os.path.isfile(input_fasta_scaffolds_file)):
 		print("The given scaffolds fasta file doesn't exist: ", input_fasta_scaffolds_file)
 		return
 
-	scaffolds_to_contigs_map_file = None #config.get('scaffoldsToContigsMapFile')
+	scaffolds_to_contigs_map_file = None  # config.get('scaffoldsToContigsMapFile')
 	if (scaffolds_to_contigs_map_file is not None) and (not os.path.isfile(scaffolds_to_contigs_map_file)):
 		print("The given scaffolds to contigs map file doesn't exist: ", scaffolds_to_contigs_map_file)
 		return
@@ -153,7 +161,7 @@ def main():
 		return
 
 	# reference predictions
-	reference_placement_file_out = None #config.get('referencePlacementFileOut')
+	reference_placement_file_out = None  # config.get('referencePlacementFileOut')
 	if reference_placement_file_out is not None and not os.path.isfile(reference_placement_file_out):
 		print("The reference placement file doesn't exist: %s" % reference_placement_file_out)
 		return
@@ -175,8 +183,7 @@ def main():
 			reference_placement_file_pp_out = os.path.join(working_dir, os.path.basename(reference_placement_file_out) + '_.PP.out')
 			ppsOut2ppOut(reference_placement_file_out, reference_placement_file_pp_out, taxonomic_ranks, database_file)
 		except Exception as e:
-			print("An error '%s' occurred while file '%s' has been generated."
-				  % (e.message, reference_placement_file_pp_out))
+			print("An error '%s' occurred while file '%s' has been generated." % (e.message, reference_placement_file_pp_out))
 
 	#####################################
 
@@ -221,7 +228,7 @@ def main():
 	# exclude mg from the reference ?
 	s16_database = None  # os.path.normpath(config.get('s16Database'))
 	exclude_ref_mg_rank = config.get('excludeRefMgRank')
-	#s16_database = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/reference_db/nobackup/silva111" #config.get('s16Database')
+	# s16_database = "/net/metagenomics/projects/cami_2014/02_otu_clustering/trunk/reference_db/nobackup/silva111" #config.get('s16Database')
 	mg_database = None # os.path.normpath(config.get('mgDatabase'))
 
 	if s16_database is not None and not os.path.isabs(s16_database):
@@ -257,14 +264,17 @@ def main():
 						os.mkdir(mask_ref_mg_dir)
 						os.mkdir(os.path.join(mask_ref_mg_dir, 'db'))
 					except OSError:
-						print("Can't create one of the directories (%s, %s, 'db') for the masked reference marker gene "
-							  "sequences." % (mask_ref_mg_16s_dir, mask_ref_mg_dir))
+						print(
+							"Can't create one of the directories (%s, %s, 'db') for the masked reference marker gene "
+							"sequences." % (mask_ref_mg_16s_dir, mask_ref_mg_dir))
 						mask_ref_ok = False
 					else:
-						mask_db.maskDb('mg', os.path.join(s16_database, 'db'), os.path.join(mask_ref_mg_16s_dir, 'db'),
-									   exclude_ref_mg_rank, refLeafCladesSet, database_file)
-						mask_db.maskDb('mg', os.path.join(mg_database, 'db'), os.path.join(mask_ref_mg_dir, 'db'),
-									   exclude_ref_mg_rank, refLeafCladesSet, database_file)
+						mask_db.maskDb(
+							'mg', os.path.join(s16_database, 'db'), os.path.join(mask_ref_mg_16s_dir, 'db'),
+							exclude_ref_mg_rank, refLeafCladesSet, database_file)
+						mask_db.maskDb(
+							'mg', os.path.join(mg_database, 'db'), os.path.join(mask_ref_mg_dir, 'db'),
+							exclude_ref_mg_rank, refLeafCladesSet, database_file)
 						shutil.copy2(os.path.join(s16_database, 'content.csv'), mask_ref_mg_16s_dir)
 						shutil.copy2(os.path.join(mg_database, 'content.csv'), mask_ref_mg_dir)
 						shutil.copytree(os.path.join(mg_database, 'hmmAmphora'),
