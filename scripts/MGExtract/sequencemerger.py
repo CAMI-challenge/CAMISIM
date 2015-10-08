@@ -128,7 +128,7 @@ class SequenceMerger(SequenceValidator):
 				self._stream_output.write(">{}\n".format(unique_sequence_id))
 				self._stream_output.writelines(seq_record.seq + "\n")
 				if self._stream_map_uid_sid:
-					self._stream_map_uid_sid.write("{}\t{}\n".format(unique_sequence_id, seq_record.id, tax_id))
+					self._stream_map_uid_sid.write("{}\t{}\t{}\n".format(unique_sequence_id, seq_record.id, tax_id))
 			else:
 				counter_rejected += 1
 				# sys.stderr.write("WARNING: [merge] sequence too small. Size: {size} ID: '{uid}', File: '{file}'\n".format(
