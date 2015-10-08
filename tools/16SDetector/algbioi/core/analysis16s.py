@@ -88,10 +88,16 @@ class RRNA16S():
 		hmmerBinDir = os.path.normpath(self._config.get('hmmerBinDir'))
 
 		if not os.path.isabs(hmmInstallDir):
-			hmmInstallDir = os.path.normpath(self._folder_tools + "/" + hmmInstallDir)
+			hmmInstallDir = os.path.expanduser(hmmInstallDir)
+			hmmInstallDir = os.path.normpath(hmmInstallDir)
+			hmmInstallDir = os.path.abspath(hmmInstallDir)
+			# hmmInstallDir = os.path.normpath(self._folder_tools + "/" + hmmInstallDir)
 
 		if not os.path.isabs(hmmerBinDir):
-			hmmerBinDir = os.path.normpath(self._folder_tools + "/" + hmmerBinDir)
+			hmmerBinDir = os.path.expanduser(hmmerBinDir)
+			hmmerBinDir = os.path.normpath(hmmerBinDir)
+			hmmerBinDir = os.path.abspath(hmmerBinDir)
+			# hmmerBinDir = os.path.normpath(self._folder_tools + "/" + hmmerBinDir)
 
 		regionsFile = os.path.join(self._workingDir, str(os.path.basename(inputFastaFile) + '.gff'))
 		cmd = str('export PATH=' + hmmerBinDir + ':$PATH; time ' + os.path.join(hmmInstallDir, 'rna_hmm3.py') + ' -i ' + inputFastaFile + ' -o ' + regionsFile
