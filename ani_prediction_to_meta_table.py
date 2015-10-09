@@ -1,54 +1,51 @@
 __author__ = 'hofmann'
 
-from source.argumenthandler import ArgumentHandler
-from source.mothurcluster import MothurCluster
-from source.taxonomy.ncbitaxonomy import NcbiTaxonomy
-from source.metatable import MetaTable
-from source.anim import ANIm
-from source.logger import Logger
+from scripts.argumenthandler import ArgumentHandler
+from scripts.MGAnnotate.mothurcluster import MothurCluster
+from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
+from scripts.MetaDataTable.metadatatable import MetadataTable
+from scripts.anim import ANIm
 import os
 
 
-def my_main(options, logger=None):
-	if logger is None:
-		logger = Logger("ANI prediction")
-	#ranks = args.ranks.strip().split(',')
-
+def my_main(options):
+	logger = options._logger.info("ANI prediction")
+	# ranks = args.ranks.strip().split(',')
 	assert isinstance(options, ArgumentHandler)
 
-	column_name_ani_novelty = options.column_name_ani_novelty
-	column_name_ani_taxid = options.column_name_ani_compare
-	column_name_ani_scientific_name = options.column_name_ani_scientific_name
-	column_name_ani = options.column_name_ani
+	column_name_ani_novelty = options._column_name_ani_novelty
+	column_name_ani_taxid = options._column_name_ani_compare
+	column_name_ani_scientific_name = options._column_name_ani_scientific_name
+	column_name_ani = options._column_name_ani
 
 	if not os.path.isfile(options.metadata_table_out):
 		logger.error("Mothur file with list of clusters not found at: '{}'".format(options.metadata_table_out))
 		return False
 
-	metadata_table = MetaTable(logger=logger)
+	metadata_table = MetadataTable(logfile=options._logfile)
 	# metadata_table_out, need data from previous steps
 	metadata_table.read(options.metadata_table_out)
 
 	logger.info("Loading taxonomic database: '{}'".format(options.ncbi_reference_directory))
 	taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False, logger)
 
-	cluster_file = os.path.join(options.project_directory, options.file_cluster_mg_16s)
-	mothur_cluster = MothurCluster(options.precision, logger=logger)
+	cluster_file = options._project_file_folder_handler.get_file_path_cluster_mg_16s()
+	mothur_cluster = MothurCluster(options.precision, logfile=options._logfile)
 	mothur_cluster.read(cluster_file)
 
 	ani_scientific_name_column = metadata_table.get_empty_column()
 	ani_prediction_novelty_column = metadata_table.get_empty_column()
 	ani_prediction_column = metadata_table.get_empty_column()
 	ani_column = metadata_table.get_empty_column()
-	#cutoff_column = metadata_table.get_column(options.column_name_cutoff)
+	# cutoff_column = metadata_table.get_column(options.column_name_cutoff)
 	unpublished_genome_ids_column = metadata_table.get_column(options.column_name_unpublished_genomes_id)
 
 	# TODO: get rid of import package
 	nucmer_exe = "importpackage mummer;nucmer"
 	with ANIm(options.query_genomes_location_file, options.reference_genome_locations_file, options.temp_directory, nucmer_exe=nucmer_exe, logger=logger, pool_size=options.processors) as ani_calculator:
 		list_of_clusters = mothur_cluster.get_clusters_of_elements(options.distance_cutoff, unpublished_genome_ids_column)
-		#logger.info("OTUS: {}".format(otus))
-		#sys.exit(0)
+		# logger.info("OTUS: {}".format(otus))
+		# sys.exit(0)
 		for unknown_genomes_id in unpublished_genome_ids_column:
 			if list_of_clusters[unknown_genomes_id] is None:
 				continue
@@ -70,10 +67,9 @@ def my_main(options, logger=None):
 				if science_name is not None:
 					ani_scientific_name_column[row_index] = science_name
 
-	metadata_table.set_column(ani_column, column_name_ani)
-	metadata_table.set_column(ani_prediction_novelty_column, column_name_ani_novelty)
-	metadata_table.set_column(ani_prediction_column, column_name_ani_taxid)
-	metadata_table.set_column(ani_scientific_name_column, column_name_ani_scientific_name)
+	metadata_table.insert_column(ani_column, column_name_ani)
+	metadata_table.insert_column(ani_prediction_novelty_column, column_name_ani_novelty)
+	metadata_table.insert_column(ani_prediction_column, column_name_ani_taxid)
+	metadata_table.insert_column(ani_scientific_name_column, column_name_ani_scientific_name)
 	metadata_table.write(options.metadata_table_out)
 	logger.info("ANI prediction finished")
-	return True

@@ -10,6 +10,8 @@ from scripts.Validator.validator import Validator
 
 
 class ArgumentHandler(Validator):
+
+	_label = "ArgumentHandler"
 	"""Reading pipeline configuration from file and from passed arguments"""
 	_file_path_config = None
 	_directory_pipeline = None
@@ -198,18 +200,10 @@ class ArgumentHandler(Validator):
 			self._valid_args = False
 			return
 
-		if not self.validate_file(self.metadata_table_in, key="Metadata file"):
-			self._valid_args = False
-			return
-
 		if self._novelty_only:
 			if not self.validate_file(self._file_path_reference_genome_locations, key="Reference genome locations"):
 				self._valid_args = False
 				return
-			return
-
-		if self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
-			self._valid_args = False
 			return
 
 		if self._directory_temp is None:
@@ -265,11 +259,54 @@ class ArgumentHandler(Validator):
 					self._valid_args = False
 					return
 
+		if self._phase == 0 or self._phase > 1:
+			if not self.validate_file(self.metadata_table_in, key="Metadata file"):
+				self._valid_args = False
+				return
+
+			if self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
+				self._valid_args = False
+				return
+
 			if not self.validate_file(self._binary_mothur, executable=True, key="mothur"):
 				self._valid_args = False
 				return
 
-		if self.validate_file(self._file_path_query_genomes_location_file, key="Query genome locations"):
+			if self.distance_cutoff is None:
+				self._logger.error("A max distance threshold is required!")
+				self._valid_args = False
+				return
+			elif not self.validate_number(self.distance_cutoff, minimum=0, maximum=1, zero=False, key="Max distance threshold"):
+				self._valid_args = False
+				return
+
+			if self.otu_distance is None:
+				self._logger.error("A threshold is required for otus!")
+				self._valid_args = False
+				return
+			elif not self.validate_number(self.otu_distance, minimum=0, maximum=1, zero=False, key="OTU distance threshold"):
+				self._valid_args = False
+				return
+
+			if self.classification_distance_minimum is None:
+				self._logger.error("A minimum classification distance threshold is required!")
+				self._valid_args = False
+				return
+			elif not self.validate_number(self.classification_distance_minimum, minimum=0, maximum=1, zero=False, key="Minimum classification distance threshold"):
+				self._valid_args = False
+				return
+
+			if self.cluster_method is None:
+				self._logger.error("A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
+				self._valid_args = False
+				return
+
+			if self.cluster_method not in self._cluster_method_choices:
+				self._logger.error("A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
+				self._valid_args = False
+				return
+
+		if not self.validate_file(self._file_path_query_genomes_location_file, key="Query genome locations"):
 			self._valid_args = False
 			return
 
@@ -281,46 +318,12 @@ class ArgumentHandler(Validator):
 			self._valid_args = False
 			return
 
-		if self.distance_cutoff is None:
-			self._logger.error("A max distance threshold is required!")
-			self._valid_args = False
-			return
-		elif not self.validate_number(self.distance_cutoff, minimum=0, maximum=1, zero=False, key="Max distance threshold"):
-			self._valid_args = False
-			return
-
-		if self.otu_distance is None:
-			self._logger.error("A threshold is required for otus!")
-			self._valid_args = False
-			return
-		elif not self.validate_number(self.otu_distance, minimum=0, maximum=1, zero=False, key="OTU distance threshold"):
-			self._valid_args = False
-			return
-
-		if self.classification_distance_minimum is None:
-			self._logger.error("A minimum classification distance threshold is required!")
-			self._valid_args = False
-			return
-		elif not self.validate_number(self.classification_distance_minimum, minimum=0, maximum=1, zero=False, key="Minimum classification distance threshold"):
-			self._valid_args = False
-			return
-
-		if self.cluster_method is None:
-			self._logger.error("'-cm' A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
-			self._valid_args = False
-			return
-
-		if self.cluster_method not in self._cluster_method_choices:
-			self._logger.error("'-cm' A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
-			self._valid_args = False
-			return
-
 		expected_output_size = self._expected_output_size_in_giga_byte()
 		expected_tmp_size = expected_output_size
 		# if self.multiple_samples:
 		# 	expected_tmp_size /= self.number_of_samples
-		directory_tmp = self._project_file_folder_handler.get_tmp_wd()
-		directory_out = self._project_file_folder_handler.get_output_directory()
+		directory_tmp = self._directory_temp
+		directory_out = self._directory_output
 		free_tmp_space = self._free_space_in_giga_bytes(directory_tmp)
 		free_out_space = self._free_space_in_giga_bytes(directory_out)
 		message = None
@@ -375,17 +378,20 @@ class ArgumentHandler(Validator):
 			return
 
 		section = "Main"
+		if self._phase is None:
+			self._phase = self._config.get_value(section, "phase", is_digit=True, silent=False)
 		self._directory_temp = self._config.get_value(section, "temp_directory", is_path=True, silent=False)
 		self._directory_output = self._config.get_value(section, "output_directory", is_path=True, silent=False)
 		if self._max_processors is None:
-			self._max_processors = self._config.get_value(section, "processors", is_digit=True)
+			self._max_processors = self._config.get_value(section, "max_processors", is_digit=True)
 
 		section = "MarkerGeneExtraction"
 		self._binary_rnammer = self._config.get_value(section, "rnammer", is_path=True)
 		self._hmmerBinDir = self._config.get_value(section, "hmmerBinDir", is_path=True)
 		self._directory_sqlite_database = self._config.get_value(section, "databaseFile", is_path=True)
 		self._rnaHmmInstallDir = self._config.get_value(section, "rnaHmmInstallDir", is_path=True)
-		self._file_path_reference_genome_locations = self._config.get_value(section, "input_reference_file", is_path=True)
+		self._file_path_reference_genome_locations = self._config.get_value(section, "reference_genomes_file", is_path=True)
+		self._file_path_map_reference_genome_id_to_tax_id = self._config.get_value(section, "reference_genomes_map_file", is_path=True)
 		self._file_path_reference_markergene = self._config.get_value(section, "input_reference_fna_file", is_path=True)
 		self._hmmer = self._config.get_value(section, "hmmer", is_digit=True)
 		self._file_path_query_genomes_location_file = self._config.get_value(section, "input_genomes_file", is_path=True)
@@ -426,21 +432,21 @@ class ArgumentHandler(Validator):
 				return
 		self._file_path_config = config_file
 		self._verbose = options.verbose
-		self.debug_mode = options.debug_mode
-		self._logging = options.logging
-		self._phase = options.stage
-		self._max_processors = options.processors
+		self._debug = options.debug_mode
+		self._logfile = options.logfile
+		self._phase = options.phase
+		self._max_processors = options.max_processors
 		self._novelty_only = options.novelty_only
 
-		self._file_path_reference_genome_locations = options.input_reference_file
-		self._file_path_reference_markergene = options.input_reference_fna_file
-		self._file_path_query_genomes_location_file = options.input_genomes
-		self._directory_output = options.output_directory
-		self.metadata_table_in = options.metadata_table_in
-		self.cluster_method = options.cluster_method
-		self.distance_cutoff = options.threshold
-		self.otu_distance = options.otu_distance
-		self.classification_distance_minimum = options.classification_distance
+		# self._file_path_reference_genome_locations = options.input_reference_file
+		# self._file_path_reference_markergene = options.input_reference_fna_file
+		# self._file_path_query_genomes_location_file = options.input_genomes
+		# self._directory_output = options.output_directory
+		# self.metadata_table_in = options.metadata_table_in
+		# self.cluster_method = options.cluster_method
+		# self.distance_cutoff = options.threshold
+		# self.otu_distance = options.otu_distance
+		# self.classification_distance_minimum = options.classification_distance
 
 	@staticmethod
 	def _get_parser_options(args=None, version="Prototype"):
@@ -485,7 +491,7 @@ class ArgumentHandler(Validator):
 			default=None,
 			type=int,
 			help="number of available processors")
-		group_input.add_argument("-s", "--phase", default=0, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
+		group_input.add_argument("-s", "--phase", default=None, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
 2 -> Gene alignment and clustering,

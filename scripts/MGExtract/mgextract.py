@@ -62,8 +62,8 @@ class MGExtract(SequenceValidator):
 		super(MGExtract, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		assert file_path_map_reference_genome_id_to_tax_id is None or self.validate_file(file_path_map_reference_genome_id_to_tax_id)
 		assert self.validate_file(file_path_query_genome_file_paths)
-		assert self.validate_file(file_path_reference_genome_file_paths)
-		assert self.validate_file(file_path_name_reference_marker_genes)
+		assert file_path_reference_genome_file_paths is None or self.validate_file(file_path_reference_genome_file_paths)
+		assert file_path_name_reference_marker_genes is None or self.validate_file(file_path_name_reference_marker_genes)
 		assert self.validate_file(config_path)
 		assert self.validate_file(mg_analyse_executable, executable=True)
 		assert self.validate_number(max_processors, minimum=1)
@@ -138,8 +138,8 @@ class MGExtract(SequenceValidator):
 			self._logger.error(msg)
 			raise OSError(msg)
 
-		tmp_out_file_path = tempfile.mktemp(suffix="_accepted", dir=self._working_dir)
-		tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._working_dir)
+		tmp_out_file_path = tempfile.mktemp(suffix="_accepted", dir=self._temp_directory)
+		tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._temp_directory)
 
 		self._merge_marker_genes_files(
 			local_genome_file_paths, tmp_out_file_path,
@@ -183,6 +183,7 @@ class MGExtract(SequenceValidator):
 		out_dir = self._working_dir
 		cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}'"
 		cmd_list = [cmd.format(exe=self._mg_analyse_executable, config=self._config_path, hmmer=hmmer, input_file=file_path, out_dir=out_dir) for file_path in list_of_fasta]
+		self._logger.debug("\n" + "\n".join(cmd_list))
 		return [parallel.TaskCmd(cmd, out_dir) for cmd in cmd_list]
 
 	def _get_local_genome_paths(self, dict_genome_id_to_path):
@@ -196,14 +197,15 @@ class MGExtract(SequenceValidator):
 		@rtype: dict[str|unicode, str|unicode]
 		"""
 		assert isinstance(dict_genome_id_to_path, dict)
-
+		counter = 0
 		system_link_directory = os.path.join(self._working_dir, "sym_links")
 		if not os.path.exists(system_link_directory):
 			os.makedirs(system_link_directory)
 		dict_genome_id_to_local_path = {}
 		for genome_id in dict_genome_id_to_path:
 			basename = os.path.basename(dict_genome_id_to_path[genome_id])
-			dict_genome_id_to_local_path[genome_id] = os.path.join(system_link_directory, basename)
+			dict_genome_id_to_local_path[genome_id] = os.path.join(system_link_directory, "{}_{}".format(counter, basename))
+			counter += 1
 		return dict_genome_id_to_local_path
 
 	def _get_genome_id_to_path_map(self, file_path):

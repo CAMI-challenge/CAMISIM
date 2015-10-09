@@ -136,7 +136,7 @@ class SequenceMerger(SequenceValidator):
 				# 				uid=unique_id,
 				# 				file=os.path.basename(input_file)))
 				if self._stream_output_bin:
-					self._stream_output_bin.write(">{}_{}\n".format(prefix_unique_id, seq_record.id))
+					self._stream_output_bin.write(">{}\n".format(unique_sequence_id))
 					self._stream_output_bin.writelines(seq_record.seq + "\n")
 
 		if counter == 0:

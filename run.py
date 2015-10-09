@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 __author__ = 'Peter Hofmann'
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 import sys
 import os
+import traceback
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.argumenthandler import ArgumentHandler
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
@@ -13,6 +14,8 @@ import ani_prediction_to_meta_table
 
 
 class MetagenomeSimulationPipeline(ArgumentHandler):
+
+	_label = "MetagenomeSimulationPipeline"
 	"""
 	Pipeline for the generation of a simulated metagenome
 	"""
@@ -57,43 +60,53 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		# 	{0} -c config.cfg -s 2
 		# 	'''.format(sys.argv[0])
 
-		options = ArgumentHandler()
-		if options._verbose:
-			self._logger.info(options.to_string())
-		if not options.is_valid():
-			self._logger.info("Abort")
+		# self._logger.info(self.to_string())
+		if not self.is_valid():
+			self._logger.info("Aborted")
 			return
+		self._logger.info("Starting")
+		try:
 
-		if options._novelty_only:
-			reference_map_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-			reference_map_table.read(options._file_path_reference_genome_locations, column_names=False)
-			ref_genome_ids = set(reference_map_table.get_column(0))
-			metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-			metadata_table.read(options.metadata_table_in)
-			taxonomy = NcbiTaxonomy(options.ncbi_reference_directory, False)
-			refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
-			mgcluster = MGAnnotate()
-			mgcluster.establish_novelty_categorisation(
-				taxonomy, refernce_ncbi_id_set, metadata_table, options._column_name_cluster_prediction,
-				options._column_name_cluster_novelty)
-			metadata_table.write(options.metadata_table_out)
-			return
+			if self._novelty_only:
+				reference_map_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+				reference_map_table.read(self._file_path_reference_genome_locations, column_names=False)
+				ref_genome_ids = set(reference_map_table.get_column(0))
+				metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+				metadata_table.read(self.metadata_table_in)
+				taxonomy = NcbiTaxonomy(self.ncbi_reference_directory, False)
+				refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
+				mgcluster = MGAnnotate()
+				mgcluster.establish_novelty_categorisation(
+					taxonomy, refernce_ncbi_id_set, metadata_table, self._column_name_cluster_prediction,
+					self._column_name_cluster_novelty)
+				metadata_table.write(self.metadata_table_out)
+				return
 
-		if options._phase == 0 or options._phase == 1:
-			if not self.marker_gene_extraction():
-				sys.exit(1)
+			if self._phase == 0 or self._phase == 1:
+				self.marker_gene_extraction()
 
-		if options._phase == 0 or options._phase == 2:
-			if not self.gene_alignment_and_clustering():
-				sys.exit(1)
+			if self._phase == 0 or self._phase == 2:
+				if not self.gene_alignment_and_clustering():
+					sys.exit(1)
 
-		if options._phase == 0 or options._phase == 3:
-			if not self.classification_of_genomes_and_novelty_prediction():
-				sys.exit(1)
+			if self._phase == 0 or self._phase == 3:
+				if not self.classification_of_genomes_and_novelty_prediction():
+					sys.exit(1)
 
-		if options._phase == 4:
-			if not self.ani_of_genomes_and_novelty_prediction():
-				sys.exit(1)
+			if self._phase == 4:
+				if not self.ani_of_genomes_and_novelty_prediction():
+					sys.exit(1)
+
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
+			self._logger.debug("\n{}\n".format(traceback.format_exc()))
+			self._logger.info("Aborted")
+		else:
+			self._logger.info("Finished")
+
+		if not self._debug:
+			self._project_file_folder_handler.remove_directory_temp()
+		else:
+			self._logger.info("Temporary data stored at:\n{}".format(self._project_file_folder_handler.get_tmp_wd()))
 
 	def marker_gene_extraction(self):
 		"""The first step is to find and extract 16S marker gene sequences. The sequences are found using "hmmsearch" and extracted based on the given positions.
@@ -115,13 +128,13 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			file_path_query_genome_file_paths=self._file_path_query_genomes_location_file,
 			file_path_reference_genome_file_paths=self._file_path_reference_genome_locations,
 			file_path_name_reference_marker_genes=self._file_path_reference_markergene,
-			config_path=self._config_file_path,
+			config_path=self._file_path_config,
 			file_path_map_reference_genome_id_to_tax_id=self._file_path_map_reference_genome_id_to_tax_id,
 			max_processors=self._max_processors,
 			temp_directory=self._project_file_folder_handler.get_tmp_wd(),
-			debug=self._debug)
+			separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 
-		return mg_extract.gather_markergenes(
+		mg_extract.gather_markergenes(
 			hmmer=self._hmmer,
 			mg_type="16S",
 			file_path_output=self._project_file_folder_handler.get_file_path_mg_16s(),
