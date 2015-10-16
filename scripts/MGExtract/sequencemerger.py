@@ -111,7 +111,7 @@ class SequenceMerger(SequenceValidator):
 
 		if not os.path.exists(file_path_input):
 			# sys.stderr.write("WARNING: [merge] File not found: '{file}'\n".format(file=input_file))
-			self._logger.warning("No marker genes found for: '{unique_id}'\n".format(unique_id=prefix_unique_id))
+			self._logger.warning("No marker genes found for: '{unique_id}'".format(unique_id=prefix_unique_id))
 			return
 
 		counter = 0
@@ -119,7 +119,7 @@ class SequenceMerger(SequenceValidator):
 		for seq_record in SeqIO.parse(file_path_input, "fasta"):
 			seq_length = len(seq_record.seq)
 			if seq_record.id in unique_id_set:
-				self._logger.warning("Removed duplicate entry of {}: {}\n".format(prefix_unique_id, seq_record.id))
+				self._logger.warning("Removed duplicate entry of {}: {}".format(prefix_unique_id, seq_record.id))
 				continue
 			unique_id_set.add(seq_record.id)
 			unique_sequence_id = "{}_{}".format(prefix_unique_id, counter)
@@ -140,9 +140,11 @@ class SequenceMerger(SequenceValidator):
 					self._stream_output_bin.writelines(seq_record.seq + "\n")
 
 		if counter == 0:
-			self._logger.warning("No valid marker gene found for {}: {}\n".format(prefix_unique_id, file_path_input))
+			self._logger.warning("No valid marker gene found for {}: {}".format(prefix_unique_id, file_path_input))
 		if counter_rejected > 0:
-			self._logger.warning("{} marker genes rejected from {}\n".format(counter_rejected, prefix_unique_id))
+			self._logger.warning("{} marker genes rejected from {}".format(counter_rejected, prefix_unique_id))
+		if counter > 0:
+			self._logger.debug("{} marker genes accepted from {}".format(counter, prefix_unique_id))
 
 
 if __name__ == "__main__":
