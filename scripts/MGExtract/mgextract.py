@@ -76,7 +76,7 @@ class MGExtract(SequenceValidator):
 		self._config_path = config_path
 		self._max_processors = max_processors
 		self._debug = debug
-		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
+		self._working_dirs = {}
 		self._genome_id_to_tax_id = None
 		self._separator = separator
 		if file_path_map_reference_genome_id_to_tax_id is None:
@@ -117,19 +117,11 @@ class MGExtract(SequenceValidator):
 		elif self._file_path_reference_genome_file_paths is not None and self._file_path_reference_marker_genes is not None:
 			self._logger.warning("Ignoring reference genome file paths and using previous reference marker genes!")
 
-		# establish symbolic link to fasta files
-		local_genome_file_paths = self._get_local_genome_paths(query_genome_file_paths)
-		for genome_id, src in query_genome_file_paths.iteritems():
-			dst = local_genome_file_paths[genome_id]
-			if not self.validate_file(src):
-				if not self._debug:
-					shutil.rmtree(self._working_dir)
-				else:
-					self._logger.warning("Remove manually: '{}'".format(self._working_dir))
-				return False
-			os.symlink(src, dst)
+		cmd_list = self._get_cmd_list(hmmer=hmmer, dict_of_fasta=query_genome_file_paths)
+		list_of_tasks = []
+		for cmd in cmd_list:
+			list_of_tasks.append(parallel.TaskCmd(cmd))
 
-		list_of_tasks = self._get_cmd_task_list(hmmer=hmmer, list_of_fasta=local_genome_file_paths.values())
 		fail_list = parallel.runCmdParallel(list_of_tasks, self._max_processors)
 		if fail_list is not None:
 			for message in parallel.reportFailedCmd(fail_list):
@@ -142,7 +134,7 @@ class MGExtract(SequenceValidator):
 		tmp_out_file_bin_path = tempfile.mktemp(suffix="_rejected", dir=self._temp_directory)
 
 		self._merge_marker_genes_files(
-			local_genome_file_paths, tmp_out_file_path,
+			query_genome_file_paths, tmp_out_file_path,
 			file_path_out_bin=tmp_out_file_bin_path, file_path_map_uid_sid=file_path_map_uid_sid, mg_type=mg_type)
 		if os.path.exists(tmp_out_file_path):
 			shutil.copy2(tmp_out_file_path, file_path_output)
@@ -161,52 +153,46 @@ class MGExtract(SequenceValidator):
 		self._logger.info("Extracting marker genes finished ({}s)".format(round(end - start, 1)))
 
 		if not self._debug:
-			shutil.rmtree(self._working_dir)
+			for directory in self._working_dirs.values():
+				shutil.rmtree(directory)
 		else:
-			self._logger.warning("Remove manually: '{}'".format(self._working_dir))
+			for directory in self._working_dirs.values():
+				self._logger.warning("Remove manually: '{}'".format(directory))
 
-	def _get_cmd_task_list(self, hmmer, list_of_fasta):
+	def _get_cmd_list(self, hmmer, dict_of_fasta):
 		"""
 		Get list of command tasks
 
 		@param hmmer: hmmer2 or hmmer3
 		@type hmmer: int | long
-		@param list_of_fasta: List of file paths of genomes
-		@type list_of_fasta: list[str|unicode]
+		@param dict_of_fasta: Dict of file paths of genomes
+		@type dict_of_fasta: dict[str|unicode, str|unicode]
 
 		@return: List of command tasks
 		@rtype: list[TaskCmd]
 		"""
 		assert isinstance(hmmer, (int, long))
-		assert isinstance(list_of_fasta, list)
+		assert isinstance(dict_of_fasta, dict)
 		assert self.validate_number(hmmer, minimum=2, maximum=3)
-		out_dir = self._working_dir
-		cmd = "{exe} -c '{config}' -nn -hmmer {hmmer} -i '{input_file}' -out '{out_dir}'"
-		cmd_list = [cmd.format(exe=self._mg_analyse_executable, config=self._config_path, hmmer=hmmer, input_file=file_path, out_dir=out_dir) for file_path in list_of_fasta]
-		self._logger.debug("\n" + "\n".join(cmd_list))
-		return [parallel.TaskCmd(cmd, out_dir) for cmd in cmd_list]
+		arguments = [
+			"-c '{}'".format(self._config_path),
+			"-hmmer {}".format(hmmer),
+			"-n",
+		]
+		cmd = "{exe} -i '{input_file}' -out '{dir_out}' {args}"
+		if self._logfile:
+			arguments.append("-log '{}'".format(self._logfile))
+			cmd += " >> {}".format(self._logfile)
 
-	def _get_local_genome_paths(self, dict_genome_id_to_path):
-		"""
-		Create local paths for genomes to avoid several issues with mothur.
-
-		@param dict_genome_id_to_path: Map of genome id to the real path of genomes
-		@type dict_genome_id_to_path: dict[str|unicode, str|unicode]
-
-		@return: Map of genome id to the local path of genomes
-		@rtype: dict[str|unicode, str|unicode]
-		"""
-		assert isinstance(dict_genome_id_to_path, dict)
+		cmd_list = []
 		counter = 0
-		system_link_directory = os.path.join(self._working_dir, "sym_links")
-		if not os.path.exists(system_link_directory):
-			os.makedirs(system_link_directory)
-		dict_genome_id_to_local_path = {}
-		for genome_id in dict_genome_id_to_path:
-			basename = os.path.basename(dict_genome_id_to_path[genome_id])
-			dict_genome_id_to_local_path[genome_id] = os.path.join(system_link_directory, "{}_{}".format(counter, basename))
+		for gid, file_path in dict_of_fasta.iteritems():
+			self._working_dirs[gid] = tempfile.mkdtemp(dir=self._temp_directory, prefix="extract_{}".format(counter))
+			cmd_list.append(cmd.format(
+				exe=self._mg_analyse_executable, input_file=file_path, dir_out=self._working_dirs[gid], args=" ".join(arguments)))
 			counter += 1
-		return dict_genome_id_to_local_path
+		self._logger.debug("\n".join(cmd_list))
+		return cmd_list
 
 	def _get_genome_id_to_path_map(self, file_path):
 		"""
@@ -265,7 +251,7 @@ class MGExtract(SequenceValidator):
 			for genome_id, genome_path in dict_genome_id_to_path.iteritems():
 				input_filename = os.path.basename(genome_path)
 				input_filepath = "{prefix}.ids.{suffix}.fna".format(prefix=input_filename, suffix=suffix)
-				input_file = os.path.join(self._working_dir, "working", input_filepath)
+				input_file = os.path.join(self._working_dirs[genome_id], "working", input_filepath)
 				# unique_id = genome_id
 				unique_id = "GR_{}".format(counter)
 				tax_id = ""
