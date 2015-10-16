@@ -144,7 +144,7 @@ class SequenceMerger(SequenceValidator):
 		if counter_rejected > 0:
 			self._logger.warning("{} marker genes rejected from {}".format(counter_rejected, prefix_unique_id))
 		if counter > 0:
-			self._logger.debug("{} marker genes accepted from {}".format(counter, prefix_unique_id))
+			self._logger.info("{} marker genes accepted from {}".format(counter, prefix_unique_id))
 
 
 if __name__ == "__main__":
