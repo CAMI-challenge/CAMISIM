@@ -7,6 +7,7 @@ import tempfile
 from scripts.projectfilefolderhandle import ProjectFileFolderHandle
 from scripts.configparserwrapper import ConfigParserWrapper
 from scripts.Validator.validator import Validator
+from scripts.MGCluster.mgcluster import MGCluster
 
 
 class ArgumentHandler(Validator):
@@ -37,7 +38,7 @@ class ArgumentHandler(Validator):
 	_directory_sqlite_database = None  # 16S mg analysis
 
 	# [MarkerGeneClustering]
-	_cluster_method_choices = ['average', 'furthest', 'nearest']
+	_cluster_method_choices = MGCluster._cluster_method_choices
 	_binary_mothur = None
 	metadata_table_in = None
 	metadata_table_out = None
@@ -56,7 +57,7 @@ class ArgumentHandler(Validator):
 	# binary_mummer = None
 
 	# subfolder/files
-	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
+	_silva_ref_files = MGCluster._silva_ref_files
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	# meta table columns  'OTU', 'novelty_category'
