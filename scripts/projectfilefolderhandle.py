@@ -23,8 +23,7 @@ class ProjectFileFolderHandle(Validator):
 	# ###################
 
 	_folder_name_source = "source"
-	# name of folder containing all tools
-	_folder_name_tools = "tools"
+	_folder_name_tools = "ppsplus"
 	# name of folder containing all log files
 	# folder_name_logfiles = "logfiles"
 

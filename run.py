@@ -4,7 +4,6 @@ __author__ = 'Peter Hofmann'
 __version__ = "0.0.3"
 
 import sys
-import os
 import traceback
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.argumenthandler import ArgumentHandler
@@ -124,7 +123,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		assert isinstance(self, ArgumentHandler)
 		from scripts.MGExtract.mgextract import MGExtract
 		mg_extract = MGExtract(
-			mg_analyse_executable=os.path.join(self._directory_pipeline, "tools", "16SDetector", "run.py"),
+			mg_analyse_executable=self._get_mg_analyse_executable(),
 			file_path_query_genome_file_paths=self._file_path_query_genomes_location_file,
 			file_path_reference_genome_file_paths=self._file_path_reference_genome_locations,
 			file_path_name_reference_marker_genes=self._file_path_reference_markergene,

@@ -83,7 +83,6 @@ class ArgumentHandler(Validator):
 		self._column_name_cluster_novelty = column_name_novelty_category
 		self._column_name_ncbi = column_name_ncbi
 		self._directory_pipeline = self._get_directory_pipeline()
-		self._mg_analyse_executable = os.path.join(self._directory_pipeline, "ppsplus", "run.py")
 
 		if not os.path.isabs(self._directory_pipeline):
 			self._directory_pipeline = os.path.expanduser(self._directory_pipeline)
@@ -127,6 +126,9 @@ class ArgumentHandler(Validator):
 			verbose=self._verbose,
 			debug=self._debug
 		)
+
+	def _get_mg_analyse_executable(self):
+		return os.path.join(self._directory_pipeline, "ppsplus", "run.py")
 
 	def _get_directory_pipeline(self):
 		"""
