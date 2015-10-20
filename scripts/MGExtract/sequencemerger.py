@@ -87,7 +87,7 @@ class SequenceMerger(SequenceValidator):
 		self._stream_output_bin = stream_output_bin
 		self._stream_map_uid_sid = stream_map_uid_sid
 
-	def merge(self, file_path_input, min_length, prefix_unique_id=None, tax_id=""):
+	def merge(self, file_path_input, min_length, prefix_unique_id=None, original_id=None, tax_id=""):
 		"""
 		Append sequences of fasta file to a stream
 
@@ -127,8 +127,10 @@ class SequenceMerger(SequenceValidator):
 				counter += 1
 				self._stream_output.write(">{}\n".format(unique_sequence_id))
 				self._stream_output.writelines(seq_record.seq + "\n")
-				if self._stream_map_uid_sid:
-					self._stream_map_uid_sid.write("{}\t{}\t{}\n".format(unique_sequence_id, seq_record.id, tax_id))
+				if original_id is None:
+					original_id = seq_record.id
+				if self._stream_map_uid_sid and original_id:
+					self._stream_map_uid_sid.write("{}\t{}\t{}\n".format(unique_sequence_id, original_id, tax_id))
 			else:
 				counter_rejected += 1
 				# sys.stderr.write("WARNING: [merge] sequence too small. Size: {size} ID: '{uid}', File: '{file}'\n".format(
