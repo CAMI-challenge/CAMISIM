@@ -269,7 +269,7 @@ class ArgumentHandler(Validator):
 				self._valid_args = False
 				return
 
-			if self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
+			if not self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
 				self._valid_args = False
 				return
 
@@ -405,7 +405,7 @@ class ArgumentHandler(Validator):
 		self._binary_mothur = self._config.get_value(section, "mothur", is_path=True)
 		self.metadata_table_in = self._config.get_value(section, "metadata_table_in", is_path=True)
 		self.silva_reference_directory = self._config.get_value(section, "silva_reference_directory", is_path=True)
-		self.cluster_method = self._config.get_value(section, "cluster_method", is_path=True)
+		self.cluster_method = self._config.get_value(section, "cluster_method")
 		self.distance_cutoff = self._config.get_value(section, "max_threshold", is_digit=True)
 		self.otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
 		self.classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
