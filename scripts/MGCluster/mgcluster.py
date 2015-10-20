@@ -14,9 +14,12 @@ class MGCluster(Validator):
 	Alignment and clustering of marker genes with references
 	"""
 
+	_label = "MGCluster"
+
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
 	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
 
+	# mothur command: cluster.split
 	_mothur_cmd_ref_dist_split = """unique.seqs(fasta={mg_fasta})
 align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
 remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)
@@ -27,6 +30,7 @@ dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={pro
 set.current(column={local_dist})
 cluster.split(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)"""
 
+	# mothur command: cluster
 	_mothur_cmd_ref_dist = """unique.seqs(fasta={mg_fasta})
 align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
 remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)
@@ -36,8 +40,6 @@ set.current(name={filename}.merged.names, column={local_dist})
 dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)
 set.current(column={local_dist})
 cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}.merged.names)"""
-
-	_label = "MGCluster"
 
 	def __init__(
 		self, mothur_executable, directory_silva_reference, max_processors=1, temp_directory=None,
@@ -70,9 +72,6 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
 
 		self._old_dir = os.getcwd()
-		# required or mothur messes up the dist.seqs command
-		# do not use absolut paths!!!
-		os.chdir(self._working_dir)
 
 		self._max_processors = max_processors
 		self._debug = debug
@@ -108,8 +107,11 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		assert self.validate_number(distance_cutoff, minimum=0, maximum=1)
 		assert self.validate_number(precision, minimum=0)
 		assert method in self._cluster_method_choices
-		self._logger.info("[MGCluster] Starting clustering process")
+		self._logger.info("Starting clustering process")
 		start = time.time()
+		# required or mothur messes up the dist.seqs command
+		# do not use absolut paths!!!
+		os.chdir(self._working_dir)
 		local_marker_gene_fasta = self._get_symbolic_link_path(marker_gene_fasta)
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 
@@ -125,8 +127,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		list_of_files = glob.glob(find_mask_list)
 		result = True
 		if len(list_of_files) == 0:
-			self._logger.error("[MGCluster] Clustering failed")
-			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
+			self._logger.error("Clustering failed")
+			self._logger.warning("Remove manually: '{}'".format(self._working_dir))
 			result = False
 		elif len(list_of_files) == 1:
 			local_distance = os.path.join(self._working_dir, "ref.align.dist")
@@ -134,17 +136,17 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 				if self._debug:
 					shutil.copy2(local_distance, os.path.join(project_folder, "mothur_distances.tsv"))
 				shutil.copy2(list_of_files[0], output_cluster_file)
-				self._logger.info("[MGCluster] Clustering success")
+				self._logger.info("Clustering success")
 			else:
-				self._logger.error("[MGCluster] Clustering failed!")
+				self._logger.error("Clustering failed!")
 				result = False
 			if not self._debug:
 				shutil.rmtree(self._working_dir)
 			else:
-				self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
+				self._logger.warning("Remove manually: '{}'".format(self._working_dir))
 		else:
-			self._logger.error("[MGCluster] Clustering with odd result, several files found!")
-			self._logger.warning("[MGCluster] Remove manually: '{}'".format(self._working_dir))
+			self._logger.error("Clustering with odd result, several files found!")
+			self._logger.warning("Remove manually: '{}'".format(self._working_dir))
 			result = False
 		end = time.time()
 
@@ -155,7 +157,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 			log_file_name = os.path.basename(log_file)
 			shutil.copy2(log_file, os.path.join(project_folder, log_file_name))
 
-		self._logger.info("[MGCluster] Done ({}s)".format(round(end - start), 1))
+		self._logger.info("Done ({}s)".format(round(end - start), 1))
 		return result
 
 	def _get_symbolic_link_path(self, original_file_path):
