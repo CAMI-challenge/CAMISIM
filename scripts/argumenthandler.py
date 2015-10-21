@@ -40,17 +40,16 @@ class ArgumentHandler(Validator):
 	# [MarkerGeneClustering]
 	_cluster_method_choices = MGCluster._cluster_method_choices
 	_binary_mothur = None
-	metadata_table_in = None
-	metadata_table_out = None
-	cluster_method = None
-	distance_cutoff = None
-	silva_reference_directory = None
-	precision = 1000
+	_metadata_table_in = None
+	_cluster_method = None
+	_distance_cutoff = None
+	_silva_reference_directory = None
+	_precision = 1000
 
 	# [MarkerGeneClassification]
-	otu_distance = None
-	classification_distance_minimum = None
-	ncbi_reference_directory = None
+	_otu_distance = None
+	_classification_distance_minimum = None
+	_ncbi_reference_directory = None
 
 	# [Binary]
 	# binary_hmmer3 = None
@@ -183,13 +182,13 @@ class ArgumentHandler(Validator):
 			ir=self._file_path_reference_genome_locations,
 			irf=self._file_path_reference_markergene,
 			i=self._file_path_query_genomes_location_file,
-			im=self.metadata_table_in,
-			om=self.metadata_table_out,
-			th=self.distance_cutoff,
-			silva=self.silva_reference_directory,
-			ncbi=self.ncbi_reference_directory,
-			otu=self.otu_distance,
-			mcd=self.classification_distance_minimum
+			im=self._metadata_table_in,
+			om=self._project_file_folder_handler.get_file_path_meta_data_table(),
+			th=self._distance_cutoff,
+			silva=self._silva_reference_directory,
+			ncbi=self._ncbi_reference_directory,
+			otu=self._otu_distance,
+			mcd=self._classification_distance_minimum
 		)
 		return result_string
 
@@ -201,7 +200,7 @@ class ArgumentHandler(Validator):
 			self._valid_args = False
 			return
 
-		if not self.validate_dir(self.ncbi_reference_directory, file_names=self._ncbi_ref_files, key="NCBI reference directory"):
+		if not self.validate_dir(self._ncbi_reference_directory, file_names=self._ncbi_ref_files, key="NCBI reference directory"):
 			self._valid_args = False
 			return
 
@@ -265,11 +264,11 @@ class ArgumentHandler(Validator):
 					return
 
 		if self._phase == 0 or self._phase > 1:
-			if not self.validate_file(self.metadata_table_in, key="Metadata file"):
+			if not self.validate_file(self._metadata_table_in, key="Metadata file"):
 				self._valid_args = False
 				return
 
-			if not self.validate_dir(self.silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
+			if not self.validate_dir(self._silva_reference_directory, file_names=self._silva_ref_files, key="SILVA reference directory"):
 				self._valid_args = False
 				return
 
@@ -277,36 +276,36 @@ class ArgumentHandler(Validator):
 				self._valid_args = False
 				return
 
-			if self.distance_cutoff is None:
+			if self._distance_cutoff is None:
 				self._logger.error("A max distance threshold is required!")
 				self._valid_args = False
 				return
-			elif not self.validate_number(self.distance_cutoff, minimum=0, maximum=1, zero=False, key="Max distance threshold"):
+			elif not self.validate_number(self._distance_cutoff, minimum=0, maximum=1, zero=False, key="Max distance threshold"):
 				self._valid_args = False
 				return
 
-			if self.otu_distance is None:
+			if self._otu_distance is None:
 				self._logger.error("A threshold is required for otus!")
 				self._valid_args = False
 				return
-			elif not self.validate_number(self.otu_distance, minimum=0, maximum=1, zero=False, key="OTU distance threshold"):
+			elif not self.validate_number(self._otu_distance, minimum=0, maximum=1, zero=False, key="OTU distance threshold"):
 				self._valid_args = False
 				return
 
-			if self.classification_distance_minimum is None:
+			if self._classification_distance_minimum is None:
 				self._logger.error("A minimum classification distance threshold is required!")
 				self._valid_args = False
 				return
-			elif not self.validate_number(self.classification_distance_minimum, minimum=0, maximum=1, zero=False, key="Minimum classification distance threshold"):
+			elif not self.validate_number(self._classification_distance_minimum, minimum=0, maximum=1, zero=False, key="Minimum classification distance threshold"):
 				self._valid_args = False
 				return
 
-			if self.cluster_method is None:
+			if self._cluster_method is None:
 				self._logger.error("A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
 				self._valid_args = False
 				return
 
-			if self.cluster_method not in self._cluster_method_choices:
+			if self._cluster_method not in self._cluster_method_choices:
 				self._logger.error("A clustering method must be chosen: {}!".format(', '.join(self._cluster_method_choices)))
 				self._valid_args = False
 				return
@@ -375,11 +374,11 @@ class ArgumentHandler(Validator):
 		if self._novelty_only:
 			self._file_path_reference_genome_locations = self._config.get_value("MarkerGeneExtraction", "input_reference_file", is_path=True)
 
-			self.metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in", is_path=True)
+			self._metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in", is_path=True)
 
-			self.metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out", is_path=True)
+			# self._metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out", is_path=True)
 
-			self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
+			self._ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
 			return
 
 		section = "Main"
@@ -403,14 +402,14 @@ class ArgumentHandler(Validator):
 
 		section = "MarkerGeneClustering"
 		self._binary_mothur = self._config.get_value(section, "mothur", is_path=True)
-		self.metadata_table_in = self._config.get_value(section, "metadata_table_in", is_path=True)
-		self.silva_reference_directory = self._config.get_value(section, "silva_reference_directory", is_path=True)
-		self.cluster_method = self._config.get_value(section, "cluster_method")
-		self.distance_cutoff = self._config.get_value(section, "max_threshold", is_digit=True)
-		self.otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
-		self.classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
+		self._metadata_table_in = self._config.get_value(section, "metadata_table_in", is_path=True)
+		self._silva_reference_directory = self._config.get_value(section, "silva_reference_directory", is_path=True)
+		self._cluster_method = self._config.get_value(section, "cluster_method")
+		self._distance_cutoff = self._config.get_value(section, "max_threshold", is_digit=True)
+		self._otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
+		self._classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
 
-		self.ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
+		self._ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
 
 	@staticmethod
 	def _free_space_in_giga_bytes(directory=tempfile.gettempdir()):
