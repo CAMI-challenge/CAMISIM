@@ -14,10 +14,10 @@ class MothurCluster(Validator):
 	_label = "MothurCluster"
 
 	def __init__(
-		self, precision, otu_separator="\t", element_separator=",", data_table_iid_mapping=None,
+		self, precision, otu_separator="\t", element_separator=",", iid_gid_mapping=None,
 		logfile=None, verbose=False, debug=False):
 		assert isinstance(precision, int)
-		assert data_table_iid_mapping is None or isinstance(data_table_iid_mapping, MetadataTable)
+		assert iid_gid_mapping is None or isinstance(iid_gid_mapping, dict)
 		super(MothurCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._precision = int(math.log10(precision))
 		self.cluster_separator = otu_separator
@@ -26,8 +26,8 @@ class MothurCluster(Validator):
 		self._gid_to_cluster_index_list = {}
 		self._unique_threshold = "unique"
 		self._iid_gid = {}
-		if data_table_iid_mapping is not None:
-			self._iid_gid = data_table_iid_mapping.get_map(0, 1)
+		if iid_gid_mapping is not None:
+			self._iid_gid = iid_gid_mapping
 
 	def get_max_threshold(self):
 		lists_of_thresholds = list(self._cutoff_to_cluster.keys())
