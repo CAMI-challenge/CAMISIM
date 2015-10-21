@@ -5,7 +5,6 @@ import os
 import math
 import textwrap
 from scripts.Validator.validator import Validator
-from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 class MothurCluster(Validator):
@@ -60,7 +59,7 @@ class MothurCluster(Validator):
 					result[gid].append(element)
 		return result
 
-	def read(self, file_path, list_of_query_gid=None):
+	def read(self, file_path, list_of_query_id=None):
 		if not os.path.isfile(file_path):
 			self._logger.error("No file found at: '{}'".format(file_path))
 			return
@@ -82,18 +81,19 @@ class MothurCluster(Validator):
 				self._gid_to_cluster_index_list[cutoff] = {}
 				cluster_index = 0
 				for cluster_as_string in row[2:]:
-					list_of_elements = cluster_as_string.split(self.element_separator)
-					list_of_cluster.append(list_of_elements)
-					if list_of_query_gid is None:
-						continue
-					list_of_gid = [self._iid_gid[gid] for gid in list_of_elements]
-					for gid in list_of_gid:
-						if gid not in list_of_query_gid:
-							continue
-						if gid not in self._gid_to_cluster_index_list[cutoff]:
-							self._gid_to_cluster_index_list[cutoff][gid] = []
-						self._gid_to_cluster_index_list[cutoff][gid].append(cluster_index)
-					cluster_index += 1
+					set_of_elements = set(cluster_as_string.split(self.element_separator))
+					remove_list = set()
+					if list_of_query_id:
+						for iid in set_of_elements:
+							gid = self._iid_gid[iid]
+							if gid not in list_of_query_id:
+								continue
+							remove_list.add(iid)
+							if gid not in self._gid_to_cluster_index_list[cutoff]:
+								self._gid_to_cluster_index_list[cutoff][gid] = []
+							self._gid_to_cluster_index_list[cutoff][gid].append(cluster_index)
+						cluster_index += 1
+					list_of_cluster.append(list(set_of_elements.difference(remove_list)))
 				self._cutoff_to_cluster[cutoff] = {"count": cluster_amount, "cluster": list_of_cluster}
 			self._logger.info("Reading finished")
 
