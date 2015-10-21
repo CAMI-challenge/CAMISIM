@@ -1,6 +1,5 @@
 __author__ = 'hofmann'
 
-import sys
 import operator
 from collections import Counter
 from scripts.Validator.validator import Validator
@@ -11,41 +10,24 @@ class TaxonomicCluster(Validator):
 
 	_label = "TaxonomicCluster"
 
-	def __init__(self, mothur_cluster, taxonomy, logfile=None, verbose=True, debug=False):
+	def __init__(self, mothur_cluster, taxonomy, iid_tid_map, minimum_support=.9, logfile=None, verbose=True, debug=False):
 		super(TaxonomicCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
-		self.mothur_cluster = mothur_cluster
+		self._mothur_cluster = mothur_cluster
 		self.taxonomy = taxonomy
-		self.ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']  # , 'root'
-		self.taxids_by_element = {}
+		self._ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']  # , 'root'
+		self._iid_tid_map = iid_tid_map
+		self._iid_to_tid_lineage = {}
+		self._minimum_support = minimum_support
 
-	def load_lineages(self, cluster, list_of_excluded_elements):
-		list_of_valid_elements = set()
-		for element in cluster:
-			# for older data with wrong ref IDs
-			# if "1.fna" in element:
-			# 	element = element.split('.')[0]+".1"
-			if element in list_of_excluded_elements:
-				continue
-			ncbi_id = element.split('.')[0]
-			if not ncbi_id.isdigit():
-				if self._logger:
-					self._logger.warning("[TaxonomicCluster] Bad tax id: {id}".format(id=ncbi_id))
-				continue
-			if element not in self.taxids_by_element:
-				self.taxids_by_element[element] = self.taxonomy.get_lineage_of_legal_ranks(ncbi_id, ranks=self.ranks, default_value=None)
-			list_of_valid_elements.add(element)
-		return list_of_valid_elements
-
-	def predict_tax_id_of(self, cluster_raw, unpublished_genome_ids_column, unpublished_id='', lowest_predicted_novelty=None, threshold='', ref_genome_ids=set()):
-		list_of_valid_elements = self.load_lineages(cluster_raw, unpublished_genome_ids_column)
-		# valid_elements_taxids = set([self.taxids_by_element[element][1] for element in list_of_valid_elements])
+	def predict_tax_id_of(self, cluster_raw, lowest_predicted_novelty=None):
+		list_of_valid_iid = self.load_lineages(cluster_raw)
 		root = {"count": 0, "c": {}, 'p': None}
 
-		total_count = [0] * len(self.ranks)
-		for element in list_of_valid_elements:
+		total_count = [0] * len(self._ranks)
+		for iid in list_of_valid_iid:
 			node = root
-			for rank_index in xrange(len(self.ranks) - 1, 0, -1):
-				tax_id = self.taxids_by_element[element][rank_index]
+			for rank_index in xrange(len(self._ranks) - 1, 0, -1):
+				tax_id = self._iid_to_tid_lineage[iid][rank_index]
 				if tax_id is None:
 					break
 				if tax_id not in node["c"]:
@@ -89,61 +71,52 @@ class TaxonomicCluster(Validator):
 			parent_node = parent_node['p']
 
 		for node in list_of_candidate:
-			if float(node["count"]) / total_count[node['r']] > 0.9:
-				novelty = self.ranks[node['r'] - 1]
+			if float(node["count"]) / total_count[node['r']] >= self._minimum_support:
+				novelty = self._ranks[node['r'] - 1]
 				# if previous novelty lower
-				if lowest_predicted_novelty["novelty"] in self.ranks and self.ranks.index(lowest_predicted_novelty["novelty"]) + 1 <= node['r']:
-					# print unpublished_id, novelty, "->", lowest_predicted_novelty["threshold"]["support"]
+				if lowest_predicted_novelty["novelty"] in self._ranks and self._ranks.index(lowest_predicted_novelty["novelty"]) + 1 <= node['r']:
 					novelty = lowest_predicted_novelty["novelty"]
-				elif len(ref_genome_ids.intersection(set(list_of_valid_elements))) > 0:  # or float(threshold) == 0.1
-					# print unpublished_id, novelty, "->", lowest_predicted_novelty["novelty"]
-					lowest_predicted_novelty["support"] = node["count"]
-					lowest_predicted_novelty["threshold"] = threshold
-					lowest_predicted_novelty["novelty"] = novelty
-					if lowest_predicted_novelty["minimum"] == '':
-						lowest_predicted_novelty["minimum"] = threshold
 				return node["id"], novelty, node["count"]
 		return None, "", 0
 
-	def cluster_to_other_rank(self, list_of_valid_elements, index_of_rank, unpublished_sequence_id=None, debug=False):
-		# list_of_none_elements = []
-		# list_of_candidate_elements = []
+	def cluster_to_other_rank(self, list_of_iid, index_of_rank, unpublished_sequence_id=None):
+		assert unpublished_sequence_id is None or isinstance(unpublished_sequence_id, basestring)
 		ncbi_id_list = []
-		# if index_of_rank is None:
-		for element in list_of_valid_elements:
-			ncbi_higher_rank = self.taxids_by_element[element][index_of_rank]
+		for iid in list_of_iid:
+			ncbi_higher_rank = self._iid_to_tid_lineage[iid][index_of_rank]
 			if ncbi_higher_rank is None:
 				continue
 			ncbi_id_list.append(str(ncbi_higher_rank))
 
-		if debug and unpublished_sequence_id is not None and len(ncbi_id_list) > 0:
-			self._logger.debug("{id}\t{rank}".format(id=unpublished_sequence_id, rank=self.ranks[index_of_rank]))
-			self.mothur_cluster.cluster_list_to_handle(Counter(ncbi_id_list), sys.stderr)
+		# if self._debug and unpublished_sequence_id is not None and len(ncbi_id_list) > 0:
+		# 	self._logger.debug("{id}\t{rank}".format(id=unpublished_sequence_id, rank=self._ranks[index_of_rank]))
+		# 	self._mothur_cluster.cluster_list_to_stream(Counter(ncbi_id_list), sys.stderr)
 		return ncbi_id_list
 
-	def get_cluster_ncbi_tax_prediction(self, cluster_raw, unpublished_genome_ids_column, unpublished_id=None):
+	# no longer used
+	def get_cluster_ncbi_tax_prediction(self, cluster_raw, unpublished_id=None):
 		rank_index = 1
-		list_of_valid_elements = self.load_lineages(cluster_raw, unpublished_genome_ids_column)
+		list_of_valid_elements = self.load_lineages(cluster_raw)
 		ncbi_id_list = []
-		for rank_index in range(1, len(self.ranks)):
+		for rank_index in range(1, len(self._ranks)):
 			ncbi_id_list = self.cluster_to_other_rank(list_of_valid_elements, rank_index, unpublished_id)
 			if len(ncbi_id_list) == 0:
 				continue
 			dominant_id, dominant_support = max(Counter(ncbi_id_list).iteritems(), key=operator.itemgetter(1))
 			if dominant_id is None:
 				continue
-			if float(dominant_support) / len(ncbi_id_list) >= .9:
+			if float(dominant_support) / len(ncbi_id_list) >= self._minimum_support:
 				break
 
 		if len(ncbi_id_list) == 0:
 			return None, ""
 		dominant_id = max(Counter(ncbi_id_list).iteritems(), key=operator.itemgetter(1))[0]
 		del ncbi_id_list
-		return dominant_id, self.ranks[rank_index - 1]
+		return dominant_id, self._ranks[rank_index - 1]
 
 	def has_consistent_lineage(self, element1, element2):
-		set1 = set(self.taxids_by_element[element1])
-		set2 = set(self.taxids_by_element[element2])
+		set1 = set(self._iid_to_tid_lineage[element1])
+		set2 = set(self._iid_to_tid_lineage[element2])
 		if None in set1:
 			set1.remove(None)
 		if None in set2:
@@ -155,3 +128,15 @@ class TaxonomicCluster(Validator):
 		if len(set1) == len(set1.union(set2)):
 			return True
 		return False
+
+	def load_lineages(self, cluster):
+		list_of_valid_elements = set()
+		for iid in cluster:
+			ncbi_id = self._iid_tid_map[iid]
+			if not ncbi_id.isdigit():
+				self._logger.warning("Bad tax id '{}': {id}".format(iid, id=ncbi_id))
+				continue
+			if iid not in self._iid_to_tid_lineage:
+				self._iid_to_tid_lineage[iid] = self.taxonomy.get_lineage_of_legal_ranks(ncbi_id, ranks=self._ranks, default_value=None)
+			list_of_valid_elements.add(iid)
+		return list_of_valid_elements
