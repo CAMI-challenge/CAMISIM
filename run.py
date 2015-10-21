@@ -4,6 +4,7 @@ __author__ = 'Peter Hofmann'
 __version__ = "0.0.3"
 
 import sys
+import os
 import traceback
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.argumenthandler import ArgumentHandler
@@ -71,14 +72,18 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				reference_map_table.read(self._file_path_reference_genome_locations, column_names=False)
 				ref_genome_ids = set(reference_map_table.get_column(0))
 				metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-				metadata_table.read(self.metadata_table_in)
-				taxonomy = NcbiTaxonomy(self.ncbi_reference_directory, False)
+				metadata_table.read(self._metadata_table_in)
+				taxonomy = NcbiTaxonomy(self._ncbi_reference_directory, False)
 				refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
-				mgcluster = MGAnnotate()
+				mgcluster = MGAnnotate(
+					ncbi_reference_directory=self._ncbi_reference_directory,
+					file_path_ref_map_file=self._project_file_folder_handler.get_file_path_internal_id_map(),
+					separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
+				)
 				mgcluster.establish_novelty_categorisation(
 					taxonomy, refernce_ncbi_id_set, metadata_table, self._column_name_cluster_prediction,
 					self._column_name_cluster_novelty)
-				metadata_table.write(self.metadata_table_out)
+				metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table())
 				return
 
 			if self._phase == 0 or self._phase == 1:
@@ -158,14 +163,12 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 	output:
 	- a mothur formatted file containing the clusters, from unique up to the given threshold
 	"""
-		assert isinstance(self, ArgumentHandler)
 		assert self.validate_file(self._project_file_folder_handler.get_file_path_mg_16s())
-		assert self.validate_file(self._project_file_folder_handler.get_file_path_cluster_mg_16s())
 
 		from scripts.MGCluster.mgcluster import MGCluster
 		mg_cluster = MGCluster(
 			mothur_executable=self._binary_mothur,
-			directory_silva_reference=self.silva_reference_directory,
+			directory_silva_reference=self._silva_reference_directory,
 			max_processors=self._max_processors,
 			temp_directory=self._directory_temp,
 			debug=self._debug)
@@ -173,9 +176,9 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		return mg_cluster.cluster(
 			marker_gene_fasta=self._project_file_folder_handler.get_file_path_mg_16s(),
 			output_cluster_file=self._project_file_folder_handler.get_file_path_cluster_mg_16s(),
-			distance_cutoff=self.distance_cutoff,
-			precision=self.precision,
-			method=self.cluster_method)
+			distance_cutoff=self._distance_cutoff,
+			precision=self._precision,
+			method=self._cluster_method)
 
 	def classification_of_genomes_and_novelty_prediction(self):
 		"""As the third step, the unpublished genomes are classified based on the clusters they are found in.
@@ -192,11 +195,20 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 	output:
 	- meta data table with a list of the genomes, with columns added that contain cluster based tax prediction, rank and novelty prediction
 	"""
-
-		assert isinstance(self, ArgumentHandler)
 		from scripts.MGAnnotate.mgannotate import MGAnnotate
-		mgcluster = MGAnnotate()
-		mgcluster.run(self)
+		mgcluster = MGAnnotate(
+			ncbi_reference_directory=self._ncbi_reference_directory,
+			file_path_ref_map_file=self._project_file_folder_handler.get_file_path_internal_id_map(),
+			separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
+		)
+		mgcluster.run(
+			metadata_table_in=self._metadata_table_in,
+			metadata_table_out=self._project_file_folder_handler.get_file_path_meta_data_table(),
+			cluster_file=self._project_file_folder_handler.get_file_path_cluster_mg_16s(),
+			precision=self._precision,
+			otu_distance=self._otu_distance,
+			classification_distance_minimum=self._classification_distance_minimum
+		)
 
 	def ani_of_genomes_and_novelty_prediction(self):
 		"""The fourth step is to calculate the average nucleotide identity.
@@ -225,7 +237,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		id_column = metadata_table.get_column(0)
 		metadata_table.clear()
 		metadata_table.insert_column(id_column, self._column_name_genome_id)
-		metadata_table.write(self.metadata_table_in)
+		metadata_table.write(self._metadata_table_in)
 		return True
 
 
