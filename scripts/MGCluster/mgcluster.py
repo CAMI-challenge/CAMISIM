@@ -17,7 +17,8 @@ class MGCluster(Validator):
 	_label = "MGCluster"
 
 	_cluster_method_choices = ['average', 'furthest', 'nearest']
-	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", "map.tsv"]
+	_file_name_map = "map.tsv"
+	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", _file_name_map]
 
 	# mothur command: cluster.split
 	_mothur_cmd_ref_dist_split = """unique.seqs(fasta={mg_fasta})
@@ -216,3 +217,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 			cutoff=cutoff,
 			precision=precision,
 			method=method)
+
+	@staticmethod
+	def get_file_name_of_map():
+		return MGCluster._file_name_map
