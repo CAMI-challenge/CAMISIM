@@ -94,7 +94,7 @@ class Novelty(Validator):
 			@rtype: None
 		"""
 		assert isinstance(set_reference_taxonomic_ids, set)
-		assert isinstance(excluded, set)
+		assert excluded is None or isinstance(excluded, set)
 		self._logger.info("Extracting included parents at each rank for each reference ID.. This may take a while.")
 		for ncbi_id in set_reference_taxonomic_ids:
 			if excluded is not None and ncbi_id in excluded:
