@@ -228,7 +228,7 @@ class Novelty(Validator):
 		@rtype: str | unicode
 		"""
 		assert isinstance(set_of_ranks, set)
-		assert isinstance(ranks, list)
+		assert ranks is None or isinstance(ranks, list)
 		if ranks is None:
 			ranks = self._ranks
 		if len(set_of_ranks) == 0:
