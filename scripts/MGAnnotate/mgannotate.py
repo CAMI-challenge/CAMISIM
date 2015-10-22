@@ -71,6 +71,13 @@ class MGAnnotate(Validator):
 
 		@rtype: None
 		"""
+		assert isinstance(metadata_table_in, basestring)
+		assert isinstance(metadata_table_out, basestring)
+		assert isinstance(cluster_file, basestring)
+		assert isinstance(precision, (int, long))
+		assert isinstance(otu_distance, float)
+		assert isinstance(classification_distance_minimum, float)
+		assert isinstance(set_of_refernce_ncbi_id, set)
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		metadata_table.read(metadata_table_in, column_names=True)
 		metadata_table.remove_empty_columns()
@@ -94,8 +101,11 @@ class MGAnnotate(Validator):
 
 		self._taxonomic_prediction(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum)
 		self._logger.info("Taxonomic prediction finished")
+		self._logger.info("Establish novelty categorisation")
 		self.establish_novelty_categorisation(taxonomy, set_of_refernce_ncbi_id, metadata_table)
+		self._logger.info("Done")
 		self._set_otu_id(metadata_table, mothur_cluster, otu_distance)
+		self._logger.info("OTU finished")
 		metadata_table.write(metadata_table_out)
 
 	def _taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
@@ -115,7 +125,11 @@ class MGAnnotate(Validator):
 
 		@rtype: None
 		"""
+		assert isinstance(metadata_table, MetadataTable)
+		assert isinstance(mothur_cluster, MothurCluster)
 		assert isinstance(taxonomy_cluster, TaxonomicCluster)
+		assert isinstance(taxonomy, NcbiTaxonomy)
+		assert isinstance(classification_distance_minimum, (int, float))
 		column_minimum_threshold = metadata_table.get_empty_column()
 		column_novely_threshold = metadata_table.get_empty_column()
 		column_support = metadata_table.get_empty_column()
@@ -206,8 +220,10 @@ class MGAnnotate(Validator):
 
 		@rtype: None
 		"""
+		assert isinstance(taxonomy, NcbiTaxonomy)
+		assert isinstance(reference_ncbi_id_set, set)
+		assert isinstance(metadata_table, MetadataTable)
 		from scripts.MGAnnotate.novelty import Novelty
-		self._logger.info("Establish novelty categorisation")
 		novelty = Novelty(
 			taxonomy,
 			column_name_ncbi_id=self._column_name_cluster_prediction,
@@ -215,9 +231,23 @@ class MGAnnotate(Validator):
 			separator="\t", logfile=None, verbose=True, debug=False)
 		novelty.read_reference(set(reference_ncbi_id_set))
 		novelty.compute_novelty(metadata_table)
-		self._logger.info("Done")
 
 	def _set_otu_id(self, metadata_table, mothur_cluster, otu_distance):
+		"""
+		Set OTU id based on clusters at a threshold
+
+		@param metadata_table: Handle of MetadataTable
+		@type metadata_table: MetadataTable
+		@param mothur_cluster: Handle of MothurCluster
+		@type mothur_cluster: MothurCluster
+		@param otu_distance: Genetic distance in percent
+		@type otu_distance: int|float
+
+		@rtype: None
+		"""
+		assert isinstance(metadata_table, MetadataTable)
+		assert isinstance(mothur_cluster, MothurCluster)
+		assert isinstance(otu_distance, (int, float))
 		list_of_unclustered_elements = set()
 		column_name_unpublished_genomes_id = metadata_table.get_column(self._column_name_genome_id)
 		number_of_genomes = len(column_name_unpublished_genomes_id)
@@ -246,4 +276,3 @@ class MGAnnotate(Validator):
 		metadata_table.insert_column(column_otu_id, self._column_name_otu_id)
 		if len(list_of_unclustered_elements) > 0:
 			self._logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
-		self._logger.info("OTU finished")
