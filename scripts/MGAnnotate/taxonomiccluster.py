@@ -14,16 +14,17 @@ class TaxonomicCluster(Validator):
 
 	def __init__(self, mothur_cluster, taxonomy, iid_tid_map, minimum_support=.9, logfile=None, verbose=True, debug=False):
 		"""
+		Constructor
 
-		@param mothur_cluster:
+		@param mothur_cluster: A handle to a MothurCluster object
 		@type mothur_cluster: MothurCluster
-		@param taxonomy:
+		@param taxonomy: Handle to NcbiTaxonomy
 		@type taxonomy: NcbiTaxonomy
-		@param iid_tid_map:
+		@param iid_tid_map: A map from internal id to the taxonomic id
 		@type iid_tid_map: dict[str|unicode, str|unicode]
-		@param minimum_support:
+		@param minimum_support: Minimum percentage of elements that must support a specific taxid
 		@type minimum_support: float
-		@param logfile: file handler or file path to a log file
+		@param logfile: File handler or file path to a log file
 		@type logfile: file | FileIO | StringIO | basestring
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
 		@type verbose: bool
@@ -42,20 +43,21 @@ class TaxonomicCluster(Validator):
 		self._iid_to_tid_lineage = {}
 		self._minimum_support = minimum_support
 
-	def predict_tax_id_of(self, cluster_raw, lowest_predicted_novelty=None):
+	def predict_tax_id_of(self, cluster, lowest_predicted_novelty=None):
 		"""
+		Get the predicted taxid of a cluster
 
-		@param cluster_raw:
-		@type cluster_raw: list[str|unicode]
-		@param lowest_predicted_novelty:
+		@param cluster: List of internal ids within a otu
+		@type cluster: list[str|unicode]
+		@param lowest_predicted_novelty: Lowest predicted novelty so far
 		@type lowest_predicted_novelty: None|dict[str|unicode, str|unicode]
 
-		@return:
+		@return: taxonomic_id, novelty, amount_of_supporting_elements
 		@rtype: tuple[None|str|unicode, str|unicode, int|long]
 		"""
-		assert isinstance(cluster_raw, list)
+		assert isinstance(cluster, list)
 		assert isinstance(lowest_predicted_novelty, dict)
-		list_of_valid_iid = self.load_lineages(cluster_raw)
+		list_of_valid_iid = self.load_lineages(cluster)
 		root = {"count": 0, "c": {}, 'p': None}
 
 		total_count = [0] * len(self._ranks)
@@ -114,22 +116,23 @@ class TaxonomicCluster(Validator):
 				return node["id"], novelty, node["count"]
 		return None, "", 0
 
-	def cluster_to_other_rank(self, list_of_iid, index_of_rank, unpublished_sequence_id=None):
+	def cluster_to_ncbi_of_a_rank(self, list_of_iid, index_of_rank, query_gid=None):
 		"""
+		Get a list of each taxonomic classifications of the elements in a cluster
 
-		@param list_of_iid:
+		@param list_of_iid: A list of internal ids (usualy those within a otu cluster)
 		@type list_of_iid: list[str|unicode] | set[str|unicode]
-		@param index_of_rank:
+		@param index_of_rank: Index referencing to a rank in self._ranks
 		@type index_of_rank: int | long
-		@param unpublished_sequence_id:
-		@type unpublished_sequence_id: None | str|unicode
+		@param query_gid: genome id this request is made for
+		@type query_gid: None | str|unicode
 
-		@return:
+		@return: List of each taxonomic classifications of the elements in a cluster
 		@rtype: list[str|unicode]
 		"""
 		assert isinstance(list_of_iid, list)
 		assert isinstance(index_of_rank, (int, long))
-		assert unpublished_sequence_id is None or isinstance(unpublished_sequence_id, basestring)
+		assert query_gid is None or isinstance(query_gid, basestring)
 		ncbi_id_list = []
 		for iid in list_of_iid:
 			ncbi_higher_rank = self._iid_to_tid_lineage[iid][index_of_rank]
@@ -145,13 +148,14 @@ class TaxonomicCluster(Validator):
 	# no longer used
 	def get_cluster_ncbi_tax_prediction(self, cluster, unpublished_id=None):
 		"""
+		Get the predicted taxid of a cluster (alternative)
 
-		@param cluster:
+		@param cluster: A list of internal ids (usualy those within a otu cluster)
 		@type cluster: list[str|unicode]
 		@param unpublished_id:
 		@type unpublished_id: None|str|unicode
 
-		@return:
+		@return: Predicted taxid of a cluster and a novelty estimate
 		@rtype: tuple[None|str|unicode, str|unicode]
 		"""
 		assert isinstance(cluster, list)
@@ -160,7 +164,7 @@ class TaxonomicCluster(Validator):
 		list_of_valid_elements = self.load_lineages(cluster)
 		ncbi_id_list = []
 		for rank_index in range(1, len(self._ranks)):
-			ncbi_id_list = self.cluster_to_other_rank(list_of_valid_elements, rank_index, unpublished_id)
+			ncbi_id_list = self.cluster_to_ncbi_of_a_rank(list_of_valid_elements, rank_index, unpublished_id)
 			if len(ncbi_id_list) == 0:
 				continue
 			dominant_id, dominant_support = max(Counter(ncbi_id_list).iteritems(), key=operator.itemgetter(1))
@@ -177,13 +181,14 @@ class TaxonomicCluster(Validator):
 
 	def has_consistent_lineage(self, iid1, iid2):
 		"""
+		Compares the lineages of two ids for inconsistencies
 
-		@param iid1:
+		@param iid1: Internal id
 		@type iid1: str|unicode
-		@param iid2:
+		@param iid2: Internal id
 		@type iid2: str|unicode
 
-		@return:
+		@return: True if consistent
 		@rtype: bool
 		"""
 		assert isinstance(iid1, basestring)
@@ -204,11 +209,12 @@ class TaxonomicCluster(Validator):
 
 	def load_lineages(self, cluster):
 		"""
+		Get list of valid internal ids and save lineages of those
 
-		@param cluster:
+		@param cluster: List of internal ids from an otu cluster
 		@type cluster: list[str|unicode]
 
-		@return:
+		@return: List of internal ids that correspond to a valid taxid
 		@rtype: list[str|unicode]
 		"""
 		assert isinstance(cluster, list)
