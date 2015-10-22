@@ -113,7 +113,7 @@ class MothurCluster(Validator):
 		Get a set of thresholds above a given minimum
 
 		@param minimum: Minimum threshold
-		@type minimum: int | long
+		@type minimum: int | float
 
 		@return: Set of thresholds above a given minimum
 		@rtype: set[str|unicode]
