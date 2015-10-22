@@ -11,19 +11,14 @@ class MGAnnotate(Validator):
 
 	_label = "MGAnnotate"
 
-	_separator = "\t"
-	_column_name_genome_id = "genome_ID"
-	_column_name_cutoff = "prediction_threshold"
-	_column_name_otu_id = "OTU"
-	_column_name_cluster_prediction = "NCBI_ID"
-	_column_name_cluster_scientific_name = "SCIENTIFIC_NAME"
-	_column_name_cluster_novelty = "novelty_category"
-	_column_name_ani = "ANI"
-	_column_name_ani_novelty = "ANI_NOVELTY_CATEGORY"
-	_column_name_ani_compare = "ANI_TAXONOMIC_COMPARE"
-	_column_name_ani_scientific_name = "ANI_SCIENTIFIC_NAME"
-
-	def __init__(self, ncbi_reference_directory, data_table_iid_mapping, separator="\t", logfile=None, verbose=False, debug=False):
+	def __init__(
+		self, ncbi_reference_directory, data_table_iid_mapping,
+		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
+		column_name_ncbi="NCBI_ID", column_name_scientific_name="SCIENTIFIC_NAME",
+		column_name_threshold="prediction_threshold",
+		column_name_ani="ANI", column_name_ani_novelty="ANI_NOVELTY_CATEGORY",
+		column_name_ani_compare="ANI_TAXONOMIC_COMPARE", column_name_ani_scientific_name="ANI_SCIENTIFIC_NAME",
+		separator="\t", logfile=None, verbose=False, debug=False):
 		"""
 		Constructor
 
@@ -43,7 +38,27 @@ class MGAnnotate(Validator):
 		assert self.validate_dir(ncbi_reference_directory)
 		assert isinstance(data_table_iid_mapping, MetadataTable)
 		assert isinstance(separator, basestring)
+		assert isinstance(column_name_genome_id, basestring)
+		assert isinstance(column_name_otu, basestring)
+		assert isinstance(column_name_novelty_category, basestring)
+		assert isinstance(column_name_ncbi, basestring)
+		assert isinstance(column_name_scientific_name, basestring)
+		assert isinstance(column_name_threshold, basestring)
+		assert isinstance(column_name_ani, basestring)
+		assert isinstance(column_name_ani_novelty, basestring)
+		assert isinstance(column_name_ani_compare, basestring)
+		assert isinstance(column_name_ani_scientific_name, basestring)
 		super(MGAnnotate, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
+		self._column_name_genome_id = column_name_genome_id
+		self._column_name_otu_id = column_name_otu
+		self._column_name_ncbi_prediction = column_name_ncbi
+		self._column_name_ncbi_scientific_name = column_name_scientific_name
+		self._column_name_novelty = column_name_novelty_category
+		self._column_name_threshold = column_name_threshold
+		self._column_name_ani = column_name_ani
+		self._column_name_ani_novelty = column_name_ani_novelty
+		self._column_name_ani_compare = column_name_ani_compare
+		self._column_name_ani_scientific_name = column_name_ani_scientific_name
 		self._separator = separator
 		self._ncbi_reference_directory = ncbi_reference_directory
 		self._data_table_iid_mapping = data_table_iid_mapping
@@ -199,10 +214,10 @@ class MGAnnotate(Validator):
 			# else:
 			# 	unknown_novelty = True
 
-		metadata_table.insert_column(column_cutoff, self._column_name_cutoff)
-		metadata_table.insert_column(column_ncbi_prediction, self._column_name_cluster_prediction)
-		metadata_table.insert_column(column_science_name, self._column_name_cluster_scientific_name)
-		metadata_table.insert_column(column_novelty, self._column_name_cluster_novelty)
+		metadata_table.insert_column(column_cutoff, self._column_name_threshold)
+		metadata_table.insert_column(column_ncbi_prediction, self._column_name_ncbi_prediction)
+		metadata_table.insert_column(column_science_name, self._column_name_ncbi_scientific_name)
+		metadata_table.insert_column(column_novelty, self._column_name_novelty)
 		# metadata_table.insert_column(column_novely_threshold, "novelty threshold")
 		# metadata_table.insert_column(column_support, "novelty support")
 		# metadata_table.insert_column(column_minimum_threshold, "minimum threshold")
@@ -226,8 +241,8 @@ class MGAnnotate(Validator):
 		from scripts.MGAnnotate.novelty import Novelty
 		novelty = Novelty(
 			taxonomy,
-			column_name_ncbi_id=self._column_name_cluster_prediction,
-			column_name_novelty=self._column_name_cluster_novelty,
+			column_name_ncbi_id=self._column_name_ncbi_prediction,
+			column_name_novelty=self._column_name_novelty,
 			separator="\t", logfile=None, verbose=True, debug=False)
 		novelty.read_reference(set(reference_ncbi_id_set))
 		novelty.compute_novelty(metadata_table)
