@@ -3,6 +3,8 @@ __author__ = 'hofmann'
 import operator
 from collections import Counter
 from scripts.Validator.validator import Validator
+from scripts.MGAnnotate.mothurcluster import MothurCluster
+from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 
 
 class TaxonomicCluster(Validator):
@@ -11,6 +13,27 @@ class TaxonomicCluster(Validator):
 	_label = "TaxonomicCluster"
 
 	def __init__(self, mothur_cluster, taxonomy, iid_tid_map, minimum_support=.9, logfile=None, verbose=True, debug=False):
+		"""
+
+		@param mothur_cluster:
+		@type mothur_cluster: MothurCluster
+		@param taxonomy:
+		@type taxonomy: NcbiTaxonomy
+		@param iid_tid_map:
+		@type iid_tid_map: dict[str|unicode, str|unicode]
+		@param minimum_support:
+		@type minimum_support: float
+		@param logfile: file handler or file path to a log file
+		@type logfile: file | FileIO | StringIO | basestring
+		@param verbose: Not verbose means that only warnings and errors will be past to stream
+		@type verbose: bool
+		@param debug: Display debug messages
+		@type debug: bool
+		"""
+		assert isinstance(mothur_cluster, MothurCluster)
+		assert isinstance(taxonomy, NcbiTaxonomy)
+		assert isinstance(iid_tid_map, dict)
+		assert isinstance(minimum_support, float)
 		super(TaxonomicCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._mothur_cluster = mothur_cluster
 		self.taxonomy = taxonomy
@@ -20,6 +43,18 @@ class TaxonomicCluster(Validator):
 		self._minimum_support = minimum_support
 
 	def predict_tax_id_of(self, cluster_raw, lowest_predicted_novelty=None):
+		"""
+
+		@param cluster_raw:
+		@type cluster_raw: list[str|unicode]
+		@param lowest_predicted_novelty:
+		@type lowest_predicted_novelty: None|dict[str|unicode, str|unicode]
+
+		@return:
+		@rtype: tuple[None|str|unicode, str|unicode, int|long]
+		"""
+		assert isinstance(cluster_raw, list)
+		assert isinstance(lowest_predicted_novelty, dict)
 		list_of_valid_iid = self.load_lineages(cluster_raw)
 		root = {"count": 0, "c": {}, 'p': None}
 
@@ -80,6 +115,20 @@ class TaxonomicCluster(Validator):
 		return None, "", 0
 
 	def cluster_to_other_rank(self, list_of_iid, index_of_rank, unpublished_sequence_id=None):
+		"""
+
+		@param list_of_iid:
+		@type list_of_iid: list[str|unicode] | set[str|unicode]
+		@param index_of_rank:
+		@type index_of_rank: int | long
+		@param unpublished_sequence_id:
+		@type unpublished_sequence_id: None | str|unicode
+
+		@return:
+		@rtype: list[str|unicode]
+		"""
+		assert isinstance(list_of_iid, list)
+		assert isinstance(index_of_rank, (int, long))
 		assert unpublished_sequence_id is None or isinstance(unpublished_sequence_id, basestring)
 		ncbi_id_list = []
 		for iid in list_of_iid:
@@ -94,9 +143,21 @@ class TaxonomicCluster(Validator):
 		return ncbi_id_list
 
 	# no longer used
-	def get_cluster_ncbi_tax_prediction(self, cluster_raw, unpublished_id=None):
+	def get_cluster_ncbi_tax_prediction(self, cluster, unpublished_id=None):
+		"""
+
+		@param cluster:
+		@type cluster: list[str|unicode]
+		@param unpublished_id:
+		@type unpublished_id: None|str|unicode
+
+		@return:
+		@rtype: tuple[None|str|unicode, str|unicode]
+		"""
+		assert isinstance(cluster, list)
+		assert unpublished_id is None or isinstance(unpublished_id, basestring)
 		rank_index = 1
-		list_of_valid_elements = self.load_lineages(cluster_raw)
+		list_of_valid_elements = self.load_lineages(cluster)
 		ncbi_id_list = []
 		for rank_index in range(1, len(self._ranks)):
 			ncbi_id_list = self.cluster_to_other_rank(list_of_valid_elements, rank_index, unpublished_id)
@@ -114,9 +175,21 @@ class TaxonomicCluster(Validator):
 		del ncbi_id_list
 		return dominant_id, self._ranks[rank_index - 1]
 
-	def has_consistent_lineage(self, element1, element2):
-		set1 = set(self._iid_to_tid_lineage[element1])
-		set2 = set(self._iid_to_tid_lineage[element2])
+	def has_consistent_lineage(self, iid1, iid2):
+		"""
+
+		@param iid1:
+		@type iid1: str|unicode
+		@param iid2:
+		@type iid2: str|unicode
+
+		@return:
+		@rtype: bool
+		"""
+		assert isinstance(iid1, basestring)
+		assert isinstance(iid2, basestring)
+		set1 = set(self._iid_to_tid_lineage[iid1])
+		set2 = set(self._iid_to_tid_lineage[iid2])
 		if None in set1:
 			set1.remove(None)
 		if None in set2:
@@ -130,6 +203,15 @@ class TaxonomicCluster(Validator):
 		return False
 
 	def load_lineages(self, cluster):
+		"""
+
+		@param cluster:
+		@type cluster: list[str|unicode]
+
+		@return:
+		@rtype: list[str|unicode]
+		"""
+		assert isinstance(cluster, list)
 		list_of_valid_elements = set()
 		for iid in cluster:
 			ncbi_id = self._iid_tid_map[iid]
