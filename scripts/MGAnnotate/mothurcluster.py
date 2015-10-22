@@ -24,7 +24,7 @@ class MothurCluster(Validator):
 		@param element_separator: Character separating elements within otu cluster from another
 		@type element_separator: str | unicode
 		@param iid_gid_mapping: Map of internal ids to genome ids
-		@type iid_gid_mapping: dict[str|unicode]
+		@type iid_gid_mapping: dict[str|unicode, str|unicode]
 		@param logfile: File handler or file path to a log file
 		@type logfile: file | FileIO | StringIO | basestring
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
