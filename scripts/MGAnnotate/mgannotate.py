@@ -24,8 +24,26 @@ class MGAnnotate(Validator):
 	_column_name_ani_scientific_name = "ANI_SCIENTIFIC_NAME"
 
 	def __init__(self, ncbi_reference_directory, data_table_iid_mapping, separator="\t", logfile=None, verbose=False, debug=False):
-		super(MGAnnotate, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
+		"""
+		Constructor
 
+		@param ncbi_reference_directory: Directory with ncbi db dump
+		@type ncbi_reference_directory: str | unicode
+		@param data_table_iid_mapping: data table with mappings of internal ids
+		@type data_table_iid_mapping: MetadataTable
+		@param separator: Expected column separator in metadata files
+		@type separator: str|unicode
+		@param logfile: file handler or file path to a log file
+		@type logfile: file | FileIO | StringIO | basestring
+		@param verbose: Not verbose means that only warnings and errors will be past to stream
+		@type verbose: bool
+		@param debug: Display debug messages
+		@type debug: bool
+		"""
+		assert self.validate_dir(ncbi_reference_directory)
+		assert isinstance(data_table_iid_mapping, MetadataTable)
+		assert isinstance(separator, basestring)
+		super(MGAnnotate, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._separator = separator
 		self._ncbi_reference_directory = ncbi_reference_directory
 		self._data_table_iid_mapping = data_table_iid_mapping
@@ -33,6 +51,26 @@ class MGAnnotate(Validator):
 	def annotate(
 		self, metadata_table_in, metadata_table_out, cluster_file, precision, otu_distance, classification_distance_minimum,
 		set_of_refernce_ncbi_id):
+		"""
+		Classify, group and predict novelty of genomes
+
+		@param metadata_table_in: File path of input table, minimum genome_ID column required
+		@type metadata_table_in: str|unicode
+		@param metadata_table_out: File path of metadata output
+		@type metadata_table_out: str|unicode
+		@param cluster_file: File path to mothur otu cluster
+		@type cluster_file: str|unicode
+		@param precision: Cluster are made in steps: 10: 0.1, 100: 0.01, 1000: 0.001
+		@type precision: int | long
+		@param otu_distance: Genetic distance in percent at which otu are taken from
+		@type otu_distance: float
+		@param classification_distance_minimum: Minimum genetic distance in percent
+		@type classification_distance_minimum: float
+		@param set_of_refernce_ncbi_id: Reference taxonomic ids of known genomes
+		@type set_of_refernce_ncbi_id: set[str|unicode]
+
+		@rtype: None
+		"""
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		metadata_table.read(metadata_table_in, column_names=True)
 		metadata_table.remove_empty_columns()
@@ -55,12 +93,28 @@ class MGAnnotate(Validator):
 			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 
 		self._taxonomic_prediction(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum)
-		self.establish_novelty_categorisation(
-			taxonomy, set_of_refernce_ncbi_id, metadata_table, self._column_name_cluster_prediction, self._column_name_cluster_novelty)
+		self._logger.info("Taxonomic prediction finished")
+		self.establish_novelty_categorisation(taxonomy, set_of_refernce_ncbi_id, metadata_table)
 		self._set_otu_id(metadata_table, mothur_cluster, otu_distance)
 		metadata_table.write(metadata_table_out)
 
 	def _taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
+		"""
+		Taxonomic classification of genomes
+
+		@param metadata_table: Handler of MetadataTable
+		@type metadata_table: MetadataTable
+		@param mothur_cluster: Handler of MothurCluster
+		@type mothur_cluster: MothurCluster
+		@param taxonomy_cluster: Handler of TaxonomicCluster
+		@type taxonomy_cluster: TaxonomicCluster
+		@param taxonomy: Handler of NcbiTaxonomy
+		@type taxonomy: NcbiTaxonomy
+		@param classification_distance_minimum: Minimum genetic distance in percent
+		@type classification_distance_minimum: int | float
+
+		@rtype: None
+		"""
 		assert isinstance(taxonomy_cluster, TaxonomicCluster)
 		column_minimum_threshold = metadata_table.get_empty_column()
 		column_novely_threshold = metadata_table.get_empty_column()
@@ -83,7 +137,7 @@ class MGAnnotate(Validator):
 			classification_distance = max_threshold
 			self._logger.warning("Minimum classification distance unavailable, changed to {}!".format(classification_distance))
 
-		sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
+		sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_thresholds()
 		prediction_thresholds = mothur_cluster.get_prediction_thresholds(minimum=classification_distance)
 		for cluster_cutoff in sorted_lists_of_cutoffs:
 			if cluster_cutoff == "unique":
@@ -101,7 +155,7 @@ class MGAnnotate(Validator):
 				if query_gid == "":
 					continue
 				separator = ""
-				list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_cutoff_of_gid(cluster_cutoff, query_gid)
+				list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_threshold_of_gid(cluster_cutoff, query_gid)
 				if len(list_of_cluster) > 1:
 					separator = ";"
 				predicted__ncbi = []
@@ -139,22 +193,27 @@ class MGAnnotate(Validator):
 		# metadata_table.insert_column(column_support, "novelty support")
 		# metadata_table.insert_column(column_minimum_threshold, "minimum threshold")
 
-		self._logger.info("Taxonomic prediction finished")
+	def establish_novelty_categorisation(self, taxonomy, reference_ncbi_id_set, metadata_table):
+		"""
+		Predict novelty of a genome
 
-	def establish_novelty_categorisation(
-		self, taxonomy, refernce_ncbi_id_set, metadata_table, column_name_cluster_prediction, column_name_cluster_novelty):
+		@param taxonomy: Handler of NcbiTaxonomy
+		@type taxonomy: NcbiTaxonomy
+		@param reference_ncbi_id_set: Reference taxonomic ids of known genomes
+		@type reference_ncbi_id_set: set[str|unicode]
+		@param metadata_table: Handler of MetadataTable
+		@type metadata_table: MetadataTable
+
+		@rtype: None
+		"""
 		from scripts.MGAnnotate.novelty import Novelty
 		self._logger.info("Establish novelty categorisation")
-		# novelty = Novelty(taxonomy,
-		# 				  logger=logger,
-		# 				  column_name_ncbi_id=options.column_name_cluster_prediction,
-		# 				  column_name_novelty="NOVELTY_CATEGORY_Jessika")
 		novelty = Novelty(
 			taxonomy,
-			column_name_ncbi_id=column_name_cluster_prediction,
-			column_name_novelty=column_name_cluster_novelty,
+			column_name_ncbi_id=self._column_name_cluster_prediction,
+			column_name_novelty=self._column_name_cluster_novelty,
 			separator="\t", logfile=None, verbose=True, debug=False)
-		novelty.read_reference(refernce_ncbi_id_set)
+		novelty.read_reference(set(reference_ncbi_id_set))
 		novelty.compute_novelty(metadata_table)
 		self._logger.info("Done")
 
@@ -168,7 +227,7 @@ class MGAnnotate(Validator):
 			self._logger.warning("OTU distance unavailable, changed to {}!".format(otu_distance))
 
 		column_otu_id = metadata_table.get_empty_column()
-		sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_cutoffs()
+		sorted_lists_of_cutoffs = mothur_cluster.get_sorted_lists_of_thresholds()
 		for cluster_cutoff in sorted_lists_of_cutoffs:
 			if cluster_cutoff == "unique" or otu_distance == "unique" or float(cluster_cutoff) != float(otu_distance):
 				continue
@@ -180,7 +239,7 @@ class MGAnnotate(Validator):
 					list_of_unclustered_elements.add(unpublished_genome_id)
 					continue
 				separator = ""
-				list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_cutoff_of_gid(cluster_cutoff, unpublished_genome_id)
+				list_of_cluster_id, list_of_cluster = mothur_cluster.get_cluster_of_threshold_of_gid(cluster_cutoff, unpublished_genome_id)
 				if len(list_of_cluster_id) > 1:
 					separator = ";"
 				column_otu_id[row_index] = separator.join([str(otu_id) for otu_id in sorted(set(list_of_cluster_id))])
