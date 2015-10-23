@@ -15,7 +15,7 @@ class MGAnnotate(Validator):
 	def __init__(
 		self, ncbi_reference_directory, data_table_iid_mapping,
 		file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
-		file_path_nucmer=None, distance_ani='unique', minimum_alignment=0.8,
+		file_path_nucmer=None, ani_distance='unique', ani_minimum_alignment=0.8,
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID", column_name_scientific_name="SCIENTIFIC_NAME",
 		column_name_threshold="prediction_threshold",
@@ -40,8 +40,8 @@ class MGAnnotate(Validator):
 		"""
 		assert file_path_nucmer is None or self.validate_file(file_path_nucmer, executable=True)
 		assert self.validate_dir(ncbi_reference_directory)
-		assert isinstance(self._max_processors, (int, long))
-		assert self.validate_number(self._max_processors, minimum=1)
+		assert isinstance(max_processors, (int, long))
+		assert self.validate_number(max_processors, minimum=1)
 		assert isinstance(data_table_iid_mapping, MetadataTable)
 		assert isinstance(separator, basestring)
 		assert isinstance(column_name_genome_id, basestring)
@@ -74,8 +74,8 @@ class MGAnnotate(Validator):
 		self._file_path_reference_genomes_location = file_path_reference_genomes_location
 		self._file_path_reference_taxid_map = file_path_reference_taxid_map
 		self._tmp_dir = temp_directory
-		self._distance_ani = distance_ani
-		self._minimum_alignment = minimum_alignment
+		self._distance_ani = ani_distance
+		self._minimum_alignment = ani_minimum_alignment
 
 	def annotate(
 		self, metadata_table_in, metadata_table_out, cluster_file, precision, otu_distance, classification_distance_minimum,
@@ -141,7 +141,7 @@ class MGAnnotate(Validator):
 		if self._file_path_nucmer:
 			self.calc_ani(mothur_cluster, taxonomy, metadata_table)
 			self._logger.info("ANI prediction finished")
-		metadata_table.write(metadata_table_out)
+		metadata_table.write(metadata_table_out, column_names=True)
 
 	def _taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
 		"""
@@ -342,16 +342,13 @@ class MGAnnotate(Validator):
 			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 		list_of_clusters_by_gid = {}
 		for gid in query_genome_ids_column:
-			list_of_clusters_by_gid[gid] = []
-			list_of_index, list_of_clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, gid)
-			list_of_clusters_by_gid[gid].append(list_of_clusters)
-		# logger.info("OTUS: {}".format(otus))
-		# sys.exit(0)
+			list_of_index, clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, gid)
+			list_of_clusters_by_gid[gid] = clusters
 		for query_genomes_id in query_genome_ids_column:
-			for list_of_clusters in list_of_clusters_by_gid[query_genomes_id]:
-				if list_of_clusters is None:
+			for clusters in list_of_clusters_by_gid[query_genomes_id]:
+				if clusters is None:
 					continue
-				ani_calculator.add_nucmer_cmd_lines(list_of_clusters, [query_genomes_id])
+				ani_calculator.add_nucmer_cmd_lines(mothur_cluster.iid_to_gid_list(clusters), [query_genomes_id])
 
 		total_lengths, sim_errors, percent_identity, percent_alignment, ncbi = ani_calculator.calculate_best_anim()
 
