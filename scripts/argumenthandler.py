@@ -6,11 +6,11 @@ import argparse
 import tempfile
 from scripts.projectfilefolderhandle import ProjectFileFolderHandle
 from scripts.configparserwrapper import ConfigParserWrapper
-from scripts.Validator.validator import Validator
+from scripts.Validator.sequencevalidator import SequenceValidator
 from scripts.MGCluster.mgcluster import MGCluster
 
 
-class ArgumentHandler(Validator):
+class ArgumentHandler(SequenceValidator):
 
 	_label = "ArgumentHandler"
 	"""Reading pipeline configuration from file and from passed arguments"""
@@ -355,6 +355,8 @@ class ArgumentHandler(Validator):
 					do_loop = False
 					continue
 				user_input = raw_input("Please type 'n' to abort, or 'y' to continue:\n>").lower()
+		if self._file_path_nucmer:
+			self.validate_file(self._file_path_nucmer, executable=True)
 		return
 
 	# read the configuration file
@@ -410,6 +412,7 @@ class ArgumentHandler(Validator):
 		self._classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
 
 		self._ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
+		self._file_path_nucmer = self._config.get_value("MarkerGeneClassification", "nucmer", is_path=True)
 
 	@staticmethod
 	def _free_space_in_giga_bytes(directory=tempfile.gettempdir()):
