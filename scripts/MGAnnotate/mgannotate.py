@@ -313,6 +313,18 @@ class MGAnnotate(Validator):
 			self._logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
 
 	def calc_ani(self, mothur_cluster, taxonomy, metadata_table):
+		"""
+		Calculate ani
+
+		@param mothur_cluster: Handler of MothurCluster
+		@type mothur_cluster: MothurCluster
+		@param taxonomy: Handler of NcbiTaxonomy
+		@type taxonomy: NcbiTaxonomy
+		@param metadata_table: Handler of MetadataTable
+		@type metadata_table: MetadataTable
+
+		@rtype: None
+		"""
 		ani_scientific_name_column = metadata_table.get_empty_column()
 		ani_prediction_novelty_column = metadata_table.get_empty_column()
 		ani_prediction_column = metadata_table.get_empty_column()
@@ -328,13 +340,18 @@ class MGAnnotate(Validator):
 			file_path_reference_taxid_map=self._file_path_reference_taxid_map,
 			separator=self._separator, temp_directory=self._tmp_dir, max_processors=self._max_processors,
 			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
-		list_of_index, list_of_clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, query_genome_ids_column)
+		list_of_clusters_by_gid = {}
+		for gid in query_genome_ids_column:
+			list_of_clusters_by_gid[gid] = []
+			list_of_index, list_of_clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, gid)
+			list_of_clusters_by_gid[gid].append(list_of_clusters)
 		# logger.info("OTUS: {}".format(otus))
 		# sys.exit(0)
 		for query_genomes_id in query_genome_ids_column:
-			if list_of_clusters[query_genomes_id] is None:
-				continue
-			ani_calculator.add_nucmer_cmd_lines(list_of_clusters[query_genomes_id], [query_genomes_id])
+			for list_of_clusters in list_of_clusters_by_gid[query_genomes_id]:
+				if list_of_clusters is None:
+					continue
+				ani_calculator.add_nucmer_cmd_lines(list_of_clusters, [query_genomes_id])
 
 		total_lengths, sim_errors, percent_identity, percent_alignment, ncbi = ani_calculator.calculate_best_anim()
 
