@@ -48,6 +48,22 @@ class MothurCluster(Validator):
 		if iid_gid_mapping is not None:
 			self._iid_gid = iid_gid_mapping
 
+	def iid_to_gid_list(self, list_iid):
+		"""
+		Change a iid list to a genome id list
+
+		@param list_iid: List of iid, like from a cluster
+		@type list_iid: list[str|unicode]
+
+		@return: List of gid
+		@rtype: list[str|unicode]
+		"""
+		assert isinstance(list_iid, list)
+		list_gid = []
+		for iid in list_iid:
+			list_gid.append(self._iid_gid[iid])
+		return list_gid
+
 	def get_max_threshold(self):
 		"""
 		Get highest threshold
