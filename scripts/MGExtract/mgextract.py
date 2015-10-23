@@ -257,7 +257,7 @@ class MGExtract(SequenceValidator):
 				tax_id = ""
 				if self._genome_id_to_tax_id is not None and genome_id in self._genome_id_to_tax_id:
 					tax_id = self._genome_id_to_tax_id[genome_id]
-				sequence_merger.merge(input_file, min_length=min_length, prefix_unique_id=unique_id, tax_id=tax_id)
+				sequence_merger.merge(input_file, min_length=min_length, prefix_unique_id=unique_id, original_id=genome_id, tax_id=tax_id)
 				counter += 1
 				# concat_fasta_on_fasta.merge(
 				# input_file, stream_output, min_length, unique_id=unique_id, out_bin_file_handle=stream_output_bin)
