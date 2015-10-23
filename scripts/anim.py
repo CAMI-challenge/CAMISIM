@@ -9,7 +9,6 @@ __author__ = 'Peter Hofmann'
 #   GNU General Public License
 
 
-import os
 import sys
 import traceback
 import tempfile
@@ -33,6 +32,44 @@ class ANIm(Validator):
 		self, file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
 		file_path_nucmer="nucmer", minimum_alignment=0.8, separator='\t', temp_directory=None, max_processors=1,
 		logfile=None, verbose=False, debug=False):
+		"""
+		Constructor
+
+		@param file_path_query_genomes_location:
+		@type file_path_query_genomes_location: str|unicode
+		@param file_path_reference_genomes_location:
+		@type file_path_reference_genomes_location: str|unicode
+		@param file_path_reference_taxid_map:
+		@type file_path_reference_taxid_map: str|unicode
+		@param file_path_nucmer:
+		@type file_path_nucmer: str|unicode
+		@param minimum_alignment:
+		@type minimum_alignment: str|unicode|int|long|float
+		@param separator:
+		@type separator: str|unicode
+		@param temp_directory:
+		@type temp_directory: str|unicode
+		@param max_processors:
+		@type max_processors: int|long
+		@param logfile: file handler or file path to a log file
+		@type logfile: file | FileIO | StringIO | basestring
+		@param verbose: Not verbose means that only warnings and errors will be past to stream
+		@type verbose: bool
+		@param debug: Display debug messages
+		@type debug: bool
+
+		@rtype: None
+		"""
+		assert self.validate_file(file_path_query_genomes_location)
+		assert self.validate_file(file_path_reference_genomes_location)
+		assert self.validate_file(file_path_reference_taxid_map)
+		assert self.validate_file(file_path_nucmer, executable=True)
+		assert temp_directory is None or self.validate_dir(temp_directory)
+		assert isinstance(minimum_alignment, (int, float))
+		assert self.validate_number(minimum_alignment, minimum=0, maximum=1)
+		assert isinstance(separator, basestring)
+		assert isinstance(max_processors, (int, long))
+		assert self.validate_number(max_processors, minimum=1)
 		super(ANIm, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._CUM_RETVALS = 0
 		self._max_processors = max_processors
@@ -53,42 +90,54 @@ class ANIm(Validator):
 		self._reference_gid_to_taxid = data_table.get_map(0, 1)
 		self._total_lengths = {}
 		self._minimum_alignment = minimum_alignment
-		# self.used_file_names = {}
+		self._used_file_names = {}
 
 	def __exit__(self, type, value, traceback):
 		super(ANIm, self).__exit__(type, value, traceback)
 		if not self._debug:
 			shutil.rmtree(self._tmp_dir)
 
-	def get_total_organism_length(self):
-		self.get_organism_lengths(self._reference_gid_to_location)
-		self.get_organism_lengths(self._query_gid_to_location)
+	# def get_total_organism_length(self):
+	# 	self.get_organism_lengths(self._reference_gid_to_location)
+	# 	self.get_organism_lengths(self._query_gid_to_location)
 
 	# Construct a command-line for NUCmer reference_id, candidate_id
 	def get_nucmer_cmd(self, reference_id, candidate_id, mum=True, maxmatch=False):
-		""" Construct a command-line for NUCmer pairwise comparison, and return as
-			a string
-
-			- f1, f2 are the locations of two input FASTA files for analysis
-
-			We use the -mum option so that we consider matches that are unique in
-			both the reference and the query. -mumreference gives us matches
-			unique only in the reference and -maxmatch gives us matches to all
-			regions, regardless of uniqueness. We may want to make this an option.
 		"""
-		if reference_id not in self._total_lengths:
-			self._total_lengths[reference_id] = self.get_organism_length(self._reference_gid_to_location[reference_id])
+		Construct a command-line for NUCmer pairwise comparison, and return as
+		a string
+
+		- f1, f2 are the locations of two input FASTA files for analysis
+
+		We use the -mum option so that we consider matches that are unique in
+		both the reference and the query. -mumreference gives us matches
+		unique only in the reference and -maxmatch gives us matches to all
+		regions, regardless of uniqueness. We may want to make this an option.
+
+		@param reference_id:
+		@type reference_id: str|unicode
+		@param candidate_id:
+		@type candidate_id: str|unicode
+		@param mum:
+		@type mum: bool
+		@param maxmatch:
+		@type maxmatch: bool
+
+		@return: Command line
+		@rtype: str|unicode
+		"""
+		assert isinstance(reference_id, basestring)
+		assert isinstance(candidate_id, basestring)
+		assert isinstance(mum, bool)
+		assert isinstance(maxmatch, bool)
+		# if reference_id not in self._total_lengths:
+		# 	self._total_lengths[reference_id] = self.get_organism_length(self._reference_gid_to_location[reference_id])
 		if candidate_id not in self._total_lengths:
 			self._total_lengths[candidate_id] = self.get_organism_length(self._query_gid_to_location[candidate_id])
-		if self._total_lengths[reference_id] < self._total_lengths[candidate_id]:
-			ref_id = reference_id
-			queri_id = candidate_id
-		else:
-			ref_id = candidate_id
-			queri_id = reference_id
-		# TODO: not from filename!!
-		out_file_name = "{}_vs_{}".format(queri_id, ref_id)
-		prefix = os.path.join(self._tmp_dir, out_file_name)
+		out_file_name = tempfile.mktemp(dir=self._tmp_dir, prefix=str(len(self._used_file_names)))
+		self._used_file_names[(reference_id, candidate_id)] = out_file_name + ".delta"
+		# out_file_name = "{}_vs_{}".format(queri_id, ref_id)
+		# prefix = os.path.join(self._tmp_dir, out_file_name)
 		# Do we use the --maxmatch option?
 		mode = ""
 		if maxmatch:
@@ -97,7 +146,7 @@ class ANIm(Validator):
 			mode = "-mum"
 
 		cmd = "{nucmer} {mode} -p {prefix} {reference} {query}".format(
-			nucmer=self._file_path_nucmer, mode=mode, prefix=prefix,
+			nucmer=self._file_path_nucmer, mode=mode, prefix=out_file_name,
 			reference=self._reference_gid_to_location[reference_id],
 			query=self._query_gid_to_location[candidate_id])
 		return cmd
@@ -115,6 +164,8 @@ class ANIm(Validator):
 
 		@rtype: None
 		"""
+		assert isinstance(reference_ids, list)
+		assert isinstance(candidate_ids, list)
 		# self._logger.info("add_nucmer_cmd_lines: %s %s" % (candidate_ids, reference_ids))
 		unique_set = set()
 		# print "C", candidate_ids
@@ -134,55 +185,35 @@ class ANIm(Validator):
 				# else:
 				# 	self._logger.warning("No genom for reference: {}".format(reference_id))
 
-	# Multiprocessing callback to logger
-	def logger_callback(self, val):
-		""" Basic callback for multiprocessing just to log status of each job
-
-			- val is an integer returned by multiprocessing, describing the run
-				status
-		"""
-		self._logger.info("Multiprocessing run completed with status: %s" % val)
-		# Keep track of returned values, as these help diagnose problems
-		# for ANIm analyses
-		self._CUM_RETVALS += val
-
 	# Run a set of command lines using multiprocessing
 	def multiprocessing_run(self):
-		""" Distributes the passed command-line jobs using multiprocessing.
+		"""
+		Distributes the passed command-line jobs using multiprocessing.
 
-			- cmdlines is an iterable of command line strings
+		@rtype: None
 		"""
 		self._logger.info("Running {} jobs with multiprocessing".format(len(self._cmd_lines)))
-		# return
-		cmd_task_list = [parallel.TaskCmd(cmd, self._tmp_dir) for cmd in self._cmd_lines]
-		fail_list = parallel.runCmdParallel(cmd_task_list, self._max_processors)
+		list_cmd_task = [parallel.TaskCmd(cmd, self._tmp_dir) for cmd in self._cmd_lines]
+		fail_list = parallel.runCmdParallel(list_cmd_task, self._max_processors)
 		if fail_list is not None:
 			parallel.reportFailedCmd(fail_list)
 			self._CUM_RETVALS = -1 * len(fail_list)
-		# pool = multiprocessing.Pool(self.pool_size)
-		# completed = []
-		# if verbose:
-		# 	callback_fn = self._logger_callback
-		# else:
-		# 	callback_fn = completed.append
-		# [pool.apply_async(subprocess.call, (str(cmd_line), ), {'stderr': subprocess.PIPE, 'shell': sys.platform != "win32"}, callback=callback_fn)
-		# 	for cmd_line in self.cmd_lines]
-		# pool.close()        # Run jobs
-		# pool.join()         # Collect output
-		# self._logger.info("Multiprocessing jobs completed:\n%s" % completed)
 		self._logger.info("Multiprocessing jobs completed")
 
 	# Run NUCmer pairwise on the input files, using multiprocessing
 	def run_cmd_lines(self):
-		""" Run NUCmer to generate pairwise alignment data for each of the
-			input FASTA files.
+		"""
+		Run NUCmer to generate pairwise alignment data for each of the
+		input FASTA files.
 
-			- filenames is a list of input FASTA filenames, from which NUCmer
-				command lines are constructed
+		- filenames is a list of input FASTA filenames, from which NUCmer
+			command lines are constructed
 
-			We loop over all FASTA files in the input directory, generating NUCmer
-			command lines for each pairwise comparison, and then pass those
-			command lines to be run using multiprocessing.
+		We loop over all FASTA files in the input directory, generating NUCmer
+		command lines for each pairwise comparison, and then pass those
+		command lines to be run using multiprocessing.
+
+		@rtype: None
 		"""
 		if len(self._cmd_lines) < 1:
 			self._logger.warning("NUCmer command lines: No lines!")
@@ -197,71 +228,52 @@ class ANIm(Validator):
 
 	# Get lengths of sequence for each organism
 	@staticmethod
-	def get_organism_length(organism_file_name):
+	def get_organism_length(file_path_fasta):
 		"""
+		Get the total length of a specific fasta file
+
+		@param file_path_fasta:
+		@type file_path_fasta: str|unicode
+
+		@rtype: int|long
 		"""
-		return sum([len(s) for s in SeqIO.parse(organism_file_name, 'fasta')])
+		assert isinstance(file_path_fasta, basestring)
+		return sum([len(s) for s in SeqIO.parse(file_path_fasta, 'fasta')])
 
 	# Get lengths of sequence for each organism
-	def get_organism_lengths(self, organism_file_names):
-		""" Returns a dictionary of total input sequence lengths, keyed by
-			organism.
-
-			Biopython's SeqIO module is used to parse all sequences in the FASTA
-			file corresponding to each organism, and the total base count in each
-			is obtained.
-
-			NOTE: ambiguity symbols are not discounted.
-		"""
-		self._logger.info("Processing organism sequence lengths")
-		for organism in organism_file_names:
-			self._total_lengths[organism] = sum([len(s) for s in SeqIO.parse(organism_file_names[organism], 'fasta')])
-
-	# Get filenames for each organism
-	def get_organism_file_names(self, file_filepath_list):
-		""" Returns a dictionary of filenames, keyed by organism.
-
-			Biopython's SeqIO module is used to parse all sequences in the FASTA
-			file corresponding to each organism, and the total base count in each
-			is obtained.
-
-			NOTE: ambiguity symbols are not discounted.
-		"""
-		self._logger.info("Processing organism filenames")
-		file_names = {}
-		with open(file_filepath_list, 'r') as file_handler:
-			for line in file_handler:
-				if len(line) > 0 and line[0] == "#":
-					continue
-				data = line.strip().split("\t")
-				organism = data[0]
-				filename = data[1]
-				file_names[organism] = filename
-		return file_names
-
-	# Get list of FASTA files in a directory
-	def get_input_files(self, *ext):
-		""" Returns a list of files in the input directory with the passed
-			extension
-
-			- dir is the location of the directory containing the input files
-
-			- *ext is a list of arguments describing permissible file extensions
-		"""
-		file_list = [filename for filename in os.listdir(self._tmp_dir) if os.path.splitext(filename)[-1] in ext]
-		return [os.path.join(self._tmp_dir, filename) for filename in file_list]
+	# def get_organism_lengths(self, organism_file_names):
+	# 	""" Returns a dictionary of total input sequence lengths, keyed by
+	# 		organism.
+	#
+	# 		Biopython's SeqIO module is used to parse all sequences in the FASTA
+	# 		file corresponding to each organism, and the total base count in each
+	# 		is obtained.
+	#
+	# 		NOTE: ambiguity symbols are not discounted.
+	# 	"""
+	# 	self._logger.info("Processing organism sequence lengths")
+	# 	for organism in organism_file_names:
+	# 		self._total_lengths[organism] = sum([len(s) for s in SeqIO.parse(organism_file_names[organism], 'fasta')])
 
 	# Parse NUCmer delta file to get total alignment length and total sim_errors
 	@staticmethod
-	def parse_delta(filename):
-		""" Reads a NUCmer output .delta file, extracting the aligned length and
-			number of similarity errors for each aligned uniquely-matched region,
-			and returns the cumulative total for each as a tuple.
-
-			- filename is the path to the input .delta file
+	def parse_delta(file_path):
 		"""
+		Reads a NUCmer output .delta file, extracting the aligned length and
+		number of similarity errors for each aligned uniquely-matched region,
+		and returns the cumulative total for each as a tuple.
+
+		- filename is the path to the input .delta file
+
+		@param file_path:
+		@type file_path: str|unicode
+
+		@return: aln_length, sim_errors
+		@rtype: tuple[int|long, int|long]
+		"""
+		assert isinstance(file_path, basestring)
 		aln_length, sim_errors = 0, 0
-		for line in [l.strip().split() for l in open(filename, 'rU').readlines()]:
+		for line in [l.strip().split() for l in open(file_path, 'rU').readlines()]:
 			if line[0] == 'NUCMER' or line[0].startswith('>'):  # Skip headers
 				continue
 			# We only want lines with seven columns:
@@ -273,7 +285,10 @@ class ANIm(Validator):
 	# Report last exception as string
 	@staticmethod
 	def last_exception():
-		""" Returns last exception as a string, or use in logging.
+		"""
+		Returns last exception as a string, or use in logging.
+
+		@rtype: str|unicode
 		"""
 		exc_type, exc_value, exc_traceback = sys.exc_info()
 		return ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
@@ -281,35 +296,35 @@ class ANIm(Validator):
 	# Parse NUCmer delta output to store alignment total length, sim_error,
 	# and percentage identity, for each pairwise comparison
 	def process_delta(self):
-		""" Returns a tuple containing a list and four dictionaries. The list
-			describes the names of all organisms (derived from their filenames).
-			The dictionaries describe results for pairwise comparisons: total
-			aligned lengths; similarity errors in those alignments; the percentage
-			of aligned length that matches (ANIm); and the percentage of the
-			pairwise comparison that is aligned.
-
-			For the total aligned length, similarity error, and ANIm dictionaries,
-			as these are triangular/symmetrical matrices we only key them by
-			(query, subject), but as the percentage aligned measure depends on the
-			sequence we calculate it against, we report (query, subject) and
-			(subject, query) values.
-
-			- org_lengths is a dictionary of total sequence lengths for each
-				input sequence
 		"""
-		delta_files = self.get_input_files('.delta')
-		self._logger.info("Delta files:\n\t%s" % '\n\t'.join(delta_files))
+		Returns a tuple containing a list and four dictionaries. The list
+		describes the names of all organisms (derived from their filenames).
+		The dictionaries describe results for pairwise comparisons: total
+		aligned lengths; similarity errors in those alignments; the percentage
+		of aligned length that matches (ANIm); and the percentage of the
+		pairwise comparison that is aligned.
+
+		For the total aligned length, similarity error, and ANIm dictionaries,
+		as these are triangular/symmetrical matrices we only key them by
+		(query, subject), but as the percentage aligned measure depends on the
+		sequence we calculate it against, we report (query, subject) and
+		(subject, query) values.
+
+		- org_lengths is a dictionary of total sequence lengths for each
+			input sequence
+
+		@return: lengths, sim_errors, perc_ids, perc_aln
+		@rtype: tuple[dict[tuple[], int|long], dict[tuple[], int|long], dict[tuple[], float], dict[tuple[], float]]
+		"""
+		# delta_files = self.get_input_files('.delta')
 		self._logger.info("Processing .delta files")
 		# We store pairwise comparison lengths in dictionaries, keyed by organism
 		# ID pair tuples:
 		# perc_aln is useful, as it is a matrix of the minimum percentage of an
 		# organism's genome involved in a pairwise alignment
 		lengths, sim_errors, perc_ids, perc_aln = {}, {}, {}, {}
-		for delta_filename in delta_files:
-			self._logger.info("Processing %s" % delta_filename)
-			# TODO: not from filename!!
-			qname, sname = os.path.splitext(os.path.split(delta_filename)[-1])[0].split('_vs_')
-			self._logger.info("Query organism: %s; Subject organism: %s" % (qname, sname))
+		for (reference_id, candidate_id), delta_filename in self._used_file_names.iteritems():
+			self._logger.info("Query organism: %s; Reference organism: %s" % (candidate_id, reference_id))
 			tot_length, tot_sim_error = self.parse_delta(delta_filename)
 			perc_id = 0
 			try:
@@ -322,23 +337,17 @@ class ANIm(Validator):
 				self._logger.error("One or more of the NUCmer output files contains no useable output.")
 				if 0 < self._CUM_RETVALS:
 					self._logger.error("One or more NUCmer runs failed. Please investigate.")
-					self._logger.error("Please retry the NUCmer comparison for %s vs %s manually" % (qname, sname))
+					self._logger.error("Please retry the NUCmer comparison for %s vs %s manually" % (candidate_id, reference_id))
 				else:
 					self._logger.error(
-						"The NUCmer comparison between %s and %s " % (qname, sname) +
+						"The NUCmer comparison between %s and %s " % (candidate_id, reference_id) +
 						"has no usable output. The comparison may be " +
 						"too distant for use. Consider using --maxmatch.")
 				self._logger.error(self.last_exception())
-			candidate_id = qname
-			reference_id = sname
-			if qname not in self._query_gid_to_location:
-				candidate_id = sname
-				reference_id = qname
 			lengths[(candidate_id, reference_id)] = tot_length
 			sim_errors[(candidate_id, reference_id)] = tot_sim_error
 			perc_ids[(candidate_id, reference_id)] = perc_id
 			perc_aln[(candidate_id, reference_id)] = 1. * tot_length / self._total_lengths[candidate_id]
-			# perc_aln[sname] = 1.*tot_length/self.total_lengths[sname]
 		return lengths, sim_errors, perc_ids, perc_aln
 
 	# METHOD: ANIm
@@ -346,23 +355,27 @@ class ANIm(Validator):
 	# organisms, without chopping sequences into fragments. We follow the method
 	# of Richter et al. (2009)
 	def calculate_anim(self):
-		""" Calculate ANI by the ANIm method, as described in Richter et al (2009)
-			Proc Natl Acad Sci USA 106: 19126-19131 doi:10.1073/pnas.0906412106.
+		"""
+		Calculate ANI by the ANIm method, as described in Richter et al (2009)
+		Proc Natl Acad Sci USA 106: 19126-19131 doi:10.1073/pnas.0906412106.
 
-			All FASTA format files (selected by suffix) in the input directory
-			are compared against each other, pairwise, using NUCmer (which must
-			be in the path). NUCmer output is stored in the output directory.
+		All FASTA format files (selected by suffix) in the input directory
+		are compared against each other, pairwise, using NUCmer (which must
+		be in the path). NUCmer output is stored in the output directory.
 
-			The NUCmer .delta file output is parsed to obtain an alignment length
-			and similarity error count for every unique region alignment between
-			the two organisms, as represented by the sequences in the FASTA files.
+		The NUCmer .delta file output is parsed to obtain an alignment length
+		and similarity error count for every unique region alignment between
+		the two organisms, as represented by the sequences in the FASTA files.
 
-			These are processed to give matrices of aligned sequence lengths,
-			similarity error counts, average nucleotide identity (ANI) percentages,
-			and minimum aligned percentage (of whole genome) for each pairwise
-			comparison.
+		These are processed to give matrices of aligned sequence lengths,
+		similarity error counts, average nucleotide identity (ANI) percentages,
+		and minimum aligned percentage (of whole genome) for each pairwise
+		comparison.
 
-			The matrices are written to file in a plain text tab-separated format.
+		The matrices are written to file in a plain text tab-separated format.
+
+		@return: lengths, sim_errors, perc_ids, perc_aln
+		@rtype: tuple[dict[tuple[], int|long], dict[tuple[], int|long], dict[tuple[], float], dict[tuple[], float]]
 		"""
 		self._logger.info("Running ANIm method")
 		self.run_cmd_lines()
@@ -371,6 +384,10 @@ class ANIm(Validator):
 
 	def calculate_best_anim(self):
 		"""
+		Return the results of the best hit in the references
+
+		@return: lengths, sim_errors, perc_ids, perc_aln
+		@rtype: dict[str|unicode, int|long], dict[str|unicode, int|long], dict[str|unicode, float], dict[str|unicode, float]
 		"""
 		min_lengths, min_sim_errors, min_perc_ids, min_perc_aln, ncbi, best_ani_by_candidate_id = {}, {}, {}, {}, {}, {}
 		lengths, sim_errors, perc_ids, perc_aln = self.calculate_anim()
