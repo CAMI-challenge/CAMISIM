@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = 'Peter Hofmann'
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 import sys
 import os
