@@ -1,4 +1,4 @@
-__author__ = 'hofmann'
+__author__ = 'Peter Hofmann'
 # original prototype:
 #   http://armchairbiology.blogspot.de/2013/11/ani-are-you-okay-are-you-okay-ani.html
 #   (c) The James Hutton Institute 2013
@@ -16,6 +16,7 @@ import tempfile
 import shutil
 import parallel
 from scripts.Validator.validator import Validator
+from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 try:
@@ -29,36 +30,39 @@ except ImportError:
 class ANIm(Validator):
 	"""calculation average nucleotide identity"""
 	def __init__(
-		self, candidates, references, out_dir_name=None, nucmer_exe="nucmer", pool_size=1,
+		self, file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
+		file_path_nucmer="nucmer", minimum_alignment=0.8, separator='\t', temp_directory=None, max_processors=1,
 		logfile=None, verbose=False, debug=False):
 		super(ANIm, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._CUM_RETVALS = 0
-		self.pool_size = pool_size
-		self.nucmer_exe = nucmer_exe
-		self.out_dir_name = out_dir_name
-		self.clean_output = False
-		if out_dir_name is None:
-			self.clean_output = True
-			self.out_dir_name = tempfile.mkdtemp()
+		self._max_processors = max_processors
+		self._file_path_nucmer = file_path_nucmer
+		self._tmp_dir = temp_directory
+		self._separator = separator
+		if temp_directory is None:
+			self._tmp_dir = tempfile.mkdtemp()
 		else:
-			self.clean_output = True
-			self.out_dir_name = tempfile.mkdtemp(dir=out_dir_name)
-		self.cmd_lines = []
-		self.reference_file_names = self.get_organism_file_names(references)
-		self.candidate_file_names = self.get_organism_file_names(candidates)
-		self.used_file_names = {}
-		self.total_lengths = {}
-		# self.get_total_organism_length()
+			self._tmp_dir = tempfile.mkdtemp(dir=temp_directory)
+		self._cmd_lines = []
+		data_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		data_table.read(file_path_query_genomes_location)
+		self._query_gid_to_location = data_table.get_map(0, 1)
+		data_table.read(file_path_reference_genomes_location)
+		self._reference_gid_to_location = data_table.get_map(0, 1)
+		data_table.read(file_path_reference_taxid_map)
+		self._reference_gid_to_taxid = data_table.get_map(0, 1)
+		self._total_lengths = {}
+		self._minimum_alignment = minimum_alignment
+		# self.used_file_names = {}
 
 	def __exit__(self, type, value, traceback):
 		super(ANIm, self).__exit__(type, value, traceback)
-		if self.clean_output:
-			# return
-			shutil.rmtree(self.out_dir_name)
+		if not self._debug:
+			shutil.rmtree(self._tmp_dir)
 
 	def get_total_organism_length(self):
-		self.get_organism_lengths(self.reference_file_names)
-		self.get_organism_lengths(self.candidate_file_names)
+		self.get_organism_lengths(self._reference_gid_to_location)
+		self.get_organism_lengths(self._query_gid_to_location)
 
 	# Construct a command-line for NUCmer reference_id, candidate_id
 	def get_nucmer_cmd(self, reference_id, candidate_id, mum=True, maxmatch=False):
@@ -72,59 +76,44 @@ class ANIm(Validator):
 			unique only in the reference and -maxmatch gives us matches to all
 			regions, regardless of uniqueness. We may want to make this an option.
 		"""
-		if reference_id not in self.total_lengths:
-			self.total_lengths[reference_id] = self.get_organism_length(self.reference_file_names[reference_id])
-		if candidate_id not in self.total_lengths:
-			self.total_lengths[candidate_id] = self.get_organism_length(self.candidate_file_names[candidate_id])
-		if self.total_lengths[reference_id] < self.total_lengths[candidate_id]:
+		if reference_id not in self._total_lengths:
+			self._total_lengths[reference_id] = self.get_organism_length(self._reference_gid_to_location[reference_id])
+		if candidate_id not in self._total_lengths:
+			self._total_lengths[candidate_id] = self.get_organism_length(self._query_gid_to_location[candidate_id])
+		if self._total_lengths[reference_id] < self._total_lengths[candidate_id]:
 			ref_id = reference_id
 			queri_id = candidate_id
 		else:
 			ref_id = candidate_id
 			queri_id = reference_id
-		# reference_name = os.path.split(reference_id)[-1]
-		# candidate_name = os.path.split(candidate_id)[-1]
+		# TODO: not from filename!!
 		out_file_name = "{}_vs_{}".format(queri_id, ref_id)
-		prefix = os.path.join(self.out_dir_name, out_file_name)
+		prefix = os.path.join(self._tmp_dir, out_file_name)
 		# Do we use the --maxmatch option?
 		mode = ""
 		if maxmatch:
 			mode = "-maxmatch"
 		elif mum:
 			mode = "-mum"
-		bash_prefix = """
-		REF_FILE=`mktemp`;
-		CAN_FILE=`mktemp`;
-		tr -d '\\015' < {} > \"$REF_FILE\";
-		tr -d '\\015' < {} > \"$CAN_FILE\";
-		""".format(self.reference_file_names[reference_id], self.candidate_file_names[candidate_id])
-		bash_suffix = """;
-		rm \"$REF_FILE\" \"$CAN_FILE\"
-		if [[ ! -f "{}.delta" ]]; then
-			exit 1
-		fi
-		""".format(prefix)
-		cmd = bash_prefix + "{} {} -p {} \"$REF_FILE\" \"$CAN_FILE\"".format(self.nucmer_exe, mode, prefix, "", "") + bash_suffix
-		# bash_prefix = """
-		# mkfifo {0};
-		# mkfifo {1};
-		# tr -d '\\015' < \"{2}\" > {0} &
-		# tr -d '\\015' < \"{3}\" > {1} &
-		# """.format(reference_id, candidate_id, self.reference_file_names[reference_id], self.candidate_file_names[candidate_id])
-		# bash_suffix = """;
-		# rm {0} {1}
-		# if [[ ! -f "{2}.delta" ]]; then
-		# 	exit 1
-		# fi
-		# """.format(reference_id, candidate_id, prefix)
-		# cmd = bash_prefix + "{} {} -p {} {} {}".format(self.nucmer_exe, mode, prefix, reference_id, candidate_id) + bash_suffix
+
+		cmd = "{nucmer} {mode} -p {prefix} {reference} {query}".format(
+			nucmer=self._file_path_nucmer, mode=mode, prefix=prefix,
+			reference=self._reference_gid_to_location[reference_id],
+			query=self._query_gid_to_location[candidate_id])
 		return cmd
 
 	# Run NUCmer pairwise on the input files, using multiprocessing
 	def add_nucmer_cmd_lines(self, reference_ids, candidate_ids):
 		"""
-			We loop over all FASTA files in reference_file_names, generating NUCmer
-			command lines for each reference_file_names comparison
+		We loop over all FASTA files in reference_file_names, generating NUCmer
+		command lines for each reference_file_names comparison
+
+		@param reference_ids:
+		@type reference_ids: list[str|unicode]
+		@param candidate_ids:
+		@type candidate_ids: list[str|unicode]
+
+		@rtype: None
 		"""
 		# self._logger.info("add_nucmer_cmd_lines: %s %s" % (candidate_ids, reference_ids))
 		unique_set = set()
@@ -139,9 +128,9 @@ class ANIm(Validator):
 				if tupel in unique_set:
 					continue
 				unique_set.add(tupel)
-				if reference_id in self.reference_file_names:
+				if reference_id in self._reference_gid_to_location:
 					# self.cmd_lines.extend([self.get_nucmer_cmd(reference_id, candidate_id) for reference_id in reference_ids])
-					self.cmd_lines.append(self.get_nucmer_cmd(reference_id, candidate_id))
+					self._cmd_lines.append(self.get_nucmer_cmd(reference_id, candidate_id))
 				# else:
 				# 	self._logger.warning("No genom for reference: {}".format(reference_id))
 
@@ -163,10 +152,10 @@ class ANIm(Validator):
 
 			- cmdlines is an iterable of command line strings
 		"""
-		self._logger.info("Running {} jobs with multiprocessing".format(len(self.cmd_lines)))
+		self._logger.info("Running {} jobs with multiprocessing".format(len(self._cmd_lines)))
 		# return
-		cmd_task_list = [parallel.TaskCmd(cmd, self.out_dir_name) for cmd in self.cmd_lines]
-		fail_list = parallel.runCmdParallel(cmd_task_list, self.pool_size)
+		cmd_task_list = [parallel.TaskCmd(cmd, self._tmp_dir) for cmd in self._cmd_lines]
+		fail_list = parallel.runCmdParallel(cmd_task_list, self._max_processors)
 		if fail_list is not None:
 			parallel.reportFailedCmd(fail_list)
 			self._CUM_RETVALS = -1 * len(fail_list)
@@ -195,12 +184,12 @@ class ANIm(Validator):
 			command lines for each pairwise comparison, and then pass those
 			command lines to be run using multiprocessing.
 		"""
-		if len(self.cmd_lines) < 1:
+		if len(self._cmd_lines) < 1:
 			self._logger.warning("NUCmer command lines: No lines!")
-			self._logger.warning("Ref {} / {}".format(len(self.reference_file_names), len(self.candidate_file_names)))
+			self._logger.debug("Ref {} / {}".format(len(self._reference_gid_to_location), len(self._query_gid_to_location)))
 			return
 		# self._logger.info("NUCmer command lines:\n\t%s" % '\n\t'.join(self.cmd_lines[0]))
-		self._logger.info("NUCmer command lines:\n\t{}".format(self.cmd_lines[0]))
+		self._logger.debug("NUCmer command lines:\n\t{}".format(self._cmd_lines[0]))
 		# return
 		self.multiprocessing_run()
 		if 0 < self._CUM_RETVALS:
@@ -226,7 +215,7 @@ class ANIm(Validator):
 		"""
 		self._logger.info("Processing organism sequence lengths")
 		for organism in organism_file_names:
-			self.total_lengths[organism] = sum([len(s) for s in SeqIO.parse(organism_file_names[organism], 'fasta')])
+			self._total_lengths[organism] = sum([len(s) for s in SeqIO.parse(organism_file_names[organism], 'fasta')])
 
 	# Get filenames for each organism
 	def get_organism_file_names(self, file_filepath_list):
@@ -259,8 +248,8 @@ class ANIm(Validator):
 
 			- *ext is a list of arguments describing permissible file extensions
 		"""
-		file_list = [filename for filename in os.listdir(self.out_dir_name) if os.path.splitext(filename)[-1] in ext]
-		return [os.path.join(self.out_dir_name, filename) for filename in file_list]
+		file_list = [filename for filename in os.listdir(self._tmp_dir) if os.path.splitext(filename)[-1] in ext]
+		return [os.path.join(self._tmp_dir, filename) for filename in file_list]
 
 	# Parse NUCmer delta file to get total alignment length and total sim_errors
 	@staticmethod
@@ -318,6 +307,7 @@ class ANIm(Validator):
 		lengths, sim_errors, perc_ids, perc_aln = {}, {}, {}, {}
 		for delta_filename in delta_files:
 			self._logger.info("Processing %s" % delta_filename)
+			# TODO: not from filename!!
 			qname, sname = os.path.splitext(os.path.split(delta_filename)[-1])[0].split('_vs_')
 			self._logger.info("Query organism: %s; Subject organism: %s" % (qname, sname))
 			tot_length, tot_sim_error = self.parse_delta(delta_filename)
@@ -341,13 +331,13 @@ class ANIm(Validator):
 				self._logger.error(self.last_exception())
 			candidate_id = qname
 			reference_id = sname
-			if qname not in self.candidate_file_names:
+			if qname not in self._query_gid_to_location:
 				candidate_id = sname
 				reference_id = qname
 			lengths[(candidate_id, reference_id)] = tot_length
 			sim_errors[(candidate_id, reference_id)] = tot_sim_error
 			perc_ids[(candidate_id, reference_id)] = perc_id
-			perc_aln[(candidate_id, reference_id)] = 1. * tot_length / self.total_lengths[candidate_id]
+			perc_aln[(candidate_id, reference_id)] = 1. * tot_length / self._total_lengths[candidate_id]
 			# perc_aln[sname] = 1.*tot_length/self.total_lengths[sname]
 		return lengths, sim_errors, perc_ids, perc_aln
 
@@ -379,7 +369,7 @@ class ANIm(Validator):
 		# lengths, sim_errors, perc_ids, perc_aln = self.process_delta()
 		return self.process_delta()
 
-	def calculate_minimum_anim(self):
+	def calculate_best_anim(self):
 		"""
 		"""
 		min_lengths, min_sim_errors, min_perc_ids, min_perc_aln, ncbi, best_ani_by_candidate_id = {}, {}, {}, {}, {}, {}
@@ -390,12 +380,11 @@ class ANIm(Validator):
 			reference_id = candidate_id_reference_id[1]
 			# self._logger.info("{}: candidate_id: {}; reference_id: {}".format(candidate_id_reference_id, candidate_id, reference_id))
 			# ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
-			ani_ish = perc_ids[candidate_id_reference_id]
-			if candidate_id not in best_ani_by_candidate_id or (perc_aln[candidate_id_reference_id] > 0.8 and best_ani_by_candidate_id[candidate_id] < ani_ish):
-				best_ani_by_candidate_id[candidate_id] = ani_ish
+			if candidate_id not in best_ani_by_candidate_id or (perc_aln[candidate_id_reference_id] > self._minimum_alignment and best_ani_by_candidate_id[candidate_id] < perc_ids[candidate_id_reference_id]):
+				best_ani_by_candidate_id[candidate_id] = perc_ids[candidate_id_reference_id]
 				min_lengths[candidate_id] = lengths[candidate_id_reference_id]
 				min_sim_errors[candidate_id] = sim_errors[candidate_id_reference_id]
 				min_perc_ids[candidate_id] = perc_ids[candidate_id_reference_id]
 				min_perc_aln[candidate_id] = perc_aln[candidate_id_reference_id]
-				ncbi[candidate_id] = reference_id.split('.')[0]
-		return min_lengths, min_sim_errors, min_perc_ids, min_perc_aln, ncbi, best_ani_by_candidate_id
+				ncbi[candidate_id] = self._reference_gid_to_taxid[reference_id]  # reference_id.split('.')[0]
+		return min_lengths, min_sim_errors, min_perc_ids, min_perc_aln, ncbi
