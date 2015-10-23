@@ -11,7 +11,6 @@ from scripts.argumenthandler import ArgumentHandler
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MGCluster.mgcluster import MGCluster
 from scripts.MGAnnotate.mgannotate import MGAnnotate
-import ani_prediction_to_meta_table
 
 
 class MetagenomeSimulationPipeline(ArgumentHandler):
@@ -88,16 +87,29 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 				mgcluster = MGAnnotate(
 					ncbi_reference_directory=self._ncbi_reference_directory,
 					data_table_iid_mapping=data_table_iid_mapping,
+					file_path_query_genomes_location=self._file_path_query_genomes_location_file,
+					file_path_reference_genomes_location=self._file_path_reference_genome_locations,
+					file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,
+					file_path_nucmer=self._file_path_nucmer,
+					ani_distance=self._distance_cutoff,
 					column_name_genome_id=self._column_name_genome_id,
 					column_name_otu=self._column_name_otu_id,
 					column_name_novelty_category=self._column_name_cluster_novelty,
 					column_name_ncbi=self._column_name_ncbi,
 					column_name_scientific_name=self._column_name_cluster_scientific_name,
+					column_name_ani=self._column_name_ani,
+					column_name_ani_novelty=self._column_name_ani_novelty,
+					column_name_ani_ncbi=self._column_name_ani_compare,
+					column_name_ani_scientific_name=self._column_name_ani_scientific_name,
+					temp_directory=self._directory_temp,
 					separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
 				)
 				mgcluster.establish_novelty_categorisation(taxonomy, refernce_ncbi_id_set, metadata_table)
 				metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table())
 				return
+
+			self._logger.info("Validating Genomes")
+			self._validate_raw_genomes()
 
 			if self._phase == 0 or self._phase == 1:
 				self.marker_gene_extraction()
@@ -109,9 +121,9 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			if self._phase == 0 or self._phase == 3:
 				self.classification_of_genomes_and_novelty_prediction()
 
-			if self._phase == 4:
-				if not self.ani_of_genomes_and_novelty_prediction():
-					sys.exit(1)
+			# if self._phase == 4:
+			# 	if not self.ani_of_genomes_and_novelty_prediction():
+			# 		sys.exit(1)
 
 		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
@@ -124,19 +136,72 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		else:
 			self._logger.info("Temporary data stored at:\n{}".format(self._project_file_folder_handler.get_tmp_wd()))
 
+	# #########################
+	#
+	# Validate Genomes
+	#
+	# #########################
+
+	def _validate_raw_genomes(self):
+		"""
+		Validate format raw genomes
+
+		@return: True if all genomes valid
+		@rtype: bool
+		"""
+		meta_data_table = MetadataTable(
+			separator=self._separator,
+			logfile=self._logfile,
+			verbose=self._verbose)
+
+		are_valid = True
+		meta_data_table.read(self._file_path_query_genomes_location_file, column_names=False)
+		list_of_file_paths = meta_data_table.get_column(1)
+		if not self._validate_format(list_of_file_paths, file_format="fasta", sequence_type="dna", ambiguous=True):
+			are_valid = False
+
+		meta_data_table.read(self._file_path_reference_genome_locations, column_names=False)
+		list_of_file_paths = meta_data_table.get_column(1)
+		if not self._validate_format(list_of_file_paths, file_format="fasta", sequence_type="dna", ambiguous=True):
+			are_valid = False
+		return are_valid
+
+	def _validate_format(self, list_of_file_paths, file_format="fasta", sequence_type="dna", ambiguous=True):
+		"""
+		Validate file format of a list of fasta files
+
+		@param list_of_file_paths: List of fasta file paths
+		@type list_of_file_paths: list[str|unicode]
+		@param file_format: 'fasta' or 'fastq'
+		@type file_format: str | unicode
+		@param sequence_type: 'dna' or 'rna' or 'protein'
+		@type sequence_type: str | unicode
+		@param ambiguous: If true ambiguous characters are valid
+		@type ambiguous: bool
+
+		@return: True if all valid
+		@rtype: bool
+		"""
+		result = True
+		for file_path in list_of_file_paths:
+			if not self.validate_sequence_file(file_path, file_format, sequence_type, ambiguous):
+				result = False
+		return result
+
 	def marker_gene_extraction(self):
-		"""The first step is to find and extract 16S marker gene sequences. The sequences are found using "hmmsearch" and extracted based on the given positions.
-	Two hmmer can currently be used. HMMER3.0 with a profile from 2010 and "rnammer" using HMMER2.0 with a profile from 2006.
-	A third one using HMMER3.0 is still to be evaluated.
-	So far it seems like rnammer provides better(more) results, but is also very slow.
-	input:
-	- file containing a list of fasta file paths, for example the genomes that someone wants to cluster.
-	- file containing a list of reference fasta file paths or alternatively, a fasta formated file containing the already extracted marker genes of the reference genomes.
-	- working directory where the results will be saved (intermediate files will be worked on in the designated /tmp folder)
-	- the number of processors that are available for parallel processing. The program "parallel" is used to process several genomes at the same time.
-	output:
-	- fasta formatted file containing the extracted marker genes of all genomes
-	"""
+		"""
+		The first step is to find and extract 16S marker gene sequences. The sequences are found using "hmmsearch" and extracted based on the given positions.
+		Two hmmer can currently be used. HMMER3.0 with a profile from 2010 and "rnammer" using HMMER2.0 with a profile from 2006.
+		A third one using HMMER3.0 is still to be evaluated.
+		So far it seems like rnammer provides better(more) results, but is also very slow.
+		input:
+		- file containing a list of fasta file paths, for example the genomes that someone wants to cluster.
+		- file containing a list of reference fasta file paths or alternatively, a fasta formated file containing the already extracted marker genes of the reference genomes.
+		- working directory where the results will be saved (intermediate files will be worked on in the designated /tmp folder)
+		- the number of processors that are available for parallel processing. The program "parallel" is used to process several genomes at the same time.
+		output:
+		- fasta formatted file containing the extracted marker genes of all genomes
+		"""
 		assert isinstance(self, ArgumentHandler)
 		from scripts.MGExtract.mgextract import MGExtract
 		mg_extract = MGExtract(
@@ -222,6 +287,11 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		mgcluster = MGAnnotate(
 			ncbi_reference_directory=self._ncbi_reference_directory,
 			data_table_iid_mapping=data_table_iid_mapping,
+			file_path_query_genomes_location=self._file_path_query_genomes_location_file,
+			file_path_reference_genomes_location=self._file_path_reference_genome_locations,
+			file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,
+			file_path_nucmer=self._file_path_nucmer,
+			ani_distance=self._distance_cutoff,
 			column_name_genome_id=self._column_name_genome_id,
 			column_name_otu=self._column_name_otu_id,
 			column_name_novelty_category=self._column_name_cluster_novelty,
@@ -229,8 +299,9 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			column_name_scientific_name=self._column_name_cluster_scientific_name,
 			column_name_ani=self._column_name_ani,
 			column_name_ani_novelty=self._column_name_ani_novelty,
-			column_name_ani_compare=self._column_name_ani_compare,
+			column_name_ani_ncbi=self._column_name_ani_compare,
 			column_name_ani_scientific_name=self._column_name_ani_scientific_name,
+			temp_directory=self._directory_temp,
 			separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
 		)
 		mgcluster.annotate(
@@ -243,24 +314,23 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			set_of_refernce_ncbi_id=set(set_of_refernce_ncbi_id)
 		)
 
-	def ani_of_genomes_and_novelty_prediction(self):
-		"""The fourth step is to calculate the average nucleotide identity.
-	To lessen the calculation burden, only genomes of sequences within the same cluster as an unpublished genome (marker gene) are compared.
-	In case only SILVA sequences are in a cluster, no comparison can be done.
-	The tool Mummer is used for the genome comparison, specifically nucmer.
-	Novelty predictions are made only for genomes with ani's better than 96%
-	ani > 96% -> same species
-	ani > 98% -> same strain
-	input:
-	- meta data table with a list of the genomes and data of the previous step, the output table path will be used as input.
-	- working directory which contains the mothur formatted file with the clusters (mothur_otu.txt)
-	- file containing a list of fasta file paths, the genomes that someone wants to cluster.
-	- file containing a list of reference fasta file paths.
-	output:
-	- meta data table with a list of the genomes, with columns added that contain ani based tax prediction, rank and novelty prediction
-	"""
-		assert isinstance(self, ArgumentHandler)
-		return ani_prediction_to_meta_table.my_main(self)
+	# def ani_of_genomes_and_novelty_prediction(self):
+	# 	"""The fourth step is to calculate the average nucleotide identity.
+	# To lessen the calculation burden, only genomes of sequences within the same cluster as an unpublished genome (marker gene) are compared.
+	# In case only SILVA sequences are in a cluster, no comparison can be done.
+	# The tool Mummer is used for the genome comparison, specifically nucmer.
+	# Novelty predictions are made only for genomes with ani's better than 96%
+	# ani > 96% -> same species
+	# ani > 98% -> same strain
+	# input:
+	# - meta data table with a list of the genomes and data of the previous step, the output table path will be used as input.
+	# - working directory which contains the mothur formatted file with the clusters (mothur_otu.txt)
+	# - file containing a list of fasta file paths, the genomes that someone wants to cluster.
+	# - file containing a list of reference fasta file paths.
+	# output:
+	# - meta data table with a list of the genomes, with columns added that contain ani based tax prediction, rank and novelty prediction
+	# """
+	# 	# return ani_prediction_to_meta_table.my_main(self)
 
 	def create_meta_table_from_fasta_path_file(self):
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
