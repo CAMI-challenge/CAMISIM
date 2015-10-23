@@ -5,6 +5,7 @@ from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.Validator.validator import Validator
+from scripts.anim import ANIm
 
 
 class MGAnnotate(Validator):
@@ -13,12 +14,14 @@ class MGAnnotate(Validator):
 
 	def __init__(
 		self, ncbi_reference_directory, data_table_iid_mapping,
+		file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
+		file_path_nucmer=None, distance_ani='unique', minimum_alignment=0.8,
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID", column_name_scientific_name="SCIENTIFIC_NAME",
 		column_name_threshold="prediction_threshold",
 		column_name_ani="ANI", column_name_ani_novelty="ANI_NOVELTY_CATEGORY",
-		column_name_ani_compare="ANI_TAXONOMIC_COMPARE", column_name_ani_scientific_name="ANI_SCIENTIFIC_NAME",
-		separator="\t", logfile=None, verbose=False, debug=False):
+		column_name_ani_ncbi="ANI_NCBI_ID", column_name_ani_scientific_name="ANI_SCIENTIFIC_NAME",
+		temp_directory=None, max_processors=1, separator="\t", logfile=None, verbose=False, debug=False):
 		"""
 		Constructor
 
@@ -35,7 +38,10 @@ class MGAnnotate(Validator):
 		@param debug: Display debug messages
 		@type debug: bool
 		"""
+		assert file_path_nucmer is None or self.validate_file(file_path_nucmer, executable=True)
 		assert self.validate_dir(ncbi_reference_directory)
+		assert isinstance(self._max_processors, (int, long))
+		assert self.validate_number(self._max_processors, minimum=1)
 		assert isinstance(data_table_iid_mapping, MetadataTable)
 		assert isinstance(separator, basestring)
 		assert isinstance(column_name_genome_id, basestring)
@@ -46,7 +52,7 @@ class MGAnnotate(Validator):
 		assert isinstance(column_name_threshold, basestring)
 		assert isinstance(column_name_ani, basestring)
 		assert isinstance(column_name_ani_novelty, basestring)
-		assert isinstance(column_name_ani_compare, basestring)
+		assert isinstance(column_name_ani_ncbi, basestring)
 		assert isinstance(column_name_ani_scientific_name, basestring)
 		super(MGAnnotate, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._column_name_genome_id = column_name_genome_id
@@ -57,11 +63,19 @@ class MGAnnotate(Validator):
 		self._column_name_threshold = column_name_threshold
 		self._column_name_ani = column_name_ani
 		self._column_name_ani_novelty = column_name_ani_novelty
-		self._column_name_ani_compare = column_name_ani_compare
+		self._column_name_ani_ncbi = column_name_ani_ncbi
 		self._column_name_ani_scientific_name = column_name_ani_scientific_name
 		self._separator = separator
 		self._ncbi_reference_directory = ncbi_reference_directory
 		self._data_table_iid_mapping = data_table_iid_mapping
+		self._file_path_nucmer = file_path_nucmer
+		self._max_processors = max_processors
+		self._file_path_query_genomes_location = file_path_query_genomes_location
+		self._file_path_reference_genomes_location = file_path_reference_genomes_location
+		self._file_path_reference_taxid_map = file_path_reference_taxid_map
+		self._tmp_dir = temp_directory
+		self._distance_ani = distance_ani
+		self._minimum_alignment = minimum_alignment
 
 	def annotate(
 		self, metadata_table_in, metadata_table_out, cluster_file, precision, otu_distance, classification_distance_minimum,
@@ -116,11 +130,17 @@ class MGAnnotate(Validator):
 
 		self._taxonomic_prediction(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum)
 		self._logger.info("Taxonomic prediction finished")
+
 		self._logger.info("Establish novelty categorisation")
 		self.establish_novelty_categorisation(taxonomy, set_of_refernce_ncbi_id, metadata_table)
 		self._logger.info("Done")
+
 		self._set_otu_id(metadata_table, mothur_cluster, otu_distance)
 		self._logger.info("OTU finished")
+
+		if self._file_path_nucmer:
+			self.calc_ani(mothur_cluster, taxonomy, metadata_table)
+			self._logger.info("ANI prediction finished")
 		metadata_table.write(metadata_table_out)
 
 	def _taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
@@ -291,3 +311,46 @@ class MGAnnotate(Validator):
 		metadata_table.insert_column(column_otu_id, self._column_name_otu_id)
 		if len(list_of_unclustered_elements) > 0:
 			self._logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
+
+	def calc_ani(self, mothur_cluster, taxonomy, metadata_table):
+		ani_scientific_name_column = metadata_table.get_empty_column()
+		ani_prediction_novelty_column = metadata_table.get_empty_column()
+		ani_prediction_column = metadata_table.get_empty_column()
+		ani_column = metadata_table.get_empty_column()
+		# cutoff_column = metadata_table.get_column(options.column_name_cutoff)
+		query_genome_ids_column = metadata_table.get_column(self._column_name_genome_id)
+
+		ani_calculator = ANIm(
+			file_path_nucmer=self._file_path_nucmer,
+			minimum_alignment=self._minimum_alignment,
+			file_path_query_genomes_location=self._file_path_query_genomes_location,
+			file_path_reference_genomes_location=self._file_path_reference_genomes_location,
+			file_path_reference_taxid_map=self._file_path_reference_taxid_map,
+			separator=self._separator, temp_directory=self._tmp_dir, max_processors=self._max_processors,
+			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
+		list_of_index, list_of_clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, query_genome_ids_column)
+		# logger.info("OTUS: {}".format(otus))
+		# sys.exit(0)
+		for query_genomes_id in query_genome_ids_column:
+			if list_of_clusters[query_genomes_id] is None:
+				continue
+			ani_calculator.add_nucmer_cmd_lines(list_of_clusters[query_genomes_id], [query_genomes_id])
+
+		total_lengths, sim_errors, percent_identity, percent_alignment, ncbi = ani_calculator.calculate_best_anim()
+
+		for row_index, query_genomes_id in enumerate(query_genome_ids_column):
+			if query_genomes_id in percent_alignment and percent_alignment[query_genomes_id] > 0:
+				if float(percent_alignment[query_genomes_id]) > 0.98:
+					ani_prediction_novelty_column[row_index] = "same_strain"
+				elif float(percent_alignment[query_genomes_id]) > 0.96:
+					ani_prediction_novelty_column[row_index] = "same_species"
+				ani_prediction_column[row_index] = ncbi[query_genomes_id]
+				ani_column[row_index] = str(percent_alignment[query_genomes_id])
+				science_name = taxonomy.get_scientific_name(ncbi[query_genomes_id])
+				if science_name is not None:
+					ani_scientific_name_column[row_index] = science_name
+
+		metadata_table.insert_column(ani_column, self._column_name_ani)
+		metadata_table.insert_column(ani_prediction_novelty_column, self._column_name_ani_novelty)
+		metadata_table.insert_column(ani_prediction_column, self._column_name_ani_ncbi)
+		metadata_table.insert_column(ani_scientific_name_column, self._column_name_ani_scientific_name)
