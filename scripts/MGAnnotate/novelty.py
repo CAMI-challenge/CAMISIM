@@ -85,13 +85,13 @@ class Novelty(Validator):
 
 	def read_reference(self, set_reference_taxonomic_ids, excluded=None):
 		"""
-			extracts all taxonomic IDs from the reference directory and stores all contained IDs for each rank
-			@param set_reference_taxonomic_ids: List of reference ids
-			@type set_reference_taxonomic_ids: set[str|unicode]
-			@param excluded: List of reference ids
-			@type excluded: set[str|unicode]
+		extracts all taxonomic IDs from the reference directory and stores all contained IDs for each rank
+		@param set_reference_taxonomic_ids: List of reference ids
+		@type set_reference_taxonomic_ids: set[str|unicode]
+		@param excluded: List of reference ids
+		@type excluded: set[str|unicode]
 
-			@rtype: None
+		@rtype: None
 		"""
 		assert isinstance(set_reference_taxonomic_ids, set)
 		assert excluded is None or isinstance(excluded, set)
@@ -115,16 +115,16 @@ class Novelty(Validator):
 
 	def compute_novelty_for_metafile(self, in_meta_file, out_meta_file):
 		"""
-			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
-			(Note that the metafile must include a header with column name 'NCBI_ID'
-								whereas novelty_category is added if it does not exist)
+		computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
+		(Note that the metafile must include a header with column name 'NCBI_ID'
+							whereas novelty_category is added if it does not exist)
 
-			@param in_meta_file: filepath to file named 'metadata_table_[version].csv'#
-			@type in_meta_file: str | unicode
-			@param out_meta_file: file path of the output
-			@type out_meta_file: str | unicode
+		@param in_meta_file: filepath to file named 'metadata_table_[version].csv'#
+		@type in_meta_file: str | unicode
+		@param out_meta_file: file path of the output
+		@type out_meta_file: str | unicode
 
-			@rtype: None
+		@rtype: None
 		"""
 		assert self.validate_file(in_meta_file)
 		assert self.validate_file(out_meta_file)
@@ -136,11 +136,11 @@ class Novelty(Validator):
 
 	def compute_novelty(self, meta_table):
 		"""
-			computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
-			(Note that the metafile must include a header with column name 'NCBI_ID'
-								whereas novelty_category is added if it does not exist)
-			@param meta_table: Handle of a MetadataTable
-			@type meta_table: MetadataTable
+		computes the novelty_category for each NCBI ID in the metafile and updates it to the output file
+		(Note that the metafile must include a header with column name 'NCBI_ID'
+							whereas novelty_category is added if it does not exist)
+		@param meta_table: Handle of a MetadataTable
+		@type meta_table: MetadataTable
 		"""
 		assert isinstance(meta_table, MetadataTable)
 		column_ncbi_id = meta_table.get_column(self._column_name_ncbi_id)
@@ -171,13 +171,13 @@ class Novelty(Validator):
 
 	def get_novelty(self, ncbi_id):
 		"""
-			Compute novelty_category for a new taxon ID according to the following algorithm.
+		Compute novelty_category for a new taxon ID according to the following algorithm.
 
-			@param ncbi_id: NCBI ID for which the novelty_category should be computed
-			@type ncbi_id: str | unicode
+		@param ncbi_id: NCBI ID for which the novelty_category should be computed
+		@type ncbi_id: str | unicode
 
-			@return: novelty category or None
-			@rtype: str
+		@return: novelty category or None
+		@rtype: str
 		"""
 		assert isinstance(ncbi_id, basestring)
 		taxonomic_lineage = self._tax.get_lineage_of_legal_ranks(ncbi_id, ranks=self._ranks)
@@ -195,13 +195,13 @@ class Novelty(Validator):
 
 	def get_taxonomic_ids_from_directory(self, directory):
 		"""
-			search a directory for all files with taxonomic IDS and return them as a set
+		search a directory for all files with taxonomic IDS and return them as a set
 
-			@param directory: directory containing sequences named [ID].[nr].fna
-			@type directory: str | unicode
+		@param directory: directory containing sequences named [ID].[nr].fna
+		@type directory: str | unicode
 
-			@return: set of the IDs
-			@rtype: set[str | unicode]
+		@return: set of the IDs
+		@rtype: set[str | unicode]
 		"""
 		assert self.validate_dir(directory)
 		directory_list = os.listdir(directory)
