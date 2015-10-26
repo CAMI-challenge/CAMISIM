@@ -8,6 +8,7 @@ from scripts.projectfilefolderhandle import ProjectFileFolderHandle
 from scripts.configparserwrapper import ConfigParserWrapper
 from scripts.Validator.sequencevalidator import SequenceValidator
 from scripts.MGCluster.mgcluster import MGCluster
+from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 class ArgumentHandler(SequenceValidator):
@@ -242,6 +243,51 @@ class ArgumentHandler(SequenceValidator):
 		"""
 		return self._valid_args
 
+	def _validate_genome_ids(self):
+		"""
+		Validate genome ids
+
+		@return:
+		"""
+		file_path_reference_genome_locations = self._file_path_reference_genome_locations
+		file_path_query_genomes_location_file = self._file_path_query_genomes_location_file
+		silva_reference_directory = self._silva_reference_directory
+		assert isinstance(file_path_reference_genome_locations, basestring)
+		assert isinstance(file_path_query_genomes_location_file, basestring)
+		assert isinstance(silva_reference_directory, basestring)
+		data_table_reference = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		data_table_reference.read(file_path_reference_genome_locations)
+		reference_gids = data_table_reference.get_column(0)
+		reference_gids_set = set(reference_gids)
+		if not len(reference_gids) == len(reference_gids_set):
+			self._valid_args = False
+			self._logger.error("Reference genome ids are not unique")
+			return
+
+		data_table_query = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		data_table_query.read(file_path_query_genomes_location_file)
+		query_gids = data_table_query.get_column(0)
+		query_gids_set = set(query_gids)
+		if not len(query_gids) == len(query_gids_set):
+			self._valid_args = False
+			self._logger.error("Query genome ids are not unique")
+			return
+
+		data_table_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		file_path_silva_map = os.path.join(silva_reference_directory, MGCluster.get_file_name_of_map())
+		data_table_silva.read(file_path_silva_map)
+		silver_ids_set = set(data_table_silva.get_column(1))
+		# silva ids are allowed to be not unique
+
+		if not query_gids_set.isdisjoint(reference_gids_set):
+			self._valid_args = False
+			self._logger.error("Reference and query genomes ids must be unique!")
+			return
+		if not query_gids_set.isdisjoint(silver_ids_set):
+			self._valid_args = False
+			self._logger.error("Silva and query genomes ids must be unique!")
+			return
+
 	def _check_values(self):
 		"""
 		Validating input arguments
@@ -379,7 +425,8 @@ class ArgumentHandler(SequenceValidator):
 
 		if self._file_path_nucmer:
 			self.validate_file(self._file_path_nucmer, executable=True)
-		return
+
+		self._validate_genome_ids()
 
 	# read the configuration file
 	def _read_config(self):
