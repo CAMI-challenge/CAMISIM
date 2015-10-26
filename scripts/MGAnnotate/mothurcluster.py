@@ -39,8 +39,8 @@ class MothurCluster(Validator):
 		assert iid_gid_mapping is None or isinstance(iid_gid_mapping, dict)
 		super(MothurCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._precision = int(math.log10(precision))
-		self.cluster_separator = otu_separator
-		self.element_separator = element_separator
+		self._cluster_separator = otu_separator
+		self._element_separator = element_separator
 		self._cutoff_to_cluster = {}
 		self._gid_to_cluster_index_list = {}
 		self._unique_threshold = "unique"
@@ -100,7 +100,7 @@ class MothurCluster(Validator):
 				if line.startswith('#') or line.startswith("label") or len(line) == 0:
 					continue
 				list_of_cluster = []
-				row = line.split(self.cluster_separator)
+				row = line.split(self._cluster_separator)
 				cutoff = row[0]
 				if cutoff.isdigit():
 					cutoff = str(float(cutoff))
@@ -109,7 +109,7 @@ class MothurCluster(Validator):
 				self._gid_to_cluster_index_list[cutoff] = {}
 				cluster_index = 0
 				for cluster_as_string in row[2:]:
-					set_of_elements = set(cluster_as_string.split(self.element_separator))
+					set_of_elements = set(cluster_as_string.split(self._element_separator))
 					remove_list = set()
 					if list_of_query_id:
 						for iid in set_of_elements:
