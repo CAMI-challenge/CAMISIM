@@ -15,7 +15,7 @@ class MGAnnotate(Validator):
 	def __init__(
 		self, ncbi_reference_directory, data_table_iid_mapping,
 		file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
-		file_path_nucmer=None, ani_distance='unique', ani_minimum_alignment=0.8,
+		file_path_nucmer=None,
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID", column_name_scientific_name="SCIENTIFIC_NAME",
 		column_name_threshold="prediction_threshold",
@@ -73,10 +73,8 @@ class MGAnnotate(Validator):
 		self._file_path_reference_genomes_location = file_path_reference_genomes_location
 		self._file_path_reference_taxid_map = file_path_reference_taxid_map
 		self._tmp_dir = temp_directory
-		self._distance_ani = ani_distance
-		self._minimum_alignment = ani_minimum_alignment
 
-	def taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
+	def taxonomic_classification(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
 		"""
 		Taxonomic classification of genomes
 
@@ -175,7 +173,7 @@ class MGAnnotate(Validator):
 		# metadata_table.insert_column(column_support, "novelty support")
 		# metadata_table.insert_column(column_minimum_threshold, "minimum threshold")
 
-	def establish_novelty_categorisation(self, taxonomy, reference_ncbi_id_set, metadata_table):
+	def novelty_categorisation(self, taxonomy, reference_ncbi_id_set, metadata_table):
 		"""
 		Predict novelty of a genome
 
@@ -245,7 +243,7 @@ class MGAnnotate(Validator):
 		if len(list_of_unclustered_elements) > 0:
 			self._logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
 
-	def calc_ani(self, mothur_cluster, taxonomy, metadata_table):
+	def calculate_ani(self, mothur_cluster, taxonomy, metadata_table, ani_distance, ani_minimum_alignment=0.8):
 		"""
 		Calculate ani
 
@@ -255,19 +253,25 @@ class MGAnnotate(Validator):
 		@type taxonomy: NcbiTaxonomy
 		@param metadata_table: Handler of MetadataTable
 		@type metadata_table: MetadataTable
+		@param ani_distance: Looks up if one of the taxids within a cluster at that distance exists
+		@type ani_distance: int|long
 
 		@rtype: None
 		"""
+		assert isinstance(mothur_cluster, MothurCluster)
+		assert isinstance(taxonomy, NcbiTaxonomy)
+		assert isinstance(metadata_table, MetadataTable)
+		assert isinstance(ani_distance, (float, long, int)), "Got '{}'".format(ani_distance)
+		assert self.validate_number(ani_distance, minimum=0, maximum=1)
 		ani_scientific_name_column = metadata_table.get_empty_column()
 		ani_prediction_novelty_column = metadata_table.get_empty_column()
 		ani_prediction_column = metadata_table.get_empty_column()
 		ani_column = metadata_table.get_empty_column()
-		# cutoff_column = metadata_table.get_column(options.column_name_cutoff)
 		query_genome_ids_column = metadata_table.get_column(self._column_name_genome_id)
 
 		ani_calculator = ANIm(
 			file_path_nucmer=self._file_path_nucmer,
-			minimum_alignment=self._minimum_alignment,
+			minimum_alignment=ani_minimum_alignment,
 			file_path_query_genomes_location=self._file_path_query_genomes_location,
 			file_path_reference_genomes_location=self._file_path_reference_genomes_location,
 			file_path_reference_taxid_map=self._file_path_reference_taxid_map,
@@ -275,7 +279,7 @@ class MGAnnotate(Validator):
 			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 		list_of_clusters_by_gid = {}
 		for gid in query_genome_ids_column:
-			list_of_index, clusters = mothur_cluster.get_cluster_of_threshold_of_gid(self._distance_ani, gid)
+			list_of_index, clusters = mothur_cluster.get_cluster_of_threshold_of_gid(ani_distance, gid)
 			list_of_clusters_by_gid[gid] = clusters
 		for query_genomes_id in query_genome_ids_column:
 			for clusters in list_of_clusters_by_gid[query_genomes_id]:
