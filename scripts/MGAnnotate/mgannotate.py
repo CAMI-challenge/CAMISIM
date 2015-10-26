@@ -5,7 +5,7 @@ from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.Validator.validator import Validator
-from scripts.anim import ANIm
+from scripts.MGAnnotate.anim import ANIm
 
 
 class MGAnnotate(Validator):
