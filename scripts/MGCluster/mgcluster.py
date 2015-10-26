@@ -69,11 +69,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		assert self.validate_dir(temp_directory)
 		super(MGCluster, self).__init__(logfile=logfile, verbose=verbose, debug=False)
 		self._mothur_executable = mothur_executable
-		self._temp_directory = temp_directory
-		self._working_dir = tempfile.mkdtemp(dir=self._temp_directory)
-
-		self._old_dir = os.getcwd()
-
+		self._tmp_dir = tempfile.mkdtemp(dir=temp_directory)
 		self._max_processors = max_processors
 		self._debug = debug
 		ref_silva_distances = self._get_symbolic_link_path(os.path.join(directory_silva_reference, "mothur_ref_distances"))
@@ -84,6 +80,11 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		self._ref_silva_alignment = ref_silva_alignment
 		# local_distance = os.path.join(self._working_dir, "ref.align.dist")
 		self._local_distance = "ref.align.dist"
+
+	def __exit__(self, type, value, traceback):
+		super(MGCluster, self).__exit__(type, value, traceback)
+		if not self._debug:
+			shutil.rmtree(self._tmp_dir)
 
 	def cluster(self, marker_gene_fasta, output_cluster_file, distance_cutoff, precision=1000, method="average"):
 		"""
@@ -100,7 +101,6 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		@param method: Cluster algorithm 'average', 'furthest', 'nearest'
 		@type method: str | unicode
 
-		@return: Nothing
 		@rtype: None
 		"""
 		assert self.validate_file(marker_gene_fasta)
@@ -110,9 +110,9 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		assert method in self._cluster_method_choices
 		self._logger.info("Starting clustering process")
 		start = time.time()
-		# required or mothur messes up the dist.seqs command
-		# do not use absolut paths!!!
-		os.chdir(self._working_dir)
+		old_dir = os.getcwd()
+		# local paths required or mothur messes up the dist.seqs command, do not use absolut paths!!!
+		os.chdir(self._tmp_dir)
 		local_marker_gene_fasta = self._get_symbolic_link_path(marker_gene_fasta)
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 
@@ -121,45 +121,39 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 			mothur_cmd=mothur_cmd,
 			mothur_executable=self._mothur_executable)
 		os.system(cmd)
-		os.chdir(self._old_dir)
+		os.chdir(old_dir)
 
 		project_folder = os.path.dirname(output_cluster_file)
-		find_mask_list = os.path.join(self._working_dir, "*.list")
+		find_mask_list = os.path.join(self._tmp_dir, "*.list")
 		list_of_files = glob.glob(find_mask_list)
-		result = True
 		if len(list_of_files) == 0:
-			self._logger.error("Clustering failed")
-			self._logger.warning("Remove manually: '{}'".format(self._working_dir))
-			result = False
+			msg = "Clustering with mothur failed #1"
+			self._logger.error(msg)
+			raise RuntimeError(msg)
 		elif len(list_of_files) == 1:
-			local_distance = os.path.join(self._working_dir, "ref.align.dist")
+			local_distance = os.path.join(self._tmp_dir, "ref.align.dist")
 			if os.path.exists(local_distance):
 				if self._debug:
 					shutil.copy2(local_distance, os.path.join(project_folder, "mothur_distances.tsv"))
 				shutil.copy2(list_of_files[0], output_cluster_file)
 				self._logger.info("Clustering success")
 			else:
-				self._logger.error("Clustering failed!")
-				result = False
-			if not self._debug:
-				shutil.rmtree(self._working_dir)
-			else:
-				self._logger.warning("Remove manually: '{}'".format(self._working_dir))
+				msg = "Clustering with mothur failed #2"
+				self._logger.error(msg)
+				raise RuntimeError(msg)
 		else:
-			self._logger.error("Clustering with odd result, several files found!")
-			self._logger.warning("Remove manually: '{}'".format(self._working_dir))
-			result = False
+			msg = "Clustering with odd result, several files found!"
+			self._logger.error(msg)
+			raise RuntimeError(msg)
 		end = time.time()
 
 		# move logfiles
-		find_mask_list = os.path.join(self._working_dir, "*.logfile")
+		find_mask_list = os.path.join(self._tmp_dir, "*.logfile")
 		list_of_log_files = glob.glob(find_mask_list)
 		for log_file in list_of_log_files:
 			log_file_name = os.path.basename(log_file)
 			shutil.copy2(log_file, os.path.join(project_folder, log_file_name))
-
 		self._logger.info("Done ({}s)".format(round(end - start), 1))
-		return result
 
 	def _get_symbolic_link_path(self, original_file_path):
 		"""
@@ -173,7 +167,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		"""
 		assert isinstance(original_file_path, basestring)
 		basename = os.path.basename(original_file_path)
-		new_path = os.path.join(self._working_dir, basename)
+		new_path = os.path.join(self._tmp_dir, basename)
 		os.symlink(original_file_path, new_path)
 		# return new_path
 		return basename
@@ -205,8 +199,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		# mothur_cmd = MGCluster._mothur_cmd_ref_dist
 		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
 		return mothur_cmd.format(
-			wd=self._working_dir,
-			debug=self._working_dir,
+			wd=self._tmp_dir,
+			debug=self._tmp_dir,
 			# filename=os.path.join(self._working_dir, filename),
 			filename=filename,
 			mg_fasta=marker_gene_fasta,
