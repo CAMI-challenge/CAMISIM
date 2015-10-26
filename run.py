@@ -90,12 +90,6 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 		else:
 			self._logger.info("Temporary data stored at:\n{}".format(self._project_file_folder_handler.get_tmp_wd()))
 
-	# #########################
-	#
-	# Validate Genomes
-	#
-	# #########################
-
 	def _validate_raw_genomes(self):
 		"""
 		Validate format raw and reference genomes
@@ -300,23 +294,23 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 			self._logger.info("Taxonomic classification")
 			# also, novelty based clustering
 			mg_annotate.taxonomic_classification(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, self._classification_distance_minimum)
-			self._logger.info("Done")
+			self._logger.info("Taxonomic classification Done")
 
 		if self._annotate_novelty:
 			self._logger.info("Novelty categorisation")
 			# novelty by comparing with reference taxonomic ids
 			mg_annotate.novelty_categorisation(taxonomy, set(list_of_refernce_ncbi_id), metadata_table)
-			self._logger.info("Done")
+			self._logger.info("Novelty categorisation Done")
 
 		if self._annotate_otu:
 			self._logger.info("OTU")
 			mg_annotate.set_otu_id(metadata_table, mothur_cluster, self._otu_distance)
-			self._logger.info("Done")
+			self._logger.info("OTU Done")
 
 		if self._annotate_ani:
 			self._logger.info("Calculating ANI")
 			mg_annotate.calculate_ani(mothur_cluster, taxonomy, metadata_table, self._distance_cutoff, self._ani_minimum_alignment)
-			self._logger.info("Done")
+			self._logger.info("Calculating ANI Done")
 		metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table(), column_names=True)
 
 	def create_meta_table(self, file_path_metadata_table):
