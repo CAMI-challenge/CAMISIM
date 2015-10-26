@@ -67,7 +67,6 @@ class MGAnnotate(Validator):
 		self._column_name_ani_scientific_name = column_name_ani_scientific_name
 		self._separator = separator
 		self._ncbi_reference_directory = ncbi_reference_directory
-		self._data_table_iid_mapping = data_table_iid_mapping
 		self._file_path_nucmer = file_path_nucmer
 		self._max_processors = max_processors
 		self._file_path_query_genomes_location = file_path_query_genomes_location
@@ -77,73 +76,7 @@ class MGAnnotate(Validator):
 		self._distance_ani = ani_distance
 		self._minimum_alignment = ani_minimum_alignment
 
-	def annotate(
-		self, metadata_table_in, metadata_table_out, cluster_file, precision, otu_distance, classification_distance_minimum,
-		set_of_refernce_ncbi_id):
-		"""
-		Classify, group and predict novelty of genomes
-
-		@param metadata_table_in: File path of input table, minimum genome_ID column required
-		@type metadata_table_in: str|unicode
-		@param metadata_table_out: File path of metadata output
-		@type metadata_table_out: str|unicode
-		@param cluster_file: File path to mothur otu cluster
-		@type cluster_file: str|unicode
-		@param precision: Cluster are made in steps: 10: 0.1, 100: 0.01, 1000: 0.001
-		@type precision: int | long
-		@param otu_distance: Genetic distance in percent at which otu are taken from
-		@type otu_distance: float
-		@param classification_distance_minimum: Minimum genetic distance in percent
-		@type classification_distance_minimum: float
-		@param set_of_refernce_ncbi_id: Reference taxonomic ids of known genomes
-		@type set_of_refernce_ncbi_id: set[str|unicode]
-
-		@rtype: None
-		"""
-		assert isinstance(metadata_table_in, basestring)
-		assert isinstance(metadata_table_out, basestring)
-		assert isinstance(cluster_file, basestring)
-		assert isinstance(precision, (int, long))
-		assert isinstance(otu_distance, float)
-		assert isinstance(classification_distance_minimum, float)
-		assert isinstance(set_of_refernce_ncbi_id, set)
-		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-		metadata_table.read(metadata_table_in, column_names=True)
-		metadata_table.remove_empty_columns()
-
-		list_query_gid = metadata_table.get_column(self._column_name_genome_id)
-		if list_query_gid is None:
-			msg = "Meta data file does not contain the required header '{}'".format(self._column_name_genome_id)
-			self._logger.error(msg)
-			raise IOError(msg)
-
-		taxonomy = NcbiTaxonomy(self._ncbi_reference_directory, verbose=self._verbose, logfile=self._logfile)
-
-		mothur_cluster = MothurCluster(
-			precision, iid_gid_mapping=self._data_table_iid_mapping.get_map(0, 1),
-			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
-		mothur_cluster.read(cluster_file, list_query_gid)
-
-		taxonomy_cluster = TaxonomicCluster(
-			mothur_cluster, taxonomy, self._data_table_iid_mapping.get_map(0, 2),
-			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
-
-		self._taxonomic_prediction(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum)
-		self._logger.info("Taxonomic prediction finished")
-
-		self._logger.info("Establish novelty categorisation")
-		self.establish_novelty_categorisation(taxonomy, set_of_refernce_ncbi_id, metadata_table)
-		self._logger.info("Done")
-
-		self._set_otu_id(metadata_table, mothur_cluster, otu_distance)
-		self._logger.info("OTU finished")
-
-		if self._file_path_nucmer:
-			self.calc_ani(mothur_cluster, taxonomy, metadata_table)
-			self._logger.info("ANI prediction finished")
-		metadata_table.write(metadata_table_out, column_names=True)
-
-	def _taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
+	def taxonomic_prediction(self, metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, classification_distance_minimum):
 		"""
 		Taxonomic classification of genomes
 
@@ -267,7 +200,7 @@ class MGAnnotate(Validator):
 		novelty.read_reference(set(reference_ncbi_id_set))
 		novelty.compute_novelty(metadata_table)
 
-	def _set_otu_id(self, metadata_table, mothur_cluster, otu_distance):
+	def set_otu_id(self, metadata_table, mothur_cluster, otu_distance):
 		"""
 		Set OTU id based on clusters at a threshold
 
