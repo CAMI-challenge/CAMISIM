@@ -411,8 +411,12 @@ class ArgumentHandler(SequenceValidator):
 		self._otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
 		self._classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
 
-		self._ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
-		self._file_path_nucmer = self._config.get_value("MarkerGeneClassification", "nucmer", is_path=True)
+		self._ncbi_reference_directory = self._config.get_value("MarkerGeneAnnotation", "ncbi_reference_directory", is_path=True)
+		self._file_path_nucmer = self._config.get_value("MarkerGeneAnnotation", "nucmer", is_path=True)
+		self._annotate_classify = self._config.get_value("MarkerGeneAnnotation", "classify", is_boolean=True)
+		self._annotate_novelty = self._config.get_value("MarkerGeneAnnotation", "novelty", is_boolean=True)
+		self._annotate_otu = self._config.get_value("MarkerGeneAnnotation", "otu", is_boolean=True)
+		self._annotate_ani = self._config.get_value("MarkerGeneAnnotation", "ani", is_boolean=True)
 
 	@staticmethod
 	def _free_space_in_giga_bytes(directory=tempfile.gettempdir()):
