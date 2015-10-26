@@ -48,8 +48,8 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 		- Evaluate third HMMER option
 		- confusion matrix of different cutoffs
 
-	@rtype: None
-	"""
+		@rtype: None
+		"""
 
 		# example:
 		# usage = '''Example usage:
