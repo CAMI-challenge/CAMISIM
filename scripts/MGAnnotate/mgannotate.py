@@ -245,7 +245,13 @@ class MGAnnotate(Validator):
 
 	def calculate_ani(self, mothur_cluster, taxonomy, metadata_table, ani_distance, ani_minimum_alignment=0.8):
 		"""
-		Calculate ani
+		Calculate the average nucleotide identity.
+		To lessen the calculation burden, only genomes of sequences within the same cluster as an unpublished genome (marker gene) are compared.
+		In case only SILVA sequences are in a cluster, no comparison can be done.
+		The tool Mummer is used for the genome comparison, specifically nucmer.
+		Novelty predictions are made only for genomes with ani's better than 96%
+		ani > 96% -> same species
+		ani > 98% -> same strain
 
 		@param mothur_cluster: Handler of MothurCluster
 		@type mothur_cluster: MothurCluster
