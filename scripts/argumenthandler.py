@@ -11,16 +11,16 @@ from scripts.MGCluster.mgcluster import MGCluster
 
 
 class ArgumentHandler(SequenceValidator):
-
+	"""
+	Reading pipeline configuration from file and from passed arguments
+	"""
 	_label = "ArgumentHandler"
-	"""Reading pipeline configuration from file and from passed arguments"""
 	_file_path_config = None
 	_directory_pipeline = None
 	_directory_temp = None
 
 	# [main]
 	_phase = 0
-	_novelty_only = None
 	_max_processors = 1
 
 	# [MarkerGeneExtraction]
@@ -46,14 +46,11 @@ class ArgumentHandler(SequenceValidator):
 	_silva_reference_directory = None
 	_precision = 1000
 
-	# [MarkerGeneClassification]
+	# [MarkerGeneAnnotation]
 	_otu_distance = None
 	_classification_distance_minimum = None
 	_ncbi_reference_directory = None
-
-	# [Binary]
-	# binary_hmmer3 = None
-	# binary_mummer = None
+	_ani_minimum_alignment = 0.8
 
 	# subfolder/files
 	_silva_ref_files = MGCluster._silva_ref_files
@@ -76,7 +73,31 @@ class ArgumentHandler(SequenceValidator):
 		self, args=None, version="Prototype", separator="\t",
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID"):
+		"""
+		Constructor
 
+		@param args: Past arguments like sys.args
+		@type args: list[]
+		@param version: Version of main Program
+		@type version: str|unicode
+		@param separator: Expected separator for data tables
+		@type separator: str|unicode
+		@param column_name_genome_id: Column name of genome ids
+		@type column_name_genome_id: str|unicode
+		@param column_name_otu: Column name of otu ids
+		@type column_name_otu: str|unicode
+		@param column_name_novelty_category: Column name of genome novelty
+		@type column_name_novelty_category: str|unicode
+		@param column_name_ncbi: Column name of taxonomic classification
+		@type column_name_ncbi: str|unicode
+		"""
+		assert args is None or isinstance(args, list)
+		assert isinstance(version, basestring)
+		assert isinstance(separator, basestring)
+		assert isinstance(column_name_genome_id, basestring)
+		assert isinstance(column_name_otu, basestring)
+		assert isinstance(column_name_novelty_category, basestring)
+		assert isinstance(column_name_ncbi, basestring)
 		self._separator = separator
 		self._column_name_genome_id = column_name_genome_id
 		self._column_name_otu_id = column_name_otu
@@ -128,6 +149,12 @@ class ArgumentHandler(SequenceValidator):
 		)
 
 	def _get_mg_analyse_executable(self):
+		"""
+		Get the path of the marker gene analyse main script
+
+		@return: File path
+		@rtype: str|unicode
+		"""
 		return os.path.join(self._directory_pipeline, "ppsplus", "run.py")
 
 	def _get_directory_pipeline(self):
@@ -140,6 +167,15 @@ class ArgumentHandler(SequenceValidator):
 		return self.get_full_path(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 	def to_file(self, file_path):
+		"""
+		Write arguments as configuration file
+
+		@param file_path:
+		@type file_path: str | unicode
+
+		@rtype: None
+		"""
+		assert self.validate_dir(file_path, only_parent=True)
 		file_directory = os.path.dirname(file_path)
 		if not os.path.isdir(file_directory):
 			self._logger.error("Directory does not exist: '{}'".format(file_directory))
@@ -148,6 +184,12 @@ class ArgumentHandler(SequenceValidator):
 			file_handler.write(self.to_string())
 
 	def to_string(self):
+		"""
+		Return arguments as string
+
+		@return: arguments as string
+		@rtype: str | unicode
+		"""
 		stages = ["Full", "MarkerGene Extraction", "MarkerGeneClustering", "MarkerGeneClustering", "ANI"]
 		result_string = """Parameter:
 		_Main_
@@ -192,22 +234,27 @@ class ArgumentHandler(SequenceValidator):
 		)
 		return result_string
 
-	def is_valid(self):
+	def _input_valid(self):
+		"""
+		Return True if input seems valid.
+
+		@return: True if arguemnts valid
+		@rtype: bool
+		"""
 		return self._valid_args
 
 	def _check_values(self):
+		"""
+		Validating input arguments
+
+		@rtype: None
+		"""
 		if not self.validate_dir(self._directory_output, only_parent=True, key="Output directory"):
 			self._valid_args = False
 			return
 
 		if not self.validate_dir(self._ncbi_reference_directory, file_names=self._ncbi_ref_files, key="NCBI reference directory"):
 			self._valid_args = False
-			return
-
-		if self._novelty_only:
-			if not self.validate_file(self._file_path_reference_genome_locations, key="Reference genome locations"):
-				self._valid_args = False
-				return
 			return
 
 		if self._directory_temp is None:
@@ -322,65 +369,36 @@ class ArgumentHandler(SequenceValidator):
 			self._valid_args = False
 			return
 
-		expected_output_size = self._expected_output_size_in_giga_byte()
-		expected_tmp_size = expected_output_size
-		# if self.multiple_samples:
-		# 	expected_tmp_size /= self.number_of_samples
-		directory_tmp = self._directory_temp
-		directory_out = self._directory_output
-		free_tmp_space = self._free_space_in_giga_bytes(directory_tmp)
-		free_out_space = self._free_space_in_giga_bytes(directory_out)
-		message = None
-		if expected_tmp_size > free_tmp_space:
-			message = "WARNING: The directory '{dir}' has only {size:.4f} GigaByte of free space left. But output will require about {out_size:.4f} Gigabyte of space!\n".format(
-				dir=directory_tmp,
-				size=free_tmp_space,
-				out_size=expected_tmp_size)
-		elif expected_output_size > free_out_space:
-			message = "WARNING: The directory '{dir}' has only {size:.4f} GigaByte of free space left. But output will require about {out_size:.4f} Gigabyte of space!\n".format(
-				dir=directory_out,
-				size=free_out_space,
-				out_size=expected_output_size)
-		elif expected_output_size > 100:
-			message = "The output will require about {} GigaByte.".format(expected_output_size)
+		expected_output_size_gb = self._expected_output_size_in_giga_byte()
+		expected_tmp_size = expected_output_size_gb
+		if not self.validate_free_space(directory=self._directory_temp, required_space_in_gb=expected_tmp_size):
+			self._valid_args = False
+			return
+		if not self.validate_free_space(directory=self._directory_output, required_space_in_gb=expected_output_size_gb):
+			self._valid_args = False
+			return
 
-		if message is not None:
-			user_input = raw_input(message + " Are you sure you want to continue? [y/n]\n>").lower()
-			do_loop = True
-			while do_loop:
-				if user_input == 'n' or user_input == 'no':
-					self._valid_args = False
-					return
-				if user_input == 'y' or user_input == 'yes':
-					do_loop = False
-					continue
-				user_input = raw_input("Please type 'n' to abort, or 'y' to continue:\n>").lower()
 		if self._file_path_nucmer:
 			self.validate_file(self._file_path_nucmer, executable=True)
 		return
 
 	# read the configuration file
 	def _read_config(self):
+		"""
+		Read arguments from a configuration file
+
+		@rtype: None
+		"""
 		if not self.validate_file(self._file_path_config, key="Configuration file"):
 			self._valid_args = False
 			return
 
 		self._config = ConfigParserWrapper(self._file_path_config, logfile=self._logfile, verbose=self._verbose)
-		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneClassification"]
+		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneAnnotation"]
 		missing_section = self._config.validate_sections(sections)
 		if missing_section:
 			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
 			self._valid_args = False
-			return
-
-		if self._novelty_only:
-			self._file_path_reference_genome_locations = self._config.get_value("MarkerGeneExtraction", "input_reference_file", is_path=True)
-
-			self._metadata_table_in = self._config.get_value("MarkerGeneClustering", "metadata_table_in", is_path=True)
-
-			# self._metadata_table_out = self._config.get_value("MarkerGeneClustering", "metadata_table_out", is_path=True)
-
-			self._ncbi_reference_directory = self._config.get_value("MarkerGeneClassification", "ncbi_reference_directory", is_path=True)
 			return
 
 		section = "Main"
@@ -411,53 +429,43 @@ class ArgumentHandler(SequenceValidator):
 		self._otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
 		self._classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
 
-		self._ncbi_reference_directory = self._config.get_value("MarkerGeneAnnotation", "ncbi_reference_directory", is_path=True)
-		self._file_path_nucmer = self._config.get_value("MarkerGeneAnnotation", "nucmer", is_path=True)
-		self._annotate_classify = self._config.get_value("MarkerGeneAnnotation", "classify", is_boolean=True)
-		self._annotate_novelty = self._config.get_value("MarkerGeneAnnotation", "novelty", is_boolean=True)
-		self._annotate_otu = self._config.get_value("MarkerGeneAnnotation", "otu", is_boolean=True)
-		self._annotate_ani = self._config.get_value("MarkerGeneAnnotation", "ani", is_boolean=True)
-
-	@staticmethod
-	def _free_space_in_giga_bytes(directory=tempfile.gettempdir()):
-		if not os.path.isdir(directory):
-			return 0
-		statvfs = os.statvfs(directory)
-		free_space = statvfs.f_frsize * statvfs.f_bfree
-		return free_space / float(1024 * 1024 * 1024)
+		section = "MarkerGeneAnnotation"
+		self._ncbi_reference_directory = self._config.get_value(section, "ncbi_reference_directory", is_path=True)
+		self._file_path_nucmer = self._config.get_value(section, "nucmer", is_path=True)
+		self._annotate_classify = self._config.get_value(section, "classify", is_boolean=True)
+		self._annotate_novelty = self._config.get_value(section, "novelty", is_boolean=True)
+		self._annotate_otu = self._config.get_value(section, "otu", is_boolean=True)
+		self._annotate_ani = self._config.get_value(section, "ani", is_boolean=True)
 
 	@staticmethod
 	def _expected_output_size_in_giga_byte():
+		"""
+		Get expected output size of the data in giga bytes
+		@todo: Write a good predicting algorithm
+
+		@return: Expected output size of the data in giga bytes
+		@rtype: int|long
+		"""
 		expected_output_size = 0
 		return expected_output_size
 
 	def _read_options(self, options):
+		"""
+		Read option from parsed arguments with argparse
+
+		@param options: parser.parse_args()
+		@type options: Any
+
+		@rtype: None
+		"""
 		config_file = options.config_file
 		if config_file is not None:
-			if not os.path.isabs(config_file):
-				# config_file = os.path.join(self.pipeline_directory, self.folder_name_tools, config_file)
-				config_file = os.path.realpath(config_file)
-			if not os.path.isfile(config_file):
-				self._logger.error("File does not exist: '{}'".format(options.config_file))
-				self._valid_args = False
-				return
+			config_file = self.get_full_path(config_file)
 		self._file_path_config = config_file
 		self._verbose = options.verbose
 		self._debug = options.debug_mode
-		# self._logfile = options.logfile
 		self._phase = options.phase
 		self._max_processors = options.max_processors
-		self._novelty_only = options.novelty_only
-
-		# self._file_path_reference_genome_locations = options.input_reference_file
-		# self._file_path_reference_markergene = options.input_reference_fna_file
-		# self._file_path_query_genomes_location_file = options.input_genomes
-		# self._directory_output = options.output_directory
-		# self.metadata_table_in = options.metadata_table_in
-		# self.cluster_method = options.cluster_method
-		# self.distance_cutoff = options.threshold
-		# self.otu_distance = options.otu_distance
-		# self.classification_distance_minimum = options.classification_distance
 
 	@staticmethod
 	def _get_parser_options(args=None, version="Prototype"):
@@ -510,8 +518,6 @@ class ArgumentHandler(SequenceValidator):
 4 -> Average Nucleotide Identity calculation
 Default: 0
 ''')
-		group_input.add_argument("-n", "--novelty_only", action='store_true', default=None, help='''apply novelty categorisation only''')
-
 		group_input = parser.add_argument_group('required')
 		group_input.add_argument("config_file", type=str, default=None, help="path to the configuration file of the pipeline")
 
