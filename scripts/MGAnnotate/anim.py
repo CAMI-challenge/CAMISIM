@@ -13,7 +13,7 @@ import sys
 import traceback
 import tempfile
 import shutil
-import parallel
+import scripts.parallel as parallel
 from scripts.Validator.validator import Validator
 from scripts.MetaDataTable.metadatatable import MetadataTable
 
