@@ -190,13 +190,12 @@ class ArgumentHandler(SequenceValidator):
 		@return: arguments as string
 		@rtype: str | unicode
 		"""
-		stages = ["Full", "MarkerGene Extraction", "MarkerGeneClustering", "MarkerGeneClustering", "ANI"]
 		result_string = """Parameter:
 		_Main_
 		Config file:\t\t'{config}'
 		Pipeline directory:\t'{pipe}'
 		Output directory:\t'{out}'
-		Stage:\t\t\t{stage}
+		Phase:\t\t\t{stage}
 		Processors:\t\t{pool}
 
 		_MarkerGeneExtraction_
@@ -219,7 +218,7 @@ class ArgumentHandler(SequenceValidator):
 			config=self._file_path_config,
 			pipe=self._directory_pipeline,
 			out=self._directory_output,
-			stage=stages[self._phase],
+			stage=self._phase,
 			pool=self._max_processors,
 			ir=self._file_path_reference_genome_locations,
 			irf=self._file_path_reference_markergene,
@@ -510,12 +509,11 @@ class ArgumentHandler(SequenceValidator):
 			default=None,
 			type=int,
 			help="number of available processors")
-		group_input.add_argument("-s", "--phase", default=None, type=int, choices=[0, 1, 2, 3, 4], help='''available options: 0-4:
+		group_input.add_argument("-s", "--phase", default=None, type=int, choices=[0, 1, 2, 3], help='''available options: 0-4:
 0 -> Full run through,
 1 -> Marker gene extraction,
 2 -> Gene alignment and clustering,
-3 -> Classification of Genomes and novelty prediction
-4 -> Average Nucleotide Identity calculation
+3 -> Annotation of Genomes
 Default: 0
 ''')
 		group_input = parser.add_argument_group('required')

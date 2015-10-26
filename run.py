@@ -79,10 +79,6 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 			if self._phase == 0 or self._phase == 3:
 				self.marker_gene_annotation()
 
-			# if self._phase == 4:
-			# 	if not self.ani_of_genomes_and_novelty_prediction():
-			# 		sys.exit(1)
-
 		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
 			self._logger.info("Aborted")
