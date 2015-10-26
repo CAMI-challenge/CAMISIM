@@ -3,7 +3,6 @@
 __author__ = 'Peter Hofmann'
 __version__ = "0.0.5"
 
-import sys
 import os
 import traceback
 from scripts.MetaDataTable.metadatatable import MetadataTable
@@ -61,65 +60,23 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		# 	'''.format(sys.argv[0])
 
 		# self._logger.info(self.to_string())
-		if not self.is_valid():
+		if not self._input_valid():
 			self._logger.info("Aborted")
 			return
 		self._logger.info("Starting")
 		try:
-
-			if self._novelty_only:
-				reference_map_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-				reference_map_table.read(self._file_path_reference_genome_locations, column_names=False)
-				ref_genome_ids = set(reference_map_table.get_column(0))
-				metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-				metadata_table.read(self._metadata_table_in)
-				taxonomy = NcbiTaxonomy(self._ncbi_reference_directory, False)
-				refernce_ncbi_id_set = set([gid.split('.')[0] for gid in ref_genome_ids])
-
-				# data_table_iid_mapping_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-				# file_path_silva_map = os.path.join(self._silva_reference_directory, MGCluster.get_file_name_of_map())
-				# data_table_iid_mapping_silva.read(file_path_silva_map)
-				# todo: test if this works
-				data_table_iid_mapping = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-				# data_table_iid_mapping.read(self._project_file_folder_handler.get_file_path_internal_id_map())
-				# data_table_iid_mapping.concatenate(data_table_iid_mapping_silva, strict=False)
-
-				mgcluster = MGAnnotate(
-					ncbi_reference_directory=self._ncbi_reference_directory,
-					data_table_iid_mapping=data_table_iid_mapping,
-					file_path_query_genomes_location=self._file_path_query_genomes_location_file,
-					file_path_reference_genomes_location=self._file_path_reference_genome_locations,
-					file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,
-					file_path_nucmer=self._file_path_nucmer,
-					ani_distance=self._distance_cutoff,
-					column_name_genome_id=self._column_name_genome_id,
-					column_name_otu=self._column_name_otu_id,
-					column_name_novelty_category=self._column_name_cluster_novelty,
-					column_name_ncbi=self._column_name_ncbi,
-					column_name_scientific_name=self._column_name_cluster_scientific_name,
-					column_name_ani=self._column_name_ani,
-					column_name_ani_novelty=self._column_name_ani_novelty,
-					column_name_ani_ncbi=self._column_name_ani_compare,
-					column_name_ani_scientific_name=self._column_name_ani_scientific_name,
-					temp_directory=self._directory_temp,
-					separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
-				)
-				mgcluster.establish_novelty_categorisation(taxonomy, refernce_ncbi_id_set, metadata_table)
-				metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table())
-				return
-
 			self._logger.info("Validating Genomes")
 			self._validate_raw_genomes()
+			self._logger.info("Done")
 
 			if self._phase == 0 or self._phase == 1:
 				self.marker_gene_extraction()
 
 			if self._phase == 0 or self._phase == 2:
-				if not self.gene_alignment_and_clustering():
-					sys.exit(1)
+				self.gene_alignment_and_clustering()
 
 			if self._phase == 0 or self._phase == 3:
-				self.classification_of_genomes_and_novelty_prediction()
+				self.marker_gene_annotation()
 
 			# if self._phase == 4:
 			# 	if not self.ani_of_genomes_and_novelty_prediction():
@@ -221,6 +178,15 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			file_path_output=self._project_file_folder_handler.get_file_path_mg_16s(),
 			file_path_map_uid_sid=self._project_file_folder_handler.get_file_path_internal_id_map())
 
+		# merge silva iid with genome iid
+		data_table_iid_mapping_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		file_path_silva_map = os.path.join(self._silva_reference_directory, MGCluster.get_file_name_of_map())
+		data_table_iid_mapping_silva.read(file_path_silva_map)
+		data_table_iid_mapping = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		data_table_iid_mapping.read(self._project_file_folder_handler.get_file_path_internal_id_map())
+		data_table_iid_mapping.concatenate(data_table_iid_mapping_silva, strict=False)
+		data_table_iid_mapping.write(self._project_file_folder_handler.get_file_path_internal_id_map())
+
 	def gene_alignment_and_clustering(self):
 		"""The second step is to align 16S sequences and clustering them.
 	All is done using "mothur".
@@ -249,14 +215,14 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			temp_directory=self._directory_temp,
 			debug=self._debug)
 
-		return mg_cluster.cluster(
+		mg_cluster.cluster(
 			marker_gene_fasta=self._project_file_folder_handler.get_file_path_mg_16s(),
 			output_cluster_file=self._project_file_folder_handler.get_file_path_cluster_mg_16s(),
 			distance_cutoff=self._distance_cutoff,
 			precision=self._precision,
 			method=self._cluster_method)
 
-	def classification_of_genomes_and_novelty_prediction(self):
+	def marker_gene_annotation(self):
 		"""As the third step, the unpublished genomes are classified based on the clusters they are found in.
 	Since clusters were made in 0.01 distance steps, the classification can be done using the smallest clusters first, using bigger ones if a classification can not be made.
 	If a marker gene of an unpublished genome is found in a cluster together with references, a common taxon that 90% of sequences agree with will be the predicted taxon.
@@ -271,27 +237,28 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 	output:
 	- meta data table with a list of the genomes, with columns added that contain cluster based tax prediction, rank and novelty prediction
 	"""
+		from scripts.MGAnnotate.mothurcluster import MothurCluster
+		from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 		# set of taxonomic ids of well known genomes
 		data_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		data_table.read(self._file_path_map_reference_genome_id_to_tax_id)
-		set_of_refernce_ncbi_id = data_table.get_column(1)
+		list_of_refernce_ncbi_id = data_table.get_column(1)
 
 		# mapping of all internal ids
-		data_table_iid_mapping_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
-		file_path_silva_map = os.path.join(self._silva_reference_directory, MGCluster.get_file_name_of_map())
-		data_table_iid_mapping_silva.read(file_path_silva_map)
+		# data_table_iid_mapping_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		# file_path_silva_map = os.path.join(self._silva_reference_directory, MGCluster.get_file_name_of_map())
+		# data_table_iid_mapping_silva.read(file_path_silva_map)
 		data_table_iid_mapping = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		data_table_iid_mapping.read(self._project_file_folder_handler.get_file_path_internal_id_map())
-		data_table_iid_mapping.concatenate(data_table_iid_mapping_silva, strict=False)
+		# data_table_iid_mapping.concatenate(data_table_iid_mapping_silva, strict=False)
 
-		mgcluster = MGAnnotate(
+		mg_annotate = MGAnnotate(
 			ncbi_reference_directory=self._ncbi_reference_directory,
 			data_table_iid_mapping=data_table_iid_mapping,
 			file_path_query_genomes_location=self._file_path_query_genomes_location_file,
 			file_path_reference_genomes_location=self._file_path_reference_genome_locations,
 			file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,
 			file_path_nucmer=self._file_path_nucmer,
-			ani_distance=self._distance_cutoff,
 			column_name_genome_id=self._column_name_genome_id,
 			column_name_otu=self._column_name_otu_id,
 			column_name_novelty_category=self._column_name_cluster_novelty,
@@ -304,33 +271,50 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			temp_directory=self._directory_temp,
 			separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
 		)
-		mgcluster.annotate(
-			metadata_table_in=self._metadata_table_in,
-			metadata_table_out=self._project_file_folder_handler.get_file_path_meta_data_table(),
-			cluster_file=self._project_file_folder_handler.get_file_path_cluster_mg_16s(),
-			precision=self._precision,
-			otu_distance=self._otu_distance,
-			classification_distance_minimum=self._classification_distance_minimum,
-			set_of_refernce_ncbi_id=set(set_of_refernce_ncbi_id)
-		)
 
-	# def ani_of_genomes_and_novelty_prediction(self):
-	# 	"""The fourth step is to calculate the average nucleotide identity.
-	# To lessen the calculation burden, only genomes of sequences within the same cluster as an unpublished genome (marker gene) are compared.
-	# In case only SILVA sequences are in a cluster, no comparison can be done.
-	# The tool Mummer is used for the genome comparison, specifically nucmer.
-	# Novelty predictions are made only for genomes with ani's better than 96%
-	# ani > 96% -> same species
-	# ani > 98% -> same strain
-	# input:
-	# - meta data table with a list of the genomes and data of the previous step, the output table path will be used as input.
-	# - working directory which contains the mothur formatted file with the clusters (mothur_otu.txt)
-	# - file containing a list of fasta file paths, the genomes that someone wants to cluster.
-	# - file containing a list of reference fasta file paths.
-	# output:
-	# - meta data table with a list of the genomes, with columns added that contain ani based tax prediction, rank and novelty prediction
-	# """
-	# 	# return ani_prediction_to_meta_table.my_main(self)
+		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		metadata_table.read(self._metadata_table_in, column_names=True)
+		metadata_table.remove_empty_columns()
+
+		list_query_gid = metadata_table.get_column(self._column_name_genome_id)
+		if list_query_gid is None:
+			msg = "Meta data file does not contain the required header '{}'".format(self._column_name_genome_id)
+			self._logger.error(msg)
+			raise IOError(msg)
+
+		taxonomy = NcbiTaxonomy(self._ncbi_reference_directory, verbose=self._verbose, logfile=self._logfile)
+
+		mothur_cluster = MothurCluster(
+			self._precision, iid_gid_mapping=data_table_iid_mapping.get_map(0, 1),
+			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
+		mothur_cluster.read(self._project_file_folder_handler.get_file_path_cluster_mg_16s(), list_query_gid)
+
+		taxonomy_cluster = TaxonomicCluster(
+			mothur_cluster, taxonomy, data_table_iid_mapping.get_map(0, 2),
+			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
+
+		if self._annotate_classify:
+			self._logger.info("Taxonomic classification")
+			# also, novelty based clustering
+			mg_annotate.taxonomic_classification(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, self._classification_distance_minimum)
+			self._logger.info("Done")
+
+		if self._annotate_novelty:
+			self._logger.info("Novelty categorisation")
+			# novelty by comparing with reference taxonomic ids
+			mg_annotate.novelty_categorisation(taxonomy, set(list_of_refernce_ncbi_id), metadata_table)
+			self._logger.info("Done")
+
+		if self._annotate_otu:
+			self._logger.info("OTU")
+			mg_annotate.set_otu_id(metadata_table, mothur_cluster, self._otu_distance)
+			self._logger.info("Done")
+
+		if self._annotate_ani:
+			self._logger.info("Calculating ANI")
+			mg_annotate.calculate_ani(mothur_cluster, taxonomy, metadata_table, self._distance_cutoff, self._ani_minimum_alignment)
+			self._logger.info("Done")
+		metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table(), column_names=True)
 
 	def create_meta_table_from_fasta_path_file(self):
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
