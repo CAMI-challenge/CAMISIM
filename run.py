@@ -12,42 +12,43 @@ from scripts.MGCluster.mgcluster import MGCluster
 from scripts.MGAnnotate.mgannotate import MGAnnotate
 
 
-class MetagenomeSimulationPipeline(ArgumentHandler):
+class GenomeAnnotationPipeline(ArgumentHandler):
+	"""
+	Pipeline for the annotation of genomes
+	"""
 
-	_label = "MetagenomeSimulationPipeline"
-	"""
-	Pipeline for the generation of a simulated metagenome
-	"""
+	_label = "GenomeAnnotationPipeline"
 
 	def my_main(self):
 		"""16S marker genes extraction, clustering, classification and novelty prediction
 
-	DESCRIPTION
-	Script for extracting 16S rRNA sequences from a set of genomes (new ones and reference genomes),
-	clustering of 16S sequences by first doing a multiple alignment, and then calculation the distance.
-	If the marker genes of the unpublished genomes clustered with one or more of the reference genomes, a taxonomic id is assign to them.
-	Finally the ani is calculated for those unpublished genomes, that got clustered with reference genomes.
+		DESCRIPTION
+		Script for extracting 16S rRNA sequences from a set of genomes (new ones and reference genomes),
+		clustering of 16S sequences by first doing a multiple alignment, and then calculation the distance.
+		If the marker genes of the unpublished genomes clustered with one or more of the reference genomes, a taxonomic id is assign to them.
+		Finally the ani is calculated for those unpublished genomes, that got clustered with reference genomes.
 
-	The three stages in short:
-	1. Extraction of 16S sequences
-	2. Creation of a multiple alignment of 16S sequences, distance matrix calculation and clustering
-	3. Classification of genomes based on clustering and novelty prediction.
-	4. ANI calculation and novelty prediction.
+		The three stages in short:
+		1. Extraction of 16S sequences
+		2. Creation of a multiple alignment of 16S sequences, distance matrix calculation and clustering
+		3. Classification of genomes based on clustering and novelty prediction.
+		4. ANI calculation and novelty prediction.
 
-	input:
-	- file containing a list of fasta file paths, for example the genomes that someone wants to cluster.
-	- file containing a list of reference fasta file paths. (Step3) alternatively , a fasta formated file containing the already extracted marker genes of the reference genomes.
-	- a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
-	- meta data table with a list of the genomes that are to be classified
-	- working directory where results of each stage will be saved
-	- the number of processors that are available for parallel processing.
-	output:
-	- meta data table with a list of the genomes, with columns added that contain tax predictions, average nucleotide identity and novelty predictions
+		input:
+		- file containing a list of fasta file paths, for example the genomes that someone wants to cluster.
+		- file containing a list of reference fasta file paths. (Step3) alternatively , a fasta formated file containing the already extracted marker genes of the reference genomes.
+		- a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
+		- meta data table with a list of the genomes that are to be classified
+		- working directory where results of each stage will be saved
+		- the number of processors that are available for parallel processing.
+		output:
+		- meta data table with a list of the genomes, with columns added that contain tax predictions, average nucleotide identity and novelty predictions
 
-	TODO
-	- Evaluate third HMMER option
-	- confusion matrix of different cutoffs
-	- have all logfiles in the working directory
+		TODO
+		- Evaluate third HMMER option
+		- confusion matrix of different cutoffs
+
+	@rtype: None
 	"""
 
 		# example:
@@ -101,7 +102,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 	def _validate_raw_genomes(self):
 		"""
-		Validate format raw genomes
+		Validate format raw and reference genomes
 
 		@return: True if all genomes valid
 		@rtype: bool
@@ -158,6 +159,8 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 		- the number of processors that are available for parallel processing. The program "parallel" is used to process several genomes at the same time.
 		output:
 		- fasta formatted file containing the extracted marker genes of all genomes
+
+		@rtype: None
 		"""
 		assert isinstance(self, ArgumentHandler)
 		from scripts.MGExtract.mgextract import MGExtract
@@ -189,22 +192,24 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 	def gene_alignment_and_clustering(self):
 		"""The second step is to align 16S sequences and clustering them.
-	All is done using "mothur".
-	The alignment requires a high quality reference alignment (e.g. from SILVA) and
-	is done using the "gotoh" algorithm. (needleman, and blast are possible alternatives, but not implemented here)
-	Also using "mothur", empty or uninformative columns are removed.
-	When calculating distances (similar to DNADist) multi nucleotide gaps will be counted as one, gaps at the end are ignored.
-	To add even more references, the distances of the reference alignment will be merged with those of the working data.
-	These were precalculated and only the missing distances between the working data to the reference alignment need to be calculated.
-	The clustering will be done based on the final distances using the "Furthest neighbor" algorithm.
-	Mothur outputs cluster in steps up to a cutoff. The size of the steps can be chosen, by default 0.01 steps.
-	input:
-	- fasta formatted reference alignment (e.g. from SILVA)
-	- a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
-	- working directory where the results will be saved and which contains the fasta formatted file with the extracted marker genes of all genomes
-	- the number of processors that are available for parallel processing. The program "mothur" can use several cores for the alignments and distance calculations.
-	output:
-	- a mothur formatted file containing the clusters, from unique up to the given threshold
+		All is done using "mothur".
+		The alignment requires a high quality reference alignment (e.g. from SILVA) and
+		is done using the "gotoh" algorithm. (needleman, and blast are possible alternatives, but not implemented here)
+		Also using "mothur", empty or uninformative columns are removed.
+		When calculating distances (similar to DNADist) multi nucleotide gaps will be counted as one, gaps at the end are ignored.
+		To add even more references, the distances of the reference alignment will be merged with those of the working data.
+		These were precalculated and only the missing distances between the working data to the reference alignment need to be calculated.
+		The clustering will be done based on the final distances using the "Furthest neighbor" algorithm.
+		Mothur outputs cluster in steps up to a cutoff. The size of the steps can be chosen, by default 0.01 steps.
+		input:
+		- fasta formatted reference alignment (e.g. from SILVA)
+		- a threshold (between 0 and 1), that will be used for the clustering. 0.03 is default.
+		- working directory where the results will be saved and which contains the fasta formatted file with the extracted marker genes of all genomes
+		- the number of processors that are available for parallel processing. The program "mothur" can use several cores for the alignments and distance calculations.
+		output:
+		- a mothur formatted file containing the clusters, from unique up to the given threshold
+
+		@rtype: None
 	"""
 		assert self.validate_file(self._project_file_folder_handler.get_file_path_mg_16s())
 
@@ -224,19 +229,21 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 	def marker_gene_annotation(self):
 		"""As the third step, the unpublished genomes are classified based on the clusters they are found in.
-	Since clusters were made in 0.01 distance steps, the classification can be done using the smallest clusters first, using bigger ones if a classification can not be made.
-	If a marker gene of an unpublished genome is found in a cluster together with references, a common taxon that 90% of sequences agree with will be the predicted taxon.
-	The 90% is arbitrary chosen and is required because of taxonomic inconsistencies.
-	When a specific rank is checked for agreement, sequences with unknown classification on that rank are ignored.
-	TODO: check for taxonomic consitency on higher ranks for those!
-	Novelty prediction is based on the predicted taxon's rank. a high rank (phylum, order, class) with low distance can be a strong indicator for taxonomic inconsistencies.
-	But it could also be caused by sequences that are not fully classified, yet.
-	input:
-	- meta data table with a list of the genomes that are to be classified
-	- working directory where the results will be saved and which contains the mothur formatted file with the clusters
-	output:
-	- meta data table with a list of the genomes, with columns added that contain cluster based tax prediction, rank and novelty prediction
-	"""
+		Since clusters were made in 0.01 distance steps, the classification can be done using the smallest clusters first, using bigger ones if a classification can not be made.
+		If a marker gene of an unpublished genome is found in a cluster together with references, a common taxon that 90% of sequences agree with will be the predicted taxon.
+		The 90% is arbitrary chosen and is required because of taxonomic inconsistencies.
+		When a specific rank is checked for agreement, sequences with unknown classification on that rank are ignored.
+		TODO: check for taxonomic consitency on higher ranks for those!
+		Novelty prediction is based on the predicted taxon's rank. a high rank (phylum, order, class) with low distance can be a strong indicator for taxonomic inconsistencies.
+		But it could also be caused by sequences that are not fully classified, yet.
+		input:
+		- meta data table with a list of the genomes that are to be classified
+		- working directory where the results will be saved and which contains the mothur formatted file with the clusters
+		output:
+		- meta data table with a list of the genomes, with columns added that contain cluster based tax prediction, rank and novelty prediction
+
+		@rtype: None
+		"""
 		from scripts.MGAnnotate.mothurcluster import MothurCluster
 		from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 		# set of taxonomic ids of well known genomes
@@ -316,20 +323,27 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 			self._logger.info("Done")
 		metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table(), column_names=True)
 
-	def create_meta_table_from_fasta_path_file(self):
+	def create_meta_table(self, file_path_metadata_table):
+		"""
+		Generate a input metadata file with genome ids only
+
+		@param file_path_metadata_table:
+		@type file_path_metadata_table: str|unicode
+
+		@rtype: None
+		"""
 		metadata_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		metadata_table.read(self._file_path_reference_genome_locations, column_names=False)
 		if metadata_table.get_number_of_rows() == 0:
-			return False
+			raise ValueError("Invalid file content")
 		id_column = metadata_table.get_column(0)
 		metadata_table.clear()
 		metadata_table.insert_column(id_column, self._column_name_genome_id)
-		metadata_table.write(self._metadata_table_in)
-		return True
+		metadata_table.write(file_path_metadata_table, column_names=True)
 
 
 if __name__ == "__main__":
-	pipeline = MetagenomeSimulationPipeline(
+	pipeline = GenomeAnnotationPipeline(
 		args=None, version=__version__, separator="\t",
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID")
