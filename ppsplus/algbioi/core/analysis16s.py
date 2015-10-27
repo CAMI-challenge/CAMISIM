@@ -78,7 +78,7 @@ class RRNA16S():
         if outLog is not None:
             stdoutLog = open(outLog, 'a')
         else:
-            stdoutLog = subprocess.STDOUT  # stdout=subprocess.STDOUT
+            stdoutLog = subprocess.PIPE  # stdout=subprocess.STDOUT
         hmmProc = subprocess.Popen(cmd, shell=True, bufsize=-1, cwd=hmmInstallDir, stdout=stdoutLog)
         print 'run cmd:', cmd
         hmmProc.wait()
@@ -114,7 +114,7 @@ class RRNA16S():
         if outLog is not None:
             stdoutLog = open(outLog, 'a')
         else:
-            stdoutLog = subprocess.STDOUT  # stdout=subprocess.STDOUT
+            stdoutLog = subprocess.PIPE  # stdout=subprocess.STDOUT
         hmmProc = subprocess.Popen(cmd, shell=True, bufsize=-1, cwd=hmmInstallDir, stdout=stdoutLog)
         print 'run cmd:', cmd
         hmmProc.wait()
