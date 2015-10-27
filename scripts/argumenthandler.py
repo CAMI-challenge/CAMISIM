@@ -419,7 +419,12 @@ class ArgumentHandler(SequenceValidator):
 		if not self.validate_free_space(directory=self._directory_temp, required_space_in_gb=expected_tmp_size):
 			self._valid_args = False
 			return
-		if not self.validate_free_space(directory=self._directory_output, required_space_in_gb=expected_output_size_gb):
+
+		directory_output = self._directory_output
+		assert isinstance(directory_output, basestring)
+		if not os.path.exists(directory_output):
+			directory_output = os.path.dirname(directory_output)
+		if not self.validate_free_space(directory=directory_output, required_space_in_gb=expected_output_size_gb):
 			self._valid_args = False
 			return
 
