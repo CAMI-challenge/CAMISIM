@@ -1,10 +1,10 @@
-taxonomic_classification_plus_otu
+GenomeAnnotationPipeline
 =================================
 
-classification of genomes by clustering (16S) marker genes
+Annotation of genomes by clustering of (16S) marker genes
 
 ###NAME
-	taxonomic_classification_plus_otu
+	GenomeAnnotationPipeline
 
 ###FILE
 	./run.py
