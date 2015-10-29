@@ -51,7 +51,7 @@ class ArgumentHandler(SequenceValidator):
 	_otu_distance = None
 	_classification_distance_minimum = None
 	_ncbi_reference_directory = None
-	_ani_minimum_alignment = 0.8
+	_ani_minimum_alignment = 0.9
 
 	# subfolder/files
 	_silva_ref_files = MGCluster._silva_ref_files
