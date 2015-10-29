@@ -1,7 +1,5 @@
 __author__ = 'hofmann'
 
-import operator
-from collections import Counter
 from scripts.Validator.validator import Validator
 from scripts.MGAnnotate.mothurcluster import MothurCluster
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
@@ -12,7 +10,7 @@ class TaxonomicCluster(Validator):
 
 	_label = "TaxonomicCluster"
 
-	def __init__(self, mothur_cluster, taxonomy, iid_tid_map, minimum_support=.9, logfile=None, verbose=True, debug=False):
+	def __init__(self, mothur_cluster, taxonomy, iid_tid_map, set_reference_genome_ncbi, minimum_support=.9, logfile=None, verbose=True, debug=False):
 		"""
 		Constructor
 
@@ -22,6 +20,8 @@ class TaxonomicCluster(Validator):
 		@type taxonomy: NcbiTaxonomy
 		@param iid_tid_map: A map from internal id to the taxonomic id
 		@type iid_tid_map: dict[str|unicode, str|unicode]
+		@param set_reference_genome_ncbi: NCBI taxonomic ids for reference genomes
+		@type set_reference_genome_ncbi: set[str|unicode]]
 		@param minimum_support: Minimum percentage of elements that must support a specific taxid
 		@type minimum_support: float
 		@param logfile: File handler or file path to a log file
@@ -34,6 +34,7 @@ class TaxonomicCluster(Validator):
 		assert isinstance(mothur_cluster, MothurCluster)
 		assert isinstance(taxonomy, NcbiTaxonomy)
 		assert isinstance(iid_tid_map, dict)
+		assert isinstance(set_reference_genome_ncbi, set)
 		assert isinstance(minimum_support, float)
 		super(TaxonomicCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._mothur_cluster = mothur_cluster
@@ -41,6 +42,7 @@ class TaxonomicCluster(Validator):
 		self._ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']  # , 'root'
 		self._iid_tid_map = iid_tid_map
 		self._iid_to_tid_lineage = {}
+		self._set_reference_genome_ncbi = set_reference_genome_ncbi
 		self._minimum_support = minimum_support
 
 	def predict_tax_id_of(self, cluster, lowest_predicted_novelty=None):
@@ -57,7 +59,8 @@ class TaxonomicCluster(Validator):
 		"""
 		assert isinstance(cluster, list)
 		assert isinstance(lowest_predicted_novelty, dict)
-		list_of_valid_iid = self.load_lineages(cluster)
+
+		list_of_valid_iid, set_of_ncbi_taxid = self.load_lineages(cluster)
 		root = {"count": 0, "c": {}, 'p': None}
 
 		total_count = [0] * len(self._ranks)
@@ -85,9 +88,6 @@ class TaxonomicCluster(Validator):
 					max_child_node = node["c"][child_node]
 					max_node_count = 1
 			if max_child_node is None or len(max_child_node["c"]) == 0 or max_node_count > 1:
-				# if max_node_count > 1:
-				# impossible to get over 50% support
-				# 	self.logger.warning("[TaxonomicCluster] max_node_count > 1: {id}, {count}".format(id=max_child_node["id"], count=max_node_count))
 				node = None
 			else:
 				node = max_child_node
@@ -109,10 +109,13 @@ class TaxonomicCluster(Validator):
 
 		for node in list_of_candidate:
 			if float(node["count"]) / total_count[node['r']] >= self._minimum_support:
-				novelty = self._ranks[node['r'] - 1]
+				novelty = self._ranks[node['r'] - 1]  # novelty of all references
 				# if previous novelty lower
 				if lowest_predicted_novelty["novelty"] in self._ranks and self._ranks.index(lowest_predicted_novelty["novelty"]) + 1 <= node['r']:
 					novelty = lowest_predicted_novelty["novelty"]
+				if self.is_near_genome_reference(list_of_valid_iid):  # or float(threshold) == 0.1
+					if lowest_predicted_novelty["novelty"] == '' or self._ranks.index(lowest_predicted_novelty["novelty"]) + 1 > node['r']:
+						lowest_predicted_novelty["novelty"] = novelty  # novelty of genome references
 				return node["id"], novelty, node["count"]
 		return None, "", 0
 
@@ -145,40 +148,6 @@ class TaxonomicCluster(Validator):
 		# 	self._mothur_cluster.cluster_list_to_stream(Counter(ncbi_id_list), sys.stderr)
 		return ncbi_id_list
 
-	# no longer used
-	def get_cluster_ncbi_tax_prediction(self, cluster, unpublished_id=None):
-		"""
-		Get the predicted taxid of a cluster (alternative)
-
-		@param cluster: A list of internal ids (usualy those within a otu cluster)
-		@type cluster: list[str|unicode]
-		@param unpublished_id:
-		@type unpublished_id: None|str|unicode
-
-		@return: Predicted taxid of a cluster and a novelty estimate
-		@rtype: tuple[None|str|unicode, str|unicode]
-		"""
-		assert isinstance(cluster, list)
-		assert unpublished_id is None or isinstance(unpublished_id, basestring)
-		rank_index = 1
-		list_of_valid_elements = self.load_lineages(cluster)
-		ncbi_id_list = []
-		for rank_index in range(1, len(self._ranks)):
-			ncbi_id_list = self.cluster_to_ncbi_of_a_rank(list_of_valid_elements, rank_index, unpublished_id)
-			if len(ncbi_id_list) == 0:
-				continue
-			dominant_id, dominant_support = max(Counter(ncbi_id_list).iteritems(), key=operator.itemgetter(1))
-			if dominant_id is None:
-				continue
-			if float(dominant_support) / len(ncbi_id_list) >= self._minimum_support:
-				break
-
-		if len(ncbi_id_list) == 0:
-			return None, ""
-		dominant_id = max(Counter(ncbi_id_list).iteritems(), key=operator.itemgetter(1))[0]
-		del ncbi_id_list
-		return dominant_id, self._ranks[rank_index - 1]
-
 	def has_consistent_lineage(self, iid1, iid2):
 		"""
 		Compares the lineages of two ids for inconsistencies
@@ -207,6 +176,28 @@ class TaxonomicCluster(Validator):
 			return True
 		return False
 
+	def is_near_genome_reference(self, set_iids):
+		"""
+		Compares the lineages of two ids for inconsistencies
+
+		@param set_iids: Set of internal id
+		@type set_iids: set[str|unicode]
+
+		@return: True if consistent
+		@rtype: bool
+		"""
+		assert isinstance(set_iids, set)
+		if None in set_iids:
+			set_iids.remove(None)
+		if None in self._set_reference_genome_ncbi:
+			self._set_reference_genome_ncbi.remove(None)
+		set2 = self._set_reference_genome_ncbi
+		for iid in set_iids:
+			set1 = set(self._iid_to_tid_lineage[iid])
+			if not set1.isdisjoint(set2):
+				return True
+		return False
+
 	def load_lineages(self, cluster):
 		"""
 		Get list of valid internal ids and save lineages of those
@@ -215,10 +206,11 @@ class TaxonomicCluster(Validator):
 		@type cluster: list[str|unicode]
 
 		@return: List of internal ids that correspond to a valid taxid
-		@rtype: list[str|unicode]
+		@rtype: tuple[set[str|unicode], set[str|unicode]]
 		"""
 		assert isinstance(cluster, list)
 		list_of_valid_elements = set()
+		set_of_ncbi_taxid = set()
 		for iid in cluster:
 			ncbi_id = self._iid_tid_map[iid]
 			if not ncbi_id.isdigit():
@@ -226,5 +218,6 @@ class TaxonomicCluster(Validator):
 				continue
 			if iid not in self._iid_to_tid_lineage:
 				self._iid_to_tid_lineage[iid] = self.taxonomy.get_lineage_of_legal_ranks(ncbi_id, ranks=self._ranks, default_value=None)
+			set_of_ncbi_taxid.add(ncbi_id)
 			list_of_valid_elements.add(iid)
-		return list_of_valid_elements
+		return list_of_valid_elements, set_of_ncbi_taxid
