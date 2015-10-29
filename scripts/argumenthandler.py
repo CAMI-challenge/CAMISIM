@@ -562,12 +562,11 @@ class ArgumentHandler(SequenceValidator):
 			default=None,
 			type=int,
 			help="number of available processors")
-		group_input.add_argument("-s", "--phase", default=None, type=int, choices=[0, 1, 2, 3], help='''available options: 0-4:
-0 -> Full run through,
-1 -> Marker gene extraction,
-2 -> Gene alignment and clustering,
+		group_input.add_argument("-s", "--phase", default=None, type=int, choices=[0, 1, 2, 3], help='''
+0 -> Full run (Default)
+1 -> Marker gene extraction
+2 -> Gene alignment and clustering
 3 -> Annotation of Genomes
-Default: 0
 ''')
 		group_input = parser.add_argument_group('required')
 		group_input.add_argument("config_file", type=str, default=None, help="path to the configuration file of the pipeline")
