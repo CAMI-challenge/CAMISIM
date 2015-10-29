@@ -66,9 +66,8 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 			return
 		self._logger.info("Starting")
 		try:
-			self._logger.info("Validating Genomes")
-			self._validate_raw_genomes()
-			self._logger.info("Done")
+			if self._validate_genomes:
+				self._validate_raw_genomes()
 
 			if self._phase == 0 or self._phase == 1:
 				self.marker_gene_extraction()
@@ -94,9 +93,9 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 		"""
 		Validate format raw and reference genomes
 
-		@return: True if all genomes valid
-		@rtype: bool
+		@rtype: None
 		"""
+		self._logger.info("Validating Genomes")
 		meta_data_table = MetadataTable(
 			separator=self._separator,
 			logfile=self._logfile,
@@ -112,7 +111,12 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 		list_of_file_paths = meta_data_table.get_column(1)
 		if not self._validate_format(list_of_file_paths, file_format="fasta", sequence_type="dna", ambiguous=True):
 			are_valid = False
-		return are_valid
+
+		if not are_valid:
+			msg = "Invalid genomes found!"
+			self._logger.error(msg)
+			raise RuntimeError(msg)
+		self._logger.info("Validating Genomes Done")
 
 	def _validate_format(self, list_of_file_paths, file_format="fasta", sequence_type="dna", ambiguous=True):
 		"""

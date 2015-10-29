@@ -459,6 +459,7 @@ class ArgumentHandler(SequenceValidator):
 		self._directory_output = self._config.get_value(section, "output_directory", is_path=True, silent=False)
 		if self._max_processors is None:
 			self._max_processors = self._config.get_value(section, "max_processors", is_digit=True)
+		self._validate_genomes = self._config.get_value(section, "validate_genomes", is_boolean=True)
 
 		section = "MarkerGeneExtraction"
 		self._binary_rnammer = self._config.get_value(section, "rnammer", is_path=True)
