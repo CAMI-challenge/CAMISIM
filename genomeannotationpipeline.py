@@ -81,7 +81,7 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 
 		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
-			self._logger.info("Aborted")
+			self._logger.error("Aborted")
 		else:
 			self._logger.info("Finished")
 
@@ -287,7 +287,8 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 		mothur_cluster.read(self._project_file_folder_handler.get_file_path_cluster_mg_16s(), list_query_gid)
 
 		taxonomy_cluster = TaxonomicCluster(
-			mothur_cluster, taxonomy, data_table_iid_mapping.get_map(0, 2),
+			mothur_cluster, taxonomy, iid_tid_map=data_table_iid_mapping.get_map(0, 2),
+			set_reference_genome_ncbi=set(list_of_refernce_ncbi_id),
 			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 
 		if self._annotate_classify:
