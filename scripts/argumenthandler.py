@@ -530,7 +530,7 @@ class ArgumentHandler(SequenceValidator):
 		"""
 		description = """
 	#######################################
-	#    MetagenomeSimulationPipeline     #
+	#    GenomeAnnotationPipeline         #
 	#    Version {}#
 	#######################################
 
