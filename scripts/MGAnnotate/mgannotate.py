@@ -243,7 +243,7 @@ class MGAnnotate(Validator):
 		if len(list_of_unclustered_elements) > 0:
 			self._logger.warning("No cluster found for {} ids!".format(len(list_of_unclustered_elements)))
 
-	def calculate_ani(self, mothur_cluster, taxonomy, metadata_table, ani_distance, ani_minimum_alignment=0.8):
+	def calculate_ani(self, mothur_cluster, taxonomy, metadata_table, ani_distance, ani_minimum_alignment=0.9):
 		"""
 		Calculate the average nucleotide identity.
 		To lessen the calculation burden, only genomes of sequences within the same cluster as an unpublished genome (marker gene) are compared.
