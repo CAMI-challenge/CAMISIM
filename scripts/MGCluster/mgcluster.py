@@ -21,6 +21,19 @@ class MGCluster(Validator):
 	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", _file_name_map]
 
 	# mothur command: cluster.split
+	_mothur_cmd_mode_ref_dist_split = "; ".join([
+		'unique.seqs(fasta={mg_fasta})',
+		'align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})',
+		'remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)',
+		'merge.files(input={filename}.names-{ref_names}, output={filename}.merged.names)',
+		'merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.names)',
+		'set.current(name={filename}.merged.names, column={local_dist})',
+		'dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)',
+		'set.current(column={local_dist})',
+		'cluster.split(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)'
+	])
+
+	# mothur command: cluster.split
 	_mothur_cmd_ref_dist_split = """unique.seqs(fasta={mg_fasta})
 align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
 remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)
@@ -117,9 +130,9 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		shutil.copy2(self._ref_silva_distances, self._local_distance)
 
 		mothur_cmd = self._get_mothur_cmd(local_marker_gene_fasta, distance_cutoff, precision, method=method)
-		cmd = "echo \"{mothur_cmd}\" | {mothur_executable}".format(
-			mothur_cmd=mothur_cmd,
-			mothur_executable=self._mothur_executable)
+		cmd = "{mothur_executable} '#{mothur_cmd}'".format(
+			mothur_executable=self._mothur_executable,
+			mothur_cmd=mothur_cmd)
 		os.system(cmd)
 		os.chdir(old_dir)
 
@@ -197,7 +210,7 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		filename, extension = os.path.splitext(marker_gene_fasta)
 		#
 		# mothur_cmd = MGCluster._mothur_cmd_ref_dist
-		mothur_cmd = MGCluster._mothur_cmd_ref_dist_split
+		mothur_cmd = MGCluster._mothur_cmd_mode_ref_dist_split
 		return mothur_cmd.format(
 			wd=self._tmp_dir,
 			debug=self._tmp_dir,
