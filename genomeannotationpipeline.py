@@ -212,7 +212,7 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 			directory_silva_reference=self._silva_reference_directory,
 			max_processors=self._max_processors,
 			temp_directory=self._directory_temp,
-			debug=self._debug)
+			logfile=self._logfile, verbose=self._verbose, debug=self._debug)
 
 		mg_cluster.cluster(
 			marker_gene_fasta=self._project_file_folder_handler.get_file_path_mg_16s(),
