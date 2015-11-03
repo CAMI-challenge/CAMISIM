@@ -21,7 +21,7 @@ class MGCluster(Validator):
 	_silva_ref_files = ["mothur_ref_distances", "mothur_ref_names", "mothur_alignment_ref.fasta", _file_name_map]
 
 	# mothur command: cluster.split
-	_mothur_cmd_mode_ref_dist_split = "; ".join([
+	_mothur_cmd_cluster_split = "; ".join([
 		'unique.seqs(fasta={mg_fasta})',
 		'align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})',
 		'remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)',
@@ -33,27 +33,18 @@ class MGCluster(Validator):
 		'cluster.split(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)'
 	])
 
-	# mothur command: cluster.split
-	_mothur_cmd_ref_dist_split = """unique.seqs(fasta={mg_fasta})
-align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
-remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)
-merge.files(input={filename}.names-{ref_names}, output={filename}.merged.names)
-merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.names)
-set.current(name={filename}.merged.names, column={local_dist})
-dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)
-set.current(column={local_dist})
-cluster.split(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)"""
-
 	# mothur command: cluster
-	_mothur_cmd_ref_dist = """unique.seqs(fasta={mg_fasta})
-align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})
-remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)
-merge.files(input={filename}.names-{ref_names}, output={filename}.merged.names)
-merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.names)
-set.current(name={filename}.merged.names, column={local_dist})
-dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)
-set.current(column={local_dist})
-cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}.merged.names)"""
+	_mothur_cmd_cluster = "; ".join([
+		"unique.seqs(fasta={mg_fasta})",
+		"align.seqs(candidate=current, template={ref_align}, align=gotoh, flip=t, processors={processors})",
+		"remove.seqs(accnos={filename}.unique.flip.accnos, fasta=current, name=current)",
+		"merge.files(input={filename}.names-{ref_names}, output={filename}.merged.names)",
+		"merge.files(input={filename}.pick.names-{ref_names}, output={filename}.merged.names)",
+		"set.current(name={filename}.merged.names, column={local_dist})",
+		"dist.seqs(oldfasta={ref_align}, column=current, cutoff={cutoff}, processors={processors}, calc=onegap, countends=F)",
+		"set.current(column={local_dist})",
+		"cluster(cutoff={cutoff}, method={method}, precision={precision}, column={local_dist}, name={filename}.merged.names)"
+	])
 
 	def __init__(
 		self, mothur_executable, directory_silva_reference, max_processors=1, temp_directory=None,
@@ -209,8 +200,8 @@ cluster(cutoff={cutoff}, method={method}, precision={precision}, name={filename}
 		# filename, extension = os.path.splitext(basename)
 		filename, extension = os.path.splitext(marker_gene_fasta)
 		#
-		# mothur_cmd = MGCluster._mothur_cmd_ref_dist
-		mothur_cmd = MGCluster._mothur_cmd_mode_ref_dist_split
+		# mothur_cmd = MGCluster._mothur_cmd_cluster
+		mothur_cmd = MGCluster._mothur_cmd_cluster_split
 		return mothur_cmd.format(
 			wd=self._tmp_dir,
 			debug=self._tmp_dir,
