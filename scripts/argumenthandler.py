@@ -143,7 +143,6 @@ class ArgumentHandler(Validator):
 		self.set_log_level(verbose=self._verbose, debug=self._debug)
 
 		# read configuration files
-		self._config = ConfigParserWrapper(self._file_path_config)
 		self._read_config()
 		if not self._valid_arguments:
 			return
@@ -269,17 +268,17 @@ fragment_size_standard_deviation={fsd}
 
 
 [CommunityDesign]
-# directory with files of a ncbi taxdump
+# Directory with files of a ncbi taxdump
 ncbi_taxdump={ncbi_taxdump}
 
-# directory of strain simulation template (optional, required if trains are to be simulated)
+# Directory of strain simulation template (optional, required if trains are to be simulated)
 strain_simulation_template={template}
 
-# how many samples should be simulated?
+# The amount of samples to be simulated
 number_of_samples={samples}
 
+# The amount of (sub)communities used for a sample.
 # A sample can be made from several (sub)communities. For example: Eukaryote / Bacteria / Archaea / Virus / Plasmid
-# how many (sub)communities are available?
 number_of_communities={communities}
 
 
@@ -352,7 +351,6 @@ log_sigma={log_sigma}
 gauss_mu={gauss_mu}
 # sigma of a gauss distribution
 gauss_sigma={gauss_sigma}
-# mu of a log distribution
 
 # View and confirm distribution (requires x-window)
 view={view}
@@ -618,6 +616,11 @@ view={view}
 
 		@rtype: None
 		"""
+		self._config = ConfigParserWrapper(self._file_path_config)
+		if not self.validate_file(self._file_path_config, key="Configuration file"):
+			self._valid_args = False
+			return
+
 		sections = ['Main', 'ReadSimulator', 'CommunityDesign']
 		invalid_sections = self._config.validate_sections(sections)
 		if invalid_sections is not None:
@@ -866,7 +869,7 @@ view={view}
 			"-p", "--max_processors",
 			default=None,
 			type=int,
-			help="maximum number of processors available")
+			help="number of available processors")
 
 		# ##########
 		# i/o
