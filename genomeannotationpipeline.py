@@ -6,7 +6,7 @@ __version__ = "0.0.5"
 import os
 import traceback
 from scripts.MetaDataTable.metadatatable import MetadataTable
-from scripts.argumenthandler import ArgumentHandler
+from scripts.argumenthandler_ga import ArgumentHandler
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MGCluster.mgcluster import MGCluster
 from scripts.MGAnnotate.mgannotate import MGAnnotate

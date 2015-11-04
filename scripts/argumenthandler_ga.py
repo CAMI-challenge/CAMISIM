@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 import tempfile
-from scripts.projectfilefolderhandle import ProjectFileFolderHandle
+from scripts.projectfilefolderhandle_ga import ProjectFileFolderHandle
 from scripts.configparserwrapper import ConfigParserWrapper
 from scripts.Validator.sequencevalidator import SequenceValidator
 from scripts.MGCluster.mgcluster import MGCluster
