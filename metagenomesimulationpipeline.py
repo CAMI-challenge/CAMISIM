@@ -7,7 +7,7 @@ import os
 import shutil
 import traceback
 import tempfile
-from fastaanonymizer import FastaAnonymizer
+from scripts.fastaanonymizer import FastaAnonymizer
 from scripts.Archive.compress import Compress
 from scripts.argumenthandler import ArgumentHandler
 from scripts.ComunityDesign.communitydesign import CommunityDesign
