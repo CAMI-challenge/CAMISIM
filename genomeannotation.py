@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = 'Peter Hofmann'
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 import os
 import traceback
@@ -12,7 +12,7 @@ from scripts.MGCluster.mgcluster import MGCluster
 from scripts.MGAnnotate.mgannotate import MGAnnotate
 
 
-class GenomeAnnotationPipeline(ArgumentHandler):
+class GenomeAnnotation(ArgumentHandler):
 	"""
 	Pipeline for the annotation of genomes
 	"""
@@ -338,7 +338,7 @@ class GenomeAnnotationPipeline(ArgumentHandler):
 
 
 if __name__ == "__main__":
-	pipeline = GenomeAnnotationPipeline(
+	pipeline = GenomeAnnotation(
 		args=None, version=__version__, separator="\t",
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID")

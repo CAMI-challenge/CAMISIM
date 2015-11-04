@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = 'peter hofmann'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 import os
 import shutil
@@ -21,7 +21,7 @@ from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.ReadSimulationWrapper.readsimulationwrapper import ReadSimulationArt
 
 
-class MetagenomeSimulationPipeline(ArgumentHandler):
+class MetagenomeSimulation(ArgumentHandler):
 	"""
 	Pipeline for the generation of a simulated metagenome
 	"""
@@ -647,7 +647,7 @@ class MetagenomeSimulationPipeline(ArgumentHandler):
 
 
 if __name__ == "__main__":
-	pipeline = MetagenomeSimulationPipeline(
+	pipeline = MetagenomeSimulation(
 		args=None, version=__version__, separator="\t",
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID", column_name_source="source")
