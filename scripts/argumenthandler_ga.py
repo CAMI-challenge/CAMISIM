@@ -36,7 +36,6 @@ class ArgumentHandler(SequenceValidator):
 	_binary_rnammer = None
 	_hmmerBinDir = None  # 16S mg analysis
 	_rnaHmmInstallDir = None  # 16S mg analysis
-	_directory_sqlite_database = None  # 16S mg analysis
 
 	# [MarkerGeneClustering]
 	_cluster_method_choices = MGCluster._cluster_method_choices
@@ -309,10 +308,6 @@ class ArgumentHandler(SequenceValidator):
 			return
 
 		if self._phase < 2:
-			if not self.validate_dir(self._directory_sqlite_database, file_names=["ncbitax_sqlite.db"], key="databaseFile"):
-				self._valid_args = False
-				return
-
 			if not self.validate_dir(self._rnaHmmInstallDir, key="rnaHmmInstallDir"):
 				self._valid_args = False
 				return
@@ -464,7 +459,6 @@ class ArgumentHandler(SequenceValidator):
 		section = "MarkerGeneExtraction"
 		self._binary_rnammer = self._config.get_value(section, "rnammer", is_path=True)
 		self._hmmerBinDir = self._config.get_value(section, "hmmerBinDir", is_path=True)
-		self._directory_sqlite_database = self._config.get_value(section, "databaseFile", is_path=True)
 		self._rnaHmmInstallDir = self._config.get_value(section, "rnaHmmInstallDir", is_path=True)
 		self._file_path_reference_genome_locations = self._config.get_value(section, "reference_genomes_file", is_path=True)
 		self._file_path_map_reference_genome_id_to_tax_id = self._config.get_value(section, "reference_genomes_map_file", is_path=True)

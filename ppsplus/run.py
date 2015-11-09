@@ -124,25 +124,6 @@ def main():
 		print("Can't parse configuration entry (minSeqLen), make sure that it's an integer number")
 		raise e
 
-	folder_database = config.get_value("MarkerGeneExtraction", "databaseFile", is_path=True)
-	if folder_database is None:
-		print("The taxonomy (databaseFile) is not specified.")
-		return
-
-	if not os.path.isdir(folder_database):
-		print("Bad directory '{}'".format(folder_database))
-		return
-
-	assert isinstance(folder_database, basestring)
-	database_file = os.path.join(folder_database, 'ncbitax_sqlite.db')
-	if not os.path.isfile(database_file):
-		print("The directory '%s' doesn't contain taxonomy file 'ncbitax_sqlite.db'")
-		return
-
-	if not os.path.isfile(database_file):
-		print("The database file doesn't exist:", database_file)
-		return
-
 	# generates working fasta files always when the configuration file is newer than particular files to be generated
 	sequences = Sequences(
 		input_fasta_file, input_fasta_scaffolds_file, scaffolds_to_contigs_map_file, taxonomic_ranks, min_seq_len)
