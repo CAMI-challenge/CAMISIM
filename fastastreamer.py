@@ -10,7 +10,7 @@ import StringIO
 import itertools
 import argparse
 from Bio import SeqIO
-from Validator.sequencevalidator import SequenceValidator
+from scripts.Validator.sequencevalidator import SequenceValidator
 
 
 class FastaStreamer(SequenceValidator):

@@ -7,7 +7,7 @@ import os
 import shutil
 import traceback
 import tempfile
-from scripts.fastaanonymizer import FastaAnonymizer
+from fastaanonymizer import FastaAnonymizer
 from scripts.Archive.compress import Compress
 from scripts.argumenthandler import ArgumentHandler
 from scripts.ComunityDesign.communitydesign import CommunityDesign
@@ -90,8 +90,9 @@ class MetagenomeSimulation(ArgumentHandler):
 				self._logger.info("Compress Data")
 				self._compress_data()
 
-		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError) as e:
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
+			self._logger.error(e.args[0])
 			self._logger.info("Metagenome simulation aborted")
 		else:
 			self._logger.info("Metagenome simulation finished")

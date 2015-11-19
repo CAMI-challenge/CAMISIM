@@ -8,7 +8,7 @@ import random
 import StringIO
 import tempfile
 import subprocess
-from Validator.sequencevalidator import SequenceValidator
+from scripts.Validator.sequencevalidator import SequenceValidator
 
 
 class FastaAnonymizer(SequenceValidator):
