@@ -4,7 +4,7 @@ GS(A) File Format
 ##GSA mapping
 The header of the gold standard assembly mapping file starts with a '#' to mark it as a line that is to be ignored when read.  
 
-    #anonymous_contig_id	genome_id	tax_id	contig_id	number_reads
+    #anonymous_contig_id	genome_id	tax_id	contig_id	number_reads	start_position	end_position
 
 'anonymous_contig_id' is a column of anonymized contig ids of the original contig ids of the gold standard assembly fasta file.  
 'genome_id' is the id of the original genome.  

@@ -280,9 +280,9 @@ class GoldStandardFileFormat(Validator):
 		assert isinstance(dict_original_seq_pos, dict)
 		assert isinstance(dict_sequence_to_genome_id, dict)
 		assert isinstance(dict_genome_id_to_tax_id, dict)
-		row_format = "{name}\t{genome_id}\t{tax_id}\t{seq_id}\t{count}\n"
+		row_format = "{name}\t{genome_id}\t{tax_id}\t{seq_id}\t{count}\t{position_0}\t{position_1}\n"
 
-		stream_output.write("#anonymous_contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\n")
+		stream_output.write("#anonymous_contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
 
 		for original_contig_id, anonymous_contig_id in dict_sequence_name_to_anonymous.iteritems():
 			seq_info = original_contig_id.strip().split("_from_")
@@ -307,7 +307,10 @@ class GoldStandardFileFormat(Validator):
 				genome_id=genome_id,
 				tax_id=tax_id,
 				seq_id=sequence_id,
-				count=count))
+				count=count,
+				position_0=pos[0],
+				position_1=pos[1])
+				)
 
 	def gs_contig_mapping(
 		self, file_path_genome_locations, file_path_metadata, file_path_id_map, list_file_paths_read_positions,
