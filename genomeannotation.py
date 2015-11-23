@@ -78,8 +78,9 @@ class GenomeAnnotation(ArgumentHandler):
 			if self._phase == 0 or self._phase == 3:
 				self.marker_gene_annotation()
 
-		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError):
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError) as e:
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
+			self._logger.error(e.args[0])
 			self._logger.error("Aborted")
 		else:
 			self._logger.info("Finished")
@@ -246,7 +247,8 @@ class GenomeAnnotation(ArgumentHandler):
 		list_of_refernce_ncbi_id = data_table.get_column(1)
 
 		# mapping of all internal ids
-		# data_table_iid_mapping_silva = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+		# data_table_iid_mapping_silva = MetadataTable(
+		# 	separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		# file_path_silva_map = os.path.join(self._silva_reference_directory, MGCluster.get_file_name_of_map())
 		# data_table_iid_mapping_silva.read(file_path_silva_map)
 		data_table_iid_mapping = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
@@ -298,7 +300,8 @@ class GenomeAnnotation(ArgumentHandler):
 		if self._annotate_classify:
 			self._logger.info("Taxonomic classification")
 			# also, novelty based clustering
-			mg_annotate.taxonomic_classification(metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, self._classification_distance_minimum)
+			mg_annotate.taxonomic_classification(
+				metadata_table, mothur_cluster, taxonomy_cluster, taxonomy, self._classification_distance_minimum)
 			self._logger.info("Taxonomic classification Done")
 
 		if self._annotate_novelty:
@@ -314,7 +317,8 @@ class GenomeAnnotation(ArgumentHandler):
 
 		if self._annotate_ani:
 			self._logger.info("Calculating ANI")
-			mg_annotate.calculate_ani(mothur_cluster, taxonomy, metadata_table, self._distance_cutoff, self._ani_minimum_alignment)
+			mg_annotate.calculate_ani(
+				mothur_cluster, taxonomy, metadata_table, self._distance_cutoff, self._ani_minimum_alignment)
 			self._logger.info("Calculating ANI Done")
 		metadata_table.write(self._project_file_folder_handler.get_file_path_meta_data_table(), column_names=True)
 
