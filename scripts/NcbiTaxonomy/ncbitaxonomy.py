@@ -1,11 +1,12 @@
 # original from Dmitrij Turaev
 
 __author__ = 'hofmann'
-__version__ = '0.0.6'
+__version__ = '0.0.8'
 
 
 import os
 import time
+import fnmatch
 from taxonomynode import TaxonomyNode
 from scripts.Validator.validator import Validator
 
@@ -78,11 +79,12 @@ class NcbiTaxonomy(Validator):
 			@rtype: str | unicode
 		"""
 		assert isinstance(taxid, basestring)
-		if taxid not in NcbiTaxonomy.taxid_to_rank:
+		if taxid in NcbiTaxonomy.taxid_to_rank:
+			return taxid
+		if taxid not in NcbiTaxonomy.taxid_old_to_taxid_new:
 			self._logger.error("Invalid taxid: '{}'".format(taxid))
 			raise ValueError("Invalid taxid")
-		if taxid not in NcbiTaxonomy.taxid_old_to_taxid_new:
-			return taxid
+
 		taxid_new = NcbiTaxonomy.taxid_old_to_taxid_new[taxid]
 		self._logger.warning("Merged id: '{}' -> '{}'".format(taxid, taxid_new))
 		return taxid_new
@@ -106,7 +108,7 @@ class NcbiTaxonomy(Validator):
 		self._logger.error("No name available for taxid: {}".format(taxid))
 		raise ValueError("Invalid taxid")
 
-	def get_taxids_by_scientific_name(self, scientific_name):
+	def get_taxids_by_scientific_name(self, scientific_name, silent=False):
 		"""
 			Return all available taxid that fit the scientific name
 
@@ -116,14 +118,41 @@ class NcbiTaxonomy(Validator):
 			@type scientific_name: basestring
 
 			@return: list of ncbi taxonomic identifiers
-			@rtype: str | unicode
+			@rtype: set[str | unicode] | None
 		"""
 		assert isinstance(scientific_name, basestring)
 		scientific_name = scientific_name.lower()
 		if scientific_name in NcbiTaxonomy.name_to_taxids:
-			return list(NcbiTaxonomy.name_to_taxids[scientific_name])
-		self._logger.error("No taxid available for scientific_name: {}".format(scientific_name))
-		raise ValueError("Invalid scientific name")
+			return set(NcbiTaxonomy.name_to_taxids[scientific_name])
+		if not silent:
+			self._logger.error("No taxid available for scientific_name: {}".format(scientific_name))
+			raise ValueError("Invalid scientific name")
+		return None
+
+	def get_taxids_by_scientific_name_wildcard(self, scientific_name):
+		"""
+			Return all available taxid that fit the scientific name
+
+			@attention: Several taxid might be a hit for one scientific name
+
+			@param scientific_name: ncbi scientific name or synonym
+			@type scientific_name: basestring
+
+			@return: set of ncbi taxonomic identifiers
+			@rtype: set[str | unicode] | None
+		"""
+		assert isinstance(scientific_name, basestring)
+		scientific_name = scientific_name.lower()
+		matches = fnmatch.filter(self.name_to_taxids.keys(), scientific_name)
+		set_of_tax_id = set()
+		for match in matches:
+			set_of_tax_id.update(set(self.name_to_taxids[match]))
+		if len(set_of_tax_id) > 1:
+			self._logger.error("Several matches '{}' found for scientific_name: '{}'".format(", ".join(matches), scientific_name))
+			return None
+		elif len(set_of_tax_id) == 0:
+			return None
+		return set_of_tax_id
 
 	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None):
 		"""
