@@ -63,6 +63,7 @@ class TaxonomicCluster(Validator):
 		list_of_valid_iid, set_of_ncbi_taxid = self.load_lineages(cluster)
 		root = {"count": 0, "c": {}, 'p': None}
 
+		# Build tree based from lineage of known references
 		total_count = [0] * len(self._ranks)
 		for iid in list_of_valid_iid:
 			node = root
@@ -75,8 +76,8 @@ class TaxonomicCluster(Validator):
 				node["c"][tax_id]["count"] += 1
 				node = node["c"][tax_id]
 				total_count[rank_index] += 1
-		# print 'root', root
-		# print 'total_count', total_count
+
+		# Get node with highest number of strains
 		node = root
 		max_child_node = None
 		while node is not None:
@@ -108,6 +109,11 @@ class TaxonomicCluster(Validator):
 			parent_node = parent_node['p']
 
 		for node in list_of_candidate:
+			if 'r' not in node:
+				if lowest_predicted_novelty["novelty"] == '':
+					lowest_predicted_novelty["novelty"] = 'superkingdom'
+				return "1", "", 0
+				# continue  # root node
 			if float(node["count"]) / total_count[node['r']] >= self._minimum_support:
 				novelty = self._ranks[node['r'] - 1]  # novelty of all references
 				# if previous novelty lower
