@@ -271,7 +271,7 @@ class GenomeAnnotation(ArgumentHandler):
 			column_name_ani_novelty=self._column_name_ani_novelty,
 			column_name_ani_ncbi=self._column_name_ani_compare,
 			column_name_ani_scientific_name=self._column_name_ani_scientific_name,
-			temp_directory=self._directory_temp,
+			temp_directory=self._directory_temp, max_processors=self._max_processors,
 			separator=self._separator, logfile=self._logfile, verbose=self._verbose, debug=self._debug
 		)
 
