@@ -257,7 +257,6 @@ class GenomeAnnotation(ArgumentHandler):
 
 		mg_annotate = MGAnnotate(
 			ncbi_reference_directory=self._ncbi_reference_directory,
-			data_table_iid_mapping=data_table_iid_mapping,
 			file_path_query_genomes_location=self._file_path_query_genomes_location_file,
 			file_path_reference_genomes_location=self._file_path_reference_genome_locations,
 			file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,

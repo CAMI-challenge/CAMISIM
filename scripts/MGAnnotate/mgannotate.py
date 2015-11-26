@@ -27,8 +27,6 @@ class MGAnnotate(Validator):
 
 		@param ncbi_reference_directory: Directory with ncbi db dump
 		@type ncbi_reference_directory: str | unicode
-		@param data_table_iid_mapping: data table with mappings of internal ids
-		@type data_table_iid_mapping: MetadataTable
 		@param separator: Expected column separator in metadata files
 		@type separator: str|unicode
 		@param logfile: file handler or file path to a log file
@@ -42,7 +40,6 @@ class MGAnnotate(Validator):
 		assert self.validate_dir(ncbi_reference_directory)
 		assert isinstance(max_processors, (int, long))
 		assert self.validate_number(max_processors, minimum=1)
-		assert isinstance(data_table_iid_mapping, MetadataTable)
 		assert isinstance(separator, basestring)
 		assert isinstance(column_name_genome_id, basestring)
 		assert isinstance(column_name_otu, basestring)
