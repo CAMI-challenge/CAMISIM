@@ -155,7 +155,7 @@ class ArgumentHandler(SequenceValidator):
 		@return: File path
 		@rtype: str|unicode
 		"""
-		return os.path.join(self._directory_pipeline, "ppsplus", "run.py")
+		return os.path.join(self._directory_pipeline, "rnahmm", "run.py")
 
 	def _get_directory_pipeline(self):
 		"""
