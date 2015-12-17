@@ -6,6 +6,7 @@ from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.Validator.validator import Validator
 from scripts.MGAnnotate.anim import ANIm
+from scripts.MGAnnotate.novelty import Novelty
 
 
 class MGAnnotate(Validator):
@@ -13,7 +14,7 @@ class MGAnnotate(Validator):
 	_label = "MGAnnotate"
 
 	def __init__(
-		self, ncbi_reference_directory, data_table_iid_mapping,
+		self,
 		file_path_query_genomes_location, file_path_reference_genomes_location, file_path_reference_taxid_map,
 		file_path_nucmer=None,
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
@@ -25,8 +26,6 @@ class MGAnnotate(Validator):
 		"""
 		Constructor
 
-		@param ncbi_reference_directory: Directory with ncbi db dump
-		@type ncbi_reference_directory: str | unicode
 		@param separator: Expected column separator in metadata files
 		@type separator: str|unicode
 		@param logfile: file handler or file path to a log file
@@ -37,7 +36,7 @@ class MGAnnotate(Validator):
 		@type debug: bool
 		"""
 		assert file_path_nucmer is None or self.validate_file(file_path_nucmer, executable=True)
-		assert self.validate_dir(ncbi_reference_directory)
+		# assert self.validate_dir(ncbi_reference_directory)
 		assert isinstance(max_processors, (int, long))
 		assert self.validate_number(max_processors, minimum=1)
 		assert isinstance(separator, basestring)
@@ -63,7 +62,7 @@ class MGAnnotate(Validator):
 		self._column_name_ani_ncbi = column_name_ani_ncbi
 		self._column_name_ani_scientific_name = column_name_ani_scientific_name
 		self._separator = separator
-		self._ncbi_reference_directory = ncbi_reference_directory
+		# self._ncbi_reference_directory = ncbi_reference_directory
 		self._file_path_nucmer = file_path_nucmer
 		self._max_processors = max_processors
 		self._file_path_query_genomes_location = file_path_query_genomes_location
@@ -186,7 +185,6 @@ class MGAnnotate(Validator):
 		assert isinstance(taxonomy, NcbiTaxonomy)
 		assert isinstance(reference_ncbi_id_set, set)
 		assert isinstance(metadata_table, MetadataTable)
-		from scripts.MGAnnotate.novelty import Novelty
 		novelty = Novelty(
 			taxonomy,
 			column_name_ncbi_id=self._column_name_ncbi_prediction,
