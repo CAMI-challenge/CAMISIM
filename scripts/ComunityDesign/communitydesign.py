@@ -175,7 +175,7 @@ class CommunityDesign(GenomePreparation):
 		super(CommunityDesign, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		if seed is not None:
 			random.seed(seed)
-			np_random.seed(abs(hash(seed)))
+			np_random.seed(abs(hash(seed)) % 4294967295)  # numpy accepts only 32 bit integers
 
 		# self._seed = seed
 		# self._filename_distribution = filename_prefix_distribution + "{index}.txt"
