@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = 'hofmann'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import io
 import StringIO
@@ -375,11 +375,8 @@ class MetadataTable(Compress):
 			@rtype: list[str|unicode]
 		"""
 		assert isinstance(column_name, (basestring, int, long))
-
-		if column_name in self._meta_table:
-			return list(self._meta_table[column_name])
-		else:
-			return None
+		assert self.has_column(column_name), "Column '{}' not found!".format(column_name)
+		return list(self._meta_table[column_name])
 
 	def get_empty_column(self, default_value=''):
 		"""
