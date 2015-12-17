@@ -3,7 +3,6 @@ __original_author__ = 'eik.dahms@uni-duesseldorf.de'
 __version__ = '0.0.3'
 
 import random
-import matplotlib.pyplot as plt
 from scripts.Validator.validator import Validator
 
 
@@ -206,6 +205,7 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
+		import matplotlib.pyplot as plt
 		try:
 			# display histogram
 			plt.figure(1)
