@@ -1,5 +1,5 @@
 __author__ = 'hofmann'
-__version__ = '0.0.2'
+__version__ = '0.0.2.1'
 
 import os
 from scripts.MetaDataTable.metadatatable import MetadataTable
@@ -108,10 +108,10 @@ class TaxonomicProfile(Validator):
 		genome_id_to_otu = metadata_table.get_map(key_column_name="genome_ID", value_column_name="OTU")
 
 		column_genome_id = metadata_table.get_column("genome_ID")
-		column_strain_id = metadata_table.get_column("strain_id")
-		if column_strain_id is None:
+		if not metadata_table.has_column("strain_id"):
 			column_strain_id = metadata_table.get_empty_column()
 		else:
+			column_strain_id = metadata_table.get_column("strain_id")
 			genome_id_to_strain_id = metadata_table.get_map(key_column_name="genome_ID", value_column_name="strain_id")
 
 		genome_id_to_lineage = self._get_genome_id_to_lineage(
