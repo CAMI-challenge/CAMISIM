@@ -647,10 +647,10 @@ view={view}
 			self._dataset_id = self._config.get_value(section, "dataset_id")
 
 		if self._directory_output is None:
-			self._directory_output = self._config.get_value(section, "output_directory")
+			self._directory_output = self._config.get_value(section, "output_directory", is_path=True)
 
 		if self._tmp_dir is None:
-			config_value = self._config.get_value(section, "temp_directory")
+			config_value = self._config.get_value(section, "temp_directory", is_path=True)
 			if config_value is not None:
 				assert self.validate_dir(config_value)
 				self._tmp_dir = config_value
@@ -678,13 +678,13 @@ view={view}
 			self._read_simulator_type = self._config.get_value(section, "type")
 
 		if self._executable_samtools is None:
-			self._executable_samtools = self._config.get_value(section, "samtools")
+			self._executable_samtools = self._config.get_value(section, "samtools", is_path=True)
 
 		if self._executable_art_illumina is None:
-			self._executable_art_illumina = self._config.get_value(section, "art_illumina", silent=True)
+			self._executable_art_illumina = self._config.get_value(section, "art_illumina", silent=True, is_path=True)
 
 		if self._directory_art_error_profiles is None:
-			self._directory_art_error_profiles = self._config.get_value(section, "art_error_profiles", silent=True)
+			self._directory_art_error_profiles = self._config.get_value(section, "art_error_profiles", silent=True, is_path=True)
 
 		if self._error_profile is None:
 			self._error_profile = self._config.get_value(section, "profile")
@@ -703,10 +703,11 @@ view={view}
 		section = "CommunityDesign"
 
 		if self._directory_ncbi_taxdump is None:
-			self._directory_ncbi_taxdump = self._config.get_value(section, "ncbi_taxdump")
+			self._directory_ncbi_taxdump = self._config.get_value(section, "ncbi_taxdump", is_path=True)
 
 		if self._strain_simulation_template is None:
-			self._strain_simulation_template = self._config.get_value(section, "strain_simulation_template", silent=True)
+			self._strain_simulation_template = self._config.get_value(
+				section, "strain_simulation_template", silent=True, is_path=True)
 
 		if self._number_of_samples is None:
 			self._number_of_samples = self._config.get_value(section, "number_of_samples", is_digit=True)
