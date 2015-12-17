@@ -161,7 +161,11 @@ class ArgumentHandler(Validator):
 
 		if self._seed is not None:
 			random.seed(self._seed)
-			np_random.seed(abs(hash(self._seed)))
+			try:
+				np_random.seed(abs(hash(self._seed)))
+			except ValueError:
+				msg = "Seed must be between 0 and 4294967295: {}, {}, {}".format(self._seed, hash(self._seed), abs(hash(self._seed)))
+				raise ValueError(msg)
 
 		assert isinstance(self._directory_output, basestring)
 		self._project_file_folder_handler = ProjectFileFolderHandle(
