@@ -1,5 +1,5 @@
 __author__ = 'hofmann'
-__verson__ = '0.0.8'
+__verson__ = '0.0.8.1'
 
 import os
 import StringIO
@@ -186,6 +186,17 @@ class ConfigParserWrapper(DefaultLogging):
 			@rtype: basestring
 		"""
 		assert isinstance(value, basestring)
+
+		parent_directory, filename = os.path.split(value)
+
+		if not parent_directory and not os.path.isfile(value):
+			for path in os.environ["PATH"].split(os.pathsep):
+				path = path.strip('"')
+				exe_file = os.path.join(path, filename)
+				if os.path.isfile(exe_file):
+					value = exe_file
+					break
+
 		value = os.path.expanduser(value)
 		value = os.path.normpath(value)
 		value = os.path.abspath(value)
