@@ -10,6 +10,9 @@ from scripts.argumenthandler_ga import ArgumentHandler
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.MGCluster.mgcluster import MGCluster
 from scripts.MGAnnotate.mgannotate import MGAnnotate
+from scripts.MGExtract.mgextract import MGExtract
+from scripts.MGAnnotate.mothurcluster import MothurCluster
+from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 
 
 class GenomeAnnotation(ArgumentHandler):
@@ -158,7 +161,6 @@ class GenomeAnnotation(ArgumentHandler):
 		@rtype: None
 		"""
 		assert isinstance(self, ArgumentHandler)
-		from scripts.MGExtract.mgextract import MGExtract
 		mg_extract = MGExtract(
 			mg_analyse_executable=self._get_mg_analyse_executable(),
 			file_path_query_genome_file_paths=self._file_path_query_genomes_location_file,
@@ -239,8 +241,6 @@ class GenomeAnnotation(ArgumentHandler):
 
 		@rtype: None
 		"""
-		from scripts.MGAnnotate.mothurcluster import MothurCluster
-		from scripts.MGAnnotate.taxonomiccluster import TaxonomicCluster
 		# set of taxonomic ids of well known genomes
 		data_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		data_table.read(self._file_path_map_reference_genome_id_to_tax_id)
@@ -256,7 +256,7 @@ class GenomeAnnotation(ArgumentHandler):
 		# data_table_iid_mapping.concatenate(data_table_iid_mapping_silva, strict=False)
 
 		mg_annotate = MGAnnotate(
-			ncbi_reference_directory=self._ncbi_reference_directory,
+			# ncbi_reference_directory=self._ncbi_reference_directory,
 			file_path_query_genomes_location=self._file_path_query_genomes_location_file,
 			file_path_reference_genomes_location=self._file_path_reference_genome_locations,
 			file_path_reference_taxid_map=self._file_path_map_reference_genome_id_to_tax_id,
