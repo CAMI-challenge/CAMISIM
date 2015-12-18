@@ -325,7 +325,7 @@ class SamtoolsWrapper(Validator):
 				samtools=self._file_path_samtools,
 				bamfile=file_path,
 				output=output_file))
-			if not exit_status == 0:
+			if exit_status != 0:
 				msg = "Error occurred parsing '{}'".format(file_path)
 				self._logger.error(msg)
 				raise OSError(msg)
