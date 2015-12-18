@@ -299,8 +299,12 @@ class MetagenomeSimulation(ArgumentHandler):
 
 		# convert sam to bam
 		samtools = SamtoolsWrapper(
-			self._executable_samtools, self._max_processors, self._project_file_folder_handler.get_tmp_wd(),
-			self._logfile, self._verbose
+			file_path_samtools=self._executable_samtools,
+			max_processes=self._max_processors,
+			tmp_dir=self._project_file_folder_handler.get_tmp_wd(),
+			logfile=self._logfile,
+			verbose=self._verbose,
+			debug=self._debug
 		)
 
 		directory_sam = directory_output_tmp
@@ -467,8 +471,13 @@ class MetagenomeSimulation(ArgumentHandler):
 			return
 
 		samtools = SamtoolsWrapper(
-			self._executable_samtools, self._max_processors, self._project_file_folder_handler.get_tmp_wd(),
-			self._logfile, self._verbose, self._debug)
+			file_path_samtools=self._executable_samtools,
+			max_processes=self._max_processors,
+			tmp_dir=self._project_file_folder_handler.get_tmp_wd(),
+			logfile=self._logfile,
+			verbose=self._verbose,
+			debug=self._debug
+			)
 
 		if self._phase_gsa:
 			for sample_index in range(self._number_of_samples):
