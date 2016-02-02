@@ -32,6 +32,7 @@ class FastaStreamer(SequenceValidator):
 
 	output is the same file with anonymous ids and a mapping form old ids to new ones
 
+	# TODO: have user choose new_line character '\0', '\n'
 	"""
 
 	_label = "FastaStreamer"
