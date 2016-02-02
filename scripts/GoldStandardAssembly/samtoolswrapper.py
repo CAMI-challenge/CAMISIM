@@ -2,6 +2,7 @@ __author__ = 'hofmann'
 __version__ = '0.0.3.1'
 
 import os
+import subprocess
 import shutil
 import tempfile
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
@@ -319,12 +320,13 @@ class SamtoolsWrapper(Validator):
 		for file_path in list_of_file_paths:
 			assert self.validate_file(file_path)
 
-		cmd = "{samtools} view '{bamfile}' | awk '{{print $1 \"\\t\" $4}}' >> '{output}'"
+		cmd = "set -o pipefail; {samtools} view '{bamfile}' | awk '{{print $1 \"\\t\" $4}}' >> '{output}'"
 		for file_path in list_of_file_paths:
-			exit_status = os.system(cmd.format(
-				samtools=self._file_path_samtools,
-				bamfile=file_path,
-				output=output_file))
+			# exit_status = os.system(
+			exit_status = subprocess.call(
+				cmd.format(samtools=self._file_path_samtools, bamfile=file_path, output=output_file),
+				shell=True,
+				executable="bash")
 			if exit_status != 0:
 				msg = "Error occurred parsing '{}'".format(file_path)
 				self._logger.error(msg)
