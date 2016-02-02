@@ -395,9 +395,13 @@ class ANIm(Validator):
 		for candidate_id_reference_id in perc_ids:
 			candidate_id = candidate_id_reference_id[0]
 			reference_id = candidate_id_reference_id[1]
-			# self._logger.info("{}: candidate_id: {}; reference_id: {}".format(candidate_id_reference_id, candidate_id, reference_id))
+			# self._logger.info("{}: candidate_id: {}; reference_id: {}".format(
+			# candidate_id_reference_id, candidate_id, reference_id))
 			# ani_ish = perc_ids[candidate_id_reference_id] * perc_aln[candidate_id_reference_id]
-			if candidate_id not in best_ani_by_candidate_id or (perc_aln[candidate_id_reference_id] > self._minimum_alignment and best_ani_by_candidate_id[candidate_id] < perc_ids[candidate_id_reference_id]):
+			if perc_aln[candidate_id_reference_id] < self._minimum_alignment:
+				continue
+			if (candidate_id not in best_ani_by_candidate_id or
+						perc_ids[candidate_id_reference_id] > best_ani_by_candidate_id[candidate_id]):
 				best_ani_by_candidate_id[candidate_id] = perc_ids[candidate_id_reference_id]
 				min_lengths[candidate_id] = lengths[candidate_id_reference_id]
 				min_sim_errors[candidate_id] = sim_errors[candidate_id_reference_id]
