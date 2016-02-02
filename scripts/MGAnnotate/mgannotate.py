@@ -291,13 +291,13 @@ class MGAnnotate(Validator):
 		total_lengths, sim_errors, percent_identity, percent_alignment, ncbi = ani_calculator.calculate_best_anim()
 
 		for row_index, query_genomes_id in enumerate(query_genome_ids_column):
-			if query_genomes_id in percent_alignment and percent_alignment[query_genomes_id] > 0:
-				if float(percent_alignment[query_genomes_id]) > 0.98:
+			if query_genomes_id in percent_identity and percent_identity[query_genomes_id] > 0:
+				if float(percent_identity[query_genomes_id]) > 0.98:
 					ani_prediction_novelty_column[row_index] = "same_strain"
-				elif float(percent_alignment[query_genomes_id]) > 0.96:
+				elif float(percent_identity[query_genomes_id]) > 0.96:
 					ani_prediction_novelty_column[row_index] = "same_species"
 				ani_prediction_column[row_index] = ncbi[query_genomes_id]
-				ani_column[row_index] = str(percent_alignment[query_genomes_id])
+				ani_column[row_index] = str(percent_identity[query_genomes_id])
 				science_name = taxonomy.get_scientific_name(ncbi[query_genomes_id])
 				if science_name is not None:
 					ani_scientific_name_column[row_index] = science_name
