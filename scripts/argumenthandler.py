@@ -450,10 +450,6 @@ view={view}
 
 		@rtype: None
 		"""
-		if not self.validate_file(self._project_file_folder_handler.get_genome_location_file_path(), silent=True):
-			self._logger.error("Required internal files not found! Did previous community design fail?")
-			self._valid_arguments = False
-
 		if self._dataset_id is None:
 			self._dataset_id = ''
 
