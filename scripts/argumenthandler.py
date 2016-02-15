@@ -21,7 +21,7 @@ class ArgumentHandler(Validator):
 	_seed = None
 
 	_phase = 0
-	_phase_validate_raw_genomes = True	# TODO: read from config
+	_phase_validate_raw_genomes = False  # TODO: read from config
 	_phase_design_community = False
 	_phase_move_and_clean_genomes = False
 	_phase_simulate_reads = False
@@ -588,11 +588,13 @@ view={view}
 			self._phase = 0
 
 		if self._phase == 0:
+			self._phase_validate_raw_genomes = True
 			self._phase_design_community = True
 			self._phase_move_and_clean_genomes = True
 			self._phase_simulate_reads = True
 
 		if self._phase == 1:
+			self._phase_validate_raw_genomes = True
 			self._phase_design_community = True
 			self._phase_move_and_clean_genomes = True
 
