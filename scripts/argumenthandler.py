@@ -557,7 +557,7 @@ view={view}
 		else:
 			self._tmp_dir = self.get_full_path(self._tmp_dir)
 
-		subfolders = ["scripts", "tools"]
+		subfolders = ["scripts"]
 
 		if self._compresslevel > 0:
 			self._phase_compress = True
