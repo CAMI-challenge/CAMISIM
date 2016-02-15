@@ -90,7 +90,7 @@ class MetagenomeSimulation(ArgumentHandler):
 				self._logger.info("Compress Data")
 				self._compress_data()
 
-		except (KeyboardInterrupt, SystemExit, Exception, ValueError) as e:
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError, RuntimeError) as e:
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
 			if len(e.args) > 0:
 				self._logger.error(e.args[0])
@@ -159,6 +159,9 @@ class MetagenomeSimulation(ArgumentHandler):
 			verbose=self._verbose)
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
+		if not self.validate_file(file_path_genome_locations, silent=True):
+			msg = "Required file not found! Was design of communities not completed?"
+			raise RuntimeError(msg)
 		meta_data_table.read(file_path_genome_locations)
 		return meta_data_table.get_map(0, 1)
 
