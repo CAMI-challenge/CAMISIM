@@ -308,7 +308,7 @@ class Validator(DefaultLogging):
 
 		if not zero and digit == 0:
 			if not silent:
-				self._logger.error("{}Invalid digit, must not be {}".format(prefix, maximum, digit))
+				self._logger.error("{}Invalid digit, must not be {}".format(prefix, digit))
 			return False
 		return True
 
