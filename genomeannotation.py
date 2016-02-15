@@ -81,9 +81,12 @@ class GenomeAnnotation(ArgumentHandler):
 			if self._phase == 0 or self._phase == 3:
 				self.marker_gene_annotation()
 
-		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError, OSError) as e:
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError, OSError) as e:
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
-			self._logger.error(e.args[0])
+			if len(e.args) > 0:
+				self._logger.error(e.args[0])
+			self._logger.error("Aborted")
+		except AssertionError:
 			self._logger.error("Aborted")
 		else:
 			self._logger.info("Finished")

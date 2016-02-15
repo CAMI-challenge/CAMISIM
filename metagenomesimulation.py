@@ -95,9 +95,7 @@ class MetagenomeSimulation(ArgumentHandler):
 			if len(e.args) > 0:
 				self._logger.error(e.args[0])
 			self._logger.info("Metagenome simulation aborted")
-		except AssertionError as e:
-			# self._logger.debug("\n{}\n".format(traceback.format_exc()))
-			# self._logger.error(e.args[0])
+		except AssertionError:
 			self._logger.info("Metagenome simulation aborted")
 		else:
 			self._logger.info("Metagenome simulation finished")
