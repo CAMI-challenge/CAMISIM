@@ -42,7 +42,7 @@ class MetagenomeSimulation(ArgumentHandler):
 		self._logger.info("Metagenome simulation starting")
 		try:
 			# Validate Genomes
-			if self._validate_raw_genomes:
+			if self._phase_validate_raw_genomes:
 				self._logger.info("Validating Genomes")
 				self._validate_raw_genomes()
 
@@ -90,9 +90,14 @@ class MetagenomeSimulation(ArgumentHandler):
 				self._logger.info("Compress Data")
 				self._compress_data()
 
-		except (KeyboardInterrupt, SystemExit, Exception, ValueError, AssertionError) as e:
+		except (KeyboardInterrupt, SystemExit, Exception, ValueError) as e:
 			self._logger.debug("\n{}\n".format(traceback.format_exc()))
-			self._logger.error(e.args[0])
+			if len(e.args) > 0:
+				self._logger.error(e.args[0])
+			self._logger.info("Metagenome simulation aborted")
+		except AssertionError as e:
+			# self._logger.debug("\n{}\n".format(traceback.format_exc()))
+			# self._logger.error(e.args[0])
 			self._logger.info("Metagenome simulation aborted")
 		else:
 			self._logger.info("Metagenome simulation finished")
