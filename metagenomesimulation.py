@@ -19,6 +19,7 @@ from scripts.GoldStandardFileFormat.goldstandardfileformat import GoldStandardFi
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.ReadSimulationWrapper.readsimulationwrapper import ReadSimulationArt
+from scripts.ReadSimulationWrapper.readsimulationwrapper import ReadSimulationWgsim
 
 
 class MetagenomeSimulation(ArgumentHandler):
@@ -273,6 +274,9 @@ class MetagenomeSimulation(ArgumentHandler):
 		@rtype: None
 		"""
 		self._project_file_folder_handler._location_reads = [True, True]  # TODO write public method for this
+		
+		read_simulators = ["art", "wgsim"] # TODO use this to dynamically choose the correct read simulator (expandability)
+		
 		sample_id = str(sample_index)
 		directory_output_tmp = self._project_file_folder_handler.get_reads_dir(True, sample_id)
 		directory_bam = self._project_file_folder_handler.get_bam_dir(sample_id)
@@ -280,18 +284,31 @@ class MetagenomeSimulation(ArgumentHandler):
 		# file_path_executable = os.path.join(directory_script, "tools", "readsimulator", "art_illumina")
 		# directory_error_profiles = os.path.join(directory_script, "tools", "readsimulator", "profile")
 
-		if not self._read_simulator_type == "art":
+		if self._read_simulator_type == "art":
+			simulator = ReadSimulationArt(
+				file_path_executable=self._executable_art_illumina,
+				directory_error_profiles=self._directory_art_error_profiles,
+				separator=self._separator,
+				max_processes=self._max_processors,
+				logfile=self._logfile,
+				verbose=self._verbose,
+				debug=self._debug,
+				seed=None,
+				tmp_dir=self._project_file_folder_handler.get_tmp_wd())
+		elif self._read_simulator_type == "wgsim":
+			simulator = ReadSimulationWgsim(
+				file_path_executable=self._executable_art_illumina,
+				directory_error_profiles=self._directory_art_error_profiles,
+				separator=self._separator,
+				max_processes=self._max_processors,
+				logfile=self._logfile,
+				verbose=self._verbose,
+				debug=self._debug,
+				seed=None,
+				tmp_dir=self._project_file_folder_handler.get_tmp_wd())
+		else:
 			raise ValueError("Read simulator type '{}' not supported.".format(self._read_simulator_type))
-		simulator = ReadSimulationArt(
-			file_path_executable=self._executable_art_illumina,
-			directory_error_profiles=self._directory_art_error_profiles,
-			separator=self._separator,
-			max_processes=self._max_processors,
-			logfile=self._logfile,
-			verbose=self._verbose,
-			debug=self._debug,
-			seed=None,
-			tmp_dir=self._project_file_folder_handler.get_tmp_wd())
+		
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
 		simulator.simulate(
