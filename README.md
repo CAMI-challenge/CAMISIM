@@ -13,7 +13,7 @@ https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/Design-docum
 [Methodology summary](https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki) can be found here:  
 https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki
 
-##Dependancies
+##Dependencies
 
 [Software and hardware dependancies](https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/Dependancies) can be found here:  
 https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/Dependancies
