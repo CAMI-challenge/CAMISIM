@@ -2,7 +2,7 @@
 
 __original_author__ = 'majda'
 __author__ = 'peter hofmann'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 
 import sys
@@ -252,7 +252,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 	
 	def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
 		super(ReadSimulationWgsim, self).__init__(file_path_executable, **kwargs)
-	
+		self._profile = 'standard'
+
 	def simulate(
 		self, file_path_distribution, file_path_genome_locations, directory_output,
 		total_size, profile, fragments_size_mean, fragment_size_standard_deviation):
@@ -284,8 +285,7 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 		if profile is not None:
 			assert profile in self._wgsim_options
 			self._profile = profile
-		else:
-			self._profile = 'standard'
+
 		if fragments_size_mean and fragment_size_standard_deviation:
 			assert self.validate_number(fragments_size_mean, minimum=1)
 			assert self.validate_number(fragment_size_standard_deviation, minimum=0)
@@ -705,93 +705,148 @@ class ReadSimulationArt(ReadSimulationWrapper):
 # 		maf_converter.main(directory_output)
 
 
+dict_of_read_simulators = {
+	"art": ReadSimulationArt,
+	"wgsim": ReadSimulationWgsim
+}
+
+
 # #################
 # MAIN
 # #################
 
 
 def main(args=None):
-	parser = argparse.ArgumentParser(description="Readsimulator")
+	parser = argparse.ArgumentParser(
+		description="Readsimulator",
+		version="ReadSimulationWrapper {}".format(__version__),
+		usage="""python "readsimulationwrapper.py" 10000 \\
+		-i abundance.tsv \\
+		-l genome_locations.tsv \\
+		-o dir_output/ \\
+		-art art_illumina \\
+		-epd dir_profile/ \\
+		-ep "hi150" \\
+		-sd 27 \\
+		-m 270
+		"""
+		)
 
-	parser.add_argument(
+	# required arguments
+
+	group_input = parser.add_argument_group('required config arguments')
+	group_input.add_argument(
 		"total_size",
 		default=None,
 		type=long,
 		help="Output size in base pairs, example 1GB: '1*10**9'")
-	parser.add_argument(
-		"-i", "--input_distribution",
+
+	group_input.add_argument(
+		"-i", "--abundance_profile",
 		default=None,
 		type=str,
-		help="list with genome ID, abundance and genome size")
-	parser.add_argument(
-		"-l", "--input_genome_loaction",
+		help="List with tab separated genome ID, abundance")
+
+	group_input.add_argument(
+		"-l", "--genome_loactions",
 		default=None,
 		type=str,
 		help="list with genome ID, and file path")
-	parser.add_argument(
+
+	group_input.add_argument(
 		"-o", "--directory_output",
 		default=None,
 		type=str,
 		help="directory where fastq files will be written to")
+
+	# optional arguments
+
+	# group_input = parser.add_argument_group('optional config arguments')
 	parser.add_argument(
 		"-tmp", "--directory_tmp",
 		default=None,
 		type=str,
 		help="temporary storage of files")
+
 	parser.add_argument(
-		"-log", "--file_path_logfile",
+		"-log", "--logfile",
 		default=None,
 		type=str,
-		help="Logfile")
+		help="File path to a Logfile")
+
 	parser.add_argument(
+		"-p", "--processor_pool",
+		default=1,
+		type=int,
+		help="number of available processors")
+
+	parser.add_argument(
+		"-seed",
+		default=None,
+		type=str,
+		help="seed for random number generators")
+
+	group_input = parser.add_argument_group('ART arguments')
+	group_input.add_argument(
+		"-art", "--executable",
+		default="art_illumina",
+		type=str,
+		help="File path to ART illumina executable.")
+
+	group_input.add_argument(
+		"-epd", "--error_profile_dir",
+		default=None,
+		type=str,
+		help="Path to directory containing ART error profiles")
+
+	group_input.add_argument(
 		"-ep", "--error_profile",
 		default="hi150",
 		type=str,
-		choices=["mi", "hi", "hi150"],
+		choices=ReadSimulationArt._art_error_profiles.keys(),  # ["mi", "hi", "hi150"],
 		help="mi: MiSeq, hi: HiSeq 100, hi150: HiSeq 150")
-	parser.add_argument(
-		"-s", "--fragment_size_standard_deviation", default=27, type=int,
-		help="the standard deviation of DNA/RNA fragment size for paired-end simulations. (from art_sim)")
-	parser.add_argument(
-		"-m", "--fragments_size_mean", default=270, type=int,
-		help="the mean size of DNA/RNA fragments for paired-end simulations. (from art_sim)")
-	parser.add_argument(
-		"-p", "--processor_pool", default=1, type=int,
-		help="number of available processors")
+
+	group_input.add_argument(
+		"-sd", "--fragment_size_standard_deviation",
+		default=27,
+		type=int,
+		help="standard deviation of fragment size in base pairs.")
+
+	group_input.add_argument(
+		"-m", "--fragments_size_mean",
+		default=270,
+		type=int,
+		help="the mean size of fragments in base pairs.")
 
 	if args is None:
 		options = parser.parse_args()
 	else:
 		options = parser.parse_args(args)
 
-	directory_script = os.path.dirname(__file__)
-	file_path_executable = os.path.join(directory_script, "tools", "readsimulator", "art_illumina")
-	directory_error_profiles = os.path.join(directory_script, "tools", "readsimulator", "profile")
+	# directory_script = os.path.dirname(__file__)
+	file_path_executable = options.executable
+	directory_error_profiles = options.error_profile_dir
 
 	simulator = ReadSimulationArt(
 		file_path_executable=file_path_executable,
 		directory_error_profiles=directory_error_profiles,
 		separator='\t',
 		max_processes=options.processor_pool,
-		logfile=options.file_path_logfile,
+		logfile=options.logfile,
 		verbose=True,
 		debug=False,
-		seed=None,
+		seed=options.seed,
 		tmp_dir=options.directory_tmp)
 
 	simulator.simulate(
-		file_path_distribution=options.input_distribution,
-		file_path_genome_locations=options.input_genome_loaction,
+		file_path_distribution=options.abundance_profile,
+		file_path_genome_locations=options.genome_loactions,
 		directory_output=options.directory_output,
 		total_size=options.total_size,
-		profile=options.error_profile,
+		profile=options.error_profile.lower(),
 		fragments_size_mean=options.fragments_size_mean,
 		fragment_size_standard_deviation=options.fragment_size_standard_deviation)
 
-dict_of_read_simulators = {
-	"art": ReadSimulationArt,
-	"wgsim": ReadSimulationWgsim
-}
 
 if __name__ == "__main__":
 	main()
