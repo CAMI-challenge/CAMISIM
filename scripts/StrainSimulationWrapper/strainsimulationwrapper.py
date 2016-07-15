@@ -117,14 +117,14 @@ class GenomeOrganizer(Validator):
 
 		final_amounts = []
 		while sum(final_amounts) < max_genome_amount:
-			amount = min(np_random.geometric(probability), 10)
+			amount = np_random.geometric(probability)
 			final_amounts.append(amount)
 
 		final_amounts[-1] -= sum(final_amounts) - max_genome_amount
 		return final_amounts
 
 	@staticmethod
-	def _get_genome_amounts_geometric_fix(num_real_genomes, max_genome_amount):
+	def _get_genome_amounts_geometric_fix(num_real_genomes, max_genome_amount, geometric_probability=0.3):
 		"""
 		Get amounts of genomes by original genome
 
@@ -144,14 +144,14 @@ class GenomeOrganizer(Validator):
 		while index < len(final_amounts):
 			if sum(final_amounts) >= max_genome_amount:
 				break
-			final_amounts[index] += min(1 + np_random.geometric(0.3), 10)
+			final_amounts[index] += 1 + np_random.geometric(geometric_probability)
 			index += 1
 
 		final_amounts[index-1] -= sum(final_amounts) - max_genome_amount
 		return final_amounts
 
 	@staticmethod
-	def _get_genome_amounts_geometric(probability, max_genome_amount):
+	def _get_genome_amounts_geometric(probability, max_genome_amount, geometric_probability=0.3):
 		"""
 		Get amounts of genomes by original genome
 
@@ -172,7 +172,7 @@ class GenomeOrganizer(Validator):
 			if random.uniform(0, 1) < probability:
 				final_amounts.append(1)
 			else:
-				amount = min(1 + np_random.geometric(0.3), 10)
+				amount = 1 + np_random.geometric(geometric_probability)
 				final_amounts.append(amount)
 
 		final_amounts[-1] -= sum(final_amounts) - max_genome_amount
