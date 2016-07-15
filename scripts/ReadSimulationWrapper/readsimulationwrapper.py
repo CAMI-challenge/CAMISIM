@@ -239,6 +239,164 @@ class ReadSimulationWrapper(GenomePreparation):
 
 
 # #################
+# ReadSimulationWgsim - wgsim Wrapper
+# #################
+
+class ReadSimulationWgsim(ReadSimulationWrapper):
+	"""
+	Simulate reads using wgsim
+	"""
+	_label = "ReadSimulationWgsim"
+	
+	_wgsim_options = ['errorfree', 'standard'] #TODO make options fully customizable?
+	
+	def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
+		super(ReadSimulationWgsim, self).__init__(file_path_executable, **kwargs)
+	
+	def simulate(
+		self, file_path_distribution, file_path_genome_locations, directory_output,
+		total_size, profile, fragments_size_mean, fragment_size_standard_deviation):
+		"""
+		Simulate reads based on a given sample distribution
+
+		@param file_path_distribution: File genome id associated with the abundance of a genome
+		@type file_path_distribution: str | unicode
+		@param file_path_genome_locations: File genome id associated with the file path of a genome
+		@type file_path_genome_locations: str | unicode
+		@param directory_output: Directory for the sam and fastq files output
+		@type directory_output: str | unicode
+		@param total_size: Size of sample in base pairs
+		@type total_size: int | long
+		@param profile: wgsim options: 'errorfree', 'standard'
+		@type profile: str | unicode
+		@param fragments_size_mean: Size of the fragment of which the ends are used as reads in base pairs
+		@type fragments_size_mean: int | long
+		@param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
+		@type fragment_size_standard_deviation: int | long
+		"""
+		assert isinstance(total_size, (int, long)), "Expected natural digit"
+		assert isinstance(fragments_size_mean, (int, long)), "Expected natural digit"
+		assert isinstance(fragment_size_standard_deviation, (int, long)), "Expected natural digit"
+		assert total_size > 0, "Total size needs to be a positive number"
+		assert fragments_size_mean > 0, "Mean fragments size needs to be a positive number"
+		assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
+		assert self.validate_dir(directory_output)
+		if profile is not None:
+			assert profile in self._wgsim_options
+			self._profile = profile
+		else:
+			self._profile = 'standard'
+		if fragments_size_mean and fragment_size_standard_deviation:
+			assert self.validate_number(fragments_size_mean, minimum=1)
+			assert self.validate_number(fragment_size_standard_deviation, minimum=0)
+			self._fragments_size_mean = fragments_size_mean
+			self._fragment_size_standard_deviation = fragment_size_standard_deviation
+		else:
+			if fragment_size_standard_deviation:
+				assert fragments_size_mean is not None, "Both, mean and sd are requires."
+			if fragments_size_mean:
+				assert fragment_size_standard_deviation is not None, "Both, mean and standard deviation, are required."
+		self._logger.info("Using '{}' error profile.".format(profile))
+
+		dict_id_abundance = self._read_distribution_file(file_path_distribution)
+		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
+		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
+
+		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
+		factor = total_size # wgsim needs number of reads as input not coverage
+
+		self._logger.debug("Multiplication factor: {}".format(factor))
+		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
+		
+	def _simulate_reads(self, dict_id_abundance, dict_id_file_path, factor, directory_output):
+		"""
+		Parallel simulation of reads
+
+		@param dict_id_abundance: Dictionary of genome id to abundance
+		@type dict_id_abundance: dict[str|unicode, float]
+		@param dict_id_file_path: Dictionary of genome id to file path
+		@type dict_id_file_path: dict[str|unicode, str|unicode]
+		@param factor: Factor abundances will be multiplied by
+		@type factor: float | int | long
+		@param directory_output: Directory for the sam and fastq files output
+		@type directory_output: str | unicode
+		"""
+		self._logger.info("Simulating reads using wgsim readsimulator...")
+		assert isinstance(dict_id_file_path, dict), "Expected dictionary, genome id as key, file path as value"
+		assert isinstance(dict_id_abundance, dict), "Expected dictionary, genome id as key, abundance as value"
+		assert isinstance(factor, (int, long, float)), "Factor must be numerical"
+		assert self.validate_dir(directory_output)
+
+		# add commands to a list of tasks to run them in parallel instead of calling them sequentially
+		tasks = []
+		for genome_id in dict_id_abundance.keys():
+			file_path_input = dict_id_file_path[genome_id]
+			abundance = dict_id_abundance[genome_id]
+			fold_coverage = int(round(abundance * factor / self._fragments_size_mean)) # name "fold_coverage" is misleading for wgsim, divided by 2 because wgsim considers read _pairs_
+			file_path_output_prefix = os.path.join(directory_output, str(genome_id))
+			self._logger.debug("{id}\t{fold_coverage}".format(id=genome_id, fold_coverage=fold_coverage))
+			system_command = self._get_sys_cmd(
+				file_path_input=file_path_input,
+				fold_coverage=fold_coverage,
+				file_path_output_prefix=file_path_output_prefix)
+			self._logger.debug("SysCmd: '{}'".format(system_command))
+			self._logger.info("Simulating reads from {}: '{}'".format(genome_id, file_path_input))
+			tasks.append(TaskCmd(system_command))
+		list_of_fails = runCmdParallel(tasks, maxProc=self._max_processes)
+
+		if list_of_fails is not None:
+			self._logger.error("{} commands returned errors!".format(len(list_of_fails)))
+			reportFailedCmd(list_of_fails)
+		self._logger.info("Simulating reads finished")
+		
+	def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
+		"""
+		Build system command to be run.
+
+		@param file_path_input: Path to genome fasta file
+		@type file_path_input: str | unicode
+		@param fold_coverage: coverage of a genome
+		@type fold_coverage: int | long | float
+		@param file_path_output_prefix: Output prefix used by art illumina
+		@type file_path_output_prefix: str | unicode
+
+		@return: System command to run art illumina
+		@rtype: str | unicode
+		"""
+		assert self.validate_file(file_path_input)
+		assert isinstance(fold_coverage, (int, long, float))
+		assert self.validate_dir(file_path_output_prefix, only_parent=True)
+
+		arguments = [
+			'-d', str(self._fragments_size_mean),
+			'-s', str(self._fragment_size_standard_deviation),
+			'-N', str(fold_coverage), # rename this, because its not the fold_coverage for wgsim
+			'-1', str(self._read_length),
+			'-2', str(self._read_length),
+			'-S', str(self._get_seed()),
+			]
+		if (self._profile == 'errorfree'):
+			arguments.extend([
+			'-e', "0",
+			'-r', "0",
+			'-R', "0",
+			#'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
+			#'A', MAX_N_RATIO,
+			])
+		arguments.extend([
+			file_path_input,
+			"{}".format(file_path_output_prefix + '1.fq'),
+			"{}".format(file_path_output_prefix + '2.fq')
+			])
+			
+		if self._logfile:
+			arguments.append(">> '{}'".format(self._logfile))
+
+		cmd = "{exe} {args}".format(exe=self._file_path_executable, args=" ".join(arguments))
+		return cmd
+		
+
+# #################
 # ReadSimulationArt - Art-Illumina Wrapper
 # #################
 

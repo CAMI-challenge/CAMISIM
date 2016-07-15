@@ -104,7 +104,7 @@ class Community(Validator):
 		if not self.validate_number(self.log_mu, 0, zero=False):
 			return False
 
-		if not self.validate_number(self.log_sigma, 0, zero=False):
+		if not self.validate_number(self.log_sigma, 0, zero=True):
 			return False
 
 		if not self.validate_number(self.gauss_mu):
