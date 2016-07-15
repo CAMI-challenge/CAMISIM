@@ -1,7 +1,7 @@
 # original from Dmitrij Turaev
 
-__author__ = 'hofmann'
-__version__ = '0.0.8'
+__author__ = 'Peter Hofmann'
+__version__ = '0.1.3'
 
 
 import os
@@ -46,6 +46,8 @@ class NcbiTaxonomy(Validator):
 		"""
 		super(NcbiTaxonomy, self).__init__(logfile=logfile, verbose=verbose)
 		assert self.validate_dir(taxonomy_directory, file_names=["names.dmp", "merged.dmp", "nodes.dmp"])
+		assert isinstance(build_node_tree, bool)
+		taxonomy_directory = self.get_full_path(taxonomy_directory)
 		self._file_path_ncbi_names = os.path.join(taxonomy_directory, "names.dmp")
 		self._file_path_ncbi_merged = os.path.join(taxonomy_directory, "merged.dmp")
 		self._file_path_ncbi_nodes = os.path.join(taxonomy_directory, "nodes.dmp")
@@ -148,13 +150,14 @@ class NcbiTaxonomy(Validator):
 		for match in matches:
 			set_of_tax_id.update(set(self.name_to_taxids[match]))
 		if len(set_of_tax_id) > 1:
-			self._logger.error("Several matches '{}' found for scientific_name: '{}'".format(", ".join(matches), scientific_name))
+			self._logger.error(
+				"Several matches '{}' found for scientific_name: '{}'".format(", ".join(matches), scientific_name))
 			return None
 		elif len(set_of_tax_id) == 0:
 			return None
 		return set_of_tax_id
 
-	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None):
+	def get_lineage_of_legal_ranks(self, taxid, ranks=None, default_value=None, as_name=False, inherit_rank=False):
 		"""
 			Return lineage of a specific taxonomic identifier, filtered by a list of legal ranks
 
@@ -166,30 +169,47 @@ class NcbiTaxonomy(Validator):
 			@type ranks: list[basestring]
 			@param default_value: Value at rank indexes at which the taxid of that specific rank is undefined
 			@type default_value: None | basestring
+			@param as_name: return scientific name if true, not taxonomic id
+			@type as_name: bool
+			@param inherit_rank: name unnamed rank names by known ones, species -> root
+			@type inherit_rank: bool
 
 			@return: list of ncbi taxonomic identifiers
 			@rtype: list[str|unicode|None]
 		"""
 		assert isinstance(taxid, basestring)
 		taxid = self.get_updated_taxid(taxid)
-		count = 0
 		if ranks is None:
 			ranks = NcbiTaxonomy.default_ordered_legal_ranks
 
 		lineage = [default_value] * len(ranks)
 		original_rank = self.get_rank_of_taxid(taxid)
 		if original_rank is not None and original_rank in ranks:
-			lineage[ranks.index(original_rank)] = taxid
+			if as_name:
+				lineage[ranks.index(original_rank)] = NcbiTaxonomy.taxid_to_name[taxid]
+			else:
+				lineage[ranks.index(original_rank)] = taxid
 
-		while taxid != "1" and count < 50:
-			count += 1
+		while taxid != "1":
 			taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
 			rank = NcbiTaxonomy.taxid_to_rank[taxid]
 			if rank in ranks:
-				lineage[ranks.index(rank)] = taxid
-		if count == 50:
-			self._logger.error("Bad lineage?: {}".format(lineage))
-			raise Warning("Strange Error")
+				if as_name:
+					lineage[ranks.index(rank)] = NcbiTaxonomy.taxid_to_name[taxid]
+				else:
+					lineage[ranks.index(rank)] = taxid
+
+		# todo: sort ranks
+		if inherit_rank:
+			rank_previous = default_value
+			tmp_list = enumerate(lineage)
+			if self.default_ordered_legal_ranks.index(ranks[0]) < self.default_ordered_legal_ranks.index(ranks[-1]):
+				tmp_list = reversed(list(enumerate(lineage)))
+			for index, value in tmp_list:
+				if value == default_value:
+					lineage[index] = rank_previous
+				else:
+					rank_previous = value
 		return lineage
 
 	def get_lineage(self, taxid):
@@ -204,18 +224,13 @@ class NcbiTaxonomy(Validator):
 		"""
 		assert isinstance(taxid, basestring)
 		taxid = self.get_updated_taxid(taxid)
-		count = 0
 		if NcbiTaxonomy._has_node_tree:
 			return TaxonomyNode.by_name[taxid].get_lineage()
 
 		lineage = [taxid]
-		while taxid != "1" and count < 50:
-			count += 1
+		while taxid != "1":
 			taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
 			lineage.append(taxid)
-		if count == 50:
-			self._logger.error("Bad lineage?: {}".format(lineage))
-			raise Warning("Strange Error")
 		return lineage
 
 	def get_parent_taxid_of_legal_ranks(self, taxid, ranks=None):
@@ -238,8 +253,10 @@ class NcbiTaxonomy(Validator):
 			self._logger.error("No parent taxid available for taxid: {}".format(taxid))
 			raise ValueError("Invalid taxid")
 		taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
-		while taxid is not None and NcbiTaxonomy.taxid_to_rank[taxid] not in ranks:
+		while taxid is not None and taxid != "1" and NcbiTaxonomy.taxid_to_rank[taxid] not in ranks:
 			taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
+		if NcbiTaxonomy.taxid_to_rank[taxid] not in ranks:
+			return None, None
 		return taxid, NcbiTaxonomy.taxid_to_rank[taxid]
 
 	def get_parent_taxid(self, taxid):
@@ -392,3 +409,115 @@ class NcbiTaxonomy(Validator):
 				# 5085       |       746128  |
 				old_taxid, new_taxid, sonst = line.strip().split('|')
 				NcbiTaxonomy.taxid_old_to_taxid_new[old_taxid.strip()] = new_taxid.strip()
+
+	# ###############
+	# newick
+	# ###############
+
+	# ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+	def _add_lineage_to_tree(self, root, lineage):
+		"""
+		Adding a lineage to a dictionary based tree
+
+		@param root: Root node
+		@type root: dict[str,dict]
+		@param lineage: A lineage
+		@type lineage: list[str]
+
+		@rtype: None
+		"""
+		node = root
+		for taxid in lineage:
+			if taxid is None:
+				continue
+			if taxid not in node:
+				node[taxid] = {}
+			node = node[taxid]
+
+	# (A,B,(C,D)E)F;
+	def _node_to_newick(self, node, node_name):
+		"""
+		Create a newick sting based on a tree
+
+		@param node:
+		@type node: dict[str,dict]
+		@param node_name:
+		@type node_name: str
+
+		@return: newick string
+		@rtype: str
+		"""
+		if len(node) == 0:
+			return node_name
+		child_nodes = []
+		for name in sorted(node.keys()):
+			child_nodes.append(self._node_to_newick(node[name], name))
+		return "({}){}".format(",".join(child_nodes), node_name)
+
+	def to_newick(self, stream, ranks=None):
+		"""
+		Export taxonomy as newick formated string.
+
+		@attention: Always rooted with id '1'
+
+		@param stream: Output stream
+		@type stream: file | FileIO | StringIO
+		@param ranks: List of legal ranks
+		@type ranks: list[str]
+
+		@rtype: None
+		"""
+		# build tree
+		if ranks is None:
+			ranks = self.default_ordered_legal_ranks
+		root = {}
+		for taxid in sorted(self.taxid_to_rank.keys()):
+			lineage = self.get_lineage_of_legal_ranks(taxid, ranks=ranks)
+			self._add_lineage_to_tree(root, lineage)
+
+		# build newick string
+		stream.write("{};\n".format(self._node_to_newick(root, '1')))
+
+	def to_map(self, stream):
+		"""
+		Exporting a map of all taxonomic ids to its respective taxonomic name.
+
+		@param stream: Output stream
+		@type stream: file | FileIO | StringIO
+
+		@rtype: None
+		"""
+		# for taxid in set_of_strains:
+		for taxid, name in self.taxid_to_name.iteritems():
+			stream.write("{}\t{}\n".format(taxid, name))
+
+	def lca(self, tax_id1, tax_id2):
+		"""
+
+		@param tax_id1: ncbi taxonomic identifier
+		@type tax_id1: basestring
+		@param tax_id2: ncbi taxonomic identifier
+		@type tax_id2: basestring
+
+		@return: ncbi taxonomic identifier
+		@rtype: basestring
+		"""
+		ranks = self.default_ordered_legal_ranks
+		ranks.reverse()
+		consistent_lineage = True
+		lineage1 = self.get_lineage_of_legal_ranks(tax_id1, ranks=ranks)
+		lineage2 = self.get_lineage_of_legal_ranks(tax_id2, ranks=ranks)
+		for index, value in enumerate(lineage1):
+			if value is None:
+				continue
+			if lineage2[index] is None:
+				continue
+			if value != lineage2[index]:
+				consistent_lineage = False
+				continue
+			if not consistent_lineage:
+				self._logger.info("Inconsitent lineage: {} vs {}".format(tax_id1, tax_id2))
+			return value
+		if not consistent_lineage:
+			self._logger.info("Inconsitent lineage: {} vs {}".format(tax_id1, tax_id2))
+		return "1"
