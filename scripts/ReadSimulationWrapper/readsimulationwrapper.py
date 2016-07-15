@@ -2,7 +2,7 @@
 
 __original_author__ = 'majda'
 __author__ = 'peter hofmann'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 import sys
@@ -302,8 +302,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
 		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
 
-		min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
-		factor = total_size # wgsim needs number of reads as input not coverage
+		# min_sequence_length = self._fragments_size_mean - self._fragment_size_standard_deviation
+		factor = total_size  # wgsim needs number of reads as input not coverage
 
 		self._logger.debug("Multiplication factor: {}".format(factor))
 		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
@@ -332,7 +332,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 		for genome_id in dict_id_abundance.keys():
 			file_path_input = dict_id_file_path[genome_id]
 			abundance = dict_id_abundance[genome_id]
-			fold_coverage = int(round(abundance * factor / self._fragments_size_mean)) # name "fold_coverage" is misleading for wgsim, divided by 2 because wgsim considers read _pairs_
+			# name "fold_coverage" is misleading for wgsim, divided by 2 because wgsim considers read _pairs_
+			fold_coverage = int(round(abundance * factor / self._fragments_size_mean))
 			file_path_output_prefix = os.path.join(directory_output, str(genome_id))
 			self._logger.debug("{id}\t{fold_coverage}".format(id=genome_id, fold_coverage=fold_coverage))
 			system_command = self._get_sys_cmd(
@@ -370,18 +371,18 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 		arguments = [
 			'-d', str(self._fragments_size_mean),
 			'-s', str(self._fragment_size_standard_deviation),
-			'-N', str(fold_coverage), # rename this, because its not the fold_coverage for wgsim
+			'-N', str(fold_coverage),  # rename this, because its not the fold_coverage for wgsim
 			'-1', str(self._read_length),
 			'-2', str(self._read_length),
 			'-S', str(self._get_seed()),
 			]
-		if (self._profile == 'errorfree'):
+		if self._profile == 'errorfree':
 			arguments.extend([
-			'-e', "0",
-			'-r', "0",
-			'-R', "0",
-			#'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
-			#'A', MAX_N_RATIO,
+				'-e', "0",
+				'-r', "0",
+				'-R', "0",
+				# 'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
+				# 'A', MAX_N_RATIO,
 			])
 		arguments.extend([
 			file_path_input,
@@ -787,6 +788,10 @@ def main(args=None):
 		fragments_size_mean=options.fragments_size_mean,
 		fragment_size_standard_deviation=options.fragment_size_standard_deviation)
 
+dict_of_read_simulators = {
+	"art": ReadSimulationArt,
+	"wgsim": ReadSimulationWgsim
+}
 
 if __name__ == "__main__":
 	main()
