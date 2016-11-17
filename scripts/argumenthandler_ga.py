@@ -138,6 +138,9 @@ class ArgumentHandler(SequenceValidator):
 		directory_output = self._directory_output
 		assert isinstance(tmp_dir, basestring)
 		assert isinstance(directory_output, basestring)
+		if not self.validate_dir(tmp_dir) or not self.validate_dir(directory_output, only_parent=True):
+			self._valid_args = False
+			return
 
 		self._project_file_folder_handler = ProjectFileFolderHandle(
 			tmp_dir=tmp_dir,
