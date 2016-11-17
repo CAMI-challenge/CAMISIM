@@ -250,6 +250,7 @@ class MetagenomeSimulation(ArgumentHandler):
 		prepare_genomes.move_genome_files(
 			genome_id_to_path_map=genome_id_to_path_map,
 			directory_output=directory_output
+			# sequence_min_length=1000 TODO
 			)
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
