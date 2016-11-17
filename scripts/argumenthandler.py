@@ -216,7 +216,7 @@ phase={phase}
 # Maximum number of available processors
 max_processors={pool}
 
-# ID used in anonymous sequences
+# ID prefix used for anonymous sequences
 dataset_id={dataset}
 
 # Directory where the output will be stored. Will be created if it does not exist.
@@ -336,7 +336,7 @@ genomes_real={genomes_real}
 max_strains_per_otu={max_strains_per_otu}
 
 # Base pair ratio between communities.
-# If one has a ratio of 1 and the other a ratio of 2, the second will have twice the size
+# If one has a ratio of 1 and the other a ratio of 2, the second will have twice the genome abundance
 ratio={ratio}
 
 # Simulated distribution
@@ -462,7 +462,7 @@ view={view}
 		if self._read_simulator_type is None:
 			self._logger.error("'-rs' No read simulator declared!")
 			self._valid_arguments = False
-		elif (self._read_simulator_type == 'art' or self._read_simulator_type == 'wgsim'):
+		elif self._read_simulator_type == 'art' or self._read_simulator_type == 'wgsim':
 			if self._directory_art_error_profiles is None:
 				self._logger.error("Art illumina error profile directory is required!")
 				self._valid_arguments = False
