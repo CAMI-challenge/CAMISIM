@@ -57,6 +57,8 @@ class ProjectFileFolderHandle(Validator):
 		assert isinstance(tmp_dir, basestring)
 		assert isinstance(output_dir, basestring)
 		assert time_stamp is None or isinstance(time_stamp, basestring)
+		assert self.validate_dir(tmp_dir)
+
 		self._tmp_dir = tempfile.mkdtemp(dir=tmp_dir)
 		self._directory_output = output_dir
 		self._time_stamp = time_stamp
