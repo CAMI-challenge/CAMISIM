@@ -270,6 +270,12 @@ class MGAnnotate(Validator):
 		ani_column = metadata_table.get_empty_column()
 		query_genome_ids_column = metadata_table.get_column(self._column_name_genome_id)
 
+		if not mothur_cluster.has_threshold(ani_distance):
+			max_threshold = mothur_cluster.get_max_threshold()
+			self._logger.warning("Distance '{}' not available using '{}' instead.".format(
+				ani_distance, max_threshold))
+			ani_distance = max_threshold
+
 		ani_calculator = ANIm(
 			file_path_nucmer=self._file_path_nucmer,
 			minimum_alignment=ani_minimum_alignment,
