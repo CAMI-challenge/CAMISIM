@@ -274,6 +274,8 @@ class MGAnnotate(Validator):
 			max_threshold = mothur_cluster.get_max_threshold()
 			self._logger.warning("Distance '{}' not available using '{}' instead.".format(
 				ani_distance, max_threshold))
+			if not max_threshold == "unique":
+				max_threshold = float(max_threshold)
 			ani_distance = max_threshold
 
 		ani_calculator = ANIm(
