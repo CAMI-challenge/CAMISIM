@@ -74,7 +74,7 @@ class MothurCluster(Validator):
 		@return: list of cluster index and a list of those clusters
 		@rtype: bool
 		"""
-		assert isinstance(threshold, (int, float, basestring))
+		assert threshold == self._unique_threshold or isinstance(threshold, (int, float))
 		return threshold in self._cutoff_to_cluster
 
 	def get_max_threshold(self):
@@ -272,7 +272,7 @@ class MothurCluster(Validator):
 		assert isinstance(threshold, (int, float, basestring))
 		assert isinstance(gid, basestring)
 		if not threshold == "unique":
-			assert isinstance(threshold, (int, float))
+			assert isinstance(threshold, (int, float)), "Bad value: '{}'".format(threshold)
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
 
 		if threshold not in self._cutoff_to_cluster:
