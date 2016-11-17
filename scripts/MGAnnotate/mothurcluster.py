@@ -64,6 +64,19 @@ class MothurCluster(Validator):
 			list_gid.append(self._iid_gid[iid])
 		return list_gid
 
+	def has_threshold(self, threshold):
+		"""
+		True if a threshold is available.
+
+		@param threshold: Specific cluster threshold
+		@type threshold: str|unicode | int|float
+
+		@return: list of cluster index and a list of those clusters
+		@rtype: bool
+		"""
+		assert isinstance(threshold, (int, float, basestring))
+		return threshold in self._cutoff_to_cluster
+
 	def get_max_threshold(self):
 		"""
 		Get highest threshold
