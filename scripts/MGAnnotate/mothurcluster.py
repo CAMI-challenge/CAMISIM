@@ -69,12 +69,14 @@ class MothurCluster(Validator):
 		True if a threshold is available.
 
 		@param threshold: Specific cluster threshold
-		@type threshold: str|unicode | int|float
+		@type threshold: str|unicode | int | float
 
 		@return: list of cluster index and a list of those clusters
 		@rtype: bool
 		"""
-		assert threshold == self._unique_threshold or isinstance(threshold, (int, float))
+		if not threshold == "unique":
+			assert isinstance(threshold, (int, float)), "Value must be of type float: '{}'".format(threshold)
+			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
 		return threshold in self._cutoff_to_cluster
 
 	def get_max_threshold(self):
