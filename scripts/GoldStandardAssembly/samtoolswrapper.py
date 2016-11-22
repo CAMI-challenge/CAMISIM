@@ -92,10 +92,10 @@ class SamtoolsWrapper(Validator):
 		file_name = os.path.splitext(os.path.basename(file_path_sam))[0]
 		file_path_bam = os.path.join(output_dir, file_name)
 		# cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
-		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_sorted_bam")
+		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_sam_to_sorted_bam")
 
 		cmd_stream_sam_file = "{samtools} view -bS {input}"
-		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output}.bam -O bam -T {prefix}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory}G -o {output}.bam -O bam -T {prefix}"
 		cmd_index_bam_file = "{samtools} index {output}.bam"
 
 		cmd = cmd_stream_sam_file + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
@@ -178,7 +178,7 @@ class SamtoolsWrapper(Validator):
 	#
 	# #######################################################
 
-	def _get_merge_bam_cmd(self, list_of_file_paths, file_name_output):
+	def _get_merge_bam_cmd(self, list_of_file_paths, file_name_output, max_memory=-1):
 		"""
 			Return system command as string.
 			Command will create a sorted and indexed bam file from a sam file.
@@ -193,8 +193,12 @@ class SamtoolsWrapper(Validator):
 			@return: system command
 			@rtype: str
 		"""
+		if max_memory == -1:
+			max_memory = self._max_memory
+		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_merged_to_sorted_bam")
+
 		cmd_merge_bam_files = "{samtools} merge -u - '{input_list}'"
-		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output}.bam -O bam -T {prefix}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory}G -o {output}.bam -O bam -T {prefix}"
 		cmd_index_bam_file = "{samtools} index {output}.bam"
 		cmd = cmd_merge_bam_files + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
 
@@ -202,7 +206,10 @@ class SamtoolsWrapper(Validator):
 		return cmd.format(
 			samtools=self._file_path_samtools,
 			input_list="' '".join(list_of_file_paths),
-			output=file_name_output
+			compression=self._compression_level,
+			memory=max_memory,
+			output=file_name_output,
+			prefix=prefix_temp_files
 			)
 
 	def merge_bam_files_by_dict(self, dict_of_bam_files, output_dir):
