@@ -76,7 +76,8 @@ class SamtoolsWrapper(Validator):
 		"""
 		file_name = os.path.splitext(os.path.basename(file_path_sam))[0]
 		file_path_bam = os.path.join(output_dir, file_name)
-		cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
+		# cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
+		cmd = "{samtools} view -bS {input} | {samtools} sort -I 0 - {output}; {samtools} index {output}.bam"
 		return cmd.format(
 			samtools=self._file_path_samtools,
 			input=file_path_sam,
@@ -275,7 +276,7 @@ class SamtoolsWrapper(Validator):
 			@raises: AssertionError
 		"""
 		if output_file is None:
-			output_file = tempfile.mktemp(dir=self._tmp_dir)
+			output_file = tempfile.mktemp(dir=self._tmp_dir, prefix="start_positions")
 		assert isinstance(list_of_file_paths, list)
 		assert isinstance(output_file, basestring)
 		assert self.validate_dir(output_file, only_parent=True)
