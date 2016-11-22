@@ -90,12 +90,12 @@ class SamtoolsWrapper(Validator):
 		if max_memory == -1:
 			max_memory = self._max_memory
 		file_name = os.path.splitext(os.path.basename(file_path_sam))[0]
-		file_path_bam = os.path.join(output_dir, file_name+".bam")
+		file_path_bam = os.path.join(output_dir, file_name)
 		# cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
 		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_sorted_bam")
 
 		cmd_stream_sam_file = "{samtools} view -bS {input}"
-		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output} -O bam -T {prefix}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output}.bam -O bam -T {prefix}"
 		cmd_index_bam_file = "{samtools} index {output}.bam"
 
 		cmd = cmd_stream_sam_file + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
