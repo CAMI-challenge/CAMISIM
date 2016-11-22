@@ -95,7 +95,7 @@ class SamtoolsWrapper(Validator):
 		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_sorted_bam")
 
 		cmd_stream_sam_file = "{samtools} view -bS {input}"
-		cmd_sort_bam_file = "{samtools} sort -I {compression} -m {memory} -o {output} -O bam -T {prefix}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output} -O bam -T {prefix}"
 		cmd_index_bam_file = "{samtools} index {output}.bam"
 
 		cmd = cmd_stream_sam_file + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
@@ -194,7 +194,7 @@ class SamtoolsWrapper(Validator):
 			@rtype: str
 		"""
 		cmd_merge_bam_files = "{samtools} merge -u - '{input_list}'"
-		cmd_sort_bam_file = "{samtools} sort -I {compression} -m {memory} -o {output}.bam -O bam -T {prefix}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory} -o {output}.bam -O bam -T {prefix}"
 		cmd_index_bam_file = "{samtools} index {output}.bam"
 		cmd = cmd_merge_bam_files + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
 
