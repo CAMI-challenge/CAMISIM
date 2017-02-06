@@ -72,6 +72,7 @@ class Community(Validator):
 		self.limit_per_otu = limit_per_otu
 		self.file_path_metadata_table = self.get_full_path(file_path_metadata_table)
 		self.file_path_genome_locations = self.get_full_path(file_path_genome_locations)
+		self.file_path_gff_locations = None
 		if file_path_gff_locations is not None:
 			self.file_path_gff_locations = self.get_full_path(file_path_gff_locations)
 		self.ratio = ratio
