@@ -72,7 +72,8 @@ class Community(Validator):
 		self.limit_per_otu = limit_per_otu
 		self.file_path_metadata_table = self.get_full_path(file_path_metadata_table)
 		self.file_path_genome_locations = self.get_full_path(file_path_genome_locations)
-		self.file_path_gff_locations = self.get_full_path(file_path_gff_locations)
+		if file_path_gff_locations is not None:
+			self.file_path_gff_locations = self.get_full_path(file_path_gff_locations)
 		self.ratio = ratio
 		self.log_mu = log_mu
 		self.log_sigma = log_sigma
@@ -122,7 +123,7 @@ class Community(Validator):
 		if not self.validate_file(self.file_path_genome_locations):
 			return False
 
-		if not self.validate_file(self.file_path_gff_locations):
+		if self.file_path_gff_locations and not self.validate_file(self.file_path_gff_locations):
 			return False
 
 		return True
@@ -311,8 +312,10 @@ class CommunityDesign(GenomePreparation):
 			column_names=True)
 
 		# get path for every genome
-		genome_id_to_file_path_gff = self._get_genome_id_to_path_map(
-			community.file_path_gff_locations, list_of_drawn_genome_id)
+		genome_id_to_file_path_gff = None
+		if community.file_path_gff_locations:
+			genome_id_to_file_path_gff = self._get_genome_id_to_path_map(
+				community.file_path_gff_locations, list_of_drawn_genome_id)
 		genome_id_to_path_map = self._get_genome_id_to_path_map(
 			community.file_path_genome_locations, list_of_drawn_genome_id)
 
