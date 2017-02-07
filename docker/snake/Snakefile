@@ -1,0 +1,25 @@
+__author__ = "Hofmann"
+__license__ = ""
+
+#configfile: 'config.json'
+
+import os
+import glob
+
+
+rule all:
+	input:
+		expand("/dckr/mnt/output/{some_name}.tsv", some_name=SomeList)
+
+## NCBI ##
+rule database_ncbi_extract:
+	input:
+		"/dckr/mnt/camiref/PROCESSED_NCBI/ncbi-taxonomy_20150130.tar.gz"
+	output:
+		merged="/dckr/cache/ncbi-taxonomy/merged.dmp",
+		names="/dckr/cache/ncbi-taxonomy/names.dmp",
+		nodes="/dckr/cache/ncbi-taxonomy/nodes.dmp",
+		folder="/dckr/cache/ncbi-taxonomy"
+	shell:
+		"tar -zxvf {input} --no-same-owner --strip 1 -C /dckr/cache/ncbi-taxonomy "
+		"&& touch {output.nodes}  {output.names} {output.merged}"
