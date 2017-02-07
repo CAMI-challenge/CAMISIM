@@ -8,6 +8,8 @@ Usage
 
 1. Get Docker build files
 
+        git clone https://github.com/CAMI-challenge/MetagenomeSimulationPipeline.git
+        git checkout docker
 
 2. Build the Docker image
 
@@ -34,4 +36,3 @@ Usage
 
 python /opt/tools/MetagenomeSimulationPipeline/genomeannotation.py /bbx/mnt/input/config.cfg
 python /opt/tools/MetagenomeSimulationPipeline/metagenomesimulation.py /bbx/mnt/input/config.cfg
-
