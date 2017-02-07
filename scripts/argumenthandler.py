@@ -619,123 +619,117 @@ view={view}
 
 		@rtype: None
 		"""
+		# TODO: check that all keys options make sense
 		self._config = ConfigParserWrapper(self._file_path_config)
 		if not self.validate_file(self._file_path_config, key="Configuration file"):
 			self._valid_args = False
-			return
-
-		sections = ['Main', 'ReadSimulator', 'CommunityDesign']
-		invalid_sections = self._config.validate_sections(sections)
-		if invalid_sections is not None:
-			assert isinstance(invalid_sections, list)
-			self._logger.error("Missing section '{}' in the configuration file.".format(", ".join(invalid_sections)))
-			self._valid_arguments = False
 			return
 
 		# ##########
 		# [Main]
 		# ##########
 
-		section = "Main"
+		section = None  # "Main"
 		if self._phase is None:
-			self._phase = self._config.get_value(section, "phase", is_digit=True)
+			self._phase = self._config.get_value("phase", is_digit=True)
 
 		if self._seed is None:
-			self._seed = self._config.get_value(section, "seed")
+			self._seed = self._config.get_value("seed")
 
 		if self._max_processors is None:
-			self._max_processors = self._config.get_value(section, "max_processors", is_digit=True)
+			self._max_processors = self._config.get_value("max_processors", is_digit=True)
 
 		if self._dataset_id is None:
-			self._dataset_id = self._config.get_value(section, "dataset_id")
+			self._dataset_id = self._config.get_value("dataset_id")
 
 		if self._directory_output is None:
-			self._directory_output = self._config.get_value(section, "output_directory", is_path=True)
+			self._directory_output = self._config.get_value("output_directory", is_path=True)
 
 		if self._tmp_dir is None:
-			config_value = self._config.get_value(section, "temp_directory", is_path=True)
+			config_value = self._config.get_value("temp_directory", is_path=True)
 			if config_value is not None:
 				assert self.validate_dir(config_value)
 				self._tmp_dir = config_value
 
-		self._phase_gsa = self._config.get_value(section, "gsa", is_boolean=True)
-		self._phase_pooled_gsa = self._config.get_value(section, "pooled_gsa", is_boolean=True)
+		self._phase_gsa = self._config.get_value("gsa", is_boolean=True)
+		self._phase_pooled_gsa = self._config.get_value("pooled_gsa", is_boolean=True)
 
-		config_value = self._config.get_value(section, "compress", is_digit=True)
+		config_value = self._config.get_value("compress", is_digit=True)
 		assert isinstance(config_value, int)
 		self._compresslevel = config_value
 
-		self._phase_anonymize = self._config.get_value(section, "anonymous", is_boolean=True)
+		self._phase_anonymize = self._config.get_value("anonymous", is_boolean=True)
 
 		# ##########
 		# [ReadSimulator]
 		# ##########
 
-		section = "ReadSimulator"
+		section = None  # "ReadSimulator"
 		if self._sample_size_in_base_pairs is None:
-			config_value = self._config.get_value(section, "size", is_digit=True)
+			config_value = self._config.get_value("size", is_digit=True)
 			if config_value is not None:
 				self._sample_size_in_base_pairs = long(config_value * self._base_pairs_multiplication_factor)
 
 		if self._read_simulator_type is None:
-			self._read_simulator_type = self._config.get_value(section, "type")
+			self._read_simulator_type = self._config.get_value("type")
 
 		if self._executable_samtools is None:
-			self._executable_samtools = self._config.get_value(section, "samtools", is_path=True)
+			self._executable_samtools = self._config.get_value("samtools", is_path=True)
 
 		if self._executable_art_illumina is None:
-			self._executable_art_illumina = self._config.get_value(section, "art_illumina", silent=True, is_path=True)
+			self._executable_art_illumina = self._config.get_value("art_illumina", silent=True, is_path=True)
 
 		if self._directory_art_error_profiles is None:
-			self._directory_art_error_profiles = self._config.get_value(section, "art_error_profiles", silent=True, is_path=True)
+			self._directory_art_error_profiles = self._config.get_value("art_error_profiles", silent=True, is_path=True)
 
 		if self._error_profile is None:
-			self._error_profile = self._config.get_value(section, "profile")
+			self._error_profile = self._config.get_value("profile")
 
 		if self._fragment_size_standard_deviation_in_bp is None:
 			self._fragment_size_standard_deviation_in_bp = self._config.get_value(
-				section, "fragment_size_standard_deviation", is_digit=True)
+				"fragment_size_standard_deviation", is_digit=True)
 
 		if self._fragments_size_mean_in_bp is None:
-			self._fragments_size_mean_in_bp = self._config.get_value(section, "fragments_size_mean", is_digit=True)
+			self._fragments_size_mean_in_bp = self._config.get_value("fragments_size_mean", is_digit=True)
 
 		# ##########
 		# [CommunityDesign]
 		# ##########
 
-		section = "CommunityDesign"
+		section = None  # "CommunityDesign"
 
 		if self._directory_ncbi_taxdump is None:
-			self._directory_ncbi_taxdump = self._config.get_value(section, "ncbi_taxdump", is_path=True)
+			self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True)
 
 		if self._strain_simulation_template is None:
 			self._strain_simulation_template = self._config.get_value(
-				section, "strain_simulation_template", silent=True, is_path=True)
+				"strain_simulation_template", silent=True, is_path=True)
 
 		if self._number_of_samples is None:
-			self._number_of_samples = self._config.get_value(section, "number_of_samples", is_digit=True)
+			self._number_of_samples = self._config.get_value("number_of_samples", is_digit=True)
 
 		if self._number_of_communities is None:
-			self._number_of_communities = self._config.get_value(section, 'number_of_communities', is_digit=True)
+			self._number_of_communities = self._config.get_value('number_of_communities', is_digit=True)
 
 		if self._number_of_communities is None:
 			self._logger.error("Bad number of communities!")
 			self._valid_arguments = False
 			return
 
+		community_sections = set()
+		community_key_options = {
+			"genomes_total", 'genomes_real', 'max_strains_per_otu', 'ratio',
+			'log_mu', 'log_sigma', 'gauss_mu', 'gauss_sigma'}
+		for key_options in community_key_options:
+			community_sections = community_sections.union(self._config.search_sections_of(key_options))
+
 		self._list_of_communities = []
 		is_valid = True
-		for index_community in range(self._number_of_communities):
-			community_name = "community{}".format(index_community)
-			if self._config.validate_sections([community_name]) is not None:
-				self._logger.error("Missing 'community{}' section in config file".format(index_community))
-				self._valid_arguments = False
-				return
-
-			file_path_metadata_table = self._config.get_value(community_name, 'metadata', is_path=True)
-			file_path_genome_locations = self._config.get_value(community_name, 'id_to_genome_file', is_path=True)
-			file_path_gff_locations = self._config.get_value(community_name, 'id_to_gff_file', is_path=True, silent=True)
-			mode = self._config.get_value(community_name, 'mode')
+		for community_section in community_sections:
+			file_path_metadata_table = self._config.get_value('metadata', community_section, is_path=True)
+			file_path_genome_locations = self._config.get_value('id_to_genome_file', community_section, is_path=True)
+			file_path_gff_locations = self._config.get_value('id_to_gff_file', community_section, is_path=True, silent=True)
+			mode = self._config.get_value('mode', community_section)
 			if not isinstance(file_path_metadata_table, basestring):
 				is_valid = False
 			if not isinstance(file_path_genome_locations, basestring):
@@ -752,20 +746,20 @@ view={view}
 			assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
 			assert isinstance(mode, basestring)
 			new_community = Community(
-				identifier=str(index_community),
-				genomes_total=self._config.get_value(community_name, 'genomes_total', is_digit=True),
-				genomes_real=self._config.get_value(community_name, 'genomes_real', is_digit=True),
-				limit_per_otu=self._config.get_value(community_name, 'max_strains_per_otu', is_digit=True),
+				identifier=community_section,
+				genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
+				genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True),
+				limit_per_otu=self._config.get_value('max_strains_per_otu', community_section, is_digit=True),
 				file_path_metadata_table=file_path_metadata_table,
 				file_path_genome_locations=file_path_genome_locations,
 				file_path_gff_locations=file_path_gff_locations,
-				ratio=self._config.get_value(community_name, 'ratio', is_digit=True),
+				ratio=self._config.get_value('ratio', community_section, is_digit=True),
 				mode=mode,
-				log_mu=self._config.get_value(community_name, 'log_mu', is_digit=True),
-				log_sigma=self._config.get_value(community_name, 'log_sigma', is_digit=True),
-				gauss_mu=self._config.get_value(community_name, 'gauss_mu', is_digit=True),
-				gauss_sigma=self._config.get_value(community_name, 'gauss_sigma', is_digit=True),
-				verbose=self._config.get_value(community_name, 'view', is_boolean=True)
+				log_mu=self._config.get_value('log_mu', community_section, is_digit=True),
+				log_sigma=self._config.get_value('log_sigma', community_section, is_digit=True),
+				gauss_mu=self._config.get_value('gauss_mu', community_section, is_digit=True),
+				gauss_sigma=self._config.get_value('gauss_sigma', community_section, is_digit=True),
+				verbose=self._config.get_value('view', community_section, is_boolean=True)
 			)
 			self._list_of_communities.append(new_community)
 		if not is_valid:
