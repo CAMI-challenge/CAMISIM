@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+# Peter Hallin 2007-02-06, to be used with RNAmmer v1.2
+
+use XML::Simple;
+use strict;
+
+sub err {
+	print "$_\n";
+	exit 1;
+}
+
+# create object
+my $xml = new XML::Simple (ForceArray => 1);
+
+# read XML file
+my $data = $xml->XMLin($ARGV[0]) or err ("error loading input:$!");
+
+print  "##gff-version2\n";
+print  "##source-version $data->{predictor}[0]\n";
+print  "##date $data->{predictionDate}[0]\n";
+print  "##Type DNA\n";
+print  "# seqname           source                      feature     start      end   score   +/-  frame  attribute\n";
+print  "# ---------------------------------------------------------------------------------------------------------\n";
+foreach my $entry (@{$data->{entries}[0]->{entry}}) {
+	next if defined $entry->{sequenceEntry}[0] eq "";
+	print  ( join ("\t" , (
+		$entry->{sequenceEntry}[0],
+		$data->{predictor}[0],
+		'rRNA',
+		$entry->{start}[0],
+		$entry->{stop}[0],
+		$entry->{score}[0],
+		$entry->{direction}[0],
+		'.',
+		$entry->{mol}[0],
+		"\n"
+	)));
+}
+print  "# ---------------------------------------------------------------------------------------------------------\n";

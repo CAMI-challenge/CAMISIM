@@ -1,0 +1,172 @@
+__author__ = "Hofmann"
+__license__ = ""
+
+#configfile: 'config.json'
+
+import os
+import glob
+
+READS = [
+	"RL_S001__insert_270.fasta",
+	"RM2_S001__insert_270.fasta",
+	"RM2_S002__insert_270.fasta",
+	"RM1_S001__insert_5000.fasta",
+	"RM1_S002__insert_5000.fasta",
+	"RH_S001__insert_270.fasta",
+	"RH_S002__insert_270.fasta",
+	"RH_S003__insert_270.fasta",
+	"RH_S004__insert_270.fasta"
+]
+#,	"RH_S005__insert_270.fasta"
+
+MinScore = [50]
+
+# , 60, 70, 80, 90, 100
+# READS = ['read']
+
+rule all:
+	input:
+		expand("/dckr/mnt/output/{read_name}_{min_score}.tsv", read_name=READS, min_score=MinScore)
+
+## NCBI ##
+rule database_ncbi_extract:
+	input:
+		"/dckr/mnt/camiref/PROCESSED_NCBI/ncbi-taxonomy_20150130.tar.gz"
+	output:
+		merged="/dckr/cache/ncbi-taxonomy/merged.dmp",
+		names="/dckr/cache/ncbi-taxonomy/names.dmp",
+		nodes="/dckr/cache/ncbi-taxonomy/nodes.dmp",
+		folder="/dckr/cache/ncbi-taxonomy"
+	shell:
+		"tar -zxvf {input} --no-same-owner --strip 1 -C /dckr/cache/ncbi-taxonomy "
+		"&& touch {output.nodes}  {output.names} {output.merged}"
+
+rule database_ncbi_newick:
+	input:
+		"/dckr/cache/ncbi-taxonomy/merged.dmp",
+		"/dckr/cache/ncbi-taxonomy/names.dmp",
+		"/dckr/cache/ncbi-taxonomy/nodes.dmp"
+	output:
+		tree="/dckr/cache/ncbi.tre",
+		map="/dckr/cache/ncbi.map"
+	shell:
+		"/usr/bin/python /opt/scripts/NcbiTaxonomy/taxonomy_newick.py '/dckr/cache/ncbi-taxonomy' > '{output.tree}' 2> '{output.map}'"
+
+rule database_ncbi_newick_to_megan:
+	input:
+		"/dckr/cache/ncbi.tre",
+		"/dckr/cache/ncbi.map"
+	output:
+		"/opt/megan/class/resources/files/ncbi.tre",
+		"/opt/megan/class/resources/files/ncbi.map"
+	shell:
+		"cp {input} /opt/megan/class/resources/files/"
+
+## DIAMOND ##
+rule database_diamond_extract:
+	input:
+		"/dckr/mnt/camiref/ftp.cami/BLASTDB_NR.tar.gz"
+	output:
+		temp("/dckr/cache/BLASTDBS")
+	shell:
+		"tar -zxf {input} --no-same-owner -C /dckr/cache/"
+
+# export gi mapping
+rule database_diamond_gi_mapping:
+	input:
+		"/dckr/cache/BLASTDBS"
+	output:
+		"/dckr/cache/gi_tax.tsv.gz"
+	shell:
+		"/opt/blastdbcmd -db '{input}/nr' -entry all -outfmt '%g,%T' | tr ',' '\t' | gzip -c -6 > {output}"
+
+# uncompress gi mapping
+rule database_diamond_gi_mapping_uncompress:
+	input:
+		"/dckr/cache/gi_tax.tsv.gz"
+	output:
+		temp("/dckr/cache/gi_tax.tsv")
+	shell:
+		"gzip -dc {input} > {output}"
+
+# export protein sequences
+rule database_diamond_protein_sequences:
+	input:
+		"/dckr/cache/BLASTDBS"
+	output:
+		"/dckr/cache/nr.faa.gz"
+	shell:
+		"/opt/blastdbcmd -db '{input}/nr' -entry all | gzip -c -6 > {output}" 
+
+# export protein sequences
+rule database_diamond_final:
+	input:
+		"/dckr/cache/nr.faa.gz"
+	output:
+		"/dckr/cache/nr.dmnd"
+	shell:
+		"/opt/diamond makedb --in {input} --db $(dirname {output})/$(basename {output} .dmnd)" 
+
+## BLAST ##
+rule database_diamond_blast:
+	input:
+		db="/dckr/cache/nr.dmnd",
+		read="/dckr/mnt/input/{read_name}.fq.gz"
+	output:
+		protected("/dckr/cache/{read_name}.daa")
+	resources: ram=25
+	threads: 20
+	shell:
+		"/opt/diamond blastx -d $(dirname {input.db})/$(basename {input.db} .dmnd) -q {input.read} -a $(dirname {output})/$(basename {output} .daa) -t /dckr/cache/ --threads {threads}"
+
+## meganizer ##
+rule megan_meganize:
+	input:
+		ncbi_tree="/opt/megan/class/resources/files/ncbi.tre",
+		ncbi_map="/opt/megan/class/resources/files/ncbi.map",
+		map="/dckr/cache/gi_tax.tsv",
+		blast="/dckr/cache/{read_name}.daa"
+	output:
+		temp("/dckr/cache/{read_name}_{min_score}.rma")
+	resources: ram=70
+	shell:
+		"/opt/megan/tools/daa2rma -v -i {input.blast} -o {output} "
+		"--paired --pairedSuffixLength 2 "
+		"--minScore {wildcards.min_score} --maxExpected 0.05 --topPercent 10.0 --minSupportPercent 0.0 --minSupport 2 "
+		"--weightedLCA --parseTaxonNames --gi2taxa {input.map} "
+		#  --minPercentIdentity 0.0 
+		#"&& cp {input.blast} {output}"
+
+rule megan_cmd:
+	input:
+		"/dckr/cache/{read_name}_{min_score}.rma"
+	output:
+		temp("/dckr/cache/megan_cmd_{read_name}_{min_score}.txt")
+	shell:
+		"echo 'open file={input} readOnly=true;' > {output} "
+		"&& echo 'uncollapse nodes=all;' >> {output} "
+		"&& echo 'select nodes=all;' >> {output} "
+		"&& echo 'export what=CSV format=readName_to_taxonId separator=tab file=/dckr/cache/megan_result_{wildcards.read_name}_{wildcards.min_score}.tsv;' >> {output} "
+		"&& echo 'quit;' >> {output}"
+
+rule megan_run:
+	input:
+		mdaa="/dckr/cache/{read_name}_{min_score}.rma",
+		cmd="/dckr/cache/megan_cmd_{read_name}_{min_score}.txt"
+	output:
+		temp("/dckr/cache/megan_result_{read_name}_{min_score}.tsv")
+	resources: ram=70
+	shell:
+		"xvfb-run --auto-servernum --server-num=1 -s '-screen 0 640x480x24' $(which MEGAN) -g -E -c {input.cmd}"
+
+rule cami_output:
+	input:
+		megan="/dckr/cache/megan_result_{read_name}_{min_score}.tsv",
+		taxonomy="/dckr/cache/ncbi-taxonomy"
+	output:
+		"/dckr/mnt/output/{read_name}_{min_score}.tsv"
+	shell:
+		"echo '@Version:0.9.0' > {output}"
+		" && echo '@SampleID: UNKNOWN' >> {output}"
+		" && echo -e '@@SEQUENCEID\tTAXID' >> {output}"
+		" && cat {input.megan} | /usr/bin/python /opt/scripts/NcbiTaxonomy/output_filter.py {input.taxonomy} >> {output}"
