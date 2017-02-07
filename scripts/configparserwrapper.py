@@ -170,7 +170,7 @@ class ConfigParserWrapper(DefaultLogging):
 		result = set()
 		for section in self._config.sections():
 			if self._config.has_option(section, option):
-				return result.add(section)
+				result.add(section)
 		return result
 
 	def _string_to_digit(self, value):
