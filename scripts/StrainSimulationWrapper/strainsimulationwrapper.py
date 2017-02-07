@@ -2,7 +2,7 @@
 
 __author__ = 'Peter Hofmann'
 __original_author__ = "Aaron Daring"
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
@@ -421,6 +421,9 @@ class StrainSimulationWrapper(GenomeOrganizer):
 		assert isinstance(genome_id_to_amounts, dict)
 		assert isinstance(genome_id_to_file_path_genome, dict)
 		assert genome_id_to_file_path_gff is None or isinstance(genome_id_to_file_path_gff, dict)
+		if genome_id_to_file_path_gff is None:
+			msg = "No gff file (gene annotation) was given. Simulating strains without such a file can break genes."
+			self._logger.warning(msg)
 		for file_path in genome_id_to_file_path_genome.values():
 			self.validate_file(file_path)
 		if genome_id_to_file_path_gff is not None:

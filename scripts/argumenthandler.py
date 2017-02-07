@@ -734,14 +734,14 @@ view={view}
 
 			file_path_metadata_table = self._config.get_value(community_name, 'metadata', is_path=True)
 			file_path_genome_locations = self._config.get_value(community_name, 'id_to_genome_file', is_path=True)
-			file_path_gff_locations = self._config.get_value(community_name, 'id_to_gff_file', is_path=True)
+			file_path_gff_locations = self._config.get_value(community_name, 'id_to_gff_file', is_path=True, silent=True)
 			mode = self._config.get_value(community_name, 'mode')
 			if not isinstance(file_path_metadata_table, basestring):
 				is_valid = False
 			if not isinstance(file_path_genome_locations, basestring):
 				is_valid = False
-			if not isinstance(file_path_gff_locations, basestring):
-				is_valid = False
+			# if not isinstance(file_path_gff_locations, basestring):
+			# 	is_valid = False
 			if not isinstance(mode, basestring):
 				is_valid = False
 
@@ -749,7 +749,7 @@ view={view}
 				continue
 			assert isinstance(file_path_metadata_table, basestring)
 			assert isinstance(file_path_genome_locations, basestring)
-			assert isinstance(file_path_gff_locations, basestring)
+			assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
 			assert isinstance(mode, basestring)
 			new_community = Community(
 				identifier=str(index_community),

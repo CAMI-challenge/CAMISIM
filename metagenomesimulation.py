@@ -47,7 +47,16 @@ class MetagenomeSimulation(ArgumentHandler):
 				self._validate_raw_genomes()
 
 			# Design Communities
-			if self._phase_design_community:
+			input_list_of_file_paths_distributions = None
+			if input_list_of_file_paths_distributions:
+				assert len(input_list_of_file_paths_distributions) == self._number_of_samples
+				genome_id_to_path_map = self.get_dict_gid_to_genome_file_path()
+				directory_out_distributions = self._project_file_folder_handler.get_distribution_dir()
+				list_of_file_paths_distributions = CommunityDesign.get_distribution_file_paths(
+					directory_out_distributions, self._number_of_samples)
+				for file_path_src, file_path_dst in zip(input_list_of_file_paths_distributions, list_of_file_paths_distributions):
+					shutil.copy2(file_path_src, file_path_dst)
+			elif self._phase_design_community:
 				self._logger.info("Design Communities")
 				genome_id_to_path_map, list_of_file_paths_distributions = self._design_community()
 			else:

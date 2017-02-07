@@ -39,7 +39,12 @@ class GoldStandardAssembly(SamtoolsWrapper):
 			@return: None
 			@rtype: None
 		"""
-		super(GoldStandardAssembly, self).__init__(file_path_samtools, max_processes, tmp_dir, logfile, verbose, debug)
+		super(GoldStandardAssembly, self).__init__(
+			file_path_samtools=file_path_samtools,
+			max_processes=max_processes,
+			tmp_dir=tmp_dir,
+			logfile=logfile, verbose=verbose, debug=debug
+		)
 		self._temp_merges_bam_directory = tempfile.mkdtemp(dir=self._tmp_dir)
 		self._bamToGold = os.path.join(os.path.dirname(scripts.__file__), "bamToGold.pl")
 		assert self.validate_file(self._bamToGold)
