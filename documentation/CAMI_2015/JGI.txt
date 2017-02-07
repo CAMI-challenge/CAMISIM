@@ -7,10 +7,10 @@ phase=0
 max_processors=4
 
 # Directory where the output will be stored. Will be created if it does not exist.
-output_directory=/bbx/mnt/output/output_JGI
+output_directory=output_JGI
 
 # Directory for temporary data
-temp_directory=/bbx/mnt/tmp/
+temp_directory=
 
 # Decide if the file format of genomes should be validated before running the pipeline.
 validate_genomes=T
@@ -24,17 +24,17 @@ hmmer=2
 # '2': rnammer (HMMER 2.x)  ! recommended, but slow !
 # '3': HMMER 3.0            ! much faster, but not as good !
 
-rnammer=/opt/tools/rnammer-1.2/rnammer
+rnammer=tools/rnammer-1.2/rnammer
 # path the the RNAmmer binary
 # RNAmmer is using hmmer2
 # if hmmer=2
 
-hmmerBinDir=/opt/tools/hmmer-3
+hmmerBinDir=tools/hmmer-3
 # Directory containing the HMMER 3.0 installation (supported version: 3.0)
 # relative path is assumed to be relative to the tools directory
 # if hmmer=3
 
-rnaHmmInstallDir=/opt/tools//MetagenomeSimulationPipeline/rnahmm/rna_hmm
+rnaHmmInstallDir=tools//MetagenomeSimulationPipeline/rnahmm/rna_hmm
 # Directory location of the 'rna_hmm' folder.
 # Part of pipeline: /../MetagenomeSimulationPipeline/rnahmm/rna_hmm
 # Contains wrapper for finding Marker genes, oroginal from http://weizhong-lab.ucsd.edu/meta_rna/
@@ -61,7 +61,7 @@ minSeqLen=900
 
 
 [MarkerGeneClustering]
-mothur=/opt/tools/mothur-1.34/mothur
+mothur=tools/mothur-1.34/mothur
 #path to the mothur binary (Mothur version=1.34)
 
 metadata_table_in=/bbx/mnt/input/meta_data.tsv
@@ -97,13 +97,13 @@ classification_distance=0.02
 
 
 [MarkerGeneAnnotation]
-ncbi_reference_directory=/bbx/mnt/ref/ncbi-taxonomy/
+ncbi_reference_directory=ref/ncbi-taxonomy/
 # Directory that contains a NCBI taxonomy dump files:
 # "nodes.dmp"
 # "merged.dmp"
 # "names.dmp"
 
-nucmer=/opt/tools/NUCmer-3.1/nucmer
+nucmer=tools/NUCmer-3.1/nucmer
 
 # also, novelty based clustering
 classify=T
