@@ -1,8 +1,8 @@
-__author__ = 'hofmann'
-__verson__ = '0.0.8.1'
+__author__ = 'Peter Hofmann'
+__version__ = '0.1.0'
 
 import os
-import StringIO
+from io import StringIO
 from ConfigParser import SafeConfigParser
 from scripts.loggingwrapper import DefaultLogging
 
@@ -31,17 +31,17 @@ class ConfigParserWrapper(DefaultLogging):
 			@return: None
 			@rtype: None
 		"""
-		assert isinstance(config_file, basestring) or self.is_stream(config_file)
-		assert logfile is None or isinstance(logfile, basestring) or self.is_stream(logfile)
+		assert isinstance(config_file, str) or self.is_stream(config_file)
+		assert logfile is None or isinstance(logfile, str) or self.is_stream(logfile)
 
 		super(ConfigParserWrapper, self).__init__(logfile=logfile, verbose=verbose)
 		self._config = SafeConfigParser()
 
-		if isinstance(config_file, basestring) and not os.path.isfile(config_file):
+		if isinstance(config_file, str) and not os.path.isfile(config_file):
 			self._logger.error("Config file does not exist: '{}'".format(config_file))
 			raise Exception("File does not exist")
 
-		if isinstance(config_file, basestring):
+		if isinstance(config_file, str):
 			self._config.read(config_file)
 			self._config_file_path = config_file
 		elif self.is_stream(config_file):
@@ -56,10 +56,10 @@ class ConfigParserWrapper(DefaultLogging):
 			Validate a list of section names for availability.
 
 			@param list_sections: list of section names
-			@type list_sections: list of basestring
+			@type list_sections: list of str
 
 			@return: None if all valid, otherwise list of invalid sections
-			@rtype: None | list[basestring]
+			@rtype: None | list[str]
 		"""
 		assert isinstance(list_sections, list)
 		invalid_sections = []
@@ -75,7 +75,7 @@ class ConfigParserWrapper(DefaultLogging):
 			print out a list of invalid section names to log.
 
 			@param list_sections: list of section names
-			@type list_sections: list[basestring]
+			@type list_sections: list[str]
 
 			@return: None
 			@rtype: None
@@ -84,16 +84,16 @@ class ConfigParserWrapper(DefaultLogging):
 		for section in list_sections:
 			self._logger.warning("Invalid section '{}'".format(section))
 
-	def get_value(self, section, option, is_digit=False, is_boolean=False, is_path=False, silent=False):
+	def get_value(self, option, section=None, is_digit=False, is_boolean=False, is_path=False, silent=False):
 		"""
 			get a value of an option in a specific section of the config file.
 
 			@attention: Set obligatory to False if a section or option that does not exist is no error.
 
-			@param section: name of section
-			@type section: basestring
 			@param option: name of option in a section
-			@type option: basestring
+			@type option: str
+			@param section: name of section
+			@type section: str
 			@param is_digit: value is a number and will be returned as such
 			@type is_digit: bool
 			@param is_boolean: value is bool and will be returned as True or False
@@ -105,14 +105,16 @@ class ConfigParserWrapper(DefaultLogging):
 
 
 			@return: None if not available or ''. Else: depends on given arguments
-			@rtype: None | basestring | int | float | bool
+			@rtype: None | str | int | float | bool
 		"""
-		assert isinstance(section, basestring)
-		assert isinstance(option, basestring)
+		assert section is None or isinstance(section, str)
+		assert isinstance(option, str)
 		assert isinstance(is_digit, bool)
 		assert isinstance(is_boolean, bool)
 		assert isinstance(silent, bool)
 		assert isinstance(is_path, bool)
+		if section is None:
+			section = self._get_section_of_option(option)
 		if not self._config.has_section(section):
 			if not silent:
 				self._logger.error("Missing section '{}'".format(section))
@@ -138,17 +140,50 @@ class ConfigParserWrapper(DefaultLogging):
 			return self._get_full_path(value)
 		return value
 
+	def _get_section_of_option(self, option):
+		"""
+			get the section of a unique option
+
+			@param option: name of option in a section
+			@type option: str
+
+			@return: Section name. None if not available
+			@rtype: None | str
+		"""
+		assert isinstance(option, str)
+		for section in self._config.sections():
+			if self._config.has_option(section, option):
+				return section
+		return None
+
+	def search_sections_of(self, option):
+		"""
+			get the section of a unique option
+
+			@param option: name of option in a section
+			@type option: str
+
+			@return: Section name. None if not available
+			@rtype: set[str]
+		"""
+		assert isinstance(option, str)
+		result = set()
+		for section in self._config.sections():
+			if self._config.has_option(section, option):
+				return result.add(section)
+		return result
+
 	def _string_to_digit(self, value):
 		"""
 			parse string to an int or float.
 
 			@param value: some string to be converted
-			@type value: basestring
+			@type value: str
 
 			@return: None if invalid, otherwise int or float
 			@rtype: None | int | float
 		"""
-		assert isinstance(value, basestring)
+		assert isinstance(value, str)
 		try:
 			if '.' in value:
 				return float(value)
@@ -162,12 +197,12 @@ class ConfigParserWrapper(DefaultLogging):
 			parse string to True or False.
 
 			@param value: some string to be converted
-			@type value: basestring
+			@type value: str
 
 			@return: None if invalid, otherwise True or False
 			@rtype: None | bool
 		"""
-		assert isinstance(value, basestring)
+		assert isinstance(value, str)
 
 		if value.lower() not in ConfigParserWrapper._boolean_states:
 			self._logger.error("Invalid bool value '{}'".format(value))
@@ -180,12 +215,12 @@ class ConfigParserWrapper(DefaultLogging):
 			convert string to absolute normpath.
 
 			@param value: some string to be converted
-			@type value: basestring
+			@type value: str
 
 			@return: absolute normpath
-			@rtype: basestring
+			@rtype: str
 		"""
-		assert isinstance(value, basestring)
+		assert isinstance(value, str)
 
 		parent_directory, filename = os.path.split(value)
 
