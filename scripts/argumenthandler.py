@@ -249,7 +249,7 @@ class ConfigFileHandler(DefaultLogging):
 		@param output_stream:
 		"""
 		output_stream.write("[Main]\n")
-		output_stream.write("samtools={}\n".format(self._seed))
+		output_stream.write("seed={}\n".format(self._seed))
 		output_stream.write("phase={}\n".format(self._phase))
 		output_stream.write("max_processors={}\n".format(self._max_processors))
 		output_stream.write("dataset_id={}\n".format(self._dataset_id))
@@ -258,7 +258,7 @@ class ConfigFileHandler(DefaultLogging):
 		output_stream.write("gsa={}\n".format(self._phase_gsa))
 		output_stream.write("pooled_gsa={}\n".format(self._phase_pooled_gsa))
 		output_stream.write("anonymous={}\n".format(self._phase_anonymize))
-		output_stream.write("compress={}\n".format(self._phase_compress))
+		output_stream.write("compress={}\n".format(self._compresslevel))
 
 	def _stream_read_simulator(self, output_stream=sys.stdout):
 		"""
@@ -268,6 +268,7 @@ class ConfigFileHandler(DefaultLogging):
 		output_stream.write("[ReadSimulator]\n")
 		output_stream.write("art_illumina={}\n".format(self._executable_art_illumina))
 		output_stream.write("art_error_profiles={}\n".format(self._directory_art_error_profiles))
+		output_stream.write("samtools={}\n".format(self._executable_samtools))
 		output_stream.write("profile={}\n".format(self._error_profile))
 		output_stream.write("size={}\n".format(self._sample_size_in_base_pairs/self._base_pairs_multiplication_factor))
 		output_stream.write("type={}\n".format(self._read_simulator_type))
@@ -413,7 +414,7 @@ class ArgumentHandler(ConfigFileHandler):
 			debug=self._debug
 		)
 		self._project_file_folder_handler.make_directory_structure(self._number_of_samples)
-		self.write_config(os.path.join(self._project_file_folder_handler.get_output_directory(), self._file_path_config))
+		self.write_config(os.path.join(self._project_file_folder_handler.get_output_directory(), self._file_name_config))
 
 	def _get_directory_pipeline(self):
 		"""
