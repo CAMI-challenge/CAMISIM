@@ -76,6 +76,7 @@ class ConfigFileHandler(DefaultLogging):
 	# [comdesign]
 	# ############
 	_number_of_communities = None
+	_input_list_of_file_paths_distributions = None
 
 	# internal variables not set in config
 	_file_name_config = "config.cfg"
@@ -171,7 +172,8 @@ class ConfigFileHandler(DefaultLogging):
 		# ##########
 
 		if self._input_list_of_file_paths_distributions is None:
-			self._input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True)
+			input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True, silent=True)
+			self._input_list_of_file_paths_distributions = input_list_of_file_paths_distributions.split(',')
 
 		section = None  # "CommunityDesign"
 		if self._directory_ncbi_taxdump is None:
@@ -277,6 +279,7 @@ class ConfigFileHandler(DefaultLogging):
 		@param output_stream:
 		"""
 		output_stream.write("[CommunityDesign]\n")
+		output_stream.write("distribution_file_paths={}\n".format(self._input_list_of_file_paths_distributions))
 		output_stream.write("ncbi_taxdump={}\n".format(self._directory_ncbi_taxdump))
 		output_stream.write("strain_simulation_template={}\n".format(self._strain_simulation_template))
 		output_stream.write("number_of_samples={}\n".format(self._number_of_samples))
@@ -359,13 +362,13 @@ class ArgumentHandler(ConfigFileHandler):
 		self._column_name_novelty_category = column_name_novelty_category
 		self._column_name_ncbi = column_name_ncbi
 		self._column_name_source = column_name_source
-		self._directory_pipeline = self._get_directory_pipeline()
 
 		options = self._get_parser_options(args, version)
 		logfile = options.logfile
 		if logfile is not None:
 			logfile = self._validator.get_full_path(logfile)
 		super(ArgumentHandler, self).__init__(logfile=logfile)
+		self._directory_pipeline = self._get_directory_pipeline()
 
 		self._valid_arguments = True
 
