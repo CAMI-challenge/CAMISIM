@@ -136,6 +136,7 @@ class ArgumentHandler(Validator):
 		self._valid_arguments = True
 
 		# read passed arguments
+		self._input_list_of_file_paths_distributions = None
 		self._read_options(options)
 		if not self._valid_arguments:
 			return
@@ -696,8 +697,10 @@ view={view}
 		# [CommunityDesign]
 		# ##########
 
-		section = None  # "CommunityDesign"
+		if self._input_list_of_file_paths_distributions is None:
+			self._input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True)
 
+		section = None  # "CommunityDesign"
 		if self._directory_ncbi_taxdump is None:
 			self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True)
 
