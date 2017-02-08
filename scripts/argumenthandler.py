@@ -173,7 +173,8 @@ class ConfigFileHandler(DefaultLogging):
 
 		if self._input_list_of_file_paths_distributions is None:
 			input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True, silent=True)
-			self._input_list_of_file_paths_distributions = input_list_of_file_paths_distributions.split(',')
+			if input_list_of_file_paths_distributions is not None:
+				self._input_list_of_file_paths_distributions = input_list_of_file_paths_distributions.split(',')
 
 		section = None  # "CommunityDesign"
 		if self._directory_ncbi_taxdump is None:
