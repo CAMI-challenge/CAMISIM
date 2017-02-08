@@ -262,9 +262,7 @@ class LoggingWrapper(object):
 
 class DefaultLogging(object):
 
-	_label = "Logging"
-
-	def __init__(self, logfile=None, verbose=False, debug=False):
+	def __init__(self, label="Log", logfile=None, verbose=False, debug=False):
 		"""
 		Prototype class for any class needing a logger
 
@@ -281,6 +279,7 @@ class DefaultLogging(object):
 		@rtype: None
 		"""
 		assert isinstance(debug, bool)
+		self._label = str(label)
 		self._logger = LoggingWrapper(self._label, verbose=verbose)
 		if logfile:
 			self._logger.set_log_file(logfile, mode='a')

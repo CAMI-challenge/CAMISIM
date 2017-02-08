@@ -8,16 +8,17 @@ import tempfile
 import random
 import numpy.random as np_random
 from scripts.configparserwrapper import ConfigParserWrapper
-from scripts.Validator.validator import Validator
+from scripts.Validator.validator import Validator, DefaultLogging
 from scripts.ComunityDesign.communitydesign import Community
 from scripts.projectfilefolderhandle import ProjectFileFolderHandle
 
 
-class ArgumentHandler(Validator):
-	"""Reading pipeline configuration from file and from passed arguments"""
+class ConfigFileHandler(DefaultLogging):
+	"""
+	Reading and writing config file
 
-	_label = "ArgumentHandler"
-
+	@type _list_of_communities: list[Community]
+	"""
 	_seed = None
 
 	_phase = 0
@@ -51,7 +52,6 @@ class ArgumentHandler(Validator):
 	_tmp_dir = None
 	_directory_output = None
 	_directory_pipeline = None
-	_file_path_config = None
 	_max_processors = 1
 	_dataset_id = ''
 
@@ -59,7 +59,6 @@ class ArgumentHandler(Validator):
 	# [read_simulator]
 	# ############
 	_sample_size_in_base_pairs = None
-	_base_pairs_multiplication_factor = float(1000000000)  # 10**9
 
 	_read_simulator_type = None
 	_error_profile = None
@@ -77,23 +76,258 @@ class ArgumentHandler(Validator):
 	# [comdesign]
 	# ############
 	_number_of_communities = None
-	_list_of_communities = []
 
-	# ############
-	# [comdesign]
-	# ############
-	# _abundance_sigma = None  # 2
-	# _abundance_mean = None  # 1
-	# _view_distribution = False  # better [comdesign] ??
-	# _use_strain_simulation = None
+	# internal variables not set in config
+	_file_name_config = "config.cfg"
+	_list_of_communities = []
+	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
+	_base_pairs_multiplication_factor = float(1000000000)  # 10**9
+
+	def __init__(self, logfile=None, verbose=False, debug=False):
+		super(ConfigFileHandler, self).__init__(label="ConfigFileHandler", logfile=logfile, verbose=verbose, debug=debug)
+		self._validator = Validator(logfile=logfile, verbose=verbose, debug=debug)
+
+	def _read_config(self, file_path_config):
+		"""
+		Read parameter from configuration file.
+
+		@rtype: bool
+		"""
+		# TODO: check that all keys options make sense
+		self._config = ConfigParserWrapper(file_path_config)
+		if not self._validator.validate_file(file_path_config, key="Configuration file"):
+			self._valid_args = False
+			return
+
+		# ##########
+		# [Main]
+		# ##########
+
+		section = None  # "Main"
+		if self._phase is None:
+			self._phase = self._config.get_value("phase", is_digit=True)
+
+		if self._seed is None:
+			self._seed = self._config.get_value("seed")
+
+		if self._max_processors is None:
+			self._max_processors = self._config.get_value("max_processors", is_digit=True)
+
+		if self._dataset_id is None:
+			self._dataset_id = self._config.get_value("dataset_id")
+
+		if self._directory_output is None:
+			self._directory_output = self._config.get_value("output_directory", is_path=True)
+
+		if self._tmp_dir is None:
+			config_value = self._config.get_value("temp_directory", is_path=True)
+			if config_value is not None:
+				assert self._validator.validate_dir(config_value)
+				self._tmp_dir = config_value
+
+		self._phase_gsa = self._config.get_value("gsa", is_boolean=True)
+		self._phase_pooled_gsa = self._config.get_value("pooled_gsa", is_boolean=True)
+
+		config_value = self._config.get_value("compress", is_digit=True)
+		assert isinstance(config_value, int)
+		self._compresslevel = config_value
+
+		self._phase_anonymize = self._config.get_value("anonymous", is_boolean=True)
+
+		# ##########
+		# [ReadSimulator]
+		# ##########
+
+		section = None  # "ReadSimulator"
+		if self._sample_size_in_base_pairs is None:
+			config_value = self._config.get_value("size", is_digit=True)
+			if config_value is not None:
+				self._sample_size_in_base_pairs = long(config_value * self._base_pairs_multiplication_factor)
+
+		if self._read_simulator_type is None:
+			self._read_simulator_type = self._config.get_value("type")
+
+		if self._executable_samtools is None:
+			self._executable_samtools = self._config.get_value("samtools", is_path=True)
+
+		if self._executable_art_illumina is None:
+			self._executable_art_illumina = self._config.get_value("art_illumina", silent=True, is_path=True)
+
+		if self._directory_art_error_profiles is None:
+			self._directory_art_error_profiles = self._config.get_value("art_error_profiles", silent=True, is_path=True)
+
+		if self._error_profile is None:
+			self._error_profile = self._config.get_value("profile")
+
+		if self._fragment_size_standard_deviation_in_bp is None:
+			self._fragment_size_standard_deviation_in_bp = self._config.get_value(
+				"fragment_size_standard_deviation", is_digit=True)
+
+		if self._fragments_size_mean_in_bp is None:
+			self._fragments_size_mean_in_bp = self._config.get_value("fragments_size_mean", is_digit=True)
+
+		# ##########
+		# [CommunityDesign]
+		# ##########
+
+		if self._input_list_of_file_paths_distributions is None:
+			self._input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True)
+
+		section = None  # "CommunityDesign"
+		if self._directory_ncbi_taxdump is None:
+			self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True)
+
+		if self._strain_simulation_template is None:
+			self._strain_simulation_template = self._config.get_value(
+				"strain_simulation_template", silent=True, is_path=True)
+
+		if self._number_of_samples is None:
+			self._number_of_samples = self._config.get_value("number_of_samples", is_digit=True)
+
+		if self._number_of_communities is None:
+			self._number_of_communities = self._config.get_value('number_of_communities', is_digit=True)
+
+		if self._number_of_communities is None:
+			self._logger.error("Bad number of communities!")
+			self._valid_arguments = False
+			return
+
+		community_sections = set()
+		community_key_options = {
+			"genomes_total", 'genomes_real', 'max_strains_per_otu', 'ratio',
+			'log_mu', 'log_sigma', 'gauss_mu', 'gauss_sigma'}
+		for key_options in community_key_options:
+			community_sections = community_sections.union(self._config.search_sections_of(key_options))
+
+		self._list_of_communities = []
+		is_valid = True
+		for community_section in community_sections:
+			file_path_metadata_table = self._config.get_value('metadata', community_section, is_path=True)
+			file_path_genome_locations = self._config.get_value('id_to_genome_file', community_section, is_path=True)
+			file_path_gff_locations = self._config.get_value('id_to_gff_file', community_section, is_path=True, silent=True)
+			mode = self._config.get_value('mode', community_section)
+			if not isinstance(file_path_metadata_table, basestring):
+				is_valid = False
+			if not isinstance(file_path_genome_locations, basestring):
+				is_valid = False
+			# if not isinstance(file_path_gff_locations, basestring):
+			# 	is_valid = False
+			if not isinstance(mode, basestring):
+				is_valid = False
+
+			if not is_valid:
+				continue
+			assert isinstance(file_path_metadata_table, basestring)
+			assert isinstance(file_path_genome_locations, basestring)
+			assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
+			assert isinstance(mode, basestring)
+			new_community = Community(
+				identifier=community_section,
+				genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
+				genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True),
+				limit_per_otu=self._config.get_value('max_strains_per_otu', community_section, is_digit=True),
+				file_path_metadata_table=file_path_metadata_table,
+				file_path_genome_locations=file_path_genome_locations,
+				file_path_gff_locations=file_path_gff_locations,
+				ratio=self._config.get_value('ratio', community_section, is_digit=True),
+				mode=mode,
+				log_mu=self._config.get_value('log_mu', community_section, is_digit=True),
+				log_sigma=self._config.get_value('log_sigma', community_section, is_digit=True),
+				gauss_mu=self._config.get_value('gauss_mu', community_section, is_digit=True),
+				gauss_sigma=self._config.get_value('gauss_sigma', community_section, is_digit=True),
+				verbose=self._config.get_value('view', community_section, is_boolean=True)
+			)
+			self._list_of_communities.append(new_community)
+		return is_valid
+
+	def _stream_main(self, output_stream=sys.stdout):
+		"""
+
+		@param output_stream:
+		"""
+		output_stream.write("[Main]\n")
+		output_stream.write("samtools={}\n".format(self._seed))
+		output_stream.write("phase={}\n".format(self._phase))
+		output_stream.write("max_processors={}\n".format(self._max_processors))
+		output_stream.write("dataset_id={}\n".format(self._dataset_id))
+		output_stream.write("output_directory={}\n".format(self._directory_output))
+		output_stream.write("temp_directory={}\n".format(self._tmp_dir))
+		output_stream.write("gsa={}\n".format(self._phase_gsa))
+		output_stream.write("pooled_gsa={}\n".format(self._phase_pooled_gsa))
+		output_stream.write("anonymous={}\n".format(self._phase_anonymize))
+		output_stream.write("compress={}\n".format(self._phase_compress))
+
+	def _stream_read_simulator(self, output_stream=sys.stdout):
+		"""
+
+		@param output_stream:
+		"""
+		output_stream.write("[ReadSimulator]\n")
+		output_stream.write("art_illumina={}\n".format(self._executable_art_illumina))
+		output_stream.write("art_error_profiles={}\n".format(self._directory_art_error_profiles))
+		output_stream.write("profile={}\n".format(self._error_profile))
+		output_stream.write("size={}\n".format(self._sample_size_in_base_pairs/self._base_pairs_multiplication_factor))
+		output_stream.write("type={}\n".format(self._read_simulator_type))
+		output_stream.write("fragments_size_mean={}\n".format(self._fragments_size_mean_in_bp))
+		output_stream.write("fragment_size_standard_deviation={}\n".format(self._fragment_size_standard_deviation_in_bp))
+
+	def _stream_community_design(self, output_stream=sys.stdout):
+		"""
+
+		@param output_stream:
+		"""
+		output_stream.write("[CommunityDesign]\n")
+		output_stream.write("ncbi_taxdump={}\n".format(self._directory_ncbi_taxdump))
+		output_stream.write("strain_simulation_template={}\n".format(self._strain_simulation_template))
+		output_stream.write("number_of_samples={}\n".format(self._number_of_samples))
+		output_stream.write("number_of_communities={}\n".format(self._number_of_communities))
+
+	def _stream_communities(self, output_stream=sys.stdout):
+		"""
+
+		@param output_stream:
+		"""
+		for community in self._list_of_communities:
+			output_stream.write("[{}]\n".format(community.id))
+			output_stream.write("metadata={}\n".format(community.file_path_metadata_table))
+			output_stream.write("id_to_genome_file={}\n".format(community.file_path_genome_locations))
+			output_stream.write("id_to_gff_file={}\n".format(community.file_path_gff_locations))
+			output_stream.write("genomes_total={}\n".format(community.genomes_total))
+			output_stream.write("genomes_real={}\n".format(community.genomes_real))
+			output_stream.write("max_strains_per_otu={}\n".format(community.limit_per_otu))
+			output_stream.write("ratio={}\n".format(community.ratio))
+			output_stream.write("mode={}\n".format(community.mode))
+			output_stream.write("log_mu={}\n".format(community.log_mu))
+			output_stream.write("log_sigma={}\n".format(community.log_sigma))
+			output_stream.write("gauss_mu={}\n".format(community.gauss_mu))
+			output_stream.write("gauss_sigma={}\n".format(community.gauss_sigma))
+			output_stream.write("view={}\n".format(community.verbose))
+			output_stream.write("\n")
+
+	def write_config(self, file_path):
+		with open(file_path, 'w') as write_handler:
+			self._stream_main(write_handler)
+			write_handler.write("\n")
+			self._stream_read_simulator(write_handler)
+			write_handler.write("\n")
+			self._stream_community_design(write_handler)
+			write_handler.write("\n")
+			self._stream_communities(write_handler)
+
+
+class ArgumentHandler(ConfigFileHandler):
+	"""Reading pipeline configuration from file and from passed arguments"""
+
+	_label = "ArgumentHandler"
+
+	_separator = None
+	_file_path_config = None
 
 	_column_name_genome_id = "genome_ID",
 	_column_name_otu = "OTU",
 	_column_name_novelty_category = "novelty_category",
 	_column_name_ncbi = "NCBI_ID",
 	_column_name_source = "source",
-
-	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
 	def __init__(
 		self, args=None, version="Prototype", separator="\t",
@@ -130,7 +364,7 @@ class ArgumentHandler(Validator):
 		options = self._get_parser_options(args, version)
 		logfile = options.logfile
 		if logfile is not None:
-			logfile = self.get_full_path(logfile)
+			logfile = self._validator.get_full_path(logfile)
 		super(ArgumentHandler, self).__init__(logfile=logfile)
 
 		self._valid_arguments = True
@@ -145,7 +379,7 @@ class ArgumentHandler(Validator):
 		self.set_log_level(verbose=self._verbose, debug=self._debug)
 
 		# read configuration files
-		self._read_config()
+		self._valid_arguments = self._read_config(self._file_path_config)
 		if not self._valid_arguments:
 			return
 
@@ -175,6 +409,7 @@ class ArgumentHandler(Validator):
 			debug=self._debug
 		)
 		self._project_file_folder_handler.make_directory_structure(self._number_of_samples)
+		self.write_config(os.path.join(self._project_file_folder_handler.get_output_directory(), self._file_path_config))
 
 	def _get_directory_pipeline(self):
 		"""
@@ -183,7 +418,7 @@ class ArgumentHandler(Validator):
 		@return: Location of pipeline
 		@rtype: str | unicode
 		"""
-		return self.get_full_path(os.path.dirname(os.path.realpath(sys.argv[0])))
+		return self._validator.get_full_path(os.path.dirname(os.path.realpath(sys.argv[0])))
 
 	def to_file(self, file_path):
 		"""
@@ -194,7 +429,7 @@ class ArgumentHandler(Validator):
 
 		@rtype: None
 		"""
-		assert self.validate_file(file_path)
+		assert self._validator.validate_file(file_path)
 		with open(file_path, 'w') as file_handler:
 			file_handler.write(self.to_string())
 
@@ -314,7 +549,7 @@ number_of_communities={communities}
 			communities=self._number_of_communities
 			)
 
-		for index, community in enumerate(self._list_of_communities):
+		for community in self._list_of_communities:
 			com_string = """
 [community{i}]
 # Metadata table, required tabseparated columns: genome_ID, OTU, NCBI_ID, novelty_category
@@ -359,7 +594,7 @@ view={view}
 
 
 """.format(
-				i=index,
+				i=community.id,
 				metadata=community.file_path_metadata_table,
 				id_to_genome_file=community.file_path_genome_locations,
 				id_to_gff_file=community.file_path_gff_locations,
@@ -400,17 +635,17 @@ view={view}
 		if self._number_of_samples is None:
 			self._logger.error("'-ns' No number of samples given!")
 			self._valid_arguments = False
-		elif not self.validate_number(self._number_of_samples, minimum=1, key='-ns'):
+		elif not self._validator.validate_number(self._number_of_samples, minimum=1, key='-ns'):
 			self._valid_arguments = False
 
 		if self._number_of_communities is None:
 			self._logger.error("No 'number of communities' given.")
 			self._valid_arguments = False
-		elif not self.validate_number(self._number_of_communities, minimum=1):
+		elif not self._validator.validate_number(self._number_of_communities, minimum=1):
 			self._valid_arguments = False
 
 		# not sure about that
-		if self._file_path_plasmid_sequence_names is not None and not self.validate_file(
+		if self._file_path_plasmid_sequence_names is not None and not self._validator.validate_file(
 			self._file_path_plasmid_sequence_names, key=''):
 			self._valid_arguments = False
 
@@ -429,21 +664,21 @@ view={view}
 		if self._directory_ncbi_taxdump is None:
 			self._logger.error("NCBI taxdump directory is required!")
 			self._valid_arguments = False
-		elif not self.validate_dir(self._directory_ncbi_taxdump, file_names=self._ncbi_ref_files, key='-ncbi'):
+		elif not self._validator.validate_dir(self._directory_ncbi_taxdump, file_names=self._ncbi_ref_files, key='-ncbi'):
 			self._valid_arguments = False
 		else:
-			self._directory_ncbi_taxdump = self.get_full_path(self._directory_ncbi_taxdump)
+			self._directory_ncbi_taxdump = self._validator.get_full_path(self._directory_ncbi_taxdump)
 
-		if self._strain_simulation_template is not None and self.validate_dir(self._strain_simulation_template):
-			self._strain_simulation_template = self.get_full_path(self._strain_simulation_template)
+		if self._strain_simulation_template is not None and self._validator.validate_dir(self._strain_simulation_template):
+			self._strain_simulation_template = self._validator.get_full_path(self._strain_simulation_template)
 
 		if self._executable_samtools is None:
 			self._logger.error("Samtools executable is required!")
 			self._valid_arguments = False
-		elif not self.validate_file(self._executable_samtools, executable=True):
+		elif not self._validator.validate_file(self._executable_samtools, executable=True):
 			self._valid_arguments = False
 		else:
-			self._executable_samtools = self.get_full_path(self._executable_samtools)
+			self._executable_samtools = self._validator.get_full_path(self._executable_samtools)
 
 	def _check_read_simulation_values(self):
 		"""
@@ -457,7 +692,7 @@ view={view}
 		if self._sample_size_in_base_pairs is None:
 			self._logger.error("'-bp' A size in giga basepairs must be given!")
 			self._valid_arguments = False
-		elif not self.validate_number(self._sample_size_in_base_pairs, minimum=0, key='-bp', zero=False):
+		elif not self._validator.validate_number(self._sample_size_in_base_pairs, minimum=0, key='-bp', zero=False):
 			self._valid_arguments = False
 
 		if self._read_simulator_type is None:
@@ -467,26 +702,26 @@ view={view}
 			if self._directory_art_error_profiles is None:
 				self._logger.error("Art illumina error profile directory is required!")
 				self._valid_arguments = False
-			elif not self.validate_dir(self._directory_art_error_profiles):
+			elif not self._validator.validate_dir(self._directory_art_error_profiles):
 				self._valid_arguments = False
 			else:
-				self._directory_art_error_profiles = self.get_full_path(self._directory_art_error_profiles)
+				self._directory_art_error_profiles = self._validator.get_full_path(self._directory_art_error_profiles)
 
 			if self._executable_art_illumina is None:
 				self._logger.error("Art illumina executable is required!")
 				self._valid_arguments = False
-			elif not self.validate_file(self._executable_art_illumina, executable=True):
+			elif not self._validator.validate_file(self._executable_art_illumina, executable=True):
 				self._valid_arguments = False
 			else:
-				self._executable_art_illumina = self.get_full_path(self._executable_art_illumina)
+				self._executable_art_illumina = self._validator.get_full_path(self._executable_art_illumina)
 
 			if self._directory_art_error_profiles is None:
 				self._logger.error("Art illumina error profile directory is required!")
 				self._valid_arguments = False
-			elif not self.validate_dir(self._directory_art_error_profiles):
+			elif not self._validator.validate_dir(self._directory_art_error_profiles):
 				self._valid_arguments = False
 			else:
-				self._directory_art_error_profiles = self.get_full_path(self._directory_art_error_profiles)
+				self._directory_art_error_profiles = self._validator.get_full_path(self._directory_art_error_profiles)
 
 			if self._error_profile is None:
 				self._logger.error("'-ep' An error profile for 'art' was not chosen!")
@@ -495,13 +730,13 @@ view={view}
 			if self._fragments_size_mean_in_bp is None:
 				self._logger.error("'-fmean' For the simulation with 'art' a mean size of the fragments is required!")
 				self._valid_arguments = False
-			elif not self.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean'):
+			elif not self._validator.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean'):
 				self._valid_arguments = False
 
 			if self._fragment_size_standard_deviation_in_bp is None:
 				self._logger.error("'-fsd' For the simulation with 'art' a standard_deviation of the fragments size is required!")
 				self._valid_arguments = False
-			elif not self.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd'):
+			elif not self._validator.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd'):
 				self._logger.error(
 					"'-fsd' The standard_deviation of the fragments size must be a positive number: '{}'".format(
 						self._fragment_size_standard_deviation_in_bp))
@@ -518,9 +753,9 @@ view={view}
 			directory_out = os.path.dirname(directory_out)
 
 		user_input_required = False
-		if not self.validate_free_space(directory_tmp, required_space_in_gb=expected_tmp_size):
+		if not self._validator.validate_free_space(directory_tmp, required_space_in_gb=expected_tmp_size):
 			user_input_required = True
-		elif not self.validate_free_space(directory_out, required_space_in_gb=expected_output_size):
+		elif not self._validator.validate_free_space(directory_out, required_space_in_gb=expected_output_size):
 			user_input_required = True
 		elif expected_output_size > 100:
 			# message = "The output will require approximately {} GigaByte.".format(expected_output_size)
@@ -540,7 +775,7 @@ view={view}
 			if self._compresslevel is None:
 				self._logger.error("No compression level (0 - 9) given.")
 				self._valid_arguments = False
-			elif not self.validate_number(self._compresslevel, 0, 9):
+			elif not self._validator.validate_number(self._compresslevel, 0, 9):
 				self._valid_arguments = False
 
 	def _check_values(self):
@@ -554,10 +789,10 @@ view={view}
 
 		if self._tmp_dir is None:
 			self._tmp_dir = tempfile.gettempdir()
-		elif not self.validate_dir(self._tmp_dir, key="temp directory"):
+		elif not self._validator.validate_dir(self._tmp_dir, key="temp directory"):
 			self._valid_arguments = False
 		else:
-			self._tmp_dir = self.get_full_path(self._tmp_dir)
+			self._tmp_dir = self._validator.get_full_path(self._tmp_dir)
 
 		subfolders = ["scripts"]
 
@@ -568,7 +803,7 @@ view={view}
 			self._logger.error("Pipeline directory is required!")
 			self._valid_arguments = False
 			return
-		elif not self.validate_dir(
+		elif not self._validator.validate_dir(
 			self._directory_pipeline,
 			sub_directories=subfolders, key="pipeline directory"):
 			self._valid_arguments = False
@@ -580,8 +815,8 @@ view={view}
 			self._valid_arguments = False
 			return
 
-		self._directory_output = self.get_full_path(self._directory_output)
-		if not self.validate_dir(self._directory_output, only_parent=True, key='-o'):
+		self._directory_output = self._validator.get_full_path(self._directory_output)
+		if not self._validator.validate_dir(self._directory_output, only_parent=True, key='-o'):
 			self._valid_arguments = False
 			return
 
@@ -602,7 +837,7 @@ view={view}
 		if self._phase == 2:
 			self._phase_simulate_reads = True
 
-		if self._phase == 2 and not self.validate_dir(self._directory_output, key='-o'):
+		if self._phase == 2 and not self._validator.validate_dir(self._directory_output, key='-o'):
 			self._valid_arguments = False
 			return
 
@@ -613,161 +848,6 @@ view={view}
 
 		if self._phase_simulate_reads:
 			self._check_read_simulation_values()
-
-	def _read_config(self):
-		"""
-		Read parameter from configuration file.
-
-		@rtype: None
-		"""
-		# TODO: check that all keys options make sense
-		self._config = ConfigParserWrapper(self._file_path_config)
-		if not self.validate_file(self._file_path_config, key="Configuration file"):
-			self._valid_args = False
-			return
-
-		# ##########
-		# [Main]
-		# ##########
-
-		section = None  # "Main"
-		if self._phase is None:
-			self._phase = self._config.get_value("phase", is_digit=True)
-
-		if self._seed is None:
-			self._seed = self._config.get_value("seed")
-
-		if self._max_processors is None:
-			self._max_processors = self._config.get_value("max_processors", is_digit=True)
-
-		if self._dataset_id is None:
-			self._dataset_id = self._config.get_value("dataset_id")
-
-		if self._directory_output is None:
-			self._directory_output = self._config.get_value("output_directory", is_path=True)
-
-		if self._tmp_dir is None:
-			config_value = self._config.get_value("temp_directory", is_path=True)
-			if config_value is not None:
-				assert self.validate_dir(config_value)
-				self._tmp_dir = config_value
-
-		self._phase_gsa = self._config.get_value("gsa", is_boolean=True)
-		self._phase_pooled_gsa = self._config.get_value("pooled_gsa", is_boolean=True)
-
-		config_value = self._config.get_value("compress", is_digit=True)
-		assert isinstance(config_value, int)
-		self._compresslevel = config_value
-
-		self._phase_anonymize = self._config.get_value("anonymous", is_boolean=True)
-
-		# ##########
-		# [ReadSimulator]
-		# ##########
-
-		section = None  # "ReadSimulator"
-		if self._sample_size_in_base_pairs is None:
-			config_value = self._config.get_value("size", is_digit=True)
-			if config_value is not None:
-				self._sample_size_in_base_pairs = long(config_value * self._base_pairs_multiplication_factor)
-
-		if self._read_simulator_type is None:
-			self._read_simulator_type = self._config.get_value("type")
-
-		if self._executable_samtools is None:
-			self._executable_samtools = self._config.get_value("samtools", is_path=True)
-
-		if self._executable_art_illumina is None:
-			self._executable_art_illumina = self._config.get_value("art_illumina", silent=True, is_path=True)
-
-		if self._directory_art_error_profiles is None:
-			self._directory_art_error_profiles = self._config.get_value("art_error_profiles", silent=True, is_path=True)
-
-		if self._error_profile is None:
-			self._error_profile = self._config.get_value("profile")
-
-		if self._fragment_size_standard_deviation_in_bp is None:
-			self._fragment_size_standard_deviation_in_bp = self._config.get_value(
-				"fragment_size_standard_deviation", is_digit=True)
-
-		if self._fragments_size_mean_in_bp is None:
-			self._fragments_size_mean_in_bp = self._config.get_value("fragments_size_mean", is_digit=True)
-
-		# ##########
-		# [CommunityDesign]
-		# ##########
-
-		if self._input_list_of_file_paths_distributions is None:
-			self._input_list_of_file_paths_distributions = self._config.get_value("distribution_file_paths", is_path=True)
-
-		section = None  # "CommunityDesign"
-		if self._directory_ncbi_taxdump is None:
-			self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True)
-
-		if self._strain_simulation_template is None:
-			self._strain_simulation_template = self._config.get_value(
-				"strain_simulation_template", silent=True, is_path=True)
-
-		if self._number_of_samples is None:
-			self._number_of_samples = self._config.get_value("number_of_samples", is_digit=True)
-
-		if self._number_of_communities is None:
-			self._number_of_communities = self._config.get_value('number_of_communities', is_digit=True)
-
-		if self._number_of_communities is None:
-			self._logger.error("Bad number of communities!")
-			self._valid_arguments = False
-			return
-
-		community_sections = set()
-		community_key_options = {
-			"genomes_total", 'genomes_real', 'max_strains_per_otu', 'ratio',
-			'log_mu', 'log_sigma', 'gauss_mu', 'gauss_sigma'}
-		for key_options in community_key_options:
-			community_sections = community_sections.union(self._config.search_sections_of(key_options))
-
-		self._list_of_communities = []
-		is_valid = True
-		for community_section in community_sections:
-			file_path_metadata_table = self._config.get_value('metadata', community_section, is_path=True)
-			file_path_genome_locations = self._config.get_value('id_to_genome_file', community_section, is_path=True)
-			file_path_gff_locations = self._config.get_value('id_to_gff_file', community_section, is_path=True, silent=True)
-			mode = self._config.get_value('mode', community_section)
-			if not isinstance(file_path_metadata_table, basestring):
-				is_valid = False
-			if not isinstance(file_path_genome_locations, basestring):
-				is_valid = False
-			# if not isinstance(file_path_gff_locations, basestring):
-			# 	is_valid = False
-			if not isinstance(mode, basestring):
-				is_valid = False
-
-			if not is_valid:
-				continue
-			assert isinstance(file_path_metadata_table, basestring)
-			assert isinstance(file_path_genome_locations, basestring)
-			assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
-			assert isinstance(mode, basestring)
-			new_community = Community(
-				identifier=community_section,
-				genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
-				genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True),
-				limit_per_otu=self._config.get_value('max_strains_per_otu', community_section, is_digit=True),
-				file_path_metadata_table=file_path_metadata_table,
-				file_path_genome_locations=file_path_genome_locations,
-				file_path_gff_locations=file_path_gff_locations,
-				ratio=self._config.get_value('ratio', community_section, is_digit=True),
-				mode=mode,
-				log_mu=self._config.get_value('log_mu', community_section, is_digit=True),
-				log_sigma=self._config.get_value('log_sigma', community_section, is_digit=True),
-				gauss_mu=self._config.get_value('gauss_mu', community_section, is_digit=True),
-				gauss_sigma=self._config.get_value('gauss_sigma', community_section, is_digit=True),
-				verbose=self._config.get_value('view', community_section, is_boolean=True)
-			)
-			self._list_of_communities.append(new_community)
-		if not is_valid:
-			self._valid_arguments = False
-			return
 
 	def _expected_output_size_in_giga_byte(self):
 		"""
@@ -787,10 +867,10 @@ view={view}
 
 		@rtype: None
 		"""
-		if not self.validate_file(options.config_file, key='-c'):
+		if not self._validator.validate_file(options.config_file, key='-c'):
 			self._valid_arguments = False
 			return
-		self._file_path_config = self.get_full_path(options.config_file)
+		self._file_path_config = self._validator.get_full_path(options.config_file)
 		self._verbose = options.verbose
 		self._debug = options.debug_mode
 		self._phase = options.phase
@@ -961,6 +1041,6 @@ view={view}
 		"""
 		user_input = raw_input("{}\n>".format(message)).lower()
 		while True:
-			if self.is_boolean_state(user_input):
-				return self.get_boolean_state(user_input)
+			if self._validator.is_boolean_state(user_input):
+				return self._validator.get_boolean_state(user_input)
 			user_input = raw_input("Please type 'n' for no, or 'y' for yes:\n>").lower()
