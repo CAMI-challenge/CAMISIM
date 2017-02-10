@@ -15,6 +15,11 @@ from scripts.projectfilefolderhandle import ProjectFileFolderHandle
 
 
 class DefaultValues(DefaultLogging):
+	"""
+	Reading and writing config file
+
+	@type _list_of_communities: list[Community]
+	"""
 	_seed = None
 
 	_phase = 0
@@ -71,7 +76,7 @@ class DefaultValues(DefaultLogging):
 	# ############
 	# [comdesign]
 	# ############
-	_number_of_communities = None
+	_list_of_communities = []
 	_input_list_of_file_paths_distributions = None
 
 	def __init__(self, logfile=None, verbose=False, debug=False):
@@ -138,6 +143,21 @@ class DefaultValues(DefaultLogging):
 		# ############
 		# self._DEFAULT_number_of_communities = None
 		self._DEFAULT_input_list_of_file_paths_distributions = None
+
+		# self._DEFAULT_file_path_metadata_table =
+		# self._DEFAULT_file_path_genome_locations =
+		# self._DEFAULT_file_path_gff_locations =
+		# self._DEFAULT_genomes_total =
+		# self._DEFAULT_genomes_real =
+		self._DEFAULT_limit_per_otu = 3
+		self._DEFAULT_ratio = 1
+		self._DEFAULT_mode = 'differential'
+		self._DEFAULT_log_mu = 1
+		self._DEFAULT_log_sigma = 2
+		self._DEFAULT_gauss_mu = 1
+		self._DEFAULT_gauss_sigma = 1
+		self._DEFAULT_view = False
+
 		os.chdir(original_wd)
 
 	def _set_default_values(self):
@@ -199,6 +219,16 @@ class DefaultValues(DefaultLogging):
 		# ############
 		# self._number_of_communities = None
 		# self._input_list_of_file_paths_distributions = None
+		for community in self._list_of_communities:
+			community.limit_per_otu = community.limit_per_otu or self._DEFAULT_limit_per_otu
+			community.ratio = community.ratio or self._DEFAULT_ratio
+			community.mode = community.mode or self._DEFAULT_mode
+			community.log_mu = community.log_mu or self._DEFAULT_log_mu
+			community.log_sigma = community.log_sigma or self._DEFAULT_log_sigma
+			community.gauss_mu = community.gauss_mu or self._DEFAULT_gauss_mu
+			community.gauss_sigma = community.gauss_sigma or self._DEFAULT_gauss_sigma
+			community.verbose = community.verbose or self._DEFAULT_view
+
 
 
 class ConfigFileHandler(DefaultValues):
@@ -209,7 +239,6 @@ class ConfigFileHandler(DefaultValues):
 	"""
 	# internal variables not set in config
 	_file_name_config = "config.cfg"
-	_list_of_communities = []
 	_ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 	_base_pairs_multiplication_factor = float(1000000000)  # 10**9
 
@@ -316,13 +345,13 @@ class ConfigFileHandler(DefaultValues):
 		if self._number_of_samples is None:
 			self._number_of_samples = self._config.get_value("number_of_samples", is_digit=True)
 
-		if self._number_of_communities is None:
-			self._number_of_communities = self._config.get_value('number_of_communities', is_digit=True)
-
-		if self._number_of_communities is None:
-			self._logger.error("Bad number of communities!")
-			self._valid_arguments = False
-			return
+		# if self._number_of_communities is None:
+		# 	self._number_of_communities = self._config.get_value('number_of_communities', is_digit=True)
+		#
+		# if self._number_of_communities is None:
+		# 	self._logger.error("Bad number of communities!")
+		# 	self._valid_arguments = False
+		# 	return
 
 		community_sections = set()
 		community_key_options = {
@@ -370,6 +399,7 @@ class ConfigFileHandler(DefaultValues):
 				verbose=self._config.get_value('view', community_section, is_boolean=True)
 			)
 			self._list_of_communities.append(new_community)
+			self._number_of_communities = len(self._list_of_communities)
 		return is_valid
 
 	def _stream_main(self, output_stream=sys.stdout):
@@ -651,10 +681,6 @@ strain_simulation_template={template}
 # The amount of samples to be simulated
 number_of_samples={samples}
 
-# The amount of (sub)communities used for a sample.
-# A sample can be made from several (sub)communities. For example: Eukaryote / Bacteria / Archaea / Virus / Plasmid
-number_of_communities={communities}
-
 
 """.format(
 			# config=self._file_path_config,
@@ -683,7 +709,6 @@ number_of_communities={communities}
 			ncbi_taxdump=self._directory_ncbi_taxdump,
 			template=self._strain_simulation_template,
 			samples=self._number_of_samples,
-			communities=self._number_of_communities
 			)
 
 		for community in self._list_of_communities:
@@ -775,8 +800,8 @@ view={view}
 		elif not self._validator.validate_number(self._number_of_samples, minimum=1, key='-ns'):
 			self._valid_arguments = False
 
-		if self._number_of_communities is None:
-			self._logger.error("No 'number of communities' given.")
+		if self._number_of_communities is None or self._number_of_communities == 0:
+			self._logger.error("Bad 'number of communities': {}".format(self._number_of_communities))
 			self._valid_arguments = False
 		elif not self._validator.validate_number(self._number_of_communities, minimum=1):
 			self._valid_arguments = False
