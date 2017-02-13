@@ -338,7 +338,7 @@ class ConfigFileHandler(DefaultValues):
 
 		if self._strain_simulation_template is None:
 			self._strain_simulation_template = self._config.get_value(
-				"strain_simulation_template", silent=True, is_path=True, silent=True)
+				"strain_simulation_template", is_path=True, silent=True)
 
 		if self._number_of_samples is None:
 			self._number_of_samples = self._config.get_value("number_of_samples", is_digit=True, silent=True)
