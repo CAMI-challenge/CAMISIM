@@ -13,8 +13,6 @@ class ConfigParserWrapper(DefaultLogging):
 		'no': False, 'false': False, 'off': False,
 		'y': True, 't': True, 'n': False, 'f': False}
 
-	_label = "ConfigParserWrapper"
-
 	def __init__(self, config_file, logfile=None, verbose=True):
 		"""
 			Wrapper for the SafeConfigParser class for easy use.
@@ -34,7 +32,7 @@ class ConfigParserWrapper(DefaultLogging):
 		assert isinstance(config_file, str) or self.is_stream(config_file)
 		assert logfile is None or isinstance(logfile, str) or self.is_stream(logfile)
 
-		super(ConfigParserWrapper, self).__init__(logfile=logfile, verbose=verbose)
+		super(ConfigParserWrapper, self).__init__(label="ConfigParserWrapper", logfile=logfile, verbose=verbose)
 		self._config = SafeConfigParser()
 
 		if isinstance(config_file, str) and not os.path.isfile(config_file):
