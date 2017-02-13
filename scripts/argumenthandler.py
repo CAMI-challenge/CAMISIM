@@ -83,7 +83,7 @@ class DefaultValues(DefaultLogging):
 		super(DefaultValues, self).__init__(label="ArgumentHandler", logfile=logfile, verbose=verbose, debug=debug)
 		self._validator = Validator(logfile=logfile, verbose=verbose, debug=debug)
 		original_wd = os.getcwd()
-		pipeline_dir = self._validator.get_full_path(os.path.dirname(scripts.__file__))
+		pipeline_dir = os.path.dirname(self._validator.get_full_path(os.path.dirname(scripts.__file__)))
 		os.chdir(pipeline_dir)
 		self._DEFAULT_seed = random.randint(0, 2147483640)
 
