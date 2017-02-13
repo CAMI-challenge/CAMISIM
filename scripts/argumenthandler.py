@@ -123,19 +123,19 @@ class DefaultValues(DefaultLogging):
 		# ############
 		# [read_simulator]
 		# ############
-		self._DEFAULT_sample_size_in_base_pairs = 10 * 1000000000
+		self._DEFAULT_sample_size_in_base_pairs = 1 * 1000000000
 
 		self._DEFAULT_read_simulator_type = 'art'
 		self._DEFAULT_error_profile = 'hi150'
-		self._DEFAULT_fragment_size_standard_deviation_in_bp = '270'
-		self._DEFAULT_fragments_size_mean_in_bp = '27'
+		self._DEFAULT_fragment_size_standard_deviation_in_bp = 270
+		self._DEFAULT_fragments_size_mean_in_bp = 27
 
 		# ############
 		# [sampledesign]
 		# ############
 		self._DEFAULT_strain_simulation_template = os.path.join(
 			pipeline_dir, 'scripts', 'StrainSimulationWrapper', 'sgEvolver', 'simulation_dir')
-		self._DEFAULT_number_of_samples = 5
+		self._DEFAULT_number_of_samples = 2
 		self._DEFAULT_file_path_plasmid_sequence_names = None
 
 		# ############
