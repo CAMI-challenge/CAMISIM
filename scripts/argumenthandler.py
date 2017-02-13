@@ -371,8 +371,8 @@ class ConfigFileHandler(DefaultValues):
 				is_valid = False
 			# if not isinstance(file_path_gff_locations, basestring):
 			# 	is_valid = False
-			if not isinstance(mode, basestring):
-				is_valid = False
+			# if not isinstance(mode, basestring):
+			# 	is_valid = False
 
 			if not is_valid:
 				continue
