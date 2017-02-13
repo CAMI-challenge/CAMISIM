@@ -64,7 +64,7 @@ class Community(Validator):
 		@type debug: bool
 		"""
 		assert genomes_real is None or genomes_real <= genomes_total
-		assert mode in PopulationDistribution.get_valid_modes()
+		assert mode is None or mode in PopulationDistribution.get_valid_modes()
 		super(Community, self).__init__(logfile, verbose, debug)
 
 		self.genomes_real = genomes_real
