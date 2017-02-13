@@ -314,7 +314,7 @@ class ConfigFileHandler(DefaultValues):
 			self._directory_art_error_profiles = self._config.get_value("art_error_profiles", silent=True, is_path=True)
 
 		if self._error_profile is None:
-			self._error_profile = self._config.get_value("profile")
+			self._error_profile = self._config.get_value("profile", silent=True)
 
 		if self._fragment_size_standard_deviation_in_bp is None:
 			self._fragment_size_standard_deviation_in_bp = self._config.get_value(
