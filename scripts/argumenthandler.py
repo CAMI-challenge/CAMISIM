@@ -408,12 +408,12 @@ class ConfigFileHandler(DefaultValues):
 		@param output_stream:
 		"""
 		output_stream.write("[Main]\n")
-		output_stream.write("seed={}\n".format(self._seed))
+		output_stream.write("seed={}\n".format(self._seed or ""))
 		output_stream.write("phase={}\n".format(self._phase))
 		output_stream.write("max_processors={}\n".format(self._max_processors))
 		output_stream.write("dataset_id={}\n".format(self._dataset_id))
-		output_stream.write("output_directory={}\n".format(self._directory_output))
-		output_stream.write("temp_directory={}\n".format(self._tmp_dir))
+		output_stream.write("output_directory={}\n".format(self._directory_output or ""))
+		output_stream.write("temp_directory={}\n".format(self._tmp_dir or ""))
 		output_stream.write("gsa={}\n".format(self._phase_gsa))
 		output_stream.write("pooled_gsa={}\n".format(self._phase_pooled_gsa))
 		output_stream.write("anonymous={}\n".format(self._phase_anonymize))
@@ -426,7 +426,7 @@ class ConfigFileHandler(DefaultValues):
 		"""
 		output_stream.write("[ReadSimulator]\n")
 		output_stream.write("art_illumina={}\n".format(self._executable_art_illumina))
-		output_stream.write("art_error_profiles={}\n".format(self._directory_art_error_profiles))
+		output_stream.write("art_error_profiles={}\n".format(self._directory_art_error_profiles or ""))
 		output_stream.write("samtools={}\n".format(self._executable_samtools))
 		output_stream.write("profile={}\n".format(self._error_profile))
 		output_stream.write("size={}\n".format(self._sample_size_in_base_pairs/self._base_pairs_multiplication_factor))
@@ -440,11 +440,11 @@ class ConfigFileHandler(DefaultValues):
 		@param output_stream:
 		"""
 		output_stream.write("[CommunityDesign]\n")
-		output_stream.write("distribution_file_paths={}\n".format(self._input_list_of_file_paths_distributions))
-		output_stream.write("ncbi_taxdump={}\n".format(self._directory_ncbi_taxdump))
-		output_stream.write("strain_simulation_template={}\n".format(self._strain_simulation_template))
+		output_stream.write("distribution_file_paths={}\n".format(self._input_list_of_file_paths_distributions or ""))
+		output_stream.write("ncbi_taxdump={}\n".format(self._directory_ncbi_taxdump or ""))
+		output_stream.write("strain_simulation_template={}\n".format(self._strain_simulation_template or ""))
 		output_stream.write("number_of_samples={}\n".format(self._number_of_samples))
-		output_stream.write("number_of_communities={}\n".format(self._number_of_communities))
+		# output_stream.write("number_of_communities={}\n".format(self._number_of_communities))
 
 	def _stream_communities(self, output_stream=sys.stdout):
 		"""
@@ -454,8 +454,8 @@ class ConfigFileHandler(DefaultValues):
 		for community in self._list_of_communities:
 			output_stream.write("[{}]\n".format(community.id))
 			output_stream.write("metadata={}\n".format(community.file_path_metadata_table))
-			output_stream.write("id_to_genome_file={}\n".format(community.file_path_genome_locations))
-			output_stream.write("id_to_gff_file={}\n".format(community.file_path_gff_locations))
+			output_stream.write("id_to_genome_file={}\n".format(community.file_path_genome_locations or ""))
+			output_stream.write("id_to_gff_file={}\n".format(community.file_path_gff_locations or ""))
 			output_stream.write("genomes_total={}\n".format(community.genomes_total))
 			output_stream.write("genomes_real={}\n".format(community.genomes_real))
 			output_stream.write("max_strains_per_otu={}\n".format(community.limit_per_otu))
