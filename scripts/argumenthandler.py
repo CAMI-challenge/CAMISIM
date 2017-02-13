@@ -161,7 +161,7 @@ class DefaultValues(DefaultLogging):
 		os.chdir(original_wd)
 
 	def _set_default_values(self):
-		self._seed = None
+		self._seed = self._seed or self._DEFAULT_seed
 
 		self._phase = self._phase or self._DEFAULT_phase
 		self._phase_validate_raw_genomes = self._phase_validate_raw_genomes or self._DEFAULT_phase_validate_raw_genomes
