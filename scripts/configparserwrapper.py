@@ -115,7 +115,10 @@ class ConfigParserWrapper(DefaultLogging):
 			section = self._get_section_of_option(option)
 		if not self._config.has_section(section):
 			if not silent:
-				self._logger.error("Missing section '{}'".format(section))
+				if section is None:
+					self._logger.error("Missing option '{}'".format(option))
+				else:
+					self._logger.error("Missing section '{}'".format(section))
 			return None
 		if not self._config.has_option(section, option):
 			if not silent:
