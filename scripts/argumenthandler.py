@@ -287,9 +287,7 @@ class ConfigFileHandler(DefaultValues):
 		self._phase_gsa = self._config.get_value("gsa", is_boolean=True)
 		self._phase_pooled_gsa = self._config.get_value("pooled_gsa", is_boolean=True)
 
-		config_value = self._config.get_value("compress", is_digit=True)
-		assert isinstance(config_value, int)
-		self._compresslevel = config_value
+		self._compresslevel = self._config.get_value("compress", is_digit=True)
 
 		self._phase_anonymize = self._config.get_value("anonymous", is_boolean=True)
 
