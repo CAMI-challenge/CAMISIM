@@ -167,7 +167,7 @@ class MetagenomeSimulation(ArgumentHandler):
 			verbose=self._verbose)
 
 		file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
-		if not self.validate_file(file_path_genome_locations, silent=True):
+		if not self._validator.validate_file(file_path_genome_locations, silent=True):
 			msg = "Required file not found! Was design of communities not completed?"
 			raise RuntimeError(msg)
 		meta_data_table.read(file_path_genome_locations)
@@ -328,7 +328,7 @@ class MetagenomeSimulation(ArgumentHandler):
 		samtools.convert_sam_to_bam(directory_sam, directory_bam)
 
 		if not self._phase_anonymize:
-			list_of_file_path = self.get_files_in_directory(directory_output_tmp, extension="fq")
+			list_of_file_path = self._validator.get_files_in_directory(directory_output_tmp, extension="fq")
 			directory_output_fastq = self._project_file_folder_handler.get_reads_dir(False, sample_id)
 			if self._phase_compress:
 				for file_path in list_of_file_path:
