@@ -379,7 +379,7 @@ class ConfigFileHandler(DefaultValues):
 			assert isinstance(file_path_metadata_table, basestring)
 			assert isinstance(file_path_genome_locations, basestring)
 			assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
-			assert isinstance(mode, basestring)
+			assert mode is None or isinstance(mode, basestring)
 			new_community = Community(
 				identifier=community_section,
 				genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
