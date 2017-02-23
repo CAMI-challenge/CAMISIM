@@ -1,14 +1,16 @@
 # original from Dmitrij Turaev
 
 __author__ = 'Peter Hofmann'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 
 import os
 import time
 import fnmatch
+import tempfile
 from taxonomynode import TaxonomyNode
 from scripts.Validator.validator import Validator
+from scripts.Archive.archive import Archive
 
 
 class NcbiTaxonomy(Validator):
@@ -33,14 +35,14 @@ class NcbiTaxonomy(Validator):
     taxid_old_to_taxid_new = {}
     _has_node_tree = False
 
-    def __init__(self, taxonomy_directory="./", build_node_tree=False, verbose=True, logfile=None):
+    def __init__(self, taxonomy_path="./", temporary_directory=None, build_node_tree=False, verbose=True, logfile=None):
         """
         Loading NCBI from SQL dump files into dictionary.
 
         @attention: building a node tree requires several gigabytes of RAM !!!
 
-        @param taxonomy_directory: directory containing ncbi dump
-        @type taxonomy_directory: str | unicode
+        @param taxonomy_path: directory containing ncbi dump
+        @type taxonomy_path: str | unicode
         @param build_node_tree: Building a node tree, maybe useful if subtree is needed.
         @type build_node_tree: bool
         @param verbose: If False, messages are only written to the logfile, if given
@@ -52,12 +54,30 @@ class NcbiTaxonomy(Validator):
         @rtype: None
         """
         super(NcbiTaxonomy, self).__init__(label="NcbiTaxonomy", logfile=logfile, verbose=verbose)
-        assert self.validate_dir(taxonomy_directory, file_names=["names.dmp", "merged.dmp", "nodes.dmp"])
+        assert isinstance(taxonomy_path, str), "Invalid taxonomy directory."
+        assert temporary_directory is None or self.validate_dir(temporary_directory)
         assert isinstance(build_node_tree, bool)
-        taxonomy_directory = self.get_full_path(taxonomy_directory)
-        self._file_path_ncbi_names = os.path.join(taxonomy_directory, "names.dmp")
-        self._file_path_ncbi_merged = os.path.join(taxonomy_directory, "merged.dmp")
-        self._file_path_ncbi_nodes = os.path.join(taxonomy_directory, "nodes.dmp")
+
+        assert os.path.exists(taxonomy_path), "Invalid taxonomy directory."
+        self._tmp_dir = None
+
+        if not self.validate_dir(taxonomy_path, silent=True):
+            archive = Archive()
+            assert archive.is_archive(taxonomy_path), "Can not read taxonomy. Unknown archive."
+            if temporary_directory is None:
+                self._tmp_dir = tempfile.mkdtemp()
+            else:
+                self._tmp_dir = tempfile.mkdtemp(dir=temporary_directory)
+            archive.extract_all(taxonomy_path, self._tmp_dir)
+            folder_name = os.listdir(self._tmp_dir)[0]
+            taxonomy_path = os.path.join(self._tmp_dir, folder_name)
+
+        assert self.validate_dir(taxonomy_path, file_names=["names.dmp", "merged.dmp", "nodes.dmp"])
+
+        taxonomy_path = self.get_full_path(taxonomy_path)
+        self._file_path_ncbi_names = os.path.join(taxonomy_path, "names.dmp")
+        self._file_path_ncbi_merged = os.path.join(taxonomy_path, "merged.dmp")
+        self._file_path_ncbi_nodes = os.path.join(taxonomy_path, "nodes.dmp")
         # self._gi_taxid_file = os.path.join(taxonomy_directory, "gi_taxid_nucl.dmp")
 
         start = time.time()
@@ -74,6 +94,20 @@ class NcbiTaxonomy(Validator):
 
         end = time.time()
         self._logger.info("Done ({}s)".format(round(end - start), 1))
+
+    def __exit__(self, type, value, traceback):
+        super(NcbiTaxonomy, self).__exit__(type, value, traceback)
+        if self.validate_dir(self._tmp_dir, silent=True):
+            import shutil
+            shutil.rmtree(self._tmp_dir)
+        self.tmp_dir = None
+
+    def __del__(self):
+        super(NcbiTaxonomy, self).__del__()
+        if self.validate_dir(self._tmp_dir, silent=True):
+            import shutil
+            shutil.rmtree(self._tmp_dir)
+        self.tmp_dir = None
 
     def has_taxid(self, taxid):
         """
