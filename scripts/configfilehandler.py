@@ -16,7 +16,6 @@ class ConfigFileHandler(DefaultValues):
     # internal variables not set in config
     _file_name_config = "config.cfg"
     _ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
-    _base_pairs_multiplication_factor = float(1000000000)  # 10**9
 
     def __init__(self, logfile=None, verbose=False, debug=False):
         super(ConfigFileHandler, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
@@ -29,10 +28,11 @@ class ConfigFileHandler(DefaultValues):
         @rtype: bool
         """
         # TODO: check that all keys options make sense
-        self._config = ConfigParserWrapper(file_path_config)
+        self._config = ConfigParserWrapper(logfile=self._logfile, verbose=self._verbose)
         if not self._validator.validate_file(file_path_config, key="Configuration file"):
             self._valid_args = False
             return
+        self._config.read(file_path_config)
 
         # ##########
         # [Main]
