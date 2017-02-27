@@ -98,7 +98,6 @@ class DefaultValues(DefaultLogging):
         os.chdir(original_wd)
 
     def _from_hardcoded(self, pipeline_dir):
-
         self._DEFAULT_phase = 0
         self._DEFAULT_phase_validate_raw_genomes = False  # TODO: read from config
         self._DEFAULT_phase_design_community = True
@@ -145,7 +144,7 @@ class DefaultValues(DefaultLogging):
         # ############
         self._DEFAULT_strain_simulation_template = os.path.join(
             pipeline_dir, 'scripts', 'StrainSimulationWrapper', 'sgEvolver', 'simulation_dir')
-        self._DEFAULT_number_of_samples = 2
+        self._DEFAULT_number_of_samples = 1
         self._DEFAULT_file_path_plasmid_sequence_names = None
 
         # ############
