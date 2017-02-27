@@ -1,4 +1,0 @@
-"""
-    Contains evaluation scripts.
-"""
-

@@ -1,0 +1,96 @@
+.TH RNAmmer 1 "February 2006" 
+.SH NAME
+RNAmmer \- predicts ribosomal RNA genes in prokaryotic genome sequences
+.SH SYNOPSIS
+\fBrnammer\fP [\fB\-S kingdom\fP] [\fB\-m molecules\fP]  [\fB\-xml xml-file\fP] [\fB\-gff gff-file\fP] [\fB\-d\fP] [\fB\-p\fP] [\fB\-h hmmreport\fP] [\fB\-f fasta-file\fP] [\fIsequence\fP]
+
+or
+
+\fBrnammer\fP [\fB\-S kingdom\fP] [\fB\-m molecules\fP]  [\fB\-xml xml-file\fP] [\fB\-gff gff-file\fP] [\fB\-d\fP] [\fB\-p\fP] [\fB\-h hmmreport\fP] [\fB\-f fasta-file\fP] < [\fIsequence\fP]
+
+
+.SH CORE
+\fBcore\-rnammer\fP [\fIconfiguration\fP]
+
+.SH DESCRIPTION
+.B RNAmmer
+predicts ribosomal RNA genes in full genome sequences by utilising 
+two levels of Hidden Markov Models: An initial spotter model searches both 
+strands. The spotter model is constructed from highly conserved loci
+within a structural alignment of known rRNA sequences. Once the spotter
+model detects an approximate position of a gene, flanking regions are
+extracted and parsed to the full model which matches the entire gene. 
+By enabling a two-level approach it is avoided to run a full model through
+an entire genome sequence allowing faster predictions.
+
+RNAmmer consists of two components: A core Perl program, '\fIcore\-rnammer\fP',
+and a wrapper, '\fIrnammer\fP'. The wrapper sets up the search by writing on or more
+temporary configuration(s). The wrapper requires the super kingdom of the input 
+sequence (bacterial, archaeal, or eukaryotic) and the molecule type (5/8, 16/17s, 
+and 23/28s) to search for. When the configuration files are written, they are 
+parsed in parallel to individual instances of the core program. Each instance of 
+the core program will in parallel search both strands, so a maximum of 3x2 hmmsearch 
+processes will run simultanously.
+
+
+The input sequences are read from \fIsequence\fP or. The input must be in 
+Pearson \fBFASTA\fP format. When using the core program, input \fIconfiguration\fP
+must in RNAmmer configuration file format (see documentation below)
+
+The output is controlled by options h (hmmreport), and f (fasta).
+
+.SH REQUIREMENTS
+.B The main executable '\fIrnammer\fP' requires the core RNAmmer program '\fIcore-rnammer\fP'. The 
+core program requires the binary 'hmmsearch' (http://hmmer.wustl.edu/)
+
+.SH OPTIONS
+.TP
+.B \-S
+Specifies the super kingdom of the input sequence. Can be either 'arc', 'bac', or 'euk'.
+
+.TP
+.B \-gff output gff file
+Specifies filename for output in GFF version 2 output
+
+.TP
+.B \-multi
+Runs all molecules and both strands in parallel
+
+.TP
+.B \-f fasta
+Specifies filename for output fasta file of predicted rRNA genes
+
+.TP
+.B \-h hmmreport
+Specifies filename for output HMM report.
+
+.TP
+.B \-m
+Molecule type can be 'tsu' for 5/8s rRNA, 'ssu' for 16/18s rRNA, 'lsu' for 23/28s rRNA or any combination seperated by comma.
+
+.TP
+.I [sequence]
+The input file to process. 
+
+.SH EXAMPLE
+../rnammer -S bac -m lsu,ssu,tsu -xml ecoli.xml -gff ecoli.gff -h ecoli.hmmreport < ecoli.fsa
+
+core-rnammer configuration.cf
+
+.SH AUTHORS
+Peter Fischer Hallin (pfh@cbs.dtu.dk)
+Center for Biological Sequence Analysis (CBS)
+Technical University of Denmark
+February 2006
+
+.SH REFERENCES
+RNAmmer: consistent annotation of rRNA genes in genomic sequences
+Lagesen K, Hallin PF, Rodland EA, Staerfeldt HH, Rognes T, and Ussery DW. 
+.br
+Manuscript in preparation
+
+Information and web-service can be found at the internet address:
+
+http://www.cbs.dtu.dk/services/RNAmmer/
+.SH SEE ALSO
+fasta(1), hmmsearch(1)
