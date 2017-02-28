@@ -14,11 +14,11 @@ class ConfigFileHandler(DefaultValues):
     @type _list_of_communities: list[Community]
     """
     # internal variables not set in config
-    _file_name_config = "config.cfg"
+    _file_name_config = "config.ini"
     _ncbi_ref_files = ["nodes.dmp", "merged.dmp", "names.dmp"]
 
-    def __init__(self, logfile=None, verbose=False, debug=False):
-        super(ConfigFileHandler, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
+    def __init__(self, label="ConfigFileHandler", logfile=None, verbose=False, debug=False):
+        super(ConfigFileHandler, self).__init__(label=label, logfile=logfile, verbose=verbose, debug=debug)
         self._validator = Validator(logfile=logfile, verbose=verbose, debug=debug)
 
     def _read_config(self, file_path_config):
@@ -110,7 +110,7 @@ class ConfigFileHandler(DefaultValues):
 
         section = None  # "CommunityDesign"
         if self._directory_ncbi_taxdump is None:
-            self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True)
+            self._directory_ncbi_taxdump = self._config.get_value("ncbi_taxdump", is_path=True, silent=True)
 
         if self._strain_simulation_template is None:
             self._strain_simulation_template = self._config.get_value(
@@ -159,7 +159,7 @@ class ConfigFileHandler(DefaultValues):
             new_community = Community(
                 identifier=community_section,
                 genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
-                genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True),
+                genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True, silent=True),
                 limit_per_otu=self._config.get_value('max_strains_per_otu', community_section, is_digit=True, silent=True),
                 file_path_metadata_table=file_path_metadata_table,
                 file_path_genome_locations=file_path_genome_locations,
