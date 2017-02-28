@@ -79,8 +79,8 @@ class DefaultValues(DefaultLogging):
     # ############
     _base_pairs_multiplication_factor = float(1000000000)  # 10**9
 
-    def __init__(self, logfile=None, verbose=False, debug=False):
-        super(DefaultValues, self).__init__(label="ArgumentHandler", logfile=logfile, verbose=verbose, debug=debug)
+    def __init__(self, label="DefaultValues", logfile=None, verbose=False, debug=False):
+        super(DefaultValues, self).__init__(label=label, logfile=logfile, verbose=verbose, debug=debug)
         self._validator = Validator(logfile=logfile, verbose=verbose, debug=debug)
         pipeline_dir = os.path.dirname(self._validator.get_full_path(os.path.dirname(scripts.__file__)))
 
@@ -92,7 +92,7 @@ class DefaultValues(DefaultLogging):
         os.chdir(pipeline_dir)
         file_path_config = os.path.join(pipeline_dir, "default_config.ini")
         if self._validator.validate_file(file_path_config, silent=True):
-            self._from_config(pipeline_dir, file_path_config)
+            self._from_config(file_path_config)
         else:
             self._from_hardcoded(pipeline_dir)
         os.chdir(original_wd)
@@ -106,9 +106,11 @@ class DefaultValues(DefaultLogging):
         self._DEFAULT_phase_gsa = True
         self._DEFAULT_phase_pooled_gsa = True
         self._DEFAULT_phase_anonymize = True
-        self._DEFAULT_phase_compress = True
 
-        self._DEFAULT_compresslevel = 5
+        self._DEFAULT_phase_compress = False
+        self._DEFAULT_compresslevel = 0
+        if self._DEFAULT_compresslevel > 0:
+            self._DEFAULT_phase_compress = True
 
         # ############
         # executables
@@ -167,7 +169,7 @@ class DefaultValues(DefaultLogging):
         self._DEFAULT_gauss_sigma = 1
         self._DEFAULT_view = False
 
-    def _from_config(self, pipeline_dir, file_path_config):
+    def _from_config(self, file_path_config):
         config = ConfigParserWrapper(logfile=self._logfile, verbose=self._verbose)
         # self._DEFAULT_seed = random.randint(0, 2147483640)
         if not self._validator.validate_file(file_path_config, key="Configuration file"):
@@ -183,9 +185,10 @@ class DefaultValues(DefaultLogging):
         self._DEFAULT_phase_gsa = config.get_value("gsa", is_boolean=True, silent=True)
         self._DEFAULT_phase_pooled_gsa = config.get_value("pooled_gsa", is_boolean=True, silent=True)
         self._DEFAULT_phase_anonymize = config.get_value("anonymous", is_boolean=True, silent=True)
-        self._DEFAULT_phase_compress = config.get_value("compress", is_digit=True, silent=True)
-
-        self._DEFAULT_compresslevel = 5
+        self._DEFAULT_compresslevel = config.get_value("compress", is_digit=True, silent=True)
+        self._DEFAULT_phase_compress = False
+        if self._DEFAULT_compresslevel > 0:
+            self._DEFAULT_phase_compress = True
 
         # ############
         # executables
