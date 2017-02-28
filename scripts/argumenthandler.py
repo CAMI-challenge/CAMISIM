@@ -15,8 +15,6 @@ from scripts.Archive.archive import Archive
 class ArgumentHandler(ConfigFileHandler):
     """Reading pipeline configuration from file and from passed arguments"""
 
-    _label = "ArgumentHandler"
-
     _separator = None
     _file_path_config = None
 
@@ -61,7 +59,7 @@ class ArgumentHandler(ConfigFileHandler):
         logfile = options.logfile
         if logfile is not None:
             logfile = self._validator.get_full_path(logfile)
-        super(ArgumentHandler, self).__init__(logfile=logfile)
+        super(ArgumentHandler, self).__init__(label="MetagenomeSimulationPipeline", logfile=logfile)
         self._directory_pipeline = self._get_directory_pipeline()
 
         self._valid_arguments = True
@@ -575,7 +573,7 @@ view={view}
             self._valid_arguments = False
             return
         self._file_path_config = self._validator.get_full_path(options.config_file)
-        self._verbose = options.verbose
+        self._verbose = not options.silent
         self._debug = options.debug_mode
         self._phase = options.phase
         self._dataset_id = options.data_set_id
@@ -615,10 +613,10 @@ view={view}
             formatter_class=argparse.RawTextHelpFormatter)
 
         parser.add_argument(
-            "-verbose", "--verbose",
+            "-silent", "--silent",
             action='store_true',
             default=False,  # set None if read from config
-            help="display more information")
+            help="Hide unimportant Progress Messages.")
         parser.add_argument(
             "-debug", "--debug_mode",
             action='store_true',
