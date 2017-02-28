@@ -1,5 +1,5 @@
 __author__ = 'Peter Hofmann'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import os
 import sys
@@ -14,7 +14,7 @@ from scripts.loggingwrapper import DefaultLogging
 
 class ConfigParserWrapper(DefaultLogging):
     """
-    @type _config: SafeConfigParser
+    @type _config: ConfigParser
     """
 
     _boolean_states = {
@@ -36,8 +36,6 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None
             @rtype: None
         """
-        assert logfile is None or isinstance(logfile, str) or self.is_stream(logfile)
-
         super(ConfigParserWrapper, self).__init__(
             label="ConfigParserWrapper", logfile=logfile, verbose=verbose)
         self._config = ConfigParser()
@@ -54,7 +52,7 @@ class ConfigParserWrapper(DefaultLogging):
 
             @rtype: None
         """
-        assert isinstance(config_file, str) or self.is_stream(config_file)
+        assert isinstance(config_file, str) or self.is_stream(config_file), "Invalid config file path: {}".format(config_file)
         if isinstance(config_file, str) and not os.path.isfile(config_file):
             self._logger.error("Config file does not exist: '{}'".format(config_file))
             raise Exception("File does not exist")
@@ -108,7 +106,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None if all valid, otherwise list of invalid sections
             @rtype: None | list[str]
         """
-        assert isinstance(list_sections, Iterable), list_sections
+        assert isinstance(list_sections, Iterable), "Invalid, not a list: '{}'".format(list_sections)
         invalid_sections = []
         for section in list_sections:
             if not self._config.has_section(section):
@@ -127,7 +125,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None
             @rtype: None
         """
-        assert isinstance(list_sections, Iterable)
+        assert isinstance(list_sections, Iterable), "Invalid, not a list: '{}'".format(list_sections)
         for section in list_sections:
             self._logger.warning("Invalid section '{}'".format(section))
 
@@ -154,12 +152,12 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None if not available or ''. Else: depends on given arguments
             @rtype: None | str | int | float | bool
         """
-        assert section is None or isinstance(section, str)
-        assert isinstance(option, str)
-        assert isinstance(is_digit, bool)
-        assert isinstance(is_boolean, bool)
-        assert isinstance(silent, bool)
-        assert isinstance(is_path, bool)
+        assert section is None or isinstance(section, str), "Invalid section: '{}'".format(section)
+        assert isinstance(option, str), "Invalid option: '{}'".format(option)
+        assert isinstance(is_digit, bool), "Invalid argument, 'is_digit' must be boolean, but got: '{}'".format(type(is_digit))
+        assert isinstance(is_boolean, bool), "Invalid argument, 'is_boolean' must be boolean, but got: '{}'".format(type(is_boolean))
+        assert isinstance(silent, bool), "Invalid argument, 'silent' must be boolean, but got: '{}'".format(type(silent))
+        assert isinstance(is_path, bool), "Invalid argument, 'is_path' must be boolean, but got: '{}'".format(type(is_path))
         if section is None:
             section = self._get_section_of_option(option)
         if not self._config.has_section(section):
@@ -200,7 +198,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: Section name. None if not available
             @rtype: None | str
         """
-        assert isinstance(option, str)
+        assert isinstance(option, str), "Invalid argument, 'option' must be string, but got: '{}'".format(type(option))
         for section in self._config.sections():
             if self._config.has_option(section, option):
                 return section
@@ -216,7 +214,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: Section name. None if not available
             @rtype: set[str]
         """
-        assert isinstance(option, str)
+        assert isinstance(option, str), "Invalid argument, 'option' must be string, but got: '{}'".format(type(option))
         result = set()
         for section in self._config.sections():
             if self._config.has_option(section, option):
@@ -233,7 +231,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None if invalid, otherwise int or float
             @rtype: None | int | float
         """
-        assert isinstance(value, str)
+        assert isinstance(value, str), "Invalid argument, 'value' must be string, but got: '{}'".format(type(value))
         try:
             if '.' in value:
                 return float(value)
@@ -252,7 +250,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: None if invalid, otherwise True or False
             @rtype: None | bool
         """
-        assert isinstance(value, str)
+        assert isinstance(value, str), "Invalid argument, 'value' must be string, but got: '{}'".format(type(value))
 
         if value.lower() not in ConfigParserWrapper._boolean_states:
             self._logger.error("Invalid bool value '{}'".format(value))
@@ -270,7 +268,7 @@ class ConfigParserWrapper(DefaultLogging):
             @return: absolute normpath
             @rtype: str
         """
-        assert isinstance(value, str)
+        assert isinstance(value, str), "Invalid argument, 'value' must be string, but got: '{}'".format(type(value))
 
         parent_directory, filename = os.path.split(value)
 
