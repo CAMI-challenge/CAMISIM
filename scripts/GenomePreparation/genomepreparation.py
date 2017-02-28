@@ -16,9 +16,11 @@ from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 class GenomePreparation(SequenceValidator):
-	_label = "GenomePreparation"
 
 	_filename_seq_map = "sequence_id_map.txt"
+
+	def __init__(self, label="GenomePreparation", logfile=None, verbose=False, debug=False):
+		super(GenomePreparation, self).__init__(label=label, logfile=logfile, verbose=verbose, debug=debug)
 
 	def write_genome_id_to_path_map(self, genome_id_to_path_map, file_path_output):
 		"""

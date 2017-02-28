@@ -11,8 +11,6 @@ from scripts.Archive.compress import Compress
 class MetadataTable(Compress):
 	"""Reading and writing a metadata table"""
 
-	_label = "MetadataTable"
-
 	def __init__(self, separator="\t", logfile=None, verbose=True):
 		"""
 			Handle tab separated files
@@ -32,7 +30,7 @@ class MetadataTable(Compress):
 		assert logfile is None or isinstance(logfile, basestring) or self.is_stream(logfile)
 		assert isinstance(separator, basestring), "separator must be string"
 		assert isinstance(verbose, bool), "verbose must be true or false"
-		super(MetadataTable, self).__init__(logfile=logfile, verbose=verbose)
+		super(MetadataTable, self).__init__(label="MetadataReader", logfile=logfile, verbose=verbose)
 
 		self._number_of_rows = 0
 		self._meta_table = {}

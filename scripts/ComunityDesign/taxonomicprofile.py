@@ -25,7 +25,7 @@ class TaxonomicProfile(Validator):
 		@param debug: Display debug messages
 		@type debug: bool
 		"""
-		super(TaxonomicProfile, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
+		super(TaxonomicProfile, self).__init__(label="TaxonomicProfile", logfile=logfile, verbose=verbose, debug=debug)
 		self._ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
 		assert isinstance(taxonomy, NcbiTaxonomy)
 		self._taxonomy = taxonomy

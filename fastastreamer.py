@@ -35,8 +35,10 @@ class FastaStreamer(SequenceValidator):
 	# TODO: have user choose new_line character '\0', '\n'
 	"""
 
-	_label = "FastaStreamer"
 	_legal_formats = ["fastq", "fasta"]
+
+	def __init__(self, logfile=None, verbose=True, debug=False):
+		super(FastaStreamer, self).__init__(logfile, verbose, debug, label="FastaStreamer")
 
 	def stream_directory(self, directory, out_stream=sys.stdout, file_format="fastq", extension="fq", paired=False):
 		"""
