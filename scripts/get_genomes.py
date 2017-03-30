@@ -1,6 +1,7 @@
 import sys
 import os
 from ftplib import FTP 
+import gzip
 import random
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.Validator.validator import Validator
@@ -163,10 +164,16 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
 		cwd = "/" + "/".join(split_path[3:]).rstrip() # get /address/to/genome
 		gen_name = split_path[-1].rstrip() # genome name is last in address
 		to_dl = gen_name + "_genomic.fna.gz"
-		out_name = out_path + list_of_genomes[elem] + ".fa.gz"  # out name is the ncbi id of the downloaded genome
+		out_name = out_path + list_of_genomes[elem] + ".fa"  # out name is the ncbi id of the downloaded genome
+		out_name_gz = out_name + ".gz"
 		metadata.update({list_of_genomes[elem]:out_name})
 		ftp.cwd(cwd)
-		ftp.retrbinary("RETR %s" % to_dl, open(out_name,'wb').write)
+		ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write)
+		gf = gzip.open(out_name_gz) #TODO we have to "uncompress" the files
+		outF = open(out_name,'wb')
+		outF.write(gf.read())
+		gf.close()
+		outF.close()
 	return metadata
 
 """

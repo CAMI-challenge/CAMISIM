@@ -19,6 +19,9 @@ def parse_options():
 	# out path
 	parser.add_argument("-o", default=None, type=str)
 
+	# temporary path
+	parser.add_argument("-tmp", default=None, type=str)
+
 	# file pointing to reference genomes TODO format
 	parser.add_argument("-ref","--reference-genomes", default="tools/assembly_summary_complete_genomes.txt")
 
