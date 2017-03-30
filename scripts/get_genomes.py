@@ -158,6 +158,9 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
 	metadata = dict() # create the metadata table (pathes to genomes)
 	ftp = FTP('ftp.ncbi.nlm.nih.gov') 
 	ftp.login() # anonymous login
+	out_path = out_path + "genomes/" #extra folder for downloaded genomes
+	if not os.path.exists(out_path):
+		os.makedirs(out_path)
 	for elem in list_of_genomes:
 		path = ftp_list[list_of_genomes[elem]]
 		split_path = path.split('/')
@@ -169,10 +172,11 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
 		metadata.update({list_of_genomes[elem]:out_name})
 		ftp.cwd(cwd)
 		ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write)
-		gf = gzip.open(out_name_gz) #TODO we have to "uncompress" the files
+		gf = gzip.open(out_name_gz) 
 		outF = open(out_name,'wb')
 		outF.write(gf.read())
 		gf.close()
+		os.remove(out_name_gz) # remove the now unzipped archives
 		outF.close()
 	return metadata
 
