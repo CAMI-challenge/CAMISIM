@@ -11,9 +11,10 @@ from scripts.loggingwrapper import LoggingWrapper as logger
 Given a 16S-profile (currently only in CAMI format), downloads all closest relative genomes and creates abundances
 """
 
-_ranks=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
+RANKS=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 # strain inclusion?
-
+THRESHOLD="family" #level up to which related genomes are to be found
+log = logger(verbose=False)
 """
 original code in the profiling-evaluation-biobox, reads a file in cami profiling format and extracts relevant information (taxids/tax path/relative abundance/genome rank in the taxonomy)
 adpated from the profile evaluation biobox, extendeded by the following: We only check for the species tax ids, original genomes for the higher ranks will be checked later on
@@ -22,7 +23,7 @@ adpated from the profile evaluation biobox, extendeded by the following: We only
 def read_profile(file_path, epsilon):
 	assert isinstance(file_path, basestring)
 	if isinstance(file_path, str) and not os.path.isfile(file_path):
-		logger.error("16S profile not found in: %s" % file_path)
+		log.error("16S profile not found in: %s" % file_path)
 		raise Exception("File not found")
 	assert epsilon is None or isinstance(epsilon, (float, int, long))
 	tax_path = list()
@@ -63,7 +64,7 @@ scientific name is for debugging, the ftp address the address of the correspondi
 def read_genome_list(file_path):
 	assert isinstance(file_path, basestring)
 	if isinstance(file_path, str) and not os.path.isfile(file_path):
-		logger.error("Reference genome list not found in: %s" % file_path)
+		log.error("Reference genome list not found in: %s" % file_path)
 		raise Exception("File not found")
 	tax_ids = list()
 	sci_name = list()
@@ -93,11 +94,11 @@ Additionally, assume there is a full genome of Escherichia albertii available (t
 """
 def extend_genome_list(tax_ids, tax):
 	ids_per_rank = [tax_ids] # on the first rank no mapping
-	for rank in _ranks[1:]:
+	for rank in RANKS[1:]:
 		ids_per_rank.append(dict()) # create empty dicts
 	for tax_id in tax_ids:
 		try:
-			lineage = tax.get_lineage_of_legal_ranks(tax_id, ranks = _ranks)
+			lineage = tax.get_lineage_of_legal_ranks(tax_id, ranks = RANKS)
 		except ValueError:
 			continue # this means, the taxid was not found in the reference (reference mismatch)
 		i = 1
@@ -106,6 +107,8 @@ def extend_genome_list(tax_ids, tax):
 				ids_per_rank[i][rank_tax_id].append(tax_id) 
 			else:
 				ids_per_rank[i].update({rank_tax_id : [tax_id]})
+			if rank == THRESHOLD: # only search up to this taxonomic rank
+				break 
 			i = i + 1 # continue with the next rank
 	return ids_per_rank
 
@@ -121,6 +124,7 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, seed):
 	gen_map = {}
 	extended_genome_list = extend_genome_list(ref_tax_ids,tax)
 	to_download = dict() # ncbi id of genomes to download
+	log.info("Downloading genomes from NCBI")
 	for taxid in profile_tax_ids[0]:
 		found_genome = False
 		if taxid in extended_genome_list[0]: # a full genome with exact ncbi id is present
@@ -128,20 +132,22 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, seed):
 			found_genome = True
 		else: # the exact genome is not present, go up the ranks
 			try:
-				lineage = tax.get_lineage_of_legal_ranks(taxid,ranks = _ranks)
+				lineage = tax.get_lineage_of_legal_ranks(taxid,ranks = RANKS)
 			except ValueError: #tax ID was not found in reference data base
-				logger.warning("Genome %s not found in reference, maybe your reference is deprecated?" % taxid)
+				log.warning("Genome %s not found in reference, maybe your reference is deprecated?" % taxid)
 				continue
 			i = 0
-			for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in _ranks with species being the lowers (0)
+			for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in RANKS with species being the lowers (0)
 				if higher_taxid in extended_genome_list[i]:
 					species_id = extended_genome_list[i][higher_taxid]
 					to_download.update({taxid : species_id[random.randint(0,len(species_id) - 1)]}) #randomly select one of the mapped genomes TODO 
 					found_genome = True
-					break #TODO add rank for debugging purposes (_ranks[i])
+					break #TODO add rank for debugging purposes (RANKS[i])
+				if RANKS[i] == THRESHOLD:
+					break # we dont need to search on higher levels
 				i = i + 1 # go to the next rank
-		if not found_genome: # This should not happen, if tax id is in reference! TODO
-			logger.warning("No genome corresponding to ID %s found, omitted. Maybe your reference is deprecated?" % taxid)
+		if not found_genome: # No reference genome up until THRESHOLD
+			log.warning("No genome corresponding to ID %s found, omitted." % taxid)
 	return to_download
 
 """
@@ -171,7 +177,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
 		out_name_gz = out_name + ".gz"
 		metadata.update({list_of_genomes[elem]:out_name})
 		ftp.cwd(cwd)
-		ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write)
+		ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
 		gf = gzip.open(out_name_gz) 
 		outF = open(out_name,'wb')
 		outF.write(gf.read())
@@ -188,7 +194,7 @@ def create_abundance_table(list_of_genomes, profile):
 	abundance = {}
 	for elem in list_of_genomes:
 		ab = float(profile[2][elem]) # profile has a taxid - weight map at pos 2
-		ab = int(ab*100) # just so we get nice numbers
+		ab = int(ab*100) # just so we get nicer numbers
 		abundance.update({list_of_genomes[elem]:ab})
 	return abundance
 
@@ -200,12 +206,12 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 """
 #list of full genomes, input profile (CAMI format), taxonomy path, out directory
 #returns number of genomes
-def generate_input(genome_list,profile,tax_path,out_path,download):
+def generate_input(genome_list,profile,tax_path,out_path,download,seed=None):
 	out_path = os.path.join(out_path,'') #so we are sure it is a directory
 	tid,n,ftp = read_genome_list(genome_list)
 	profile = read_profile(profile,1) # probably 0.01 or something as threshold?
 	tax = NcbiTaxonomy(tax_path)
-	to_dl = map_to_full_genomes(tid,profile,tax,None) #TODO add seed
+	to_dl = map_to_full_genomes(tid,profile,tax,seed) #TODO add seed
 	if not download:
 		downloaded = []
 		for gen in to_dl:
