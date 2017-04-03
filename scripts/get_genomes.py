@@ -19,30 +19,46 @@ Given a 16S-profile (currently only in CAMI format), downloads all closest relat
 # strain inclusion?
 RANKS=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 #map BIOM ranks to CAMI ranks
-BIOM_RANKS={'s':RANKS[0],'g':RANKS[1],'f':RANKS[2],'o':RANKS[3],'c':RANKS[4],'p':RANKS[5],'k':RANKS[6]}
+BIOM_RANKS={'s':0,'g':1,'f':2,'o':3,'c':4,'p':5,'k':6}
 THRESHOLD="family" #level up to which related genomes are to be found
 log = logger(verbose=False)
 
 """
 Reads a biom (from e.g. QIIME) profile and transforms it so it can be used for the pipeline
 """
-def transform_profile(biom_profile, epsilon):
+def transform_profile(biom_profile, epsilon, no_samples, tax):
 	try:
 		table = biom.load_table(biom_profile)
 	except:
 		return read_profile(biom_profile, epsilon) # file is not a biom file: CAMI format
 	ids = table.ids(axis="observation")
+	profiles = []
 	samples = table.ids() # the samples' ids of the biom file
 	metadata = []
-	for id in ids:
-		metadata.append(table.metadata(id,axis="observation")["taxonomy"]) # retrieving lineage
-	for elem in metadata:
-		lineage = []
-		for rank in elem:
-			tax = rank.split("__") # split biom-string
-			if tax == '': 
-				break #so we get the lowest set rank (assuming no rank is bypassed)
-			lineage.append(tax[1])
+	i = 0
+	for sample in samples:
+		if no_samples != 1 and i > 0: # this is how it is described in the main script TODO
+			break
+		#if i > no_samples: # simulate the first i samples from biom file if i < no_samples?
+		#	break
+		profile = []
+		for id in ids:
+			abundance = table.get_value_by_ids(id,sample)
+			if abundance > 0: #only present strains should appear in profile
+				metadata.append(table.metadata(id,axis="observation")["taxonomy"]) # retrieving lineage
+		for elem in metadata:
+			lineage = []
+			for rank in elem:
+				tax = rank.split("__") # split biom-string
+				if tax[1] == '': 
+					if BIOM_RANKS[tax[0]] > RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
+						log.warning("Rank of \"genome\" %s is too high, omitted." % lineage[-1])
+						lineage = [] # skip this genome
+					break #so we get the lowest set rank (assuming no rank is bypassed)
+				lineage.append(tax[1])
+			if lineage == []: # rank is too high, ignore
+				continue
+			
 
 """
 original code in the profiling-evaluation-biobox, reads a file in cami profiling format and extracts relevant information (taxids/tax path/relative abundance/genome rank in the taxonomy)
@@ -97,7 +113,7 @@ def read_genome_list(file_path):
 		log.error("Reference genome list not found in: %s" % file_path)
 		raise Exception("File not found")
 	tax_ids = list()
-	sci_name = list()
+	sci_name = {}
 	ftp_address = {}
 	with open(file_path,'r') as full_genomes:
 		for line in full_genomes:
@@ -107,7 +123,7 @@ def read_genome_list(file_path):
 			if len(temp) < 3: # if the line split by tabs does not contain the three elements something is wrong
 				continue
 			tax_ids.append(temp[0])
-			sci_name.append(temp[1])
+			sci_name[temp[1]] = temp[0]
 			ftp_address[temp[0]] = temp[2]
 	return tax_ids, sci_name, ftp_address
 """
@@ -254,12 +270,13 @@ def generate_input(args):
 	config = ConfigParser()
 	config.read(args.config)
 
-	tid,n,ftp = read_genome_list(genome_list)
+	tax = NcbiTaxonomy(tax_path)
 	
-	profiles = transform_profile(profile,1) # might be multiple ones if biom file
+	tid,sci_name,ftp = read_genome_list(genome_list)
+	
+	profiles = transform_profile(profile,1,args.samples,tax) # might be multiple ones if biom file
 	# probably 0.01 or something as threshold?
 	
-	tax = NcbiTaxonomy(tax_path)
 	i = 0
 	abundances = []
 	downloaded = []
