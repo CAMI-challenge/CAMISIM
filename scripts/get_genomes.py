@@ -3,29 +3,59 @@ import os
 from ftplib import FTP 
 import gzip
 import random
+import biom #TODO required software
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.Validator.validator import Validator
 from scripts.loggingwrapper import LoggingWrapper as logger
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser  # ver. < 3.0
 
 """
 Given a 16S-profile (currently only in CAMI format), downloads all closest relative genomes and creates abundances
 """
 
-RANKS=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 # strain inclusion?
+RANKS=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
+#map BIOM ranks to CAMI ranks
+BIOM_RANKS={'s':RANKS[0],'g':RANKS[1],'f':RANKS[2],'o':RANKS[3],'c':RANKS[4],'p':RANKS[5],'k':RANKS[6]}
 THRESHOLD="family" #level up to which related genomes are to be found
 log = logger(verbose=False)
+
+"""
+Reads a biom (from e.g. QIIME) profile and transforms it so it can be used for the pipeline
+"""
+def transform_profile(biom_profile, epsilon):
+	try:
+		table = biom.load_table(biom_profile)
+	except:
+		return read_profile(biom_profile, epsilon) # file is not a biom file: CAMI format
+	ids = table.ids(axis="observation")
+	samples = table.ids() # the samples' ids of the biom file
+	metadata = []
+	for id in ids:
+		metadata.append(table.metadata(id,axis="observation")["taxonomy"]) # retrieving lineage
+	for elem in metadata:
+		lineage = []
+		for rank in elem:
+			tax = rank.split("__") # split biom-string
+			if tax == '': 
+				break #so we get the lowest set rank (assuming no rank is bypassed)
+			lineage.append(tax[1])
+
 """
 original code in the profiling-evaluation-biobox, reads a file in cami profiling format and extracts relevant information (taxids/tax path/relative abundance/genome rank in the taxonomy)
 adpated from the profile evaluation biobox, extendeded by the following: We only check for the species tax ids, original genomes for the higher ranks will be checked later on
 """
-# TODO generic read profile function, s.t. biom/QIIME format can also be used
 def read_profile(file_path, epsilon):
 	assert isinstance(file_path, basestring)
 	if isinstance(file_path, str) and not os.path.isfile(file_path):
 		log.error("16S profile not found in: %s" % file_path)
 		raise Exception("File not found")
 	assert epsilon is None or isinstance(epsilon, (float, int, long))
+	# check whether profile is biom or cami format
+	
 	tax_path = list()
 	tax_ids = list()
 	weights = dict()
@@ -52,7 +82,7 @@ def read_profile(file_path, epsilon):
 				tax_path.append(temp_split[2])  # add the whole taxpath
 				tax_ids.append(temp_split[0])  # just terminal tax ID
 				weights[temp_split[0]] = weight  # the associated weight
-	return tax_ids, tax_path, weights, ranks
+	return [(tax_ids, tax_path, weights, ranks)] # since in biom this might be multiple ones
 
 """
 given the list of full genomes available from NCBI, create a mapping with the relevant data (ncbi id/scientific name/ftp address of full genomes)
@@ -160,11 +190,14 @@ We might also download the _genomic.gff.gz for genes/evolution
 Also note that, if by chance multiple original genomes mapped to the same reference genome, this will get downloaded multiple times,
 but should only appear once in the out directory.
 """
-def download_genomes(list_of_genomes, ftp_list, out_path):
+def download_genomes(list_of_genomes, ftp_list, out_path, sample):
 	metadata = dict() # create the metadata table (pathes to genomes)
 	ftp = FTP('ftp.ncbi.nlm.nih.gov') 
 	ftp.login() # anonymous login
-	out_path = out_path + "genomes/" #extra folder for downloaded genomes
+	sample_path = out_path + "sample%s/" % sample # extra folder for every sample
+	if not os.path.exists(sample_path):
+		os.makedirs(sample_path)
+	out_path = sample_path + "genomes/" # extra folder for downloaded genomes
 	if not os.path.exists(out_path):
 		os.makedirs(out_path)
 	for elem in list_of_genomes:
@@ -198,6 +231,10 @@ def create_abundance_table(list_of_genomes, profile):
 		abundance.update({list_of_genomes[elem]:ab})
 	return abundance
 
+def write_files(profiles, abundances, downloaded, mapping, args):
+	return None
+
+
 """
 Given the reference genomes' sequences (path), an 16S profile, the path to the NCBI taxonomy and the output path,
 downloads mapped genomes, creates an abundance table and all the further inputs which are needed downstream by the main pipeline.
@@ -206,29 +243,63 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 """
 #list of full genomes, input profile (CAMI format), taxonomy path, out directory
 #returns number of genomes
-def generate_input(genome_list,profile,tax_path,out_path,download,seed=None):
-	out_path = os.path.join(out_path,'') #so we are sure it is a directory
+def generate_input(args):
+	# read args
+	genome_list = args.reference_genomes
+	profile = args.profile
+	tax_path = args.ncbi
+	download = args.download_genomes
+	seed = args.seed
+	out_path = os.path.join(args.o,'') #so we are sure it is a directory
+	config = ConfigParser()
+	config.read(args.config)
+
 	tid,n,ftp = read_genome_list(genome_list)
-	profile = read_profile(profile,1) # probably 0.01 or something as threshold?
+	
+	profiles = transform_profile(profile,1) # might be multiple ones if biom file
+	# probably 0.01 or something as threshold?
+	
 	tax = NcbiTaxonomy(tax_path)
-	to_dl = map_to_full_genomes(tid,profile,tax,seed) #TODO add seed
-	if not download:
-		downloaded = []
-		for gen in to_dl:
-			downloaded.append("%s\t%s" % (to_dl[gen],out_path + to_dl[gen] + "fa.gz"))
-	else:
-		downloaded = download_genomes(to_dl,ftp,out_path)
-	ab = create_abundance_table(to_dl,profile)
-	with open(out_path + "abundance.tsv",'wb') as abundance:
-		for e in ab:
-			abundance.write("%s\t%s\n" % (e,ab[e]))
-	with open(out_path + "genome_to_id.tsv",'wb') as gpath:
-		for e in downloaded:
-			gpath.write("%s\t%s\n" % (e,downloaded[e]))
-	with open(out_path + "metadata.tsv",'wb') as metadata:
-		i = 0 #for OTU assignment (every species gets its own OTU here) TODO
-		for gen in to_dl:
-			metadata.write("%s\t%s\t%s\t%s\n" % (gen,i,to_dl[gen],"new_strain"))
-			i = i + 1
-	return len(downloaded)
+	i = 0
+	abundances = []
+	downloaded = []
+	mapping = []
+	for profile in profiles:
+		mapping.append(map_to_full_genomes(tid,profile,tax,seed))
+		to_dl = mapping[i]
+
+		if not download:
+			downloaded[i] = []
+			for gen in to_dl:
+				downloaded[i].append("%s\t%ssample%s%s.fa" % (to_dl[gen],out_path,i,to_dl[gen]))
+		else:
+			downloaded.append(download_genomes(to_dl,ftp,out_path,i))
+		abundances.append(create_abundance_table(to_dl,profile))
+		i += 1
+	
+	numg = 0
+	for k in xrange(i): # number of samples
+		sample_path = out_path + "sample%s/" % k
+		with open(sample_path + "abundance.tsv",'wb') as abundance:
+			for genome in abundances[k]:
+				abundance.write("%s\t%s\n" % (genome,abundances[k][genome]))
+		config.set('community%s' % k,'distribution_file_paths',sample_path + "abundance.tsv")
+
+		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
+			for genome in downloaded[k]:
+				gpath.write("%s\t%s\n" % (genome,downloaded[k][genome]))
+		config.set('community%s' % k,'id_to_genome_file',sample_path + "genome_to_id.tsv")
+		
+		with open(sample_path + "metadata.tsv",'wb') as metadata:
+			otu = 0 #for OTU assignment (every species gets its own OTU here) TODO
+			for gen in mapping[k]:
+				metadata.write("%s\t%s\t%s\t%s\n" % (gen,otu,mapping[k][gen],"new_strain"))
+				otu = otu + 1
+		config.set('community%s' % k,'metadata',sample_path + "metadata.tsv")
+		
+		numg += len(downloaded[k])
+	cfg_path = out_path + "config.ini"
+	with open(cfg_path,'wb') as cfg:
+		config.write(cfg)
+	return numg, cfg_path
 

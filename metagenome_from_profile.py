@@ -2,6 +2,10 @@
 
 from scripts.Validator.validator import Validator
 from scripts.configfilehandler import ConfigFileHandler
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser  # ver. < 3.0
 import scripts.get_genomes as GG
 import shutil
 import os
@@ -20,7 +24,7 @@ def parse_options():
 
 	helptext="Output directory, make sure this directory exists!"
 	# out path
-	parser.add_argument("-o", default=None, type=str, help=helptext)
+	parser.add_argument("-o", default=None, type=str, help=helptext,metavar="OUT PATH")
 	
 	helptext="Path where temporary files are stored (get deleted after pipeline is finished)"
 	# temporary path
@@ -32,7 +36,7 @@ def parse_options():
 
 	helptext="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path"
 	# optional config file (out_path will get overwritten if it is set in config file)
-	parser.add_argument("-c","--config",default="default_config.ini",help=helptext)
+	parser.add_argument("-c","--config",default="default_config.ini",help=helptext,metavar="CONFIG FILE")
 
 	helptext="Path to the NCBI taxdump for finding corresponding reference genomes"
 	parser.add_argument("--ncbi",default="tools/ncbi-taxonomy_20150130.zip",help=helptext)
@@ -44,23 +48,21 @@ def parse_options():
 	
 	return args
 
-def create_config(args,numg):
-	with open(args.config) as config:
-		new_config = config.read()
+def create_config(args,cfg,numg):
+	config = ConfigParser()
+	config.read(cfg)
 	
-	new_config+="metadata=%s\n" % (os.path.join(args.o,'') + "metadata.tsv")
-	new_config+="id_to_genome_file=%s\n" % (os.path.join(args.o,'') + "genome_to_id.tsv")
-	new_config+="distribution_file_paths=%s\n" % (os.path.join(args.o,'') + "abundance.tsv")
-	new_config+="output_directory=%s\n" % (os.path.join(args.o,''))
-	new_config+="genomes_total=%s\n" % numg
+	config.set('Main', 'output_directory', os.path.join(args.o,''))
+	config.set('Main', 'genomes_total', numg)
+
 	if args.seed is not None:
-		new_config+="seed=%s\n" % args.seed
+		config.set('Main', "seed", args.seed)
 	name = os.path.join(args.o,'') + "config.ini"
-	with open(name,'wb') as nconf:
-		nconf.write(new_config)
+	with open(name,'wb') as cfg_path:
+		config.write(cfg_path)
 	return name
 
 args = parse_options()
-numg = GG.generate_input(args.reference_genomes,args.profile,args.ncbi,args.o,args.download_genomes,args.seed)
-c = create_config(args,numg)
+numg,config = GG.generate_input(args) # total number of genomes and path to updated config
+c = create_config(args,config,numg)
 os.system("./metagenomesimulation.py %s" % c)
