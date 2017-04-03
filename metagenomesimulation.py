@@ -50,9 +50,15 @@ class MetagenomeSimulation(ArgumentHandler):
             # Design Communities
             if self._input_list_of_file_paths_distributions:
                 assert len(self._input_list_of_file_paths_distributions) == self._number_of_samples
+                meta_data_table = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
+                meta_data_table.read(self._list_of_communities[0].file_path_metadata_table, column_names=True)
+                file_path_metadata = self._project_file_folder_handler.get_genome_metadata_file_path()
+                meta_data_table.write(file_path_metadata, column_names=True)
+
                 file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
                 shutil.copy2(self._list_of_communities[0].file_path_genome_locations, file_path_genome_locations)
                 genome_id_to_path_map = self.get_dict_gid_to_genome_file_path()
+
                 directory_out_distributions = self._project_file_folder_handler.get_distribution_dir()
                 list_of_file_paths_distributions = CommunityDesign.get_distribution_file_paths(
                     directory_out_distributions, self._number_of_samples)
