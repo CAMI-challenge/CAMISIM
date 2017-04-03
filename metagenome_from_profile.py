@@ -16,7 +16,11 @@ def parse_options():
 	
 	helptext="16S profile to create metagenome from. Can either be CAMI-format or biom-format."
 	#TODO default profile
-	parser.add_argument("-p","--profile", default=None, type=str,help=helptext)
+	parser.add_argument("-p","--profile", default=None, type=str, help=helptext)
+
+	helptext="Number of samples to be generated. If nothing is given, this defaults to 1 (CAMI format) or the number of samples present in the biom file. If a specific number is given, the samples are simulated using the first sample of the biom file"
+	#TODO is this the wanted behaviour?
+	parser.add_argument("-s","--samples", default=1, type=int, help=helptext)
 
 	helptext="Whether the related genomes are supposed to be downloaded."
 	# download the mapped full genomes?
