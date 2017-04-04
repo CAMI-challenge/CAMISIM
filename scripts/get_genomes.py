@@ -26,7 +26,7 @@ log = logger(verbose=False)
 """
 Reads a biom (from e.g. QIIME) profile and transforms it so it can be used for the pipeline
 """
-def transform_profile(biom_profile, epsilon, no_samples, tax):
+def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 	try:
 		table = biom.load_table(biom_profile)
 	except:
@@ -37,28 +37,61 @@ def transform_profile(biom_profile, epsilon, no_samples, tax):
 	metadata = []
 	i = 0
 	for sample in samples:
+		log.info("Processing sample %s" % i)
 		if no_samples != 1 and i > 0: # this is how it is described in the main script TODO
 			break
 		#if i > no_samples: # simulate the first i samples from biom file if i < no_samples?
 		#	break
-		profile = []
+		profile = ([],[],[],RANKS) # tax ids / tax paths / weights / ranks
 		for id in ids:
 			abundance = table.get_value_by_ids(id,sample)
 			if abundance > 0: #only present strains should appear in profile
-				metadata.append(table.metadata(id,axis="observation")["taxonomy"]) # retrieving lineage
+				lineage = table.metadata(id,axis="observation")["taxonomy"] # retrieving lineage
+				if len(lineage) > 1: # if length of lineage is one that the strain cannot be assigned
+					metadata.append(lineage)
 		for elem in metadata:
 			lineage = []
-			for rank in elem:
+			for rank in elem: # only the lineage
 				tax = rank.split("__") # split biom-string
+				if len(tax) != 2: # there is no name
+					break
 				if tax[1] == '': 
 					if BIOM_RANKS[tax[0]] > RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
-						log.warning("Rank of \"genome\" %s is too high, omitted." % lineage[-1])
+						log.warning("Rank of \"genome\" %s is too high, omitted." % RANKS[BIOM_RANKS[lineage[-1][0]]])
 						lineage = [] # skip this genome
 					break #so we get the lowest set rank (assuming no rank is bypassed)
-				lineage.append(tax[1])
+				lineage.append(tax)
 			if lineage == []: # rank is too high, ignore
 				continue
-			
+			sci_name = retrieve_scientific_name(lineage)
+			sci_name.encode('ascii','ignore') # and hope that this does not break something
+			sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
+			ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)# which one if there is more than one?
+			# does this speed up/find less when not wildcard is used? TODO
+			if ncbi_ids is None:
+				log.warning("Scientific name %s does not correspond to NCBI id, omitted" % sci_name)
+				continue
+			ncbi_id = ncbi_ids.pop()#TODO
+			tax_path = taxonomy.get_lineage_of_legal_ranks(ncbi_id) 
+			weight = elem[1]
+			profile[0].append(ncbi_id)
+			profile[1].append(tax_path)
+			profile[2].append(weight)
+		profiles.append(profile)
+	return profiles
+
+"""
+Given the biom-lineage information retrieves the scientific name, which is composed of genus + species for species level, or just the information of the lowest rank otherwise
+"""
+def retrieve_scientific_name(lineage):
+	name = ''
+	for rank in lineage:
+		sci_name = rank[1]
+		if sci_name != '':
+			name = sci_name # lowest set rank is used
+		if rank[0] == 's' and rank[1] != '':
+			name += " " + rank[1] # species name starts with genus name (e.g. genus Escherichia, species coli)
+	return name
 
 """
 original code in the profiling-evaluation-biobox, reads a file in cami profiling format and extracts relevant information (taxids/tax path/relative abundance/genome rank in the taxonomy)
@@ -266,6 +299,7 @@ def generate_input(args):
 	tax_path = args.ncbi
 	download = args.download_genomes
 	seed = args.seed
+	no_samples = args.samples
 	out_path = os.path.join(args.o,'') #so we are sure it is a directory
 	config = ConfigParser()
 	config.read(args.config)
@@ -293,27 +327,38 @@ def generate_input(args):
 			downloaded.append(download_genomes(to_dl,ftp,out_path,i))
 		abundances.append(create_abundance_table(to_dl,profile))
 		i += 1
+
 	
 	numg = 0
-	for k in xrange(i): # number of samples
+	for k in xrange(i): # number of samples TODO samples vs #profiles!
 		sample_path = out_path + "sample%s/" % k
+		current_community = 'community%s' % k
+		if current_community not in config.sections():
+			config.add_section(current_community)
+			section_items = config.items('community0')
+			for item in section_items:
+				config.set(current_community,item[0],item[1]) # set the other values for the communities like in the first community
+		#TODO this can also be customized
+
 		with open(sample_path + "abundance.tsv",'wb') as abundance:
 			for genome in abundances[k]:
 				abundance.write("%s\t%s\n" % (genome,abundances[k][genome]))
-		config.set('community%s' % k,'distribution_file_paths',sample_path + "abundance.tsv")
+		config.set(current_community, 'distribution_file_paths',sample_path + "abundance.tsv")
 
 		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
 			for genome in downloaded[k]:
 				gpath.write("%s\t%s\n" % (genome,downloaded[k][genome]))
-		config.set('community%s' % k,'id_to_genome_file',sample_path + "genome_to_id.tsv")
+		config.set(current_community,'id_to_genome_file',sample_path + "genome_to_id.tsv")
 		
 		with open(sample_path + "metadata.tsv",'wb') as metadata:
 			otu = 0 #for OTU assignment (every species gets its own OTU here) TODO
 			for gen in mapping[k]:
 				metadata.write("%s\t%s\t%s\t%s\n" % (gen,otu,mapping[k][gen],"new_strain"))
 				otu = otu + 1
-		config.set('community%s' % k,'metadata',sample_path + "metadata.tsv")
+		config.set(current_community,'metadata',sample_path + "metadata.tsv")
 		
+		config.set(current_community,'genomes_total',len(downloaded[k])) # TODO what if strains should be simulated
+
 		numg += len(downloaded[k])
 	cfg_path = out_path + "config.ini"
 	with open(cfg_path,'wb') as cfg:
