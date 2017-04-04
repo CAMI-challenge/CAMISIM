@@ -208,9 +208,9 @@ class NcbiTaxonomy(Validator):
         for match in matches:
             set_of_tax_id.update(set(self.name_to_taxids[match]))
         if len(set_of_tax_id) > 1:
-            self._logger.error(
+            self._logger.warning(
                 "Several matches '{}' found for scientific_name: '{}'".format(", ".join(matches), scientific_name))
-            return None
+            return set_of_tax_id
         elif len(set_of_tax_id) == 0:
             return None
         return set_of_tax_id
