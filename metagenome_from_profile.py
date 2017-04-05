@@ -57,7 +57,6 @@ def create_config(args,cfg,numg):
 	config.read(cfg)
 	
 	config.set('Main', 'output_directory', os.path.join(args.o,''))
-	config.set('Main', 'genomes_total', numg)
 
 	if args.seed is not None:
 		config.set('Main', "seed", args.seed)
