@@ -34,9 +34,9 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 	ids = table.ids(axis="observation")
 	profiles = []
 	samples = table.ids() # the samples' ids of the biom file
-	metadata = []
 	i = 0
 	for sample in samples:
+		metadata = []
 		log.info("Processing sample %s" % i)
 		if no_samples != 1 and i > 0: # this is how it is described in the main script TODO
 			break
@@ -56,8 +56,8 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 				if len(tax) != 2: # there is no name
 					break
 				if tax[1] == '': 
-					if BIOM_RANKS[tax[0]] > RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
-						log.warning("Rank of \"genome\" %s is too high, omitted." % RANKS[BIOM_RANKS[lineage[-1][0]]])
+					if BIOM_RANKS[tax[0]] >= RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
+						log.warning("Rank (%s) of %s is too high, omitted." % (RANKS[BIOM_RANKS[lineage[-1][0]]],lineage[-1][1]))
 						lineage = [] # skip this genome
 					break #so we get the lowest set rank (assuming no rank is bypassed)
 				lineage.append(tax)
@@ -244,6 +244,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path, sample):
 	ftp = FTP('ftp.ncbi.nlm.nih.gov') 
 	ftp.login() # anonymous login
 	sample_path = out_path + "sample%s/" % sample # extra folder for every sample
+	log.info("Downloading %s genomes" % len(list_of_genomes))
 	if not os.path.exists(sample_path):
 		os.makedirs(sample_path)
 	out_path = sample_path + "genomes/" # extra folder for downloaded genomes
