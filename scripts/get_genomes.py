@@ -379,5 +379,5 @@ def generate_input(args):
 	
 	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
 	
-	return creates_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
+	return create_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
 
