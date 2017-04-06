@@ -38,20 +38,25 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 	for sample in samples:
 		metadata = []
 		log.info("Processing sample %s" % i)
-		if no_samples != 1 and i > 0: # this is how it is described in the main script TODO
+		if no_samples is not None and no_samples != len(samples) and no_samples != 1 and i > 0: # no. samples not equal to samples in biom file, simulate using only the first sample
+			log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
 			break
 		#if i > no_samples: # simulate the first i samples from biom file if i < no_samples?
 		#	break
-		profile = ([],[],[],RANKS) # tax ids / tax paths / weights / ranks
+		profile = ([],[],{},RANKS) # tax ids / tax paths / tax_id : weight map / ranks
 		for id in ids:
 			abundance = table.get_value_by_ids(id,sample)
+			lineage = table.metadata(id,axis="observation") # retrieving lineage
+			if lineage is None: 
+				lineage = id.split(";") # in prepared biom files the id is already the taxonomy TODO
+			else:
+				lineage = lineage["taxonomy"] # "original" biom file stores taxonomy in metadata/taxonomy
 			if abundance > 0: #only present strains should appear in profile
-				lineage = table.metadata(id,axis="observation")["taxonomy"] # retrieving lineage
-				if len(lineage) > 1: # if length of lineage is one that the strain cannot be assigned
-					metadata.append(lineage)
+				if len(lineage) > 1: # if length of lineage is one then the strain cannot be assigned
+					metadata.append((lineage,abundance))
 		for elem in metadata:
 			lineage = []
-			for rank in elem: # only the lineage
+			for rank in elem[0]: # only the lineage
 				tax = rank.split("__") # split biom-string
 				if len(tax) != 2: # there is no name
 					break
@@ -76,7 +81,10 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 			weight = elem[1]
 			profile[0].append(ncbi_id)
 			profile[1].append(tax_path)
-			profile[2].append(weight)
+			if ncbi_id in profile[2]:
+				profile[2][ncbi_id] += weight
+			else:
+				profile[2][ncbi_id] = weight
 		profiles.append(profile)
 	return profiles
 
@@ -89,8 +97,8 @@ def retrieve_scientific_name(lineage):
 		sci_name = rank[1]
 		if sci_name != '':
 			name = sci_name # lowest set rank is used
-		if rank[0] == 's' and rank[1] != '':
-			name += " " + rank[1] # species name starts with genus name (e.g. genus Escherichia, species coli)
+		#if rank[0] == 's' and rank[1] != '': #TODO check how this is working
+		#	name += " " + rank[1] # species name starts with genus name (e.g. genus Escherichia, species coli)
 	return name
 
 """
@@ -281,20 +289,8 @@ def create_abundance_table(list_of_genomes, profile):
 		abundance.update({list_of_genomes[elem]:ab})
 	return abundance
 
-def write_files(profiles, abundances, downloaded, mapping, args):
-	return None
-
-
-"""
-Given the reference genomes' sequences (path), an 16S profile, the path to the NCBI taxonomy and the output path,
-downloads mapped genomes, creates an abundance table and all the further inputs which are needed downstream by the main pipeline.
-If download is set to false, no genomes are downloaded and instead the reference genomes are expected to be in the out directory
-The file name should then be out_path/taxID.fa.gz so it can be found
-"""
-#list of full genomes, input profile (CAMI format), taxonomy path, out directory
-#returns number of genomes
-def generate_input(args):
-	# read args
+# read args
+def read_args(args):	
 	genome_list = args.reference_genomes
 	profile = args.profile
 	tax_path = args.ncbi
@@ -304,14 +300,11 @@ def generate_input(args):
 	out_path = os.path.join(args.o,'') #so we are sure it is a directory
 	config = ConfigParser()
 	config.read(args.config)
-
 	tax = NcbiTaxonomy(tax_path)
-	
-	tid,sci_name,ftp = read_genome_list(genome_list)
-	
-	profiles = transform_profile(profile,1,args.samples,tax) # might be multiple ones if biom file
-	# probably 0.01 or something as threshold?
-	
+	return genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax
+
+"""given all samples' profiles, downloads corresponding genomes and creates required tables"""
+def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
 	i = 0
 	abundances = []
 	downloaded = []
@@ -328,8 +321,10 @@ def generate_input(args):
 			downloaded.append(download_genomes(to_dl,ftp,out_path,i))
 		abundances.append(create_abundance_table(to_dl,profile))
 		i += 1
+	return downloaded, abundances, mapping, i
 
-	
+"""creates and writes the files required for configruation"""
+def create_configs(i, out_path, config, abundances, downloaded, mapping):
 	numg = 0
 	for k in xrange(i): # number of samples TODO samples vs #profiles!
 		sample_path = out_path + "sample%s/" % k
@@ -365,4 +360,24 @@ def generate_input(args):
 	with open(cfg_path,'wb') as cfg:
 		config.write(cfg)
 	return numg, cfg_path
+
+"""
+Given the reference genomes' sequences (path), an 16S profile, the path to the NCBI taxonomy and the output path,
+downloads mapped genomes, creates an abundance table and all the further inputs which are needed downstream by the main pipeline.
+If download is set to false, no genomes are downloaded and instead the reference genomes are expected to be in the out directory
+The file name should then be out_path/taxID.fa.gz so it can be found
+"""
+#list of full genomes, input profile (CAMI format), taxonomy path, out directory
+#returns number of genomes
+def generate_input(args):
+	genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
+
+	tid,sci_name,ftp = read_genome_list(genome_list)
+	
+	profiles = transform_profile(profile,1,args.samples,tax) # might be multiple ones if biom file
+	# probably 0.01 or something as threshold?
+	
+	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
+	
+	return creates_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
 
