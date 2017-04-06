@@ -24,7 +24,7 @@ def parse_options():
 
 	helptext="Whether the related genomes are supposed to be downloaded."
 	# download the mapped full genomes?
-	parser.add_argument("-dl", "--download-genomes", action='store_true', default=True, help=helptext)
+	parser.add_argument("-no-dl", "--dont-download-genomes", action='store_false', default=True, help=helptext)
 
 	helptext="Output directory, make sure this directory exists!"
 	# out path
