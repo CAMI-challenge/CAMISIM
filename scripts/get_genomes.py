@@ -294,7 +294,7 @@ def read_args(args):
 	genome_list = args.reference_genomes
 	profile = args.profile
 	tax_path = args.ncbi
-	download = args.download_genomes
+	download = args.dont_download_genomes
 	seed = args.seed
 	no_samples = args.samples
 	out_path = os.path.join(args.o,'') #so we are sure it is a directory
