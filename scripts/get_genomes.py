@@ -347,6 +347,7 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 		config.set(current_community,'id_to_genome_file',sample_path + "genome_to_id.tsv")
 		
 		with open(sample_path + "metadata.tsv",'wb') as metadata:
+			metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
 			otu = 0 #for OTU assignment (every species gets its own OTU here) TODO
 			for gen in mapping[k]:
 				metadata.write("%s\t%s\t%s\t%s\n" % (gen,otu,mapping[k][gen],"new_strain"))
