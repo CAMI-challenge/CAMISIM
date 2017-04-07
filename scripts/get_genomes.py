@@ -314,9 +314,9 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
 		to_dl = mapping[i]
 
 		if not download:
-			downloaded[i] = []
+			downloaded.append({})
 			for gen in to_dl:
-				downloaded[i].append("%s\t%ssample%s%s.fa" % (to_dl[gen],out_path,i,to_dl[gen]))
+				downloaded[i].update({gen:to_dl[gen]})
 		else:
 			downloaded.append(download_genomes(to_dl,ftp,out_path,i))
 		abundances.append(create_abundance_table(to_dl,profile))
@@ -339,12 +339,14 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 		with open(sample_path + "abundance.tsv",'wb') as abundance:
 			for genome in abundances[k]:
 				abundance.write("%s\t%s\n" % (genome,abundances[k][genome]))
-		config.set(current_community, 'distribution_file_paths',sample_path + "abundance.tsv")
+		filename = sample_path + "abundance.tsv"
+		config.set(current_community, 'distribution_file_paths',filename)
 
 		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
 			for genome in downloaded[k]:
 				gpath.write("%s\t%s\n" % (genome,downloaded[k][genome]))
-		config.set(current_community,'id_to_genome_file',sample_path + "genome_to_id.tsv")
+		filename = sample_path + "genome_to_id.tsv"
+		config.set(current_community,'id_to_genome_file',filename)
 		
 		with open(sample_path + "metadata.tsv",'wb') as metadata:
 			metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
@@ -352,10 +354,11 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 			for gen in mapping[k]:
 				metadata.write("%s\t%s\t%s\t%s\n" % (gen,otu,mapping[k][gen],"new_strain"))
 				otu = otu + 1
-		config.set(current_community,'metadata',sample_path + "metadata.tsv")
+		filename = sample_path + "metadata.tsv"
+		config.set(current_community,'metadata',filename)
 		
-		config.set(current_community,'genomes_total',len(downloaded[k])) # TODO what if strains should be simulated
-
+		config.set(current_community,'genomes_total',str(len(downloaded[k]))) # TODO what if strains should be simulated
+		
 		numg += len(downloaded[k])
 	cfg_path = out_path + "config.ini"
 	with open(cfg_path,'wb') as cfg:
@@ -379,6 +382,6 @@ def generate_input(args):
 	# probably 0.01 or something as threshold?
 	
 	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
-	
+
 	return create_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
 
