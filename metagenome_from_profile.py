@@ -20,7 +20,7 @@ def parse_options():
 
 	helptext="Number of samples to be generated. If nothing is given, this defaults to 1 (CAMI format) or the number of samples present in the biom file. If a specific number is given, the samples are simulated using the first sample of the biom file"
 	#TODO is this the wanted behaviour?
-	parser.add_argument("-s","--samples", default=1, type=int, help=helptext)
+	parser.add_argument("-s","--samples", default=None, type=int, help=helptext)
 
 	helptext="Whether the related genomes are supposed to be downloaded."
 	# download the mapped full genomes?
@@ -43,7 +43,7 @@ def parse_options():
 	parser.add_argument("-c","--config",default="default_config.ini",help=helptext,metavar="CONFIG FILE")
 
 	helptext="Path to the NCBI taxdump for finding corresponding reference genomes"
-	parser.add_argument("--ncbi",default="tools/ncbi-taxonomy_20150130.zip",help=helptext)
+	parser.add_argument("--ncbi",default="tools/ncbi-taxonomy_20170222.tar.gz",help=helptext)
 	
 	helptext="Seed for the random generator"
 	parser.add_argument("--seed",default=None,help=helptext)
