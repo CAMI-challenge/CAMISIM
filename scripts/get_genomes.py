@@ -337,14 +337,16 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 		#TODO this can also be customized
 
 		with open(sample_path + "abundance.tsv",'wb') as abundance:
-			for genome in abundances[k]:
-				abundance.write("%s\t%s\n" % (genome,abundances[k][genome]))
+			for gen in mapping[k]:
+				genome = mapping[k][gen]
+				abundance.write("%s\t%s\n" % (gen,abundances[k][genome]))
 		filename = sample_path + "abundance.tsv"
 		config.set(current_community, 'distribution_file_paths',filename)
 
 		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
-			for genome in downloaded[k]:
-				gpath.write("%s\t%s\n" % (genome,downloaded[k][genome]))
+			for gen in mapping[k]:
+				genome = mapping[k][gen]
+				gpath.write("%s\t%s\n" % (gen,downloaded[k][genome]))
 		filename = sample_path + "genome_to_id.tsv"
 		config.set(current_community,'id_to_genome_file',filename)
 		
