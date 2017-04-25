@@ -3,7 +3,7 @@ Metagenome Simulation Pipeline
 
 A software for the simulation of microbial communities and shotgun metagenome data sets.
 
-##Documentation 
+## Documentation 
 * [User manual](https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/User-manual)
 * [Software and hardware dependencies](https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/Dependencies)
 * [Command line Arguments](https://github.com/CAMI-challenge/MetagenomeSimulationPipeline/wiki/Command-line-Arguments)
