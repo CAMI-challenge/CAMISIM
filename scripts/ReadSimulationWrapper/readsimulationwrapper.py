@@ -368,12 +368,12 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
 			'--prefix', file_path_output_prefix
 			]
 		if self._fragments_size_mean is not None:
-		arguments.extend([
-			'--length-mean', str(self._fragments_size_mean),
-			])
+			arguments.extend([
+				'--length-mean', str(self._fragments_size_mean),
+				])
 		if self._fragments_size_standard_deviation is not None:
-		arguments.extend([
-			'--length-sd', str(self._fragments_size_standard_deviation),
+			arguments.extend([
+				'--length-sd', str(self._fragments_size_standard_deviation),
 			])
 
 		arguments.extend([
