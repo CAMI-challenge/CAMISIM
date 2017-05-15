@@ -237,6 +237,29 @@ class ReadSimulationWrapper(GenomePreparation):
 				raise IOError(msg)
 		return file_path_output
 
+class ReadSimulationPBsim(ReadSimulationWrapper):
+	"""
+	Simulate long (PacBio) reads using pbsim
+	"""
+
+	_label = "ReadSimulationPBsim"
+
+
+	def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
+		super(ReadSimulationPBsim, self).__init__(file_path_executable, **kwargs)
+		self._profile = 'standard'
+
+class ReadSimulationNanosim(ReadSimulationWrapper):
+	"""
+	Simulate long reads(Oxford Nanopore) using nanosim
+	"""
+
+	_label = "ReadSimulationNanosim"
+
+	def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
+		super(ReadSimulationNanosim, self).__init__(file_path_executable, **kwargs)
+		self._profile = 'standard'
+
 
 # #################
 # ReadSimulationWgsim - wgsim Wrapper
@@ -707,7 +730,9 @@ class ReadSimulationArt(ReadSimulationWrapper):
 
 dict_of_read_simulators = {
 	"art": ReadSimulationArt,
-	"wgsim": ReadSimulationWgsim
+	"wgsim": ReadSimulationWgsim,
+	"nanosim": ReadSimulationNanosim,
+	"pbsim": ReadSimulationPBsim
 }
 
 

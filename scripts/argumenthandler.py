@@ -400,7 +400,7 @@ view={view}
         if self._read_simulator_type is None:
             self._logger.error("'-rs' No read simulator declared!")
             self._valid_arguments = False
-        elif self._read_simulator_type == 'art' or self._read_simulator_type == 'wgsim':
+        elif self._read_simulator_type == 'art' or self._read_simulator_type == 'wgsim' or self._read_simulator_type = 'pbsim' or self._read_simulator_type = 'nanosim':
             if self._directory_art_error_profiles is None:
                 self._logger.error("Art illumina error profile directory is required!")
                 self._valid_arguments = False
