@@ -285,8 +285,9 @@ def create_abundance_table(list_of_genomes, profile):
 	abundance = {}
 	for elem in list_of_genomes:
 		ab = float(profile[2][elem]) # profile has a taxid - weight map at pos 2
-		ab = int(ab*100) # just so we get nicer numbers
-		abundance.update({list_of_genomes[elem]:ab})
+		ab = int(ab*1000) # just so we get nicer numbers
+		if ab > 0:
+			abundance.update({list_of_genomes[elem]:ab})
 	return abundance
 
 # read args
