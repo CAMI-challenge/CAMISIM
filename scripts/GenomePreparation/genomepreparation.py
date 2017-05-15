@@ -92,8 +92,9 @@ class GenomePreparation(SequenceValidator):
 		@raise Exception:
 		"""
 		assert self.validate_file(file_path_input)
-		assert not self.validate_file(file_path_output, silent=True), "Overwriting files prohibited: '{}'".format(
-			file_path_output)
+		if (self.validate_file(file_path_output, silent=True)):
+			self._logger.warning("Output file exists, skipping")
+			return
 		assert file_format == "fasta", "'{}' is not supported, yet.".format(file_format)
 		if set_of_sequence_names is None:
 			set_of_sequence_names = []
