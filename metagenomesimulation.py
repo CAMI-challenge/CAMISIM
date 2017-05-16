@@ -320,7 +320,7 @@ class MetagenomeSimulation(ArgumentHandler):
             directory_output=directory_output_tmp,
             total_size=self._sample_size_in_base_pairs,
             profile=self._error_profile,
-            fragments_size_mean=self._fragments_size_mean_in_bp,
+            fragment_size_mean=self._fragments_size_mean_in_bp,
             fragment_size_standard_deviation=self._fragment_size_standard_deviation_in_bp)
 
         # convert sam to bam
