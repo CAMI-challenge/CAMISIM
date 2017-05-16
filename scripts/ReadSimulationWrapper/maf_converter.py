@@ -88,7 +88,7 @@ def read_maf(samfile, sequence_id, dict_seq, dict_seq_quality, file_path):
 				n += 1
 				maf_s = line.strip().split()
 				# maf_s = line.strip().split(" ")
-				if maf_s[1] == "ref":
+				if n % 2 == 1:
 					POS = maf_s[2]
 					SEQ_ref = maf_s[6]
 
