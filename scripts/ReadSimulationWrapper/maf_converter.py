@@ -104,7 +104,7 @@ def read_maf(samfile, sequence_id, dict_seq, dict_seq_quality, file_path):
 					MAPQ = str(255)
 					CIGAR = cigar_code_creation(SEQ_ref, SEQ_read)
 					RNEXT = "*"
-					PNEXT = "*"
+					PNEXT = "0"
 					SEQ = dict_seq[maf_sid]
 					QUAL = dict_seq_quality[maf_sid]
 					TLEN = str(len(SEQ))
@@ -125,53 +125,32 @@ def rename_files(directory):
 		print file_path, file
 		os.rename(file_path, file)
 
-
-def cigar_code_creation(SEQ_ref, SEQ_read):
-	equal_count = 0
-	unequal_count = 1
-	CIGAR = ""
-	addition_unequal = False
-	addition_equal = False
-	old_Char = ""
-	# compare ref & read
-	char_ref = list(SEQ_ref)
-	char_read = list(SEQ_read)
-	for pos, val in enumerate(char_ref):
-		if char_ref[pos] == char_read[pos]:
-			equal_count += 1
-			addition_equal = True
-			# if previous char mismatch
-			if addition_unequal:
-				CIGAR = CIGAR + str(unequal_count) + new_char
-				addition_unequal = False
-			old_Char = ""
-			unequal_count = 1
+def cigar_code_creation(char_ref, char_read):
+	cigar = ""
+	debug = False
+	i = 0
+	while (i < len(char_ref) and i < len(char_read)):
+		length = 0
+		while (i < len(char_ref) and char_ref[i] == '-'):
+			i += 1
+			length += 1
+		if length > 0:
+			cigar += "%sI" % length
 			continue
-		else:
-			if addition_equal:
-				CIGAR = CIGAR + str(equal_count) + "="
-				addition_equal = False
-			equal_count = 0
-			if char_read[pos] == "-":
-				new_char = "D"
-			elif char_ref[pos] == "-":
-				new_char = "I"
-			elif char_read[pos] == "N":
-				new_char = "N"
-			else:
-				new_char = "X"
-			# check previous char
-			if new_char == old_Char:
-				unequal_count += 1
-				addition_unequal = True
-			else:
-				CIGAR = CIGAR + str(unequal_count) + new_char
-				unequal_count = 1
-			old_Char = new_char
-	if equal_count != 0:
-		CIGAR = CIGAR + str(equal_count) + "="
-
-	return CIGAR
+		length = 0
+		while (i < len(char_read) and char_read[i] == '-'):
+			i += 1
+			length += 1
+		if length > 0:
+			cigar += "%sD" % length
+			continue
+		length = 0
+		while (i < len(char_ref) and i < len(char_read) and char_read[i] != '-' and char_ref[i] != '-'):
+			i += 1
+			length += 1
+		if length > 0:
+			cigar += "%sM" % length
+	return cigar
 
 if __name__ == "__main__":
 	main()
