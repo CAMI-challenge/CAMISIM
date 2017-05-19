@@ -110,7 +110,7 @@ class MetagenomeSimulation(ArgumentHandler):
         except (KeyboardInterrupt, SystemExit, Exception, ValueError, RuntimeError) as e:
             self._logger.debug("\n{}\n".format(traceback.format_exc()))
             if len(e.args) > 0:
-                self._logger.error(e.args[0])
+				self._logger.error(e)
             self._logger.info("Metagenome simulation aborted")
         except AssertionError:
             self._logger.info("Metagenome simulation aborted")
@@ -465,12 +465,17 @@ class MetagenomeSimulation(ArgumentHandler):
             self._project_file_folder_handler.get_reads_dir(True, str(sample_index))
             for sample_index in range(self._number_of_samples)]
 
+        if (self._read_simulator_type == "art" or self._read_simulator_type == "wgsim"):
+            paired_end = True
+        else:
+            paired_end = False
+
         file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
         for sample_index in range(self._number_of_samples):
             file_path_anonymous_reads_tmp, file_path_anonymous_mapping_tmp = self._anonymize_reads(
                 directories_fastq_dir_in[sample_index],
-                sequence_prefix="S{}R".format(sample_index),
-                paired_end=True)
+                "S{}R".format(sample_index),
+                paired_end)
             sample_id = str(sample_index)
             file_path_anonymous_reads_out = self._project_file_folder_handler.get_anonymous_reads_file_path(sample_id)
             file_path_anonymous_gs_mapping_out = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
@@ -480,7 +485,6 @@ class MetagenomeSimulation(ArgumentHandler):
                     prefix="anonymous_gs_mapping")
             else:
                 file_path_anonymous_gs_mapping = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
-
             with open(file_path_anonymous_gs_mapping, 'w') as stream_output:
                 gs_mapping.gs_read_mapping(
                     file_path_genome_locations, file_path_metadata, file_path_anonymous_mapping_tmp, stream_output
@@ -535,7 +539,6 @@ class MetagenomeSimulation(ArgumentHandler):
                         (file_path_anonymous_gsa_mapping, file_path_anonymous_gsa_mapping_out+".gz"))
                 else:
                     shutil.move(file_path_output_anonymous_gsa, file_path_output_anonymous_gsa_out)
-
         if self._phase_pooled_gsa:
             file_path_output_anonymous, file_path_anonymous_mapping_tmp = self._anonymize_pooled_gsa(
                 file_path_output_gsa_pooled,
@@ -566,7 +569,7 @@ class MetagenomeSimulation(ArgumentHandler):
             else:
                 shutil.move(file_path_output_anonymous, file_path_output_anonymous_out)
 
-    def _anonymize_reads(self, directory_fastq, sequence_prefix, paired_end=True):
+    def _anonymize_reads(self, directory_fastq, sequence_prefix, paired_end):
         """
         Anonymize simulated reads.
 
