@@ -347,8 +347,28 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
 
 		self._logger.debug("Multiplication factor: {}".format(factor))
 		self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
-		maf_converter.write_sam(directory_output)
+		sequence_map = maf_converter.main(directory_output)
+		self._fix_extensions(directory_output, sequence_map)
 
+	def _fix_extensions(self, directory_output, sequence_map): # rename fastq to fq
+		files = os.listdir(directory_output)
+		for f in files:
+			if (f.endswith("fastq")):
+				oldname = "%s/%s" % (directory_output,f)
+				prefix = f.split('_')[0] # original name
+				with open(oldname,'r') as reads:
+					newname = "%s/%s.fq" % (directory_output,"".join(f.split(".")[:-1]))
+					with open(newname, 'w') as fq: # rename file to fq and rename sequence names
+						for line in reads:
+							if len(line) < 1:
+								continue
+							seq_name = line[1:].strip()
+							if seq_name in sequence_map[prefix]:
+								newline = line[0] + sequence_map[prefix][seq_name] + '\n'
+								fq.write(newline)
+							else:
+								fq.write(line)
+	
 	def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
 		"""
 		Build system command to be run.
