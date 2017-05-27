@@ -109,11 +109,11 @@ class MetagenomeSimulation(ArgumentHandler):
 
         except (KeyboardInterrupt, SystemExit, Exception, ValueError, RuntimeError) as e:
             self._logger.debug("\n{}\n".format(traceback.format_exc()))
-            if len(e.args) > 0:
-				self._logger.error(e)
+            exc_tb = sys.exc_info()[-1]
+            self._logger.error("%s in line %s" % (e, exc_tb.tb_lineno))
             self._logger.info("Metagenome simulation aborted")
         except AssertionError:
-            self._logger.info("Metagenome simulation aborted")
+            self._logger.info("Metagenome simulation aborted, assertion %s failed" % e)
         else:
             self._logger.info("Metagenome simulation finished")
 
