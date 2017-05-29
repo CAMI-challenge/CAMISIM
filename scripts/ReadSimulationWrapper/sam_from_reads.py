@@ -30,33 +30,34 @@ def write_all(read_path, dict_id_filepath):
 			convert_fasta(os.path.join(read_path,f),prefix)
 
 def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
-	reference, prefix = read_reference(reference_path)
+	reference, prefix = read_reference(reference_path) # orig_prefix is prefix without _ in name
 	write_sam = os.path.join(read_file.rsplit("/",1)[0], orig_prefix) + ".sam"
-	write_header(write_sam, len(reference), orig_prefix)
+	write_header(write_sam, len(reference), prefix)
 	with open(read_file, 'r') as reads:
 		for line in reads:
 			if line.startswith('>'):
 				name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
-				QNAME = name[1:] + "-" + index # first sign of name is ">"
+				QNAME = prefix + "-" + index # first sign of name is ">"
+				query = name[1:] + "-" + index # nanosim replaces _ by -
 				if strand == 'R':
 					FLAG = str(16)
 				else:
 					FLAG = str(0)
 				RNAME = prefix
-				if align_status == "unaligned":
+				if align_status == "unaligned": #special cigar/no pos for non-mapping reads
 					POS = str(0)
 					CIGAR = "*"
 				else:
 					POS = start
-					CIGAR, pos = id_to_cigar_map[QNAME]
+					CIGAR, pos = id_to_cigar_map[query]
 				MAPQ = str(255)
 				RNEXT = '*'
 				PNEXT = '0'
 				QUAL = '*' # no quality is given for nanosim
 			else:
 				SEQ = line.strip()
-				TLEN = str(len(SEQ)) #str(int(soffset) + int(align_length) + int(eoffset))
-				if CIGAR != '*':
+				TLEN = str(len(SEQ)) 
+				if CIGAR != '*': # unmapped bases counted as insertions in read
 					CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
 				sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
 				clen = get_cigar_length(CIGAR)
