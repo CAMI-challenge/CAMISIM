@@ -26,8 +26,43 @@ def write_all(read_path, dict_id_filepath):
 	for f in files:
 		if f.endswith("_reads.fasta"):
 			prefix = f.rsplit(".",1)[0].rsplit("_",1)[0] # path/to/genomeid_reads.fasta
-			write_sam(os.path.join(read_path,f),id_to_cigar_map[prefix], dict_id_filepath[prefix],os.path.join(read_path,prefix) + ".sam")
-			convert_fasta(os.path.join(read_path,f))
+			prefix = write_sam(os.path.join(read_path,f),id_to_cigar_map[prefix], dict_id_filepath[prefix], prefix)
+			convert_fasta(os.path.join(read_path,f),prefix)
+
+def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
+	reference, prefix = read_reference(reference_path)
+	write_sam = os.path.join(read_file.rsplit("/",1)[0], orig_prefix) + ".sam"
+	write_header(write_sam, len(reference), orig_prefix)
+	with open(read_file, 'r') as reads:
+		for line in reads:
+			if line.startswith('>'):
+				name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
+				QNAME = name[1:] + "-" + index # first sign of name is ">"
+				if strand == 'R':
+					FLAG = str(16)
+				else:
+					FLAG = str(0)
+				RNAME = prefix
+				if align_status == "unaligned":
+					POS = str(0)
+					CIGAR = "*"
+				else:
+					POS = start
+					CIGAR, pos = id_to_cigar_map[QNAME]
+				MAPQ = str(255)
+				RNEXT = '*'
+				PNEXT = '0'
+				QUAL = '*' # no quality is given for nanosim
+			else:
+				SEQ = line.strip()
+				TLEN = str(len(SEQ)) #str(int(soffset) + int(align_length) + int(eoffset))
+				if CIGAR != '*':
+					CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+				sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
+				clen = get_cigar_length(CIGAR)
+				with open(write_sam, 'a+') as samfile:
+					samfile.write("\t".join(sam_line) + "\n")
+	return prefix
 
 def get_cigars(error_profile):
 	errors = {}
@@ -53,49 +88,19 @@ def get_cigars(error_profile):
 		CIGAR = ""
 		for pos, etype, length in sorted_errors:
 			if etype == 'ins':
-				if (pos - ref_len > 0):
-					CIGAR += str(pos - ref_len) + "M"
+				if (int(pos) - ref_len > 0):
+					CIGAR += str(int(pos) - ref_len) + "M"
 				CIGAR += str(length) + "I"
-				ref_len = pos
+				ref_len = int(pos)
+				length = 0 # only relevant if insertion at the end
 			elif etype == 'del':
-				if (pos - ref_len > 0):
-					CIGAR += str(pos - ref_len) + "M"
+				if (int(pos) - ref_len > 0):
+					CIGAR += str(int(pos) - ref_len) + "M"
 				CIGAR += str(length) + "D"
-				ref_len = pos + length
-		cigars[sequence] = (CIGAR, pos)
+				ref_len = int(pos) + int(length)
+		# if deletion at the end, the number of matches has to be reduces
+		cigars[sequence] = (CIGAR, int(pos) + int(length))
 	return cigars
-
-def write_sam(read_file, id_to_cigar_map, reference_path, sam_file):
-	reference, prefix = read_reference(reference_path)
-	write_header(sam_file, len(reference), prefix)
-	with open(read_file, 'r') as reads:
-		for line in reads:
-			if line.startswith('>'):
-				name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
-				QNAME = name[1:] + "-" + index # first sign of name is ">"
-				if strand == 'R':
-					FLAG = str(16)
-				else:
-					FLAG = str(0)
-				RNAME = prefix
-				if align_status == "unaligned":
-					POS = str(0)
-					CIGAR = "*"
-				else:
-					POS = start
-					CIGAR, pos = id_to_cigar_map[QNAME]
-				MAPQ = str(255)
-				RNEXT = '*'
-				PNEXT = '0'
-				QUAL = '*' # no quality is given for nanosim
-			else:
-				SEQ = line.strip()
-				TLEN = str(len(SEQ)) #str(int(soffset) + int(align_length) + int(eoffset))
-				if CIGAR != '*':
-					CIGAR = soffset + "I" + CIGAR + (align_length - pos) + "M" + eoffset + "I"
-				sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
-				with open(sam_file, 'a+') as samfile:
-					samfile.write("\t".join(sam_line) + "\n")
 
 def get_cigar_length(cigar):
 	length = 0
@@ -111,17 +116,16 @@ def get_cigar_length(cigar):
 			decimals = []
 	return length
 
-def convert_fasta(fasta_reads):
-	out_name = fasta_reads.rsplit(".",1)[0] + ".fq"
+def convert_fasta(fasta_reads, name):
+	out_name = fasta_reads.rsplit("_",1)[0] + ".fq" # /path/to/genomeid_reads.fasta
 	with open(fasta_reads,'r') as reads:
 		with open(out_name, 'w') as out:
 			for line in reads:
 				if line.startswith(">"):
 					spl = line.strip().split("_")
-					name = spl[0]
 					index = spl[3]
 					out.write("@" + name + "-" + index + '\n')
 				else:
 					out.write(line)
 					out.write("+" + name + "-" + index + '\n')
-					out.write("I" * len(line) + '\n') # no quality information is available
+					out.write("I" * (len(line) - 1) + '\n') # no quality information is available
