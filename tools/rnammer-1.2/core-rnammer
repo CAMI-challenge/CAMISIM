@@ -1,0 +1,350 @@
+#!/usr/bin/perl
+use Data::Dumper;
+# VERSION 1.2
+my $version = '1.2-core';
+
+# 1.1b: config parameter 'multi' introduced to allow parallel execution
+# 1.1c: printing annotation to STDERR ( even of annotation files is produced)
+# 1.1d: gff-support
+# 1.1e: fixed bug that expanded the flanking regions outside the sequence
+#       gff support removed - now build into wrapper - multi parameter removed
+# 1.2   included sequence length in gff and xml output - pfh
+
+use strict;
+
+#############################################################
+##      RNAmmer Core ('core-rnammer')                      ##
+#############################################################
+
+#############################################################
+## This is the core of RNAmmer rRNA prediction tool.       ##
+## It reads an RNAmmer configuration file in the format    ##
+## '[key]=value' (/^\[(.*)\]=(.*)/)                        ##
+## 'rnammer' serves as wrapper for this program            ##
+## See the program documentation for further information   ##
+#############################################################
+
+my @tempfileS;
+my %CONFIG;
+my $cm;
+my %FASTA;
+my %JOBS;
+my $subfasta_key = 0;
+
+&usage() unless ( @ARGV );
+
+sub err_exit {
+	print "$_\n";
+	exit 1;
+}
+
+sub usage {
+	print "usage(): sub-rnammer [configuration file]\n";
+	exit ( 1 );
+}
+
+%CONFIG = read_configuration (  $ARGV[0] ) ;
+%FASTA  = &read_fasta ( $CONFIG{sequence} ) ;
+%FASTA  = &apply_revcompl ( %FASTA ) ;
+
+%JOBS = &build_jobs();
+%JOBS = &final_search( %JOBS );
+
+&final_results ( %JOBS );
+
+&clean_up ( @tempfileS );
+
+sub read_fasta {
+	my %fasta;
+	err_exit  ("read_fasta(): Sequence file '$_[0]' could not be opened: $!\n") unless open ( FASTA , $_[0]);
+	my $fasta_entry = 0;
+	while ( defined ( my $line = <FASTA> ) ) {
+		chomp $line;
+		if ($line =~ /^>(\S+)/) {
+			$fasta_entry++; 
+			$fasta{$fasta_entry}{tag} = $1;
+		} else {
+			$fasta{$fasta_entry}{length} += length($line); 
+			$fasta{$fasta_entry}{pos} .=  uc($line); 
+		} 
+	}
+	close FASTA;
+	return %fasta;
+}
+
+sub apply_revcompl {
+	my %fasta = @_;
+	foreach my $fasta_entry (keys %fasta) {
+		$fasta{$fasta_entry}{neg} = reverse($fasta{$fasta_entry}{pos});
+		$fasta{$fasta_entry}{neg} =~ tr/ATGC/TACG/;
+		printf STDERR "apply_revcompl(): entry %s (%s): %0.0f bp\n",$fasta_entry,$fasta{$fasta_entry}{tag},length($fasta{$fasta_entry}{neg}),$fasta{$fasta_entry}{neg} unless $CONFIG{mode} eq 'silent';
+	}
+	return %fasta;
+}
+
+sub write_fasta {
+	( my $fname , my $tag , my $sequence) = @_;
+	err_exit  ("write_fasta(): Error opening '$fname' for writing: $!\n") unless ( open OUT ,">$fname" );
+	print STDERR "write_fasta(): Writing sequence to '$fname'...(".length($sequence)." bases)\n" if $CONFIG{mode} ne "silent";
+	my $pos = 0;
+	print OUT ">$tag\n";
+	for ( my $n = 0 ; $n < length ( $sequence ) ; $n += 60 ) {
+		print OUT (substr($sequence, $n, 60)."\n");
+	}
+	close OUT or err_exit  ("write_fasta(): Error closing '$fname' after writing: $!\n");
+}
+
+sub build_jobs {
+	my %jobs;
+	if (-f $CONFIG{spottermodel}) {
+		foreach my $fasta_entry (keys %FASTA) {
+			foreach my $strand ("pos","neg") {
+				my $fname = "$CONFIG{tempdir}/$CONFIG{id}.$fasta_entry.$strand.fsa";
+				print STDERR "build_jobs(): running $fname on spotter model\n" if $CONFIG{mode} ne "silent";
+				next if $FASTA{$fasta_entry}{$strand} eq "";
+				&write_fasta ($fname,"$fasta_entry.$strand",$FASTA{$fasta_entry}{$strand});
+				push @tempfileS,$fname;
+				push @tempfileS, "$fname.hmmsearchresult";
+				my @OPTIONS = ();
+				next unless -s $fname > 0;
+				push @OPTIONS , "--domE $CONFIG{domain_spottermodel_evalue}" unless $CONFIG{domain_spottermodel_evalue} eq '';
+				push @OPTIONS , "--domT $CONFIG{domain_spottermodel_score}" unless $CONFIG{domain_spottermodel_score} eq '';
+				push @OPTIONS , "-E $CONFIG{global_spottermodel_evalue}" unless $CONFIG{global_spottermodel_evalue} eq '';
+				push @OPTIONS , "-T $CONFIG{global_spottermodel_score}" unless $CONFIG{global_spottermodel_score} eq '';
+				system sprintf('%s --compat %s %s "%s" > "%s.hmmsearchresult"',$CONFIG{hmmsearch},join(' ',@OPTIONS),$CONFIG{spottermodel},$fname,$fname);
+			}
+		}
+		while (wait != -1) { sleep 1; }
+		%jobs = build_jobs_from_spotter();
+	} else {
+		%jobs = build_jobs_from_main();
+	}
+	return %jobs;
+}
+
+sub build_jobs_from_main {
+	my %jobs;
+	my $id;
+	foreach my $fasta_entry (keys %FASTA) {
+		foreach my $strand ("pos","neg") {
+			$subfasta_key++;
+			print STDERR "build_jobs_from_main(): entry $fasta_entry, $strand\n" if $CONFIG{mode} ne "silent";
+			$jobs{$subfasta_key}{begin} = 1;
+			$jobs{$subfasta_key}{stop} = length($FASTA{$fasta_entry}{$strand});
+			$jobs{$subfasta_key}{dna} = $FASTA{$fasta_entry}{$strand};
+			$jobs{$subfasta_key}{strand} = $strand;
+			$jobs{$subfasta_key}{fasta_entry} = $fasta_entry;
+		}
+	}
+	return %jobs;
+}
+
+sub build_jobs_from_spotter {
+	my %jobs;
+	my $id;
+	foreach my $fasta_entry (keys %FASTA) {
+		foreach my $strand ("pos","neg") {
+			my $fname =  "$CONFIG{tempdir}/$CONFIG{id}.$fasta_entry.$strand.fsa.hmmsearchresult";
+			next unless open IN, $fname;
+			while ( <IN> ) {
+				chomp;
+				if (/\d+\/\d+\s+(\d+)\s+(\d+)\s+[\[\.\]][\[\.\]]\s+\d+\s+\d+\s+[\[\.\]][\[\.\]]\s+([0-9\-e\.]+)\s+([0-9\-e\.]+)/) {
+					(my $begin,my $stop,my $score,my $evalue) = ($1,$2,$3,$4);
+					if (($CONFIG{spotter_min_len} < abs($stop-$begin) || $CONFIG{spotter_min_len} eq '') && ($CONFIG{spotter_max_len} > abs($stop-$begin) || $CONFIG{spotter_max_len} eq '')) {
+						print STDERR "build_jobs_from_spotter(): Entry $fasta_entry, $strand strand, $begin..$stop, E $evalue, score $score\n" if $CONFIG{mode} ne "silent";
+						$subfasta_key++;
+						$jobs{$subfasta_key}{begin} = $begin-$CONFIG{flankBegin};
+						$jobs{$subfasta_key}{stop} = $stop+$CONFIG{flankStop};
+						$jobs{$subfasta_key}{begin} = 1 if $jobs{$subfasta_key}{begin} < 1;
+						$jobs{$subfasta_key}{stop} = length($FASTA{$fasta_entry}{$strand}) if $jobs{$subfasta_key}{stop} > length($FASTA{$fasta_entry}{$strand}) ;
+						$jobs{$subfasta_key}{dna} = $FASTA{$fasta_entry}{$strand};
+						$jobs{$subfasta_key}{strand} = $strand;
+						$jobs{$subfasta_key}{fasta_entry} = $fasta_entry;
+					} else {
+						print STDERR "build_jobs_from_spotter(): discarded feature because of length\n" if $CONFIG{mode} ne "silent";
+					}
+				}
+			}
+		}
+	}
+	return %jobs;
+}
+
+sub final_search {
+	my %jobs = @_;
+	foreach my $subfasta_key (keys %jobs) {
+		my $fname =  sprintf('%s/%s.final_search.%s.fsa',$CONFIG{tempdir},$CONFIG{id},$subfasta_key);
+		my @OPTIONS = ();
+		push @OPTIONS , "--domE $CONFIG{domain_fullmodel_evalue}" unless $CONFIG{domain_fullmodel_evalue} eq '';
+		push @OPTIONS , "--domT $CONFIG{domain_fullmodel_score}" unless $CONFIG{domain_fullmodel_score} eq '';
+		push @OPTIONS , "-E $CONFIG{global_fullmodel_evalue}" unless $CONFIG{global_fullmodel_evalue} eq '';
+		push @OPTIONS , "-T $CONFIG{global_fullmodel_score}" unless $CONFIG{global_fullmodel_score} eq '';
+		&write_fasta ($fname,$subfasta_key,substr($jobs{$subfasta_key}{dna},$jobs{$subfasta_key}{begin}-1,$jobs{$subfasta_key}{stop}-$jobs{$subfasta_key}{begin}+1));
+		next unless -s $fname > 0 ;
+		$jobs{$subfasta_key}{fname} = $fname;
+		push @tempfileS, $fname;
+		push @tempfileS, "$fname.hmmsearchresult";
+		system sprintf('%s --compat %s "%s" "%s" > "%s.hmmsearchresult"',$CONFIG{hmmsearch},join(' ',@OPTIONS),$CONFIG{postmodel},$fname,$fname);
+	}
+	while (wait != -1) { sleep 1; }
+	if ($CONFIG{hmm_output} ne '') {
+		err_exit("final_search(): Could not open file '$CONFIG{hmm_output}' for writing:$!\n") unless open OUT , ">$CONFIG{hmm_output}";
+		foreach my $subfasta_key (keys %jobs) {
+			my $report = "$CONFIG{tempdir}/$CONFIG{id}.final_search.$subfasta_key.fsa.hmmsearchresult";
+			next unless open IN , $report;
+			while (<IN>) {
+				print OUT;
+			}
+		}
+		close OUT;
+		close IN;
+	}
+	return %jobs;
+}
+
+sub final_results {
+	my %jobs = @_;
+	# attempt to open output files if specified on config file
+	err_exit("final_results(): Could not open xml_output file: '$CONFIG{xml_output}' for writing: $!") unless open XML , ">$CONFIG{xml_output}";
+	my %ALIGNMENTS;
+	foreach my $subfasta_key (keys %jobs) {
+		my $FEATURE,my $START, my $STOP, my $DIR, my $DESCRIPTION, my $bestScore = -1, my $entry_key=0, my %ENTRY,my $best_entry_key;
+		my $fname = $jobs{$subfasta_key}{fname}.".hmmsearchresult";
+		next unless  open IN, $fname ;
+		my $l = length($jobs{$subfasta_key}{dna});
+		my $fasta_entry = $jobs{$subfasta_key}{fasta_entry};
+		my $fasta_tag = $FASTA{$fasta_entry}{tag};
+		my $al_mode = 0;
+		my %DOMAIN_INDEX;
+		while ( <IN> ) {
+			chomp;
+			if (/^(\d+):\s+domain (\d+) of (\d+), from (\d+) to (\d+)/) {
+				(my $seq, my $domain , my $ofDomain,my  $from , my  $to) = ($1,$2,$3,$4,$5);
+				my $term = -1;
+				my $len;
+				do  {
+					my $l;
+					chomp(my $l1 = <IN>);
+					chomp(my $l2 = <IN>);
+					chomp(my $l3 = <IN>);
+					chomp(my $l4 = <IN>);
+					my $start = 19;
+					$start += 3 if $l1 =~ /\*\->/;
+					my $model_string = $1 if ($l1 =~ /([ATGC\.atgc]+)/);
+					$ALIGNMENTS{$seq}{$domain}{model_string} .= $model_string;
+					$ALIGNMENTS{$seq}{$domain}{match_string} .= substr($l2,$start,length( $model_string));
+					$ALIGNMENTS{$seq}{$domain}{query_string} .= substr($l3,$start,length( $model_string));
+					$term = $1 if $l3 =~ /\s+(\d+)\s*$/;
+				} while ( $term != $to)
+		} elsif (/^(\d+)\s+(\d+)\/\d+\s+(\d+)\s+(\d+)\s+[\[\.\]]{2,2}\s+\d+\s+\d+\s+[\[\.\]]{2,2}\s+([0-9\-e\.]+)\s+([0-9\-e\.]+)/) {
+				(my $seq,my $domain,my $begin,my $end,my $score,my $evalue,my $strand) = ($1,$2,$3,$4,$5,$6,$jobs{$subfasta_key}{strand});
+				if (($CONFIG{final_min_len} < abs($end-$begin) or $CONFIG{final_min_len} eq '') and ($CONFIG{final_max_len} > abs($end-$begin) or $CONFIG{final_max_len} eq '')) {
+					$entry_key++;
+					if ($strand eq 'pos') {
+						($FEATURE,$START,$STOP,$DIR,$DESCRIPTION) = ($CONFIG{feature},$jobs{$subfasta_key}{begin}+$begin-1,$jobs{$subfasta_key}{begin}+$end-1,'+',$CONFIG{description});
+					} elsif ($strand eq 'neg') {
+						($FEATURE,$START,$STOP,$DIR,$DESCRIPTION) = ($CONFIG{feature},$l-$end-$jobs{$subfasta_key}{begin}+2,$l-$jobs{$subfasta_key}{begin}-$begin+2,'-',$CONFIG{description});
+					}
+					my $sequence = substr($FASTA{$fasta_entry}{pos},$START-1,$STOP - $START + 1);
+					if ($strand eq 'neg') {
+						$sequence = reverse($sequence);
+						$sequence =~  tr/ATGCatgc/TACGtacg/;
+					}
+					$ENTRY{$entry_key}{sequenceEntryLength} = $FASTA{$fasta_entry}{length};
+					$ENTRY{$entry_key}{sequence} = $sequence;
+					$ENTRY{$entry_key}{start} = $START;
+					$ENTRY{$entry_key}{stop} = $STOP;
+					$ENTRY{$entry_key}{score} = $score;
+					$ENTRY{$entry_key}{evalue} = $evalue;
+					$ENTRY{$entry_key}{dir} = $DIR;
+					$ENTRY{$entry_key}{fasta_tag} = $fasta_tag;
+					$ENTRY{$entry_key}{source} = "RNAmmer-$version";
+					$ENTRY{$entry_key}{description} = "${DESCRIPTION}_[E:$evalue;score:$score]\_$fasta_tag";
+					$ENTRY{$entry_key}{mol} = ${DESCRIPTION};
+					$ENTRY{$entry_key}{feature}  = 'rRNA';
+					$ENTRY{$entry_key}{seq}  = $seq;
+					$ENTRY{$entry_key}{domain}  = $domain;
+					$ENTRY{$entry_key}{frame}  = '.';
+					if ($score > $bestScore and $CONFIG{spottermodel} ne '') {
+						$bestScore = $score;
+						$best_entry_key = $entry_key;
+					}
+				} else {
+					print STDERR "final_results() discarded hit because of length ($1,$2,$3,$4)\n" if $CONFIG{mode} ne "silent";
+				}
+			}
+		}
+		close IN;
+		my @ENTRY_KEYS;
+		if ( defined ( $best_entry_key ) ) {
+			@ENTRY_KEYS = ($best_entry_key);
+		} else {
+			@ENTRY_KEYS = keys %ENTRY;
+		}
+		next unless defined $ENTRY_KEYS[0];
+		foreach my $entry_key	(@ENTRY_KEYS) {
+			next if $ENTRY{$entry_key}{mol} eq '';
+			( my $seq , my $domain) = ( $ENTRY{$entry_key}{seq} , $ENTRY{$entry_key}{domain});
+			$ENTRY{$entry_key}{model_string} = $ALIGNMENTS{$seq}{$domain}{model_string};
+			$ENTRY{$entry_key}{match_string} = $ALIGNMENTS{$seq}{$domain}{match_string};
+			$ENTRY{$entry_key}{query_string} = $ALIGNMENTS{$seq}{$domain}{query_string};
+			print  XML "		<entry>\n";
+			printf XML "			<mol>\%s</mol>\n",$ENTRY{$entry_key}{mol};
+			printf XML "			<feature>\%s</feature>\n",$ENTRY{$entry_key}{feature};
+			printf XML "			<start>\%s</start>\n",$ENTRY{$entry_key}{start};
+			printf XML "			<stop>\%s</stop>\n",$ENTRY{$entry_key}{stop};
+			printf XML "			<direction>\%s</direction>\n",$ENTRY{$entry_key}{dir};
+			printf XML "			<score>\%s</score>\n",$ENTRY{$entry_key}{score};
+			printf XML "			<evalue>\%s</evalue>\n",$ENTRY{$entry_key}{evalue};
+			printf XML "			<sequenceEntry>\%s</sequenceEntry>\n",$ENTRY{$entry_key}{fasta_tag};
+			printf XML "			<sequenceEntryLength>\%s</sequenceEntryLength>\n",$ENTRY{$entry_key}{sequenceEntryLength};
+			printf XML "			<sequence>\%s</sequence>\n",$ENTRY{$entry_key}{sequence};
+			printf XML "			<model_string>\%s</model_string>\n",$ENTRY{$entry_key}{model_string};
+			printf XML "			<match_string>\%s</match_string>\n",$ENTRY{$entry_key}{match_string};
+			printf XML "			<query_string>\%s</query_string>\n" ,$ENTRY{$entry_key}{query_string};
+			printf XML "		</entry>\n";
+		}
+	}
+}
+
+sub clean_up {
+	foreach my $file (@_) {
+		if (-e $file) {
+			print STDERR "clean_up(): Deleting temporary file '$file'\n" if $CONFIG{mode} ne "silent";
+			unlink ($file);
+		}
+	}
+}
+
+sub read_configuration {
+	err_exit ( "read_configuration(): could not open configuration file '$_[0]': $!" )  unless open ( CONFIG , $_[0] ) ;
+	my %config;
+	$config{config} = $_[0];
+	while ( <CONFIG> ) {
+		chomp($config{$1} = $2) if /^\[(.*)\]=(.*)/;
+	}
+	close CONFIG;
+	mkdir $config{tempdir} unless -e $config{tempdir};
+	err_exit ( "read_configuration(): Working directory must be provided. Got '$config{tempdir}' (specify with '[tempdir]=). ") unless -e $config{tempdir};
+	err_exit ( "read_configuration(): Binary 'hmmsearch' not found (specify with '[hmmsearch]=)" ) unless -f $config{hmmsearch} ;
+	$config{feature} = "-" if $config{feature} eq '';
+	$config{description} = "-" if $config{description} eq '';
+	$config{tempdir} =~ s/\/$//g;
+	if ($config{id} =~ /^(\d+)$/) {
+		print STDERR "read_configuration(): Reusing session id = $1\n" if $config{mode} ne "silent";
+		$config{id} = $1;
+	} else {
+		$a = int(rand(10000000000))+100000000000000000;
+		$config{id} = $a;
+		print STDERR "read_configuration(): Creating new session id = $a\n" if $config{mode} ne "silent";
+	}
+	foreach my $variable (sort keys %config) {
+		print STDERR "read_configuration(): [$variable] = $config{$variable}\n" if $config{mode} ne "silent";
+	}
+	print STDERR "read_configuration(): ok\n" if $config{mode} ne "silent";
+	return %config;
+}
+
+
+
+

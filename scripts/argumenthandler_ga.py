@@ -443,48 +443,41 @@ class ArgumentHandler(SequenceValidator):
 			return
 
 		self._config = ConfigParserWrapper(self._file_path_config, logfile=self._logfile, verbose=self._verbose)
-		sections = ["Main", "MarkerGeneExtraction", "MarkerGeneClustering", "MarkerGeneAnnotation"]
-		missing_section = self._config.validate_sections(sections)
-		if missing_section:
-			self._logger.error("Missing section '{}' in the configuration file.".format(missing_section))
-			self._valid_args = False
-			return
-
 		section = "Main"
 		if self._phase is None:
-			self._phase = self._config.get_value(section, "phase", is_digit=True, silent=False)
-		self._directory_temp = self._config.get_value(section, "temp_directory", is_path=True, silent=False)
-		self._directory_output = self._config.get_value(section, "output_directory", is_path=True, silent=False)
+			self._phase = self._config.get_value("phase", is_digit=True, silent=False)
+		self._directory_temp = self._config.get_value("temp_directory", is_path=True, silent=False)
+		self._directory_output = self._config.get_value("output_directory", is_path=True, silent=False)
 		if self._max_processors is None:
-			self._max_processors = self._config.get_value(section, "max_processors", is_digit=True)
-		self._validate_genomes = self._config.get_value(section, "validate_genomes", is_boolean=True)
+			self._max_processors = self._config.get_value("max_processors", is_digit=True)
+		self._validate_genomes = self._config.get_value("validate_genomes", is_boolean=True)
 
 		section = "MarkerGeneExtraction"
-		self._binary_rnammer = self._config.get_value(section, "rnammer", is_path=True)
-		self._hmmerBinDir = self._config.get_value(section, "hmmerBinDir", is_path=True)
-		self._rnaHmmInstallDir = self._config.get_value(section, "rnaHmmInstallDir", is_path=True)
-		self._file_path_reference_genome_locations = self._config.get_value(section, "reference_genomes_file", is_path=True)
-		self._file_path_map_reference_genome_id_to_tax_id = self._config.get_value(section, "reference_genomes_map_file", is_path=True)
-		self._file_path_reference_markergene = self._config.get_value(section, "input_reference_fna_file", is_path=True)
-		self._hmmer = self._config.get_value(section, "hmmer", is_digit=True)
-		self._file_path_query_genomes_location_file = self._config.get_value(section, "input_genomes_file", is_path=True)
+		self._binary_rnammer = self._config.get_value("rnammer", is_path=True)
+		self._hmmerBinDir = self._config.get_value("hmmerBinDir", is_path=True)
+		self._rnaHmmInstallDir = self._config.get_value("rnaHmmInstallDir", is_path=True)
+		self._file_path_reference_genome_locations = self._config.get_value("reference_genomes_file", is_path=True)
+		self._file_path_map_reference_genome_id_to_tax_id = self._config.get_value("reference_genomes_map_file", is_path=True)
+		self._file_path_reference_markergene = self._config.get_value("input_reference_fna_file", is_path=True)
+		self._hmmer = self._config.get_value("hmmer", is_digit=True)
+		self._file_path_query_genomes_location_file = self._config.get_value("input_genomes_file", is_path=True)
 
 		section = "MarkerGeneClustering"
-		self._binary_mothur = self._config.get_value(section, "mothur", is_path=True)
-		self._metadata_table_in = self._config.get_value(section, "metadata_table_in", is_path=True)
-		self._silva_reference_directory = self._config.get_value(section, "silva_reference_directory", is_path=True)
-		self._cluster_method = self._config.get_value(section, "cluster_method")
-		self._distance_cutoff = self._config.get_value(section, "max_threshold", is_digit=True)
-		self._otu_distance = self._config.get_value(section, "otu_distance", is_digit=True)
-		self._classification_distance_minimum = self._config.get_value(section, "classification_distance", is_digit=True)
+		self._binary_mothur = self._config.get_value("mothur", is_path=True)
+		self._metadata_table_in = self._config.get_value("metadata_table_in", is_path=True)
+		self._silva_reference_directory = self._config.get_value("silva_reference_directory", is_path=True)
+		self._cluster_method = self._config.get_value("cluster_method")
+		self._distance_cutoff = self._config.get_value("max_threshold", is_digit=True)
+		self._otu_distance = self._config.get_value("otu_distance", is_digit=True)
+		self._classification_distance_minimum = self._config.get_value("classification_distance", is_digit=True)
 
 		section = "MarkerGeneAnnotation"
-		self._ncbi_reference_directory = self._config.get_value(section, "ncbi_reference_directory", is_path=True)
-		self._file_path_nucmer = self._config.get_value(section, "nucmer", is_path=True)
-		self._annotate_classify = self._config.get_value(section, "classify", is_boolean=True)
-		self._annotate_novelty = self._config.get_value(section, "novelty", is_boolean=True)
-		self._annotate_otu = self._config.get_value(section, "otu", is_boolean=True)
-		self._annotate_ani = self._config.get_value(section, "ani", is_boolean=True)
+		self._ncbi_reference_directory = self._config.get_value("ncbi_reference_directory", is_path=True)
+		self._file_path_nucmer = self._config.get_value("nucmer", is_path=True)
+		self._annotate_classify = self._config.get_value("classify", is_boolean=True)
+		self._annotate_novelty = self._config.get_value("novelty", is_boolean=True)
+		self._annotate_otu = self._config.get_value("otu", is_boolean=True)
+		self._annotate_ani = self._config.get_value("ani", is_boolean=True)
 
 	@staticmethod
 	def _expected_output_size_in_giga_byte():
