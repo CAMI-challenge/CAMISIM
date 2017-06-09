@@ -15,11 +15,9 @@ def parse_options():
 	parser = argparse.ArgumentParser()
 	
 	helptext="16S profile to create metagenome from. Can either be CAMI-format or biom-format."
-	#TODO default profile
 	parser.add_argument("-p","--profile", default=None, type=str, help=helptext)
 
 	helptext="Number of samples to be generated. If nothing is given, this defaults to 1 (CAMI format) or the number of samples present in the biom file. If a specific number is given, the samples are simulated using the first sample of the biom file"
-	#TODO is this the wanted behaviour?
 	parser.add_argument("-s","--samples", default=None, type=int, help=helptext)
 
 	helptext="Whether the related genomes are supposed to be downloaded."
@@ -30,12 +28,12 @@ def parse_options():
 	# out path
 	parser.add_argument("-o", default=None, type=str, help=helptext,metavar="OUT PATH")
 	
-	helptext="Path where temporary files are stored (get deleted after pipeline is finished)"
+	helptext="Path where temporary files are stored (gets deleted after pipeline is finished)"
 	# temporary path
 	parser.add_argument("-tmp", default=None, type=str, help=helptext)
 
 	helptext="File pointing to reference genomes of the format: NCBI id\tScientific name\tNCBI ftp address of full genome"
-	# file pointing to reference genomes TODO format
+	# file pointing to reference genomes
 	parser.add_argument("-ref","--reference-genomes", default="tools/assembly_summary_complete_genomes.txt", help=helptext)
 
 	helptext="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path"
@@ -65,7 +63,8 @@ def create_config(args,cfg,numg):
 		config.write(cfg_path)
 	return name
 
-args = parse_options()
-numg,config = GG.generate_input(args) # total number of genomes and path to updated config
-c = create_config(args,config,numg)
-os.system("./metagenomesimulation.py %s" % c)
+if __name__ == "__main__":
+	args = parse_options()
+	numg,config = GG.generate_input(args) # total number of genomes and path to updated config
+	c = create_config(args,config,numg)
+	os.system("./metagenomesimulation.py %s" % c)
