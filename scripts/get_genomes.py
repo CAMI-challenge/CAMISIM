@@ -294,17 +294,19 @@ def read_args(args):
 	genome_list = args.reference_genomes
 	profile = args.profile
 	tax_path = args.ncbi
-	download = args.dont_download_genomes
+	#download = args.dont_download_genomes
 	seed = args.seed
 	no_samples = args.samples
 	out_path = os.path.join(args.o,'') #so we are sure it is a directory
 	config = ConfigParser()
 	config.read(args.config)
 	tax = NcbiTaxonomy(tax_path)
-	return genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax
+	#return genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax
+	return genome_list, profile, tax_path, seed, no_samples, out_path, config, tax
 
+#def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
 """given all samples' profiles, downloads corresponding genomes and creates required tables"""
-def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
+def create_full_profiles(profiles, tid, ftp, tax, seed, out_path):
 	i = 0
 	abundances = []
 	downloaded = []
@@ -313,13 +315,14 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
 		mapping.append(map_to_full_genomes(tid,profile,tax,i,seed))
 		to_dl = mapping[i]
 
-		if not download:
-			downloaded.append({})
-			for gen in to_dl:
-				genome = to_dl[gen]
-				downloaded[i].update({genome:os.path.join(out_path,"sample%s" % i,"genomes", to_dl[gen]) + ".fa" % i})
-		else:
-			downloaded.append(download_genomes(to_dl,ftp,out_path,i))
+		#if not download:
+		#	downloaded.append({})
+		#	for gen in to_dl:
+		#		genome = to_dl[gen]
+		#		downloaded[i].update({genome:os.path.join(out_path,"sample%s" % i,"genomes", to_dl[gen]) + ".fa"})
+		#else:
+		#	downloaded.append(download_genomes(to_dl,ftp,out_path,i))
+		downloaded.append(download_genomes(to_dl,ftp,out_path,i))
 		abundances.append(create_abundance_table(to_dl,profile))
 		i += 1
 	return downloaded, abundances, mapping, i
@@ -379,14 +382,16 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 #list of full genomes, input profile (CAMI format), taxonomy path, out directory
 #returns number of genomes
 def generate_input(args):
-	genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
+	#genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
+	genome_list, profile, tax_path, seed, no_samples, out_path, config, tax = read_args(args)
 
 	tid,sci_name,ftp = read_genome_list(genome_list)
 	
 	profiles = transform_profile(profile,1,args.samples,tax) # might be multiple ones if biom file
 	# probably 0.01 or something as threshold?
 	
-	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
+	#downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
+	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, out_path)
 
 	return create_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
 

@@ -20,9 +20,9 @@ def parse_options():
 	helptext="Number of samples to be generated. If nothing is given, this defaults to 1 (CAMI format) or the number of samples present in the biom file. If a specific number is given, the samples are simulated using the first sample of the biom file"
 	parser.add_argument("-s","--samples", default=None, type=int, help=helptext)
 
-	helptext="Whether the related genomes are supposed to be downloaded."
+	#helptext="Whether the related genomes are supposed to be downloaded."
 	# download the mapped full genomes?
-	parser.add_argument("-no-dl", "--dont-download-genomes", action='store_false', default=True, help=helptext)
+	#parser.add_argument("-no-dl", "--dont-download-genomes", action='store_false', default=True, help=helptext)
 
 	helptext="Output directory, make sure this directory exists!"
 	# out path
