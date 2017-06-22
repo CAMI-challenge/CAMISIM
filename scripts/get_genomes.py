@@ -48,7 +48,7 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
 			abundance = table.get_value_by_ids(id,sample)
 			lineage = table.metadata(id,axis="observation") # retrieving lineage
 			if lineage is None: 
-				lineage = id.split(";") # in prepared biom files the id is already the taxonomy TODO
+				lineage = id.split(";") # in prepared biom files the id is already the taxonomy TODO (might need to split by | or other char)
 			else:
 				lineage = lineage["taxonomy"] # "original" biom file stores taxonomy in metadata/taxonomy
 			if abundance > 0: #only present strains should appear in profile
