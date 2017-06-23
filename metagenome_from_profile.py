@@ -38,7 +38,7 @@ def parse_options():
 
 	helptext="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path"
 	# optional config file (out_path will get overwritten if it is set in config file)
-	parser.add_argument("-c","--config",default="default_config.ini",help=helptext,metavar="CONFIG FILE")
+	parser.add_argument("-c","--config",default="defaults/default_config.ini",help=helptext,metavar="CONFIG FILE")
 
 	helptext="Path to the NCBI taxdump for finding corresponding reference genomes"
 	parser.add_argument("--ncbi",default="tools/ncbi-taxonomy_20170222.tar.gz",help=helptext)
@@ -53,7 +53,7 @@ def parse_options():
 def create_config(args,cfg,numg):
 	config = ConfigParser()
 	config.read(cfg)
-	
+
 	config.set('Main', 'output_directory', os.path.join(args.o,''))
 
 	if args.seed is not None:

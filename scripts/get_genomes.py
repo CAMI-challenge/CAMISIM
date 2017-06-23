@@ -215,7 +215,7 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
 	for taxid in profile_tax_ids[0]:
 		found_genome = False
 		if taxid in extended_genome_list[0]: # a full genome with exact ncbi id is present
-			to_download.update(taxid = taxid) # if profile contains strains this might cause overwrites TODO
+			to_download.update(taxid = (taxid, taxid)) # if profile contains strains this might cause overwrites TODO
 			found_genome = True
 		else: # the exact genome is not present, go up the ranks
 			try:
@@ -227,7 +227,7 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
 			for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in RANKS with species being the lowers (0)
 				if higher_taxid in extended_genome_list[i]:
 					species_id = extended_genome_list[i][higher_taxid]
-					to_download.update({taxid : species_id[random.randint(0,len(species_id) - 1)]}) #randomly select one of the mapped genomes TODO 
+					to_download.update({taxid : (species_id[random.randint(0,len(species_id) - 1)], higher_taxid)}) #randomly select one of the mapped genomes TODO 
 					found_genome = True
 					break #TODO add rank for debugging purposes (RANKS[i])
 				if RANKS[i] == THRESHOLD:
@@ -313,8 +313,10 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, out_path):
 	mapping = []
 	for profile in profiles:
 		mapping.append(map_to_full_genomes(tid,profile,tax,i,seed))
-		to_dl = mapping[i]
-
+		to_dl = {x:mapping[i][x][0] for x in mapping[i]} # pair of (taxid, otu)
+		
+		#to_dl = mapping[i]
+		
 		#if not download:
 		#	downloaded.append({})
 		#	for gen in to_dl:
@@ -342,7 +344,7 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 
 		with open(sample_path + "abundance.tsv",'wb') as abundance:
 			for gen in mapping[k]:
-				genome = mapping[k][gen]
+				genome = mapping[k][gen][0]
 				if abundances[k][genome] == 0: # abundance is too low, do not simulate reads
 					continue
 				abundance.write("%s\t%s\n" % (gen,abundances[k][genome]))
@@ -351,17 +353,15 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 
 		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
 			for gen in mapping[k]:
-				genome = mapping[k][gen]
+				genome = mapping[k][gen][0]
 				gpath.write("%s\t%s\n" % (gen,downloaded[k][genome]))
 		filename = sample_path + "genome_to_id.tsv"
 		config.set(current_community,'id_to_genome_file',filename)
 		
 		with open(sample_path + "metadata.tsv",'wb') as metadata:
 			metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
-			otu = 0 #for OTU assignment (every species gets its own OTU here) TODO
 			for gen in mapping[k]:
-				metadata.write("%s\t%s\t%s\t%s\n" % (gen,otu,mapping[k][gen],"new_strain"))
-				otu = otu + 1
+				metadata.write("%s\t%s\t%s\t%s\n" % (gen,mapping[k][gen][1],mapping[k][gen][0],"new_strain"))
 		filename = sample_path + "metadata.tsv"
 		config.set(current_community,'metadata',filename)
 		
