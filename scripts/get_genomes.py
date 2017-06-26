@@ -4,6 +4,7 @@ from ftplib import FTP
 import gzip
 import random
 import biom #TODO required software
+from numpy import random as np_rand
 from scripts.NcbiTaxonomy.ncbitaxonomy import NcbiTaxonomy
 from scripts.Validator.validator import Validator
 from scripts.loggingwrapper import LoggingWrapper as logger
@@ -106,11 +107,11 @@ original code in the profiling-evaluation-biobox, reads a file in cami profiling
 adpated from the profile evaluation biobox, extendeded by the following: We only check for the species tax ids, original genomes for the higher ranks will be checked later on
 """
 def read_profile(file_path, epsilon):
-	assert isinstance(file_path, basestring)
+	if not isinstance(file_path, basestring):
+		log.error("file_path is invalid: %s" % file_path)
 	if isinstance(file_path, str) and not os.path.isfile(file_path):
 		log.error("16S profile not found in: %s" % file_path)
 		raise Exception("File not found")
-	assert epsilon is None or isinstance(epsilon, (float, int, long))
 	# check whether profile is biom or cami format
 	
 	tax_path = list()
@@ -207,7 +208,6 @@ If not, than the next rank is checked, i.e. genus. If there is a full genome wit
 than one of these genomes is chosen as the "closest related" genome. 
 """
 def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
-	random.seed(seed)
 	gen_map = {}
 	extended_genome_list = extend_genome_list(ref_tax_ids,tax)
 	to_download = dict() # ncbi id of genomes to download
@@ -215,7 +215,7 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
 	for taxid in profile_tax_ids[0]:
 		found_genome = False
 		if taxid in extended_genome_list[0]: # a full genome with exact ncbi id is present
-			to_download.update(taxid = (taxid, taxid)) # if profile contains strains this might cause overwrites TODO
+			to_download.update(taxid = ([taxid], taxid)) # if profile contains strains this might cause overwrites TODO
 			found_genome = True
 		else: # the exact genome is not present, go up the ranks
 			try:
@@ -225,9 +225,9 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
 				continue
 			i = 0
 			for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in RANKS with species being the lowers (0)
-				if higher_taxid in extended_genome_list[i]:
+				if higher_taxid is not None and higher_taxid in extended_genome_list[i]:
 					species_id = extended_genome_list[i][higher_taxid]
-					to_download.update({taxid : (species_id[random.randint(0,len(species_id) - 1)], higher_taxid)}) #randomly select one of the mapped genomes TODO 
+					to_download.update({taxid : (species_id, higher_taxid)}) #all matching genomes
 					found_genome = True
 					break #TODO add rank for debugging purposes (RANKS[i])
 				if RANKS[i] == THRESHOLD:
@@ -259,35 +259,77 @@ def download_genomes(list_of_genomes, ftp_list, out_path, sample):
 	if not os.path.exists(out_path):
 		os.makedirs(out_path)
 	for elem in list_of_genomes:
-		path = ftp_list[list_of_genomes[elem]]
-		split_path = path.split('/')
-		cwd = "/" + "/".join(split_path[3:]).rstrip() # get /address/to/genome
-		gen_name = split_path[-1].rstrip() # genome name is last in address
-		to_dl = gen_name + "_genomic.fna.gz"
-		out_name = os.path.join(out_path,list_of_genomes[elem]) + ".fa"  # out name is the ncbi id of the downloaded genome
-		out_name_gz = out_name + ".gz"
-		metadata.update({list_of_genomes[elem]:out_name})
-		ftp.cwd(cwd)
-		ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
-		gf = gzip.open(out_name_gz) 
-		outF = open(out_name,'wb')
-		outF.write(gf.read())
-		gf.close()
-		os.remove(out_name_gz) # remove the now unzipped archives
-		outF.close()
+		for gen in list_of_genomes[elem]:
+			path = ftp_list[gen]
+			split_path = path.split('/')
+			cwd = "/" + "/".join(split_path[3:]).rstrip() # get /address/to/genome
+			gen_name = split_path[-1].rstrip() # genome name is last in address
+			to_dl = gen_name + "_genomic.fna.gz"
+			out_name = os.path.join(out_path,gen) + ".fa"  # out name is the ncbi id of the downloaded genome
+			out_name_gz = out_name + ".gz"
+			metadata.update({gen:out_name})
+			ftp.cwd(cwd)
+			ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+			gf = gzip.open(out_name_gz) 
+			outF = open(out_name,'wb')
+			outF.write(gf.read())
+			gf.close()
+			os.remove(out_name_gz) # remove the now unzipped archives
+			outF.close()
 	return metadata
 
 """
 Given the list of genomes and the profile, create an abundance table for the downloaded genomes
 """
-#TODO log-normal distribution within a genome
-def create_abundance_table(list_of_genomes, profile):
+def create_abundance_table(list_of_genomes, seed, config, community, profile):
+	current_community = 'community%s' % community
+	try:
+		max_strains = int(config.get(current_community, "max_strains_per_otu"))
+		mu = int(config.get(current_community, "log_mu"))
+		sigma = int(config.get(current_community, "log_sigma"))
+	except:
+		try:
+			max_strains = int(config.get("Main", max_strains_per_otu))
+			mu = int(config.get("Main", "log_mu"))
+			sigma = int(config.get("Main", "log_sigma"))
+		except:
+			max_strains = 1 # no max_strains have been set for this community (TODO set max_strains global?)
+			mu = 1
+			sigma = 2 # this aint particularily beatiful
+	np_rand.seed(seed)
 	abundance = {}
+	to_dl = {}
 	for elem in list_of_genomes:
-		ab = float(profile[2][elem]) # profile has a taxid - weight map at pos 2
-		ab = int(ab*1000) # just so we get nicer numbers
-		abundance.update({list_of_genomes[elem]:ab})
-	return abundance
+		total_ab = float(profile[2][elem]) # profile has a taxid - weight map at pos 2
+		total_ab = int(total_ab*1000) # just so we get nicer numbers
+		mapped_genomes = list_of_genomes[elem]
+		if len(mapped_genomes) < max_strains: #use all available genomes
+			log_normal_vals = np_rand.lognormal(mu,sigma,len(mapped_genomes))
+			sum_log_normal = sum(log_normal_vals)
+			i = 0
+			for g in mapped_genomes:
+				rel_ab = log_normal_vals[i]/sum_log_normal
+				i += 1
+				abundance.update({g:rel_ab * total_ab}) # relative abundance in lognormal (%) times total_abundance (in profile)
+				if elem in to_dl:
+					to_dl[elem].append(g)
+				else:
+					to_dl.update({elem:[g]})
+			#TODO evolve?
+		else:
+			log_normal_vals = np_rand.lognormal(mu,sigma,max_strains)
+			sum_log_normal = sum(log_normal_vals)
+			genomes = np_rand.choice(len(mapped_genomes), max_strains) # sample max_strains genomes
+			i = 0
+			for g in genomes:
+				rel_ab = log_normal_vals[i]/sum_log_normal
+				i += 1
+				abundance.update({list_of_genomes[elem][g]:rel_ab * total_ab})
+				if elem in to_dl:
+					to_dl[elem].append(list_of_genomes[elem][g])
+				else:
+					to_dl.update({elem:[list_of_genomes[elem][g]]})
+	return abundance, to_dl
 
 # read args
 def read_args(args):	
@@ -306,14 +348,15 @@ def read_args(args):
 
 #def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
 """given all samples' profiles, downloads corresponding genomes and creates required tables"""
-def create_full_profiles(profiles, tid, ftp, tax, seed, out_path):
+def create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path):
 	i = 0
 	abundances = []
 	downloaded = []
 	mapping = []
 	for profile in profiles:
 		mapping.append(map_to_full_genomes(tid,profile,tax,i,seed))
-		to_dl = {x:mapping[i][x][0] for x in mapping[i]} # pair of (taxid, otu)
+		to_dl = {x:mapping[i][x][0] for x in mapping[i]} 
+		# pair of (taxid, otu), select randomly
 		
 		#to_dl = mapping[i]
 		
@@ -324,8 +367,9 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, out_path):
 		#		downloaded[i].update({genome:os.path.join(out_path,"sample%s" % i,"genomes", to_dl[gen]) + ".fa"})
 		#else:
 		#	downloaded.append(download_genomes(to_dl,ftp,out_path,i))
-		downloaded.append(download_genomes(to_dl,ftp,out_path,i))
-		abundances.append(create_abundance_table(to_dl,profile))
+		sample, to_dl_updated = create_abundance_table(to_dl,seed,config,i,profile)
+		abundances.append(sample)
+		downloaded.append(download_genomes(to_dl_updated,ftp,out_path,i))
 		i += 1
 	return downloaded, abundances, mapping, i
 
@@ -343,25 +387,26 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
 		#TODO this can also be customized
 
 		with open(sample_path + "abundance.tsv",'wb') as abundance:
-			for gen in mapping[k]:
-				genome = mapping[k][gen][0]
-				if abundances[k][genome] == 0: # abundance is too low, do not simulate reads
+			for gen in abundances[k]:
+				genome = abundances[k][gen]
+				if genome == 0: # abundance is too low, do not simulate reads
 					continue
-				abundance.write("%s\t%s\n" % (gen,abundances[k][genome]))
+				abundance.write("%s\t%s\n" % (gen,genome))
 		filename = sample_path + "abundance.tsv"
 		config.set(current_community, 'distribution_file_paths',filename)
 
 		with open(sample_path + "genome_to_id.tsv",'wb') as gpath:
-			for gen in mapping[k]:
-				genome = mapping[k][gen][0]
-				gpath.write("%s\t%s\n" % (gen,downloaded[k][genome]))
+			for gen in downloaded[k]:
+				genome = downloaded[k][gen]
+				gpath.write("%s\t%s\n" % (gen,genome))
 		filename = sample_path + "genome_to_id.tsv"
 		config.set(current_community,'id_to_genome_file',filename)
 		
 		with open(sample_path + "metadata.tsv",'wb') as metadata:
 			metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
 			for gen in mapping[k]:
-				metadata.write("%s\t%s\t%s\t%s\n" % (gen,mapping[k][gen][1],mapping[k][gen][0],"new_strain"))
+				for genome in mapping[k][gen][0]:
+					metadata.write("%s\t%s\t%s\t%s\n" % (genome,mapping[k][gen][1],genome,"new_strain"))
 		filename = sample_path + "metadata.tsv"
 		config.set(current_community,'metadata',filename)
 		
@@ -384,14 +429,14 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 def generate_input(args):
 	#genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
 	genome_list, profile, tax_path, seed, no_samples, out_path, config, tax = read_args(args)
-
+	
 	tid,sci_name,ftp = read_genome_list(genome_list)
 	
 	profiles = transform_profile(profile,1,args.samples,tax) # might be multiple ones if biom file
 	# probably 0.01 or something as threshold?
 	
 	#downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path)
-	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, out_path)
+	downloaded, abundances, mapping, nr_samples = create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path)
 
 	return create_configs(nr_samples, out_path, config, abundances, downloaded, mapping)
 
