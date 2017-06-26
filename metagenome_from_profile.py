@@ -26,7 +26,7 @@ def parse_options():
 
 	helptext="Output directory, make sure this directory exists!"
 	# out path
-	parser.add_argument("-o", default=None, type=str, help=helptext,metavar="OUT PATH")
+	parser.add_argument("-o", default="out/", type=str, help=helptext,metavar="OUT PATH")
 	
 	helptext="Path where temporary files are stored (gets deleted after pipeline is finished)"
 	# temporary path
