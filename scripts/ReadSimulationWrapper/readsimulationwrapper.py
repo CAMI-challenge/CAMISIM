@@ -338,7 +338,8 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
 
 		dict_id_abundance = self._read_distribution_file(file_path_distribution)
 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
+		locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
+		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
 	
 		min_sequence_length = 100 # TODO ???
 		
@@ -460,7 +461,8 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
 
 		dict_id_abundance = self._read_distribution_file(file_path_distribution)
 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
+		locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
+		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
 
 		self._fragment_size_mean = 7408 # nanosim does not use fragment size, this is for getting the correct number of reads
 		# this value has been calculated using the script tools/nanosim_profile/get_mean from the values in nanosim_profile
@@ -489,7 +491,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
 		assert self.validate_dir(file_path_output_prefix, only_parent=True)
 
 		arguments = [
-			'circular',
+			'linear',
 			'-n', str(fold_coverage),  # rename this, because its not the fold_coverage for wgsim
 			'-r', file_path_input,
 			'-o', file_path_output_prefix,
@@ -564,7 +566,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 
 		dict_id_abundance = self._read_distribution_file(file_path_distribution)
 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
+		locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
+		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
 
 		# min_sequence_length = self._fragment_size_mean - self._fragment_size_standard_deviation
 		factor = total_size  # wgsim needs number of reads as input not coverage
@@ -701,7 +704,8 @@ class ReadSimulationArt(ReadSimulationWrapper):
 
 		dict_id_abundance = self._read_distribution_file(file_path_distribution)
 		dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
-		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location"
+		locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
+		assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
 
 		min_sequence_length = self._fragment_size_mean - self._fragment_size_standard_deviation
 		factor = self.get_multiplication_factor(
