@@ -46,6 +46,7 @@ def parse_options():
     helptext="Seed for the random generator"
     parser.add_argument("--seed",default=None,help=helptext)
 
+    parser.add_argument("--debug",action='store_true',default=False,help="get more debug information")
     args = parser.parse_args()
     
     return args
@@ -67,4 +68,7 @@ if __name__ == "__main__":
     args = parse_options()
     numg,config = GG.generate_input(args) # total number of genomes and path to updated config
     c = create_config(args,config,numg)
-    os.system("./metagenomesimulation.py %s" % c)
+    if args.debug:
+        os.system("./metagenomesimulation.py %s --debug" % c)
+    else:
+        os.system("./metagenomesimulation.py %s" % c)
