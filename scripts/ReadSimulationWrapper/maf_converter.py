@@ -15,7 +15,7 @@ def merge_fastq(directory, dict_sequence_mapping):
 	fastq = os.path.join(directory, "*.fq")
 	file_list = sorted(glob.glob(fastq))
 	for file_path in file_list:
-		orig_file_prefix = os.path.basename(file_path).split("_")[0]
+		orig_file_prefix = os.path.basename(file_path).rsplit("_",1)[0]
 		file_path = os.path.join(directory, orig_file_prefix + ".fq")
 		with open(file_path, 'a+') as write_handler:
 			for record in SeqIO.parse(file_path, "fastq-sanger"):
@@ -30,14 +30,14 @@ def write_sam(directory):
 	dict_sequence_mapping = {}
 	for file_path in list_of_maf_file_path:
 		# write sam header
-		orig_file_prefix = os.path.basename(file_path).split("_")[0]
+		orig_file_prefix = os.path.basename(file_path).rsplit("_",1)[0]
 		sam_file = os.path.join(directory, orig_file_prefix + ".sam")
 		with open(sam_file, "w") as samfile:
 			samfile.write("@HD\tVN:1.4\tSQ:unsorted\n")
 	prefix_to_true_sid = {}
 	for file_path in list_of_maf_file_path:
 		# get seq_ID
-		orig_file_prefix = os.path.basename(file_path).split("_")[0]
+		orig_file_prefix = os.path.basename(file_path).rsplit("_")[0]
 		prefix = file_path.rsplit(".", 1)[0]
 		record = SeqIO.read(prefix + ".ref", "fasta")
 		sequence_id = record.id
