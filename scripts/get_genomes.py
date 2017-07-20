@@ -31,7 +31,11 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
     try:
         table = biom.load_table(biom_profile)
     except:
-        return read_profile(biom_profile, epsilon) # file is not a biom file: CAMI format
+        try:
+            return read_profile(biom_profile, epsilon) # file is not a biom file: CAMI format
+        except:
+            log.error("Incorrect file format of input profile")
+            return
     ids = table.ids(axis="observation")
     profiles = []
     samples = table.ids() # the samples' ids of the biom file
@@ -44,7 +48,7 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
             break
         #if i > no_samples: # simulate the first i samples from biom file if i < no_samples?
         #    break
-        profile = ([],[],{},RANKS) # tax ids / tax paths / tax_id : weight map / ranks
+        profile = ({},RANKS)#([],[],{},RANKS) # tax ids / tax paths / tax_id : weight map / ranks
         for id in ids:
             abundance = table.get_value_by_ids(id,sample)
             lineage = table.metadata(id,axis="observation") # retrieving lineage
@@ -54,38 +58,37 @@ def transform_profile(biom_profile, epsilon, no_samples, taxonomy):
                 lineage = lineage["taxonomy"] # "original" biom file stores taxonomy in metadata/taxonomy
             if abundance > 0: #only present strains should appear in profile
                 if len(lineage) > 1: # if length of lineage is one then the strain cannot be assigned
-                    metadata.append((lineage,abundance))
-        for elem in metadata:
+                    metadata.append((id,lineage,abundance))
+        for id, lin, weight in metadata:
             lineage = []
-            for rank in elem[0]: # only the lineage
-                tax = rank.split("__") # split biom-string
-                if len(tax) != 2: # there is no name
+            for rank in lin: # only the lineage
+                taxon = rank.split("__") # split biom-string
+                if len(taxon) != 2: # there is no name
                     break
-                if tax[1] == '': 
-                    if BIOM_RANKS[tax[0]] >= RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
+                if taxon[1] == '': 
+                    if BIOM_RANKS[taxon[0]] >= RANKS.index(THRESHOLD): # the rank is higher than the desired threshold
                         log.warning("Rank (%s) of %s is too high, omitted." % (RANKS[BIOM_RANKS[lineage[-1][0]]],lineage[-1][1]))
                         lineage = [] # skip this genome
                     break #so we get the lowest set rank (assuming no rank is bypassed)
-                lineage.append(tax)
+                lineage.append(taxon)
             if lineage == []: # rank is too high, ignore
                 continue
             sci_name = retrieve_scientific_name(lineage)
             sci_name.encode('ascii','ignore') # and hope that this does not break something
             sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
             ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)# which one if there is more than one?
-            # does this speed up/find less when not wildcard is used? TODO
             if ncbi_ids is None:
                 log.warning("Scientific name %s does not correspond to NCBI id, omitted" % sci_name)
                 continue
-            ncbi_id = ncbi_ids.pop()#TODO
-            tax_path = taxonomy.get_lineage_of_legal_ranks(ncbi_id) 
-            weight = elem[1]
-            profile[0].append(ncbi_id)
-            profile[1].append(tax_path)
-            if ncbi_id in profile[2]:
-                profile[2][ncbi_id] += weight
-            else:
-                profile[2][ncbi_id] = weight
+            ncbi_id = ncbi_ids.pop() # TODO do not take first?
+            tax_path = taxonomy.get_lineage_of_legal_ranks(ncbi_id)
+            profile[0][id] = (ncbi_id, tax_path, weight)
+            #profile[0].append(ncbi_id)
+            #profile[1].append(tax_path)
+            #if ncbi_id in profile[2]:
+            #    profile[2][ncbi_id] += weight
+            #else:
+            #    profile[2][ncbi_id] = weight
         profiles.append(profile)
     return profiles
 
@@ -207,15 +210,16 @@ For all species tax ids in the profile, it is checked whether that tax id is a t
 If not, than the next rank is checked, i.e. genus. If there is a full genome with the same genus tax id like our genus tax id,
 than one of these genomes is chosen as the "closest related" genome. 
 """
-def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
+def map_to_full_genomes(ref_tax_ids, profile, tax, sample, seed):
     gen_map = {}
     extended_genome_list = extend_genome_list(ref_tax_ids,tax)
     to_download = dict() # ncbi id of genomes to download
     log.info("Downloading genomes from NCBI")
-    for taxid in profile_tax_ids[0]:
+    for id in profile:
+        taxid = profile[id][0]
         found_genome = False
         if taxid in extended_genome_list[0]: # a full genome with exact ncbi id is present
-            to_download.update(taxid = ([taxid], taxid)) # if profile contains strains this might cause overwrites TODO
+            to_download.update(id = ([taxid], taxid)) 
             found_genome = True
         else: # the exact genome is not present, go up the ranks
             try:
@@ -227,7 +231,7 @@ def map_to_full_genomes(ref_tax_ids, profile_tax_ids, tax, sample, seed):
             for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in RANKS with species being the lowers (0)
                 if higher_taxid is not None and higher_taxid in extended_genome_list[i]:
                     species_id = extended_genome_list[i][higher_taxid]
-                    to_download.update({taxid : (species_id, higher_taxid)}) #all matching genomes
+                    to_download.update({id : (species_id, higher_taxid)}) #all matching genomes
                     found_genome = True
                     break #TODO add rank for debugging purposes (RANKS[i])
                 if RANKS[i] == THRESHOLD:
@@ -259,6 +263,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path, sample):
     if not os.path.exists(out_path):
         os.makedirs(out_path)
     for elem in list_of_genomes:
+        i = 0
         for gen in list_of_genomes[elem]:
             path = ftp_list[gen]
             split_path = path.split('/')
@@ -267,7 +272,9 @@ def download_genomes(list_of_genomes, ftp_list, out_path, sample):
             to_dl = gen_name + "_genomic.fna.gz"
             out_name = os.path.join(out_path,gen) + ".fa"  # out name is the ncbi id of the downloaded genome
             out_name_gz = out_name + ".gz"
-            metadata.update({gen:out_name})
+            genome_id = "%s.%s" % (elem,i) # genome name is "taxonomic profile id.#genome"
+            i += 1 
+            metadata.update({genome_id:out_name})
             ftp.cwd(cwd)
             ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
             gf = gzip.open(out_name_gz) 
@@ -300,7 +307,7 @@ def create_abundance_table(list_of_genomes, seed, config, community, profile):
     abundance = {}
     to_dl = {}
     for elem in list_of_genomes:
-        total_ab = float(profile[2][elem]) # profile has a taxid - weight map at pos 2
+        total_ab = float(profile[elem][2]) # profile has a taxid - weight map at pos 2
         total_ab = int(total_ab*1000) # just so we get nicer numbers
         mapped_genomes = list_of_genomes[elem]
         if len(mapped_genomes) < max_strains: #use all available genomes
@@ -347,17 +354,19 @@ def read_args(args):
     return genome_list, profile, tax_path, seed, no_samples, out_path, config, tax
 
 #def create_full_profiles(profiles, tid, ftp, tax, seed, download, out_path):
-"""given all samples' profiles, downloads corresponding genomes and creates required tables"""
+"""given all samples' profiles, downloads corresponding genomes and creates required tables
+abundance: mapping from downloaded_genomes to their abundance
+mapping: mapping from genome_id to list of all downloaded genomes and their otu
+downloaded: mapping from genome_id to file path"""
 def create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path):
     i = 0
     abundances = []
     downloaded = []
     mapping = []
-    for profile in profiles:
-        full_map = map_to_full_genomes(tid,profile,tax,i,seed)
-        to_dl = {x:full_map[x][0] for x in full_map}
-        # pair of (taxid, otu), select randomly
-        
+    for profile_with_ranks in profiles:
+        profile = profile_with_ranks[0] # only the map is remaining
+        full_map = map_to_full_genomes(tid,profile,tax,i,seed) #returns id:[mapped_genomes],otu
+        to_dl = {x:full_map[x][0] for x in full_map} #only mapped genomes
         
         #if not download:
         #    downloaded.append({})
@@ -367,9 +376,14 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path):
         #else:
         #    downloaded.append(download_genomes(to_dl,ftp,out_path,i))
         sample, to_dl_updated = create_abundance_table(to_dl,seed,config,i,profile)
-        mapping.append(full_map) # instead of full_map could use to_dl_updated
         abundances.append(sample)
         downloaded.append(download_genomes(to_dl_updated,ftp,out_path,i))
+        for id in downloaded:
+            if id not in full_map: # contains a "." (has multiple downloaded genomes)
+                original_id = id.rsplit(".",1)[0]
+            else:
+                originl_id = id
+            mapping.append({id:(downloaded[id],full_map[original_id][1]) for id in to_dl_updated}) #
         i += 1
     return downloaded, abundances, mapping, i
 
@@ -387,11 +401,12 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
         #TODO this can also be customized
 
         with open(sample_path + "abundance.tsv",'wb') as abundance:
-            for gen in abundances[k]:
-                genome = abundances[k][gen]
-                if genome == 0: # abundance is too low, do not simulate reads
+            for genome in mapping[k]:
+                mapped_genome = mapping[k][genome]
+                abundance = abundances[k][mapped_genome]
+                if abundance == 0: # abundance is too low, do not simulate reads
                     continue
-                abundance.write("%s\t%s\n" % (gen,genome))
+                abundance.write("%s\t%s\n" % (genome,abundance))
         filename = sample_path + "abundance.tsv"
         config.set(current_community, 'distribution_file_paths',filename)
 
@@ -404,10 +419,10 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
         
         with open(sample_path + "metadata.tsv",'wb') as metadata:
             metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
-            for gen in mapping[k]:
-                set_of_mapped_genomes = set(mapping[k][gen][0])
-                for genome in set_of_mapped_genomes:
-                    metadata.write("%s\t%s\t%s\t%s\n" % (genome,mapping[k][gen][1],gen,"new_strain")) #check multiple matchings
+            for genome_id in mapping[k]:
+                #set_of_mapped_genomes = set(mapping[k][gen][0]) # this should not be necessary
+                for genome in mapping[k][gen][0]:
+                    metadata.write("%s\t%s\t%s\t%s\n" % (genome_id,mapping[k][gen][1],genome,"new_strain")) #check multiple matchings
         filename = sample_path + "metadata.tsv"
         config.set(current_community,'metadata',filename)
         
