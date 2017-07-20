@@ -427,6 +427,7 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
         config.set(current_community,'metadata',filename)
         
         config.set(current_community,'genomes_total',str(len(downloaded[k]))) # TODO what if strains should be simulated
+        config.set(current_community,'num_real_genomes',str(len(downloaded[k]))) # TODO what if strains should be simulated
         
         numg += len(downloaded[k])
     cfg_path = out_path + "config.ini"

@@ -37,7 +37,7 @@ def write_sam(directory):
 	prefix_to_true_sid = {}
 	for file_path in list_of_maf_file_path:
 		# get seq_ID
-		orig_file_prefix = os.path.basename(file_path).rsplit("_")[0]
+		orig_file_prefix = os.path.basename(file_path).rsplit("_",1)[0]
 		prefix = file_path.rsplit(".", 1)[0]
 		record = SeqIO.read(prefix + ".ref", "fasta")
 		sequence_id = record.id
@@ -60,7 +60,7 @@ def write_sam(directory):
 			dict_seq_quality[record.id] = SeqIO.QualityIO._get_sanger_quality_str(record)
 		sequence_id = prefix_to_true_sid[prefix]
 		# write sam sequences
-		orig_file_prefix = os.path.basename(file_path).split("_")[0]
+		orig_file_prefix = os.path.basename(file_path).rsplit("_",1)[0]
 		sam_file = os.path.join(directory, orig_file_prefix + ".sam")
 		with open(sam_file, "a") as samfile:
 			dict_of_maf_sid = read_maf(samfile, sequence_id, dict_seq, dict_seq_quality, file_path)

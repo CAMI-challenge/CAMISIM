@@ -357,7 +357,7 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
 		for f in files:
 			if (f.endswith("fastq")):
 				oldname = "%s/%s" % (directory_output,f)
-				prefix = f.split('_')[0] # original name
+				prefix = f.rsplit('_',1)[0] # original name
 				with open(oldname,'r') as reads:
 					newname = "%s/%s.fq" % (directory_output,"".join(f.split(".")[:-1]))
 					with open(newname, 'w') as fq: # rename file to fq and rename sequence names

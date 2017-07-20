@@ -99,10 +99,6 @@ class DefaultValues(DefaultLogging):
 
     def _from_hardcoded(self, pipeline_dir):
         self._DEFAULT_phase = 0
-        self._DEFAULT_phase_validate_raw_genomes = False  # TODO: read from config
-        self._DEFAULT_phase_design_community = True
-        self._DEFAULT_phase_move_and_clean_genomes = True
-        self._DEFAULT_phase_simulate_reads = True
         self._DEFAULT_phase_gsa = True
         self._DEFAULT_phase_pooled_gsa = True
         self._DEFAULT_phase_anonymize = True
@@ -178,10 +174,6 @@ class DefaultValues(DefaultLogging):
 
         self._DEFAULT_phase = config.get_value("phase", is_digit=True, silent=True)
         # TODO: read from config
-        self._DEFAULT_phase_validate_raw_genomes = False
-        self._DEFAULT_phase_design_community = True
-        self._DEFAULT_phase_move_and_clean_genomes = True
-        self._DEFAULT_phase_simulate_reads = True
         self._DEFAULT_phase_gsa = config.get_value("gsa", is_boolean=True, silent=True)
         self._DEFAULT_phase_pooled_gsa = config.get_value("pooled_gsa", is_boolean=True, silent=True)
         self._DEFAULT_phase_anonymize = config.get_value("anonymous", is_boolean=True, silent=True)
@@ -252,12 +244,7 @@ class DefaultValues(DefaultLogging):
 
     def _set_default_values(self):
         self._seed = self._seed or self._DEFAULT_seed
-
         self._phase = self._phase or self._DEFAULT_phase
-        self._phase_validate_raw_genomes = self._phase_validate_raw_genomes or self._DEFAULT_phase_validate_raw_genomes
-        self._phase_design_community = self._phase_design_community or self._DEFAULT_phase_design_community
-        self._phase_move_and_clean_genomes = self._phase_move_and_clean_genomes or self._DEFAULT_phase_move_and_clean_genomes
-        self._phase_simulate_reads = self._phase_simulate_reads or self._DEFAULT_phase_simulate_reads
         self._phase_gsa = self._phase_gsa or self._DEFAULT_phase_gsa
         self._phase_pooled_gsa = self._phase_pooled_gsa or self._DEFAULT_phase_pooled_gsa
         self._phase_anonymize = self._phase_anonymize or self._DEFAULT_phase_anonymize
