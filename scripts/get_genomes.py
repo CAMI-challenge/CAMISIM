@@ -304,13 +304,15 @@ def create_abundance_table(list_of_genomes, seed, config, community, profile):
             mu = 1
             sigma = 2 # this aint particularily beatiful
     np_rand.seed(seed)
+    strains_to_draw = (np_rand.geometric(2./max_strains) % max_strains) + 1
+    # mean will be ~max_strains/2 and a minimum of 1 strain is drawn
     abundance = {}
     to_dl = {}
     for elem in list_of_genomes:
         total_ab = float(profile[elem][2]) # profile has a taxid - weight map at pos 2
         total_ab = int(total_ab*1000) # just so we get nicer numbers
         mapped_genomes = list_of_genomes[elem]
-        if len(mapped_genomes) < max_strains: #use all available genomes
+        if len(mapped_genomes) < strains_to_draw: #use all available genomes
             log_normal_vals = np_rand.lognormal(mu,sigma,len(mapped_genomes))
             sum_log_normal = sum(log_normal_vals)
             i = 0
@@ -322,11 +324,10 @@ def create_abundance_table(list_of_genomes, seed, config, community, profile):
                     to_dl[elem].append(g)
                 else:
                     to_dl.update({elem:[g]})
-            #TODO evolve?
         else:
-            log_normal_vals = np_rand.lognormal(mu,sigma,max_strains)
+            log_normal_vals = np_rand.lognormal(mu, sigma, strains_to_draw)
             sum_log_normal = sum(log_normal_vals)
-            genomes = np_rand.choice(len(mapped_genomes), max_strains) # sample max_strains genomes
+            genomes = np_rand.choice(len(mapped_genomes), strains_to_draw) # sample genomes
             i = 0
             for g in genomes:
                 rel_ab = log_normal_vals[i]/sum_log_normal
