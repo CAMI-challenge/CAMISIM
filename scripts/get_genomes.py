@@ -304,7 +304,10 @@ def create_abundance_table(list_of_genomes, seed, config, community, profile):
             mu = 1
             sigma = 2 # this aint particularily beatiful
     np_rand.seed(seed)
-    strains_to_draw = (np_rand.geometric(2./max_strains) % max_strains) + 1
+    if max_strains >= 2:
+        strains_to_draw = (np_rand.geometric(2./max_strains) % max_strains) + 1
+    else:
+        strains_to_draw = 1
     # mean will be ~max_strains/2 and a minimum of 1 strain is drawn
     abundance = {}
     to_dl = {}
@@ -376,15 +379,18 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path):
         #        downloaded[i].update({genome:os.path.join(out_path,"sample%s" % i,"genomes", to_dl[gen]) + ".fa"})
         #else:
         #    downloaded.append(download_genomes(to_dl,ftp,out_path,i))
-        sample, to_dl_updated = create_abundance_table(to_dl,seed,config,i,profile)
-        abundances.append(sample)
-        downloaded.append(download_genomes(to_dl_updated,ftp,out_path,i))
-        for id in downloaded:
+        sample_abundance, to_dl_updated = create_abundance_table(to_dl,seed,config,i,profile)
+        abundances.append(sample_abundance)
+        sample_genomes = download_genomes(to_dl_updated,ftp,out_path,i)
+        downloaded.append(sample_genomes)
+        current_mapping = {}
+        for id in sample_genomes:
             if id not in full_map: # contains a "." (has multiple downloaded genomes)
                 original_id = id.rsplit(".",1)[0]
             else:
-                originl_id = id
-            mapping.append({id:(downloaded[id],full_map[original_id][1]) for id in to_dl_updated}) #
+                original_id = id
+            current_mapping.update({id:(downloaded[id],full_map[original_id][1])})
+        mapping.append(current_mapping)
         i += 1
     return downloaded, abundances, mapping, i
 
@@ -427,9 +433,9 @@ def create_configs(i, out_path, config, abundances, downloaded, mapping):
         filename = sample_path + "metadata.tsv"
         config.set(current_community,'metadata',filename)
         
-        config.set(current_community,'genomes_total',str(len(downloaded[k]))) # TODO what if strains should be simulated
         config.set(current_community,'num_real_genomes',str(len(downloaded[k]))) # TODO what if strains should be simulated
-        
+        # TODO get genomes_total
+
         numg += len(downloaded[k])
     cfg_path = out_path + "config.ini"
     with open(cfg_path,'wb') as cfg:
