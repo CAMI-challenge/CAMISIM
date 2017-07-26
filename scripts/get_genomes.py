@@ -389,7 +389,7 @@ def create_full_profiles(profiles, tid, ftp, tax, seed, config, out_path):
                 original_id = id.rsplit(".",1)[0]
             else:
                 original_id = id
-            current_mapping.update({id:(downloaded[id],full_map[original_id][1])})
+            current_mapping.update({id:(sample_genomes[id],full_map[original_id][1])})
         mapping.append(current_mapping)
         i += 1
     return downloaded, abundances, mapping, i
