@@ -1,0 +1,128 @@
+[Main]
+# maximum number of processes
+max_processors=8
+
+# 0: community design + read simulator,
+# 1: read simulator only
+phase=0
+
+# ouput directory, where the output will be stored (will NOT be created by pipeline)
+output_directory=out
+
+# temp directory (will NOT be created by pipeline)
+temp_directory=tmp
+
+# id of dataset, used in foldernames and is prefix in anonymous sequences
+dataset_id=RL
+
+# random seed
+seed=42
+
+# whether a gold standard is supposed to be created
+gsa=true
+
+# if multiple samples are present: gold standard of all samples pooled?
+pooled_gsa=true
+
+# compress the data (levels 0-9)
+compress=9
+
+# anonymise data
+anonymous=false
+
+[ReadSimulator]
+# which readsimulator to use:
+#           'pacbio', 'art' (Illumina) or 'pirs' (Illumina).
+#           Currently only 'art' works with the entire pipeline.
+type=art
+
+# Samtools (http://www.htslib.org/) takes care of sam/bam files. Version 1.0 or higher required!
+# file path to executable
+samtools=tools/samtools-1.3/samtools
+
+# ART_Illumina (2008-2015) (Weichun Huang at whduke@gmail.com). Version 2.3.6 recommended!
+# file path to executable
+art_illumina=tools/art_illumina-2.3.6/art_illumina
+
+#art profiles:
+#MiSeq 250bp: mi
+#MiSeq 100bp): hi
+profile=hi150
+# Directory containing error profiles for ART_Illumina
+art_error_profiles=tools/art_illumina-2.3.6/profiles/
+
+#paired end read, insert size
+fragments_size_mean=270
+fragment_size_standard_deviation=27
+
+# specify the samples size in Giga base pairs
+size=1
+
+[CommunityDesign]
+# how many different samples?
+number_of_samples=1
+
+# how many communities
+number_of_communities=2
+
+# directory containing the taxdump of ncbi
+# "nodes.dmp"
+# "merged.dmp"
+# "names.dmp"
+ncbi_taxdump=tools/ncbi-taxonomy_20170222.tar.gz
+
+strain_simulation_template=scripts/StrainSimulationWrapper/sgEvolver/simulation_dir/
+
+# define communities: [community<integer>]
+[community0]
+# information about all included genomes:
+# can be used for multiple samples
+metadata=documentation/CAMI2015_metadata_final.tsv
+id_to_genome_file=documentation/CAMI2015_paths.tsv
+id_to_gff_file=tools/rnammer-1.2/example/ecoli.gff
+# can be omitted if no genes have been predicted
+
+# how many genomes do you want to sample over all?
+genomes_total=28
+genomes_real=28
+
+# how many genomes per species taxon
+#   (species taxon will be replaced by OTU-cluster later on)
+max_strains_per_otu=3
+ratio=1
+
+# which kind of different samples do you need?
+#   replicates / timeseries_lognormal / timeseries_normal / differential
+mode=differential
+
+# Part: community design
+# Set parameters of log-normal and normal distribution, number of samples
+# sigma > 0; influences shape (higher sigma -> smaller peak and longer tail),
+log_sigma=2
+
+# mu (real number) is a parameter for the log-scale
+log_mu=1
+
+# normal dsitribution parameters used for replicates
+gauss_mu=1
+gauss_sigma=1
+
+# do you want to see a distribution before you decide to use it? yes/no
+view=no
+
+[community1]
+metadata=documentation/plasmid_metadata_v2.3_filtered.tsv
+id_to_genome_file=documentation/plasmid_path.tsv
+id_to_gff_file=tools/rnammer-1.2/example/ecoli.gff
+genomes_total=20
+genomes_real=20
+max_strains_per_otu=3
+#ration=15, but sequences are 6* as big
+ratio=2.5
+mode=differential
+log_mu=1
+log_sigma=2
+# normal dsitribution parameters used for replicates
+gauss_mu=1
+gauss_sigma=1
+view=false

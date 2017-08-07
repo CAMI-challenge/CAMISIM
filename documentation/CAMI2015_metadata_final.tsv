@@ -1,0 +1,691 @@
+genome_ID	NCBI_ID	OTU	novelty_category	SCIENTIFIC_NAME	JGI_NAME	JGI_to_taxid_parsing	tc_ncbi	tc_sn	MPI_NAME
+1010920	1123498	0	new_species	Vibrio ruber DSM 16370	Vibrio ruber DSM 16370	exact			
+1030704	1122188	1	new_species	Lysobacter spongiicola DSM 21749	Lysobacter spongiicola DSM 21749	exact	68	Lysobacter	
+1030707	1121401	2	new_genus	Desulfobotulus sapovorans DSM 2055	Desulfobotulus sapovorans DSM 2055	exact			
+1030710	1121255	3	new_genus	Caenimonas koreensis DSM 17982	Caenimonas koreensis DSM 17982	exact	367474	Caenimonas koreensis	
+1030713	1121412	4	new_species	Desulfomicrobium thermophilum DSM 16697	Desulfomicrobium thermophilum DSM 16697	exact			
+1030716	1121911	5	new_genus	Garciella nitratireducens DSM 15102	Garciella nitratireducens DSM 15102	exact			
+1030719	1121405	6	new_strain	Desulfococcus multivorans DSM 2059	Desulfococcus multivorans DSM 2059	exact	896	Desulfococcus	
+1030722	1121449	7	new_species	Desulfovibrio gracilis DSM 16080	Desulfovibrio gracilis DSM 16080	exact	872	Desulfovibrio	
+1030725	1121450	8	new_species	Desulfovibrio halophilus DSM 5663	Desulfovibrio halophilus DSM 5663	exact	45629	Desulfovibrio halophilus	
+1030728	1121270	9	new_family	Carboxydocella sporoproducens DSM 16521	Carboxydocella sporoproducens DSM 16521	exact			
+1030731	1123019	10	new_species	Pseudomonas pertucinogena DSM 18268	Pseudomonas pertucinogena DSM 18268	exact			
+1030734	1121868	11	new_species	Enterovibrio nigricans DSM 22720	Enterovibrio nigricans DSM 22720	exact			
+1030737	1123491	12	new_strain	Vibrio cincinnatiensis DSM 19608	Vibrio cincinnatiensis DSM 19608	exact			
+1030740	1121442	13	new_species	Desulfovibrio bizertensis DSM 18034	Desulfovibrio bizertensis DSM 18034	exact	872	Desulfovibrio	
+1030743	1123271	14	new_species	Sphingopyxis litoris DSM 22379	Sphingopyxis litoris DSM 22379	exact	1434046	Sphingorhabdus	
+1030746	1123272	14	new_species	Sphingopyxis marina DSM 22363	Sphingopyxis marina DSM 22363	exact	1434046	Sphingorhabdus	
+1030749	1123014	15	new_species	Pseudogulbenkiania subflava DSM 22618	Pseudogulbenkiania subflava DSM 22618	exact			
+1030752	1123015	16	new_strain	Pseudomonas aeruginosa DSM 50071	Pseudomonas aeruginosa DSM 50071	exact	286	Pseudomonas	
+1030755	1121001	17	new_genus	Andreprevotia lacus DSM 23236	Andreprevotia lacus DSM 23236	exact			
+1030758	1121014	18	new_species	Arenimonas donghaensis DSM 18148 = HO3-R19	Arenimonas donghaensis DSM 18148	exact	375061	Arenimonas donghaensis	
+1030761	1122185	19	new_species	Lysobacter concretionis Ko07 = DSM 16239	Lysobacter concretionis DSM 16239	exact	262325	Lysobacter concretionis	
+1030764	1123238	20	new_species	Salmonella subterranea DSM 16208	Salmonella subterranea DSM 16208	exact			
+1030767	1122148	21	new_species	Lactobacillus lindneri DSM 20690 = JCM 11027	Lactobacillus lindneri DSM 20690	exact			
+1030770	1122150	22	new_species	Lactobacillus nagelii DSM 13675	Lactobacillus nagelii DSM 13675	exact			
+1030773	1122151	23	new_species	Lactobacillus paralimentarius DSM 13238 = JCM 10415	Lactobacillus paralimentarius DSM 13238	exact	1578	Lactobacillus	
+1030776	1123232	24	new_species	Salinicoccus kunmingensis DSM 17847	Salinicoccus kunmingensis DSM 17847	exact			
+1030782	1123358	25	new_strain	Tetragenococcus halophilus subsp. halophilus DSM 20339	Tetragenococcus halophilus DSM 20339	exact			
+1030785	1121021	26	new_genus	Asaccharobacter celatus DSM 18785	Asaccharobacter celatus DSM 18785	exact	447020	Adlercreutzia	
+1030788	1123031	27	new_species	Pseudoxanthomonas taiwanensis DSM 22914	Pseudoxanthomonas taiwanensis DSM 22914	exact	83618	Pseudoxanthomonas	
+1030791	1123022	28	new_species	Pseudomonas xiamenensis DSM 22326	Pseudomonas xiamenensis DSM 22326	exact	157792	Pseudomonas xiamenensis	
+1030794	1121484	29	new_species	Dyadobacter ginsengisoli DSM 21015	Dyadobacter ginsengisoli DSM 21015	exact	363850	Dyadobacter ginsengisoli	
+1030797	1121119	30	new_species	Brenneria alni DSM 11811	Brenneria alni DSM 11811	exact			
+1030800	1120981	31	new_genus	Alysiella filiformis DSM 16848	Alysiella filiformis DSM 16848	exact	194196	Alysiella filiformis	
+1030803	1122136	32	new_species	Kingella potus DSM 18304	Kingella potus DSM 18304	exact	482	Neisseria	
+1030806	1121478	33	new_genus	Diaphorobacter oryzae DSM 22780	Diaphorobacter oryzae DSM 22780	exact	491745	Diaphorobacter oryzae	
+1030809	1121452	34	new_species	Desulfovibrio idahonensis DSM 15450	Desulfovibrio idahonensis DSM 15450	exact	872	Desulfovibrio	
+1030812	1121466	35	new_species	Desulfovibrio vietnamensis DSM 10520	Desulfovibrio vietnamensis DSM 10520	exact			
+1030815	1121463	36	new_species	Desulfovibrio senezii DSM 8436	Desulfovibrio senezii DSM 8436	exact	872	Desulfovibrio	
+1030818	1123006	37	new_genus	Propionivibrio pelophilus DSM 12018	Propionivibrio pelophilus DSM 12018	exact	65401	Propionivibrio pelophilus	
+1030821	1123000	38	new_genus	Propionigenium maris DSM 9537	Propionigenium maris DSM 9537	exact			
+1030824	1123374	39	new_species	Thermodesulfovibrio hydrogeniphilus DSM 18151	Thermodesulfovibrio hydrogeniphilus DSM 18151	exact	412896	Thermodesulfovibrio hydrogeniphilus	
+1030827	1121872	40	new_strain	Erwinia tracheiphila DSM 21139	Erwinia tracheiphila DSM 21139	exact	65700	Erwinia tracheiphila	
+1030830	1121029	41	new_species	Azoarcus communis DSM 12120	Azoarcus communis DSM 12120	exact	187273	uncultured Azoarcus sp.	
+1030833	1122234	42	new_species	Methylobacterium komagatae DSM 19563	Methylobacterium komagatae DSM 19563	exact	407	Methylobacterium	
+1030836	1121885	43	new_family	Flavisolibacter ginsengiterrae DSM 18136	Flavisolibacter ginsengiterrae DSM 18136	exact	200666	Sphingobacteriales	
+1030839	1123064	44	new_species	Roseomonas vinacea DSM 19362	Roseomonas vinacea DSM 19362	exact	424704	Roseomonas vinacea	
+1030845	1123269	45	new_species	Sphingomonas sanxanigenens DSM 19645 = NX02	Sphingomonas sanxanigenens DSM 19645	exact			
+1030857	1123496	46	new_species	Vibrio porteresiae DSM 19223	Vibrio porteresiae DSM 19223	exact			
+1030860	1121120	47	new_species	Brenneria nigrifluens DSM 30175	Brenneria nigrifluens DSM 30175	exact			
+1030869	1122961	48	new_strain	Picrophilus oshimae DSM 9789	Picrophilus oshimae DSM 9789	exact	46631	Picrophilus	
+1030872	1122969	49	new_genus	Ponticoccus litoralis DSM 18986	Ponticoccus litoralis DSM 18986	exact			
+1030875	1122945	50	new_genus	Pelagicola litoralis DSM 18290	Pelagicola litoralis DSM 18290	exact			
+1030878	1122187	51	new_species	Lysobacter oryzae DSM 21044	Lysobacter oryzae DSM 21044	exact	68	Lysobacter	
+1030881	1122958	52	new_species	Phenylobacterium composti DSM 19425	Phenylobacterium composti DSM 19425	exact	20	Phenylobacterium	
+1030890	1121350	53	new_species	Comamonas nitrativorans DSM 13191	Comamonas nitrativorans DSM 13191	exact	283	Comamonas	
+1030893	1123030	54	new_species	Pseudoxanthomonas kalamensis DSM 18571	Pseudoxanthomonas kalamensis DSM 18571	exact	289483	Pseudoxanthomonas kalamensis	
+1030896	1123266	55	new_species	Sphingomonas aestuarii DSM 19475	Sphingomonas aestuarii DSM 19475	exact	13687	Sphingomonas	
+1030905	1121439	56	new_strain	Desulfovibrio alkalitolerans DSM 16529	Desulfovibrio alkalitolerans DSM 16529	exact	293256	Desulfovibrio alkalitolerans	
+1030911	1123260	57	new_genus	Soehngenia saccharolytica DSM 12858	Soehngenia saccharolytica DSM 12858	exact			
+1030917	1123280	58	new_genus	Sporacetigenium mesophilum DSM 16796	Sporacetigenium mesophilum DSM 16796	exact			
+1030929	1123264	59	new_species	Sphingobacterium multivorum DSM 11691	Sphingobacterium multivorum DSM 11691	exact			
+1030935	1123061	60	new_species	Roseomonas lacus DSM 19439	Roseomonas lacus DSM 19439	exact	125216	Roseomonas	
+1030947	1449332	61	new_species	Actinomadura glauciflava DSM 44770	Actinomadura glauciflava DSM 44770	exact	2037	Actinomycetales	
+1030956	1121460	62	new_species	Desulfovibrio paquesii DSM 16681	Desulfovibrio paquesii DSM 16681	exact			
+1030965	1121959	63	new_species	Hymenobacter psychrotolerans DSM 18569	Hymenobacter psychrotolerans DSM 18569	exact	344998	Hymenobacter psychrotolerans	
+1030968	1123492	64	new_strain	Vibrio gazogenes DSM 21264	Vibrio gazogenes DSM 21264	exact			
+1035897	28122	65	new_species	Fibrobacter intestinalis	Fibrobacter intestinalis ATCC 43854	strain_id	28122	Fibrobacter intestinalis	
+1035900	644383	66	new_family	Thermosporothrix hazakensis	Thermosporothrix hazakensis ATCC BAA-1881	strain_id			
+1035906	39498	67	new_strain	[Eubacterium] yurii	Eubacterium yurii ATCC 43714	strain_id	39498	[Eubacterium] yurii	
+1035909	142842	68	new_genus	Selenihalanaerobacter shriftii	Selenihalanaerobacter shriftii ATCC BAA-73	strain_id	142842	Selenihalanaerobacter shriftii	
+1035912	244584	69	new_species	Mycoplasma testudineum	Mycoplasma testudineum ATCC 700618	strain_id	244584	Mycoplasma testudineum	
+1035915	33922	70	new_species	Mycoplasma agassizii	Mycoplasma agassizii ATCC 700616	strain_id	33922	Mycoplasma agassizii	
+1035921	745369	71	new_family	Acetoanaerobium noterae	Acetoanaerobium noterae ATCC 35199	strain_id			
+1035924	171291	72	new_species	Mycoplasma verecundum	Mycoplasma verecundum ATCC 27862	strain_id	171291	Mycoplasma verecundum	
+1035930	2088	73	new_order	Anaeroplasma bactoclasticum	Anaeroplasma bactoclasticum ATCC 27112	strain_id			
+1035933	261392	74	new_species	Treponema porcinum	Treponema porcinum ATCC BAA-908	strain_id	261392	Treponema porcinum	
+1035936	225004	75	new_species	Treponema berlinense	Treponema berlinense ATCC BAA-909	strain_id	225004	Treponema berlinense	
+1035939	35623	76	new_species	Acholeplasma oculi	Acholeplasma oculi ATCC 27350	strain_id	35623	Acholeplasma oculi	
+1035945	42322	77	new_species	Eubacterium ruminantium	Eubacterium ruminantium ATCC 17233	strain_id			
+1035948	745368	78	new_genus	Gemmiger formicilis	Gemmiger formicilis ATCC 27749	strain_id			
+1035951	915	79	new_strain	Nitrosomonas europaea	Nitrosomonas europaea ATCC 25978	strain_id	915	Nitrosomonas europaea	
+1035969	466	80	new_genus	Legionella maceachernii	Legionella maceachernii ATCC 35300	strain_id	445	Legionella	
+1035972	36874	81	new_species	Porphyromonas cangingivalis	Porphyromonas cangingivalis ATCC 700135	strain_id	36874	Porphyromonas cangingivalis	
+1035975	48467	82	new_genus	Prosthecobacter debontii	Prosthecobacter debontii ATCC 700200	strain_id	48467	Prosthecobacter debontii	
+1035978	180163	83	new_species	Cetobacterium ceti	Cetobacterium ceti ATCC 700028	strain_id	180163	Cetobacterium ceti	
+1035981	393921	84	new_strain	Porphyromonas crevioricanis	Porphyromonas crevioricanis ATCC 55563	strain_id	836	Porphyromonas	
+1035984	263852	85	new_genus	Pilibacter termitis	Pilibacter termitis ATCC BAA-1030	strain_id			
+1035987	29524	86	new_species	Porphyromonas circumdentaria	Porphyromonas circumdentaria ATCC 51356	strain_id	29524	Porphyromonas circumdentaria	
+1035990	48464	87	new_genus	Prosthecobacter fusiformis	Prosthecobacter fusiformis ATCC 25309	strain_id	48464	Prosthecobacter fusiformis	
+1035993	1513	88	new_strain	Clostridium tetani	Clostridium tetani ATCC 19406	strain_id	1513	Clostridium tetani	
+1035996	115783	89	new_species	Geobacter thiogenes	Geobacter thiogenes ATCC BAA-34	strain_id	28231	Geobacter	
+1035999	28898	90	new_species	Campylobacter helveticus	Campylobacter helveticus ATCC 51209	strain_id	28898	Campylobacter helveticus	
+1036002	92487	91	new_species	Thiothrix eikelboomii	Thiothrix eikelboomii ATCC 49788	strain_id	92487	Thiothrix eikelboomii	
+1036008	64969	92	new_genus	Oceanospirillum multiglobuliferum	Oceanospirillum multiglobuliferum ATCC 33336	strain_id			
+1036011	28136	93	new_strain	Prevotella oulorum	Prevotella oulorum ATCC 43324	strain_id	28136	Prevotella oulorum	
+1036539	1121884	43	new_family	Flavisolibacter ginsengisoli DSM 18119	Flavisolibacter ginsengisoli DSM 18119	exact	200666	Sphingobacteriales	
+1036542	1122133	94	new_species	Kaistia soli DSM 19436	Kaistia soli DSM 19436	exact	446684	Kaistia soli	
+1036545	1121391	95	new_genus	Desulfacinum infernum DSM 9756	Desulfacinum infernum DSM 9756	exact			
+1036548	1121416	96	new_genus	Desulfopila aestuarii DSM 18488	Desulfopila aestuarii DSM 18488	exact	231440	Desulfopila aestuarii	
+1036551	1123404	97	new_genus	Tissierella praeacuta DSM 18095	Tissierella praeacuta DSM 18095	exact	43131	Tissierella praeacuta	
+1036554	1123243	98	new_genus	Schwartzia succinivorans DSM 10502	Schwartzia succinivorans DSM 10502	exact	55507	Schwartzia succinivorans	
+1036557	1122184	99	new_genus	Lutispora thermophila DSM 19022	Lutispora thermophila DSM 19022	exact	186802	Clostridiales	
+1036560	1121256	100	new_genus	Caldanaerobius fijiensis DSM 17918	Caldanaerobius fijiensis DSM 17918	exact			
+1036563	1121457	101	new_species	Desulfovibrio marinisediminis DSM 17456	Desulfovibrio marinisediminis DSM 17456	exact	872	Desulfovibrio	
+1036566	1121088	102	new_strain	Bacillus coagulans DSM 1 = ATCC 7050	Bacillus coagulans DSM 1	exact	1398	Bacillus coagulans	
+1036569	876	103	new_strain	Desulfovibrio desulfuricans	Desulfovibrio desulfuricans aestuarii DSM 17919	species_name	872	Desulfovibrio	
+1036572	1121425	104	new_species	Desulfotomaculum australicum DSM 11792	Desulfotomaculum australicum DSM 11792	exact	1562	Desulfotomaculum	
+1036575	1121395	105	new_species	Desulfitobacterium chlororespirans DSM 11544	Desulfitobacterium chlororespirans DSM 11544	exact	51616	Desulfitobacterium chlororespirans	
+1036578	1121455	106	new_species	Desulfovibrio litoralis DSM 11393	Desulfovibrio litoralis DSM 11393	exact	466107	Desulfovibrio litoralis	
+1036581	1120923	107	new_species	Acidocella aminolytica 101 = DSM 11237	Acidocella aminolytica DSM 11237	exact	50709	Acidocella	
+1036584	1121429	108	new_species	Desulfotomaculum putei DSM 12395	Desulfotomaculum putei DSM 12395	exact			
+1036587	1121942	109	new_species	Halomonas ilicicola DSM 19980	Halomonas ilicicola DSM 19980	exact	480814	Halomonas ilicicola	
+1036590	1121026	110	new_species	Aureimonas altamirensis DSM 21988	Aureimonas altamirensis DSM 21988	exact	370622	Aureimonas altamirensis	
+1036593	1121477	111	new_genus	Devosia limi DSM 17137	Devosia limi DSM 17137	exact			
+1036596	1122206	112	new_species	Marinomonas polaris DSM 16579	Marinomonas polaris DSM 16579	exact	28253	Marinomonas	
+1036599	1123071	113	new_species	Rubritalea squalenifaciens DSM 18772	Rubritalea squalenifaciens DSM 18772	exact	361050	Rubritalea	
+1036602	1123231	114	new_species	Salinicoccus alkaliphilus DSM 16010	Salinicoccus alkaliphilus DSM 16010	exact	148453	Salinicoccus alkaliphilus	
+1036605	1122159	115	new_species	Leeuwenhoekiella marinoflava DSM 3653	Leeuwenhoekiella marinoflava DSM 3653	exact	988	Leeuwenhoekiella marinoflava	
+1036608	1122156	116	new_genus	Lampropedia hyalina DSM 16112	Lampropedia hyalina DSM 16112	exact	198706	Lampropedia hyalina	
+1036611	1121262	117	new_species	Caloramator proteoclasticus DSM 10124	Caloramator proteoclasticus DSM 10124	exact	459648	Caloramator sp. YeAs	
+1036614	1121881	118	new_genus	Ferrithrix thermotolerans DSM 19514	Ferrithrix thermotolerans DSM 19514	exact	209649	Ferrithrix thermotolerans	
+1036617	1122930	119	new_genus	Papillibacter cinnamivorans DSM 12816	Papillibacter cinnamivorans DSM 12816	exact	100176	Papillibacter cinnamivorans	
+1036620	1121421	120	new_species	Desulfotomaculum aeronauticum DSM 10349	Desulfotomaculum aeronauticum DSM 10349	exact	1562	Desulfotomaculum	
+1036623	1121883	121	new_species	Fervidobacterium gondwanense DSM 13020	Fervidobacterium gondwanense DSM 13020	exact	548918	Fervidobacterium riparium	
+1036629	1121264	122	new_genus	Caloranaerobacter azorensis DSM 13643	Caloranaerobacter azorensis DSM 13643	exact	116090	Caloranaerobacter azorensis	
+1036632	1123282	123	new_genus	Sporobacter termitidis DSM 10068	Sporobacter termitidis DSM 10068	exact	44748	Sporobacter	
+1036635	1121128	124	new_strain	Butyricicoccus pullicaecorum DSM 23266	Butyricicoccus pullicaecorum DSM 23266	exact			
+1036638	1123380	125	new_species	Thermosipho atlanticus DSM 15807	Thermosipho atlanticus DSM 15807	exact	238991	Thermosipho atlanticus	
+1036641	1123349	126	new_genus	Tepidibacter formicigenes DSM 15518	Tepidibacter formicigenes DSM 15518	exact	214904	Tepidibacter	
+1036647	1121291	127	new_species	Clostridium acidisoli DSM 12555	Clostridium acidisoli DSM 12555	exact	91624	Clostridium acidisoli	
+1036650	1121409	128	new_species	Desulfofustis glycolicus DSM 9705	Desulfofustis glycolicus DSM 9705	exact	51195	Desulfofustis glycolicus	
+1036653	1121345	129	new_species	[Clostridium] xylanovorans DSM 12503	Clostridium xylanovorans DSM 12503	exact	100134	[Clostridium] xylanovorans	
+1036656	1121432	130	new_species	Desulfotomaculum thermosubterraneum DSM 16057	Desulfotomaculum thermosubterraneum DSM 16057	exact	348840	Desulfotomaculum thermosubterraneum	
+1036659	1121420	131	new_species	Desulfosporosinus lacus DSM 15449	Desulfosporosinus lacus DSM 15449	exact			
+1036662	1121390	132	new_genus	Desulfacinum hydrothermale DSM 13146	Desulfacinum hydrothermale DSM 13146	exact	109258	Desulfacinum hydrothermale	
+1036665	1121331	133	new_species	Clostridium proteolyticum DSM 3090	Clostridium proteolyticum DSM 3090	exact	29365	Clostridium proteolyticum	
+1036668	1121306	134	new_species	Clostridium collagenovorans DSM 3089	Clostridium collagenovorans DSM 3089	exact			
+1036671	1123324	135	new_genus	Succinivibrio dextrinosolvens DSM 3072	Succinivibrio dextrinosolvens DSM 3072	exact			
+1036674	1120997	136	new_genus	Anaerovibrio lipolyticus DSM 3074	Anaerovibrio lipolyticus DSM 3074	exact	1200557	Anaerovibrio sp. RM50	
+1036677	1121324	137	new_species	[Clostridium] litorale DSM 5388	Clostridium litorale DSM 5388	exact	1557	[Clostridium] litorale	
+1036680	1121316	138	new_species	Clostridium grantii DSM 8605	Clostridium grantii DSM 8605	exact	40575	Clostridium grantii	
+1036683	1121131	139	new_strain	Butyrivibrio fibrisolvens DSM 3071	Butyrivibrio fibrisolvens DSM 3071	exact	831	Butyrivibrio fibrisolvens	
+1036686	1121320	140	new_strain	Clostridium intestinale DSM 6191	Clostridium intestinale DSM 6191	exact	36845	Clostridium intestinale	
+1036689	1121326	141	new_species	Clostridium magnum DSM 2767	Clostridium magnum DSM 2767	exact			
+1036692	1123382	142	new_genus	Thermosyntropha lipolytica DSM 11003	Thermosyntropha lipolytica DSM 11003	exact	54294	Thermosyntropha lipolytica	
+1036695	1121132	143	new_species	Butyrivibrio hungatei DSM 14810	Butyrivibrio hungatei DSM 14810	exact	830	Butyrivibrio	
+1036698	1123012	144	new_genus	Pseudobutyrivibrio xylanivorans DSM 14809	Pseudobutyrivibrio xylanivorans DSM 14809	exact			
+1036701	1123350	145	new_genus	Tepidibacter thalassicus DSM 15285	Tepidibacter thalassicus DSM 15285	exact	214905	Tepidibacter thalassicus	
+1036704	1123003	146	new_genus	Propionispora hippei DSM 15287	Propionispora hippei DSM 15287	exact	209080	Propionispora hippei	
+1036707	1121301	147	new_species	Clostridium caminithermale DSM 15212	Clostridium caminithermale DSM 15212	exact			
+1036710	1121302	148	new_species	Clostridium cavendishii DSM 21758	Clostridium cavendishii DSM 21758	exact	349931	Clostridium cavendishii	
+1036713	1121950	149	new_genus	Hespellia stercorisuis DSM 15480	Hespellia stercorisuis DSM 15480	exact	180311	Hespellia stercorisuis	
+1036716	1121428	150	new_strain	Desulfotomaculum hydrothermale Lam5 = DSM 18033	Desulfotomaculum hydrothermale DSM 18033	exact			
+1036719	1121322	151	new_species	[Clostridium] jejuense DSM 15929	Clostridium jejuense DSM 15929	exact	259063	[Clostridium] jejuense	
+1036722	1120995	152	new_genus	Anaerosphaera aminiphila DSM 21120	Anaerosphaera aminiphila DSM 21120	exact	1120994	Anaerosphaera aminiphila	
+1036725	1121025	153	new_genus	Atopostipes suicloacalis DSM 15692	Atopostipes suicloacalis DSM 15692	exact	180295	Atopostipes suicloacalis	
+1036728	1120989	154	new_family	Anaerobranca californiensis DSM 14826	Anaerobranca californiensis DSM 14826	exact	42447	Anaerobranca	
+1036731	1121266	155	new_genus	Caminicella sporogenes DSM 14501	Caminicella sporogenes DSM 14501	exact	166485	Caminicella sporogenes	
+1036734	1120975	156	new_genus	Alkalibacter saccharofermentans DSM 14828	Alkalibacter saccharofermentans DSM 14828	exact	235931	Alkalibacter saccharofermentans	
+1036743	1120996	157	new_genus	Anaerosporobacter mobilis DSM 15930	Anaerosporobacter mobilis DSM 15930	exact			
+1036746	1123369	158	new_species	Thermoanaerobacter uzonensis DSM 18761	Thermoanaerobacter uzonensis DSM 18761	exact			
+1036752	1121919	159	new_genus	Geosporobacter subterraneus DSM 17957	Geosporobacter subterraneus DSM 17957	exact	390806	Geosporobacter subterraneus	
+1036755	1121393	160	new_strain	Desulfatibacillum alkenivorans DSM 16219	Desulfatibacillum alkenivorans DSM 16219	exact	218207	Desulfatibacillum	
+1036758	1121476	161	new_genus	Dethiosulfatibacter aminovorans DSM 17477	Dethiosulfatibacter aminovorans DSM 17477	exact	332095	Dethiosulfatibacter aminovorans	
+1036761	1122189	162	new_genus	Malonomonas rubra DSM 5091	Malonomonas rubra DSM 5091	exact	57040	Malonomonas rubra	
+1036764	1122934	163	new_genus	Parasporobacterium paucivorans DSM 15970	Parasporobacterium paucivorans DSM 15970	exact	115544	Parasporobacterium paucivorans	
+1036770	1122195	164	new_species	Marinitoga hydrogenitolerans DSM 16785	Marinitoga hydrogenitolerans DSM 16785	exact	287990	Marinitoga hydrogenitolerans	
+1036773	198312	165	new_species	Porphyrobacter sanguineus	Porphyrobacter sanguineus DSM 11032	strain_id	1111	Porphyrobacter	
+1036776	213588	166	new_genus	Thermomonas hydrothermalis	Thermomonas hydrothermalis DSM 14834	strain_id	213588	Thermomonas hydrothermalis	
+1036779	198092	167	new_species	Roseomonas rosea	Roseomonas rosea DSM 14916	strain_id	125216	Roseomonas	
+1036782	445973	168	new_strain	Intestinibacter bartlettii DSM 16795	Clostridium bartlettii DSM 16795	exact			
+1036785	299255	169	new_species	Ferrimonas marina	Ferrimonas marina DSM 16917	strain_id			
+1036794	1122991	170	new_species	Prevotella shahii DSM 15611 = JCM 12083	Prevotella shahii DSM 15611	exact			
+1036797	1121955	171	new_species	Hymenobacter daecheongensis DSM 21074	Hymenobacter daecheongensis DSM 21074	exact	496053	Hymenobacter daecheongensis	
+1036800	1123357	172	new_genus	Tessaracoccus bendigoensis DSM 12906	Tessaracoccus bendigoensis DSM 12906	exact	72764	Tessaracoccus bendigoensis	
+1036803	1123029	173	new_genus	Pseudoxanthobacter soli DSM 19599	Pseudoxanthobacter soli DSM 19599	exact	433838	Pseudoxanthobacter	
+1036806	266809	174	new_species	Thalassobacter stenotrophicus	Jannaschia cystaugens DSM 16310	strain_id	266808	Thalassobacter	
+1048576	349095	175	new_species	Megasphaera paucivorans	Megasphaera paucivorans DSM 16981	strain_id	906	Megasphaera	
+1048582	1123293	176	new_species	Stackebrandtia albiflava DSM 45044	Stackebrandtia albiflava DSM 45044	exact	2037	Actinomycetales	
+1048657	130788	177	new_species	Sedimentibacter saalensis	Sedimentibacter saalensis DSM 13558	strain_id			
+1048762	116849	178	new_genus	Azomonas agilis	Azomonas agilis DSM 375	strain_id			
+1048765	561088	179	new_genus	Aquamicrobium aerolatum	Aquamicrobium aerolatum DSM 21857	strain_id	561088	Aquamicrobium aerolatum	
+1048768	1121284	180	new_species	Chryseobacterium bovis DSM 19482	Chryseobacterium bovis DSM 19482	exact			
+1048771	76595	181	new_species	Cellulophaga fucicola	Cellulophaga fucicola DSM 24786	strain_id	104264	Cellulophaga	
+1048774	1080	182	new_genus	Afifella marina	Afifella marina DSM 2698	strain_id	1080	Afifella marina	
+1048777	104662	183	new_species	Chitinophaga japonensis	Chitinophaga japonensis DSM 13484	strain_id	200666	Sphingobacteriales	
+1048780	1004	184	new_species	Chitinophaga sancti	Chitinophaga sancti DSM 784	strain_id			
+1048783	2371	185	new_strain	Xylella fastidiosa	Xylella fastidiosa DSM 10026	strain_id	2371	Xylella fastidiosa	
+1048786	91360	186	new_genus	Desulforhopalus singaporensis	Desulforhopalus singaporensis DSM 12130	strain_id	91360	Desulforhopalus singaporensis	
+1048855	1028	187	new_species	Marivirga sericea	Marivirga sericea DSM 4125	strain_id	869806	Marivirga	
+1048861	103732	188	new_genus	Lechevalieria flava	Lechevalieria flava DSM 43885	strain_id			
+1048864	103728	189	new_species	Actinokineospora diospyrosa	Actinokineospora diospyrosa DSM 44255	strain_id	39845	Actinokineospora	
+1048867	1933	190	new_genus	Streptoalloteichus tenebrarius	Streptoalloteichus tenebrarius DSM 40477	strain_id	1933	Streptoalloteichus tenebrarius	
+1048870	68170	191	new_genus	Lechevalieria aerocolonigenes	Lechevalieria aerocolonigenes DSM 40034	strain_id			
+1048873	334858	192	new_genus	Goodfellowiella coeruleoviolacea	Goodfellowiella coeruleoviolacea DSM 43935	strain_id	334858	Goodfellowiella coeruleoviolacea	
+1048876	438851	193	new_genus	Lentzea californiensis	Lentzea californiensis DSM 43393	strain_id	2070	Pseudonocardiaceae	
+1048879	42197	194	new_species	Actinosynnema pretiosum	Actinosynnema pretiosum DSM 44132	strain_id	40566	Actinosynnema	
+1048882	103729	189	new_species	Actinokineospora globicatena	Actinokineospora globicatena DSM 44256	strain_id	39845	Actinokineospora	
+1048885	2030	195	new_genus	Kibdelosporangium aridum	Kibdelosporangium aridum DSM 43828	strain_id	2029	Kibdelosporangium	
+1048888	40571	193	new_genus	Lentzea albidocapillata	Lentzea albidocapillata DSM 44073	strain_id	2070	Pseudonocardiaceae	
+1048891	129578	196	new_species	Oceanimonas baumannii	Oceanimonas baumannii DSM 15594	strain_id			
+1048894	188872	197	new_genus	Arenibacter troitsensis	Arenibacter troitsensis DSM 19835	strain_id	178469	Arenibacter	
+1048900	440515	197	new_genus	Arenibacter echinorum	Arenibacter echinorum DSM 23522	strain_id	178469	Arenibacter	
+1048903	53254	198	new_genus	Bosea thiooxidans	Bosea thiooxidans DSM 9653	strain_id	85413	Bosea	
+1048906	654838	199	new_genus	Fontibacter flavus	Fontibacter flavus DSM 22241	strain_id	881894	Fontibacter	
+1048909	577679	200	new_genus	Prauserella flava	Prauserella flava DSM 45265	strain_id	142577	Prauserella	
+1048912	176898	200	new_genus	Prauserella alba	Prauserella alba DSM 44590	strain_id	142577	Prauserella	
+1048915	387889	200	new_genus	Prauserella salsuginis	Prauserella salsuginis DSM 45264	strain_id	142577	Prauserella	
+1048918	387890	200	new_genus	Prauserella aidingensis	Prauserella aidingensis DSM 45266	strain_id	142577	Prauserella	
+1048924	185641	200	new_genus	Prauserella halophila	Prauserella halophila DSM 44617	strain_id	142577	Prauserella	
+1048927	72806	201	new_species	Williamsia maris	Williamsia maris DSM 44693	strain_id	85043	Williamsia	
+1048930	321325	201	new_species	Williamsia deligens	Williamsia deligens DSM 44902	strain_id	321325	Williamsia deligens	
+1048933	391736	202	new_species	Williamsia serinedens	Williamsia serinedens DSM 45037	strain_id	2037	Actinomycetales	
+1048936	651661	203	new_species	Dyadobacter psychrophilus	Dyadobacter psychrophilus DSM 22270	strain_id	651661	Dyadobacter psychrophilus	
+1048939	639310	204	new_genus	Olleya aquimaris	Olleya aquimaris DSM 24464	species_name	336276	Olleya	
+1048942	688913	205	new_genus	Ohtaekwangia kribbensis	Ohtaekwangia kribbensis DSM 25221	species_name	688913	Ohtaekwangia kribbensis	
+1048945	688867	205	new_genus	Ohtaekwangia koreensis	Ohtaekwangia koreensis DSM 25262	species_name	688867	Ohtaekwangia koreensis	
+1048948	576117	206	new_species	Celeribacter halophilus	Huaishuia halophila DSM 26270	species_name	576117	Celeribacter halophilus	
+1048951	990	207	new_species	Cytophaga xylanolytica	Cytophaga xylanolytica DSM 6779	strain_id			
+1048954	568105	208	new_genus	Hwanghaeicola aestuarii	Hwanghaeicola aestuarii DSM 22009	strain_id	568105	Hwanghaeicola aestuarii	
+1048957	696762	209	new_genus	Planktotalea frisia	Planktotalea frisia DSM 23709	strain_id	696762	Planktotalea frisia	
+1048960	1037355	210	new_species	Parabacteroides chartae	Parabacteroides chartae DSM 24967	strain_id			
+1048963	561184	211	new_genus	Mameliella alba	Mameliella alba DSM 26384	species_name	31989	Rhodobacteraceae	
+1048966	1061	212	new_strain	Rhodobacter capsulatus	Rhodobacter capsulatus DSM 1710	strain_id	1060	Rhodobacter	
+1048969	143223	213	new_genus	Salegentibacter salegens	Salegentibacter salegens DSM 5424	strain_id	143223	Salegentibacter salegens	
+1048972	196587	214	new_genus	Albidovulum inexpectatum	Albidovulum inexpectatum DSM 12048	strain_id	196587	Albidovulum inexpectatum	
+1048975	49280	215	new_genus	Gelidibacter algens	Gelidibacter algens DSM 12408	strain_id	49280	Gelidibacter algens	
+1048978	121821	216	new_genus	Roseinatronobacter thiooxidans	Roseinatronobacter thiooxidans DSM 13087	strain_id	119541	Rhodobaca	
+1048981	172045	217	new_species	Elizabethkingia miricola	Elizabethkingia miricola DSM 14571	strain_id	308865	Elizabethkingia	
+1048984	188932	218	new_species	Pedobacter cryoconitis	Pedobacter cryoconitis DSM 14825	strain_id	84567	Pedobacter	
+1048987	213248	219	new_genus	Mesonia algae	Mesonia algae DSM 15361	strain_id	213248	Mesonia algae	
+1048990	191564	220	new_species	Nonlabens xylanidelens	Nonlabens xylanidelens DSM 16809	strain_id	363408	Nonlabens	
+1048993	328515	220	new_strain	Nonlabens dokdonensis	Nonlabens dokdonensis DSM 17205	strain_id	363408	Nonlabens	
+1048999	393003	221	new_species	Chitinophaga ginsengisegetis	Chitinophaga ginsengisegetis DSM 18108	strain_id			
+1049002	402884	222	new_genus	Gemmobacter changlensis	Gemmobacter changlensis DSM 18774	strain_id	402884	Gemmobacter changlensis	
+1049005	404881	223	new_genus	Defluviimonas denitrificans	Defluviimonas denitrificans DSM 18921	strain_id	404881	Defluviimonas denitrificans	
+1049008	237019	224	new_species	Algoriphagus chordae	Algoriphagus chordae DSM 19830	species_name	246875	Algoriphagus	
+1049011	441209	216	new_genus	Rhodobaca barguzinensis	Rhodobaca barguzinensis DSM 19920	strain_id	119541	Rhodobaca	
+1049014	468058	225	new_species	Mucilaginibacter oryzae	Mucilaginibacter oryzae DSM 19975	strain_id	468058	Mucilaginibacter oryzae	
+1049017	643671	226	new_genus	Larkinella arboricola	Larkinella arboricola DSM 21851	strain_id	643671	Larkinella arboricola	
+1049023	591202	227	new_genus	Arcicella aurantiaca	Arcicella aurantiaca DSM 22214	species_name	591202	Arcicella aurantiaca	
+1049026	619805	228	new_genus	Soonwooa buanensis	Soonwooa buanensis DSM 22323	strain_id	619805	Soonwooa buanensis	
+1049029	572036	229	new_species	Pedobacter luteus	Pedobacter luteus DSM 22385	strain_id	572036	Pedobacter luteus	
+1049032	561061	230	new_species	Sphingobacterium psychroaquaticum	Sphingobacterium psychroaquaticum DSM 22418	strain_id			
+1049035	570520	231	new_species	Formosa spongicola	Formosa spongicola DSM 22637	strain_id	283785	Bizionia	
+1049038	1189325	232	new_genus	Oceanicella actignis	Oceanicella actignis DSM 22673	strain_id			
+1049041	57028	233	new_species	Algoriphagus ratkowskyi	Algoriphagus ratkowskyi DSM 22686	species_name	246875	Algoriphagus	
+1049044	279824	234	new_species	Algoriphagus alkaliphilus	Algoriphagus alkaliphilus DSM 22703	species_name	279824	Algoriphagus alkaliphilus	
+1049047	906888	235	new_species	Nonlabens ulvanivorans	Nonlabens ulvanivorans DSM 22727	strain_id	363408	Nonlabens	
+1049053	623280	236	new_genus	Parapedobacter luteus	Parapedobacter luteus DSM 22899	strain_id	623280	Parapedobacter luteus	
+1049056	1004304	237	new_family	Hydrotalea sandarakina	Hydrotalea sandarakina DSM 23241	strain_id	200666	Sphingobacteriales	
+1049059	447422	238	new_genus	Salegentibacter salinarum	Salegentibacter salinarum DSM 23400	strain_id	143222	Salegentibacter	
+1049062	435906	239	new_genus	Salegentibacter salarius	Salegentibacter salarius DSM 23401	strain_id	143222	Salegentibacter	
+1049065	270918	239	new_genus	Salegentibacter mishustinae	Salegentibacter mishustinae DSM 23404	strain_id	143222	Salegentibacter	
+1049068	241145	238	new_genus	Salegentibacter holothuriorum	Salegentibacter holothuriorum DSM 23405	strain_id	143222	Salegentibacter	
+1049071	291403	240	new_species	Algoriphagus yeomjeoni	Algoriphagus yeomjeoni DSM 23446	species_name	246875	Algoriphagus	
+1049074	429344	241	new_species	Maribacter polysiphoniae	Maribacter polysiphoniae DSM 23514	strain_id	252356	Maribacter	
+1049077	561365	242	new_species	Maribacter arcticus	Maribacter arcticus DSM 23546	strain_id	561365	Maribacter arcticus	
+1049080	331697	243	new_species	Chitinophaga skermanii	Chitinophaga skermanii DSM 23857	species_name	200666	Sphingobacteriales	
+1049083	1513896	244	new_species	Sphingobacterium nematocida	Sphingobacterium nematocida DSM 24091	species_name	28453	Sphingobacterium	
+1049086	889453	245	new_genus	Alkalitalea saponilacus	Alkalitalea saponilacus DSM 24412	strain_id			
+1049089	990712	246	new_genus	Albidovulum xiamenense	Albidovulum xiamenense DSM 24422	species_name	34008	Rhodovulum	
+1049211	504486	247	new_species	Cellulophaga tyrosinoxydans	Cellulophaga tyrosinoxydans DSM 21164	strain_id	104264	Cellulophaga	
+1052941	354	248	new_strain	Azotobacter vinelandii	Azotobacter vinelandii DSM 279	species_name			
+1052944	266	249	new_strain	Paracoccus denitrificans	Paracoccus denitrificans DSM 415	species_name	265	Paracoccus	
+1052947	266	249	new_strain	Paracoccus denitrificans	Paracoccus denitrificans DSM 15418	species_name	265	Paracoccus	
+1052950	82367	250	new_strain	Paracoccus pantotrophus	Paracoccus pantotrophus DSM 1403	species_name	265	Paracoccus	
+1052953	82367	250	new_strain	Paracoccus pantotrophus	Paracoccus pantotrophus DSM 11073	species_name	265	Paracoccus	
+1052956	2242	251	new_strain	Halobacterium salinarum	Halobacterium salinarum DSM 668	species_name	2239	Halobacterium	
+1052959	2242	251	new_strain	Halobacterium salinarum	Halobacterium salinarum DSM 670	species_name	2239	Halobacterium	
+1052962	478009	251	new_strain	Halobacterium salinarum R1	Halobacterium salinarum DSM 671	exact	2239	Halobacterium	
+1052965	2242	251	new_strain	Halobacterium salinarum	Halobacterium salinarum DSM 3754	strain_id	2239	Halobacterium	
+1052968	1061	212	new_strain	Rhodobacter capsulatus	Rhodobacter capsulatus DSM 938	species_name	1060	Rhodobacter	
+1052974	759851	252	new_strain	Sporosarcina newyorkensis	Sporosarcina newyorkensis DSM 23543	species_name			
+1052977	759851	252	new_strain	Sporosarcina newyorkensis	Sporosarcina newyorkensis DSMZ 23966	species_name			
+1052980	170623	253	new_species	Azotobacter beijerinckii	Azotobacter beijerinckii DSM 282	species_name			
+1052983	170623	253	new_species	Azotobacter beijerinckii	Azotobacter beijerinckii DSM 373	species_name			
+1052986	170623	253	new_species	Azotobacter beijerinckii	Azotobacter beijerinckii DSM 378	strain_id			
+1052989	170623	253	new_species	Azotobacter beijerinckii	Azotobacter beijerinckii DSM 381	species_name			
+1052992	382	254	new_strain	Sinorhizobium meliloti	Ensifer meliloti DSM 23913	species_name	106591	Ensifer	
+1052995	382	254	new_strain	Sinorhizobium meliloti	Ensifer meliloti DSM 23914	species_name	106591	Ensifer	
+1052998	1525	255	new_strain	Moorella thermoacetica	Moorella thermoacetica DSM 521	strain_id	44260	Moorella	
+1053004	1525	255	new_strain	Moorella thermoacetica	Moorella thermoacetica DSM 12993	species_name	44260	Moorella	
+1053007	756689	256	new_species	Nocardia amikacinitolerans	Nocardia amikacinitolerans DSM 45535	species_name	1817	Nocardia	
+1053010	756689	256	new_species	Nocardia amikacinitolerans	Nocardia amikacinitolerans DSM 45536	species_name	1817	Nocardia	
+1053013	756689	256	new_species	Nocardia amikacinitolerans	Nocardia amikacinitolerans DSM 45537	species_name	1817	Nocardia	
+1053016	756689	256	new_species	Nocardia amikacinitolerans	Nocardia amikacinitolerans DSM 45538	species_name	1817	Nocardia	
+1053019	756689	256	new_species	Nocardia amikacinitolerans	Nocardia amikacinitolerans DSM 45539	strain_id	1817	Nocardia	
+1053022	1082	257	new_strain	Phaeospirillum fulvum	Phaeospirillum fulvum DSM 114	species_name	1082	Phaeospirillum fulvum	
+1053025	1082	257	new_strain	Phaeospirillum fulvum	Phaeospirillum fulvum DSM 115	species_name	1082	Phaeospirillum fulvum	
+1053028	1082	257	new_strain	Phaeospirillum fulvum	Phaeospirillum fulvum DSM 117	species_name	1082	Phaeospirillum fulvum	
+1053031	1082	257	new_strain	Phaeospirillum fulvum	Phaeospirillum fulvum DSM 13234	species_name	85265	Phaeospirillum	
+1053034	1516	258	new_strain	Thermoanaerobacter thermohydrosulfuricus	Thermoanaerobacter thermohydrosulfuricus DSM 569	species_name			
+1053037	1516	258	new_strain	Thermoanaerobacter thermohydrosulfuricus	Thermoanaerobacter thermohydrosulfuricus DSM 7021	species_name			
+1053040	192	259	new_strain	Azospirillum brasilense	Azospirillum brasilense DSM 1690	strain_id			
+1053043	526729	260	new_species	Promicromonospora flava	Promicromonospora flava DSMZ 21481	species_name	85017	Promicromonosporaceae	
+1053046	765201	261	new_species	Promicromonospora thailandica	Promicromonospora thailandica DSM 26652	species_name	43676	Promicromonospora	
+1053049	629679	262	new_species	Promicromonospora umidemergens	Promicromonospora umidemergens DSM 22081	strain_id	43676	Promicromonospora	
+1053052	170623	253	new_species	Azotobacter beijerinckii	Azotobacter beijerinckii DSM 1041	species_name			
+1053055	280	263	new_strain	Xanthobacter autotrophicus	Xanthobacter autotrophicus DSM 432	strain_id	279	Xanthobacter	
+1053058	266	249	new_strain	Paracoccus denitrificans	Paracoccus denitrificans DSM 413	strain_id	265	Paracoccus	
+1021_A	33882	264	new_species	Microbacterium					1021_A_run134
+1021_AC	443157	265	new_species	Nocardioides hankookensis					1021_AC_run134
+1021_AE	106591	266	new_species	Ensifer					1021_AE_run134
+1021_AG	2040	267	new_species	Aeromicrobium					1021_AG_run134
+1021_AH	1386	268	new_species	Bacillus					1021_AH_run134_run137_run147
+1021_AI	1839	269	new_species	Nocardioides					1021_AI_run134
+1021_AN	106591	266	new_species	Ensifer					1021_AN_run134_run137_run147
+1021_AP	1763	270	new_species	Mycobacterium					1021_AP_run134_run137_run147
+1021_AQ	80864	271	new_genus	Comamonadaceae					1021_AQ_run134_run137_run147
+1021_AR	379	272	new_species	Rhizobium					1021_AR_run134_run137_run147
+1021_AS	80864	271	new_genus	Comamonadaceae					1021_AS_run134_run137_run147
+1021_AZ	106591	273	new_species	Ensifer					1021_AZ_run134
+1021_B	110932	274	new_species	Leifsonia					1021_B_run134_run137_run147
+1021_BA	68	275	new_species	Lysobacter					1021_BA_run134
+1021_BD	286	276	new_species	Pseudomonas					1021_BD_run134
+1021_BE	379	277	new_species	Rhizobium					1021_BE_run134
+1021_BF	506	278	new_genus	Alcaligenaceae					1021_BF_run134_run137_run147
+1021_C	2062	279	new_genus	Streptomycetaceae					1021_C_run134_run137_run147
+1021_F	158751	280	new_species	uncultured Acidovorax sp.					1021_F_run134
+1021_G	286	281	new_species	Pseudomonas					1021_G_run134
+1021_H	106591	273	new_species	Ensifer					1021_H_run134
+1021_I	106591	273	new_species	Ensifer					1021_I_run134
+1021_L	31988	282	new_genus	Aminobacter					1021_L_run134
+1021_M	46913	283	new_genus	Devosia					1021_M_run134
+1021_N	106591	266	new_species	Ensifer					1021_N_run134
+1021_O	1763	284	new_species	Mycobacterium					1021_O_run134
+1021_P	1707	285	new_species	Cellulomonas					1021_P_run134
+1021_Q	1843	286	new_species	Nocardioides jensenii					1021_Q_run134
+1021_R	106591	266	new_species	Ensifer					1021_R_run134
+1021_S	379	287	new_species	Rhizobium					1021_S_run134
+1021_T	33882	288	new_species	Microbacterium					1021_T_run134
+1021_U	506	278	new_genus	Alcaligenaceae					1021_U_run134
+1021_W	53355	289	new_genus	Terrabacter					1021_W_run134
+1021_Y	237	290	new_species	Flavobacterium					1021_Y_run134
+1139_AA	69278	291	new_genus	Aquamicrobium					1139_AA_run158_run162
+1139_AC	379	292	new_species	Rhizobium					1139_AC_run158
+1139_AF	85413	293	new_genus	Bosea					1139_AF_run158_run162
+1139_AG	29580	294	new_species	Janthinobacterium					1139_AG_run158_run162
+1139_AH	237	295	new_species	Flavobacterium					1139_AH_run158_run162
+1139_AJ	379	296	new_species	Rhizobium					1139_AJ_run158_run162
+1139_AK	83618	297	new_species	Pseudoxanthomonas					1139_AK_run158_run162
+1139_AL	379	298	new_species	Rhizobium					1139_AL_run158_run162
+1139_AN	68	275	new_species	Lysobacter					1139_AN_run158_run162
+1139_AO	85413	299	new_genus	Bosea					1139_AO_run158_run162
+1139_AP	1259470	300	new_species	Nocardioides sp. RHLT1-14					1139_AP_run158_run162
+1139_AQ	46913	301	new_genus	Devosia					1139_AQ_run158_run162
+1139_AR	349273	302	new_species	uncultured Phenylobacterium sp.					1139_AR_run158_run162
+1139_AS	379	303	new_species	Rhizobium					1139_AS_run158_run162
+1139_AW	13687	304	new_species	Sphingomonas					1139_AW_run158_run162
+1139_AX	1243042	305	new_species	Paenibacillus sp. AMB_13					1139_AX_run158_run162
+1139_AY	46913	283	new_genus	Devosia					1139_AY_run158_run162
+1139_AZ	1883	306	new_species	Streptomyces					1139_AZ_run158_run162
+1139_B	162491	307	new_genus	Oerskovia					1139_B_run158_run162
+1139_BC	75	308	new_species	Caulobacter					1139_BC_run158_run162
+1139_BD	75	308	new_species	Caulobacter					1139_BD_run158_run162
+1139_BE	1883	306	new_species	Streptomyces					1139_BE_run158_run162
+1139_BF	80864	309	new_genus	Comamonadaceae					1139_BF_run158_run162
+1139_BG	80864	310	new_genus	Comamonadaceae					1139_BG_run158_run162
+1139_BH	68	275	new_species	Lysobacter					1139_BH_run158_run162
+1139_BI	1255265	311	new_species	Nitrobacter sp. NS5-5					1139_BI_run158_run162
+1139_BK	165697	312	new_species	Sphingopyxis					1139_BK_run158_run162
+1139_BL	12916	313	new_species	Acidovorax					1139_BL_run158_run162
+1139_BM	68	275	new_species	Lysobacter					1139_BM_run158_run162
+1139_BN	379	296	new_species	Rhizobium					1139_BN_run158_run162
+1139_BO	223904	269	new_species	Nocardioides sp. NS/27					1139_BO_run158_run162
+1139_BQ	286	314	new_species	Pseudomonas					1139_BQ_run158_run162
+1139_BS	46913	315	new_genus	Devosia					1139_BS_run158_run162
+1139_BT	1259470	300	new_species	Nocardioides sp. RHLT1-14					1139_BT_run162_run167
+1139_BU	75309	316	new_species	Rhodanobacter					1139_BU_run158_run162
+1139_BV	1294566	317	new_genus	Devosia sp. R41					1139_BV_run158_run162
+1139_BW	366349	318	new_species	Rhizobium sp. CHNTR26					1139_BW_run158_run162
+1139_BY	85413	319	new_genus	Bosea					1139_BY_run158_run162
+1139_BZ	75	320	new_species	Caulobacter					1139_BZ_run158_run162
+1139_C	80864	321	new_genus	Comamonadaceae					1139_C_run158_run162
+1139_CA	68	275	new_species	Lysobacter					1139_CA_run158_run162
+1139_CB	68287	322	new_species	Mesorhizobium					1139_CB_run158_run162
+1139_CC	33882	323	new_species	Microbacterium					1139_CC_run158_run162
+1139_CD	80864	324	new_genus	Comamonadaceae					1139_CD_run158_run162
+1139_CE	33882	325	new_species	Microbacterium					1139_CE_run158_run162
+1139_CF	80864	309	new_genus	Comamonadaceae					1139_CF_run158_run162
+1139_CG	106591	273	new_species	Ensifer					1139_CG_run158_run162
+1139_CH	908626	326	new_genus	Angustibacter					1139_CH_run158_run162_run167
+1139_CI	366349	318	new_species	Rhizobium sp. CHNTR26					1139_CI_run158_run162
+1139_CJ	1707	285	new_species	Cellulomonas					1139_CJ_run158_run162
+1139_CK	68287	322	new_species	Mesorhizobium					1139_CK_run158_run162
+1139_CL	237	327	new_species	Flavobacterium					1139_CL_run158
+1139_CM	110932	328	new_species	Leifsonia					1139_CM_run158_run162
+1139_CO	80864	309	new_genus	Comamonadaceae					1139_CO_run158
+1139_CP	366349	318	new_species	Rhizobium sp. CHNTR26					1139_CP_run158_run162
+1139_F	33877	329	new_species	Agromyces					1139_F_run158_run162
+1139_G	506	278	new_genus	Alcaligenaceae					1139_G_run158_run162
+1139_I	619730	289	new_genus	Terrabacter carboxydivorans					1139_I_run158_run162
+1139_J	1839	330	new_species	Nocardioides					1139_J_run158_run162
+1139_M	1843	286	new_species	Nocardioides jensenii					1139_M_run158_run162
+1139_O	355930	331	new_genus	Yonghaparkia alkaliphila					1139_O_run158_run162_run167
+1139_P	286	332	new_species	Pseudomonas					1139_P_run158_run162
+1139_Q	80864	321	new_genus	Comamonadaceae					1139_Q_run158_run162
+1139_R	149698	333	new_species	Massilia					1139_R_run158_run162
+1139_S	106591	266	new_species	Ensifer					1139_S_run158_run162
+1139_T	13687	304	new_species	Sphingomonas					1139_T_run158_run162
+1139_U	182367	334	new_species	Rhizobium sp. DCP1					1139_U_run158
+1139_V	349273	302	new_species	uncultured Phenylobacterium sp.					1139_V_run158_run162
+1139_Y	169973	335	new_species	uncultured Massilia sp.					1139_Y_run158_run162
+1220_A	85023	336	new_genus	Microbacteriaceae					1220_A_run172_run176
+1220_AA	1386	337	new_species	Bacillus					1220_AA_run172_run176_run188
+1220_AB	490570	338	new_genus	Phycicoccus ginsenosidimutans					1220_AB_run172_run176_run188
+1220_AC	44249	339	new_species	Paenibacillus					1220_AC_run172_run176_run188
+1220_AD	173053	340	new_species	Tetrasphaera duodecadis					1220_AD_run172_run176
+1220_AF	1663	341	new_species	Arthrobacter					1220_AF_run172_run176
+1220_AG	1663	342	new_species	Arthrobacter					1220_AG_run172_run176_run188
+1220_AH	1663	343	new_species	Arthrobacter					1220_AH_run172_run176_run188
+1220_AI	44249	344	new_species	Paenibacillus					1220_AI_run172_run176
+1220_AJ	75309	345	new_species	Rhodanobacter					1220_AJ_run172_run176_run188
+1220_AK	32033	346	new_genus	Xanthomonadaceae					1220_AK_run172_run176
+1220_AL	424797	347	new_species	Nocardioides terrigena					1220_AL_run172_run176
+1220_AM	1663	348	new_species	Arthrobacter					1220_AM_run172_run176
+1220_AO	1143711	349	new_species	Paenibacillus frigoriresistens					1220_AO_run172_run176
+1220_AP	1843	286	new_species	Nocardioides jensenii					1220_AP_run172_run176_run188
+1220_AQ	1843	286	new_species	Nocardioides jensenii					1220_AQ_run172_run176
+1220_AR	367298	350	new_genus	Phycicoccus					1220_AR_run172_run176
+1220_AS	355930	331	new_genus	Yonghaparkia alkaliphila					1220_AS_run172_run176_run188
+1220_AU	619730	289	new_genus	Terrabacter carboxydivorans					1220_AU_run172_run176_run188
+1220_AV	68	275	new_species	Lysobacter					1220_AV_run172_run176_run188
+1220_AX	1707	285	new_species	Cellulomonas					1220_AX_run172_run176_run188
+1220_AZ	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1220_AZ_run172_run176_run188
+1220_B	1839	269	new_species	Nocardioides					1220_B_run172_run176
+1220_BA	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1220_BA_run172_run176_run188
+1220_BB	13687	304	new_species	Sphingomonas					1220_BB_run172_run176_run188
+1220_BC	1883	352	new_species	Streptomyces					1220_BC_run172_run176_run188
+1220_BD	169973	335	new_species	uncultured Massilia sp.					1220_BD_run172_run176
+1220_BE	165697	353	new_species	Sphingopyxis					1220_BE_run172_run176_run188
+1220_BH	149698	333	new_species	Massilia					1220_BH_run172_run176_run188
+1220_BI	227322	354	new_species	uncultured Paenibacillus sp.					1220_BI_run172_run176_run188
+1220_BK	2040	355	new_species	Aeromicrobium					1220_BK_run172_run176
+1220_BL	1387244	356	new_species	Rhizobium sp. Ia8					1220_BL_run172_run176
+1220_BM	44249	357	new_species	Paenibacillus					1220_BM_run172_run176
+1220_BO	227322	354	new_species	uncultured Paenibacillus sp.					1220_BO_run172_run176_run188_run192_run197
+1220_BP	1386	337	new_species	Bacillus					1220_BP_run172_run176
+1220_BQ	1386	337	new_species	Bacillus					1220_BQ_run172_run176
+1220_BT	110932	358	new_species	Leifsonia					1220_BT_run172_run176
+1220_BU	1883	352	new_species	Streptomyces					1220_BU_run172_run176
+1220_BV	106591	273	new_species	Ensifer					1220_BV_run172_run176
+1220_BW	33882	359	new_species	Microbacterium					1220_BW_run172_run176
+1220_C	1456769	360	new_genus	Phycicoccus sp. THG-a14					1220_C_run172_run176
+1220_CC	68287	361	new_species	Mesorhizobium					1220_CC_run172_run176_run188
+1220_CD	286	362	new_species	Pseudomonas					1220_CD_run172_run176_run188
+1220_CE	1456769	360	new_genus	Phycicoccus sp. THG-a14					1220_CE_run172_run176_run188
+1220_CF	69278	291	new_genus	Aquamicrobium					1220_CF_run172_run176_run188
+1220_CG	245876	363	new_species	Nitratireductor					1220_CG_run172_run176
+1220_CH	2063	364	new_species	Kitasatospora					1220_CH_run172_run176
+1220_CI	33882	359	new_species	Microbacterium					1220_CI_run172_run176_run188
+1220_CK	330227	365	new_species	Microbacterium sp. Bt 07					1220_CK_run172_run176
+1220_D	2063	364	new_species	Kitasatospora					1220_D_run172_run176_run188
+1220_E	1817	366	new_species	Nocardia					1220_E_run172_run176
+1220_F	165697	312	new_species	Sphingopyxis					1220_F_run172_run176_run188
+1220_G	160236	367	new_species	uncultured Herbaspirillum sp.					1220_G_run172
+1220_H	80864	324	new_genus	Comamonadaceae					1220_H_run172_run176
+1220_I	286	368	new_species	Pseudomonas					1220_I_run172_run176_run188
+1220_K	2040	267	new_species	Aeromicrobium					1220_K_run172_run176
+1220_L	1883	369	new_species	Streptomyces					1220_L_run172_run176
+1220_M	80864	370	new_genus	Comamonadaceae					1220_M_run172_run176_run188
+1220_N	75309	316	new_species	Rhodanobacter					1220_N_run172_run176_run188
+1220_Q	293890	371	new_strain	Agromyces subbeticus					1220_Q_run172_run176
+1220_R	1763	372	new_species	Mycobacterium					1220_R_run172_run176
+1220_T	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1220_T_run172_run176
+1220_U	1387244	356	new_species	Rhizobium sp. Ia8					1220_U_run172_run176
+1220_V	68	373	new_species	Lysobacter					1220_V_run172_run176
+1220_W	160791	304	new_strain	Sphingomonas wittichii					1220_W_run172_run176
+1220_X	53458	374	new_species	Janibacter limosus					1220_X_run172_run176
+1220_Y	136099	375	new_genus	Knoellia					1220_Y_run172_run176
+1220_Z	1663	376	new_species	Arthrobacter					1220_Z_run172_run176_run188
+1285_A	286	377	new_species	Pseudomonas					1285_A_run188_run192
+1285_AB	33877	378	new_species	Agromyces					1285_AB_run188
+1285_AC	460257	379	new_species	Aeromicrobium ponti					1285_AC_run188
+1285_AD	1827	380	new_species	Rhodococcus					1285_AD_run188
+1285_AE	407	381	new_species	Methylobacterium					1285_AE_run188
+1285_AF	747294	382	new_genus	Pseudorhodoferax					1285_AF_run188
+1285_AG	29580	383	new_species	Janthinobacterium					1285_AG_run188_run192_run197
+1285_AH	509094	384	new_species	Brevundimonas sp. HINF004					1285_AH_run188
+1285_AI	407	381	new_species	Methylobacterium					1285_AI_run188
+1285_AJ	85023	385	new_genus	Microbacteriaceae					1285_AJ_run188
+1285_AK	311234	386	new_species	Cellulomonas terrae					1285_AK_run189_run193
+1285_AM	407	387	new_species	Methylobacterium					1285_AM_run189
+1285_AN	1386	388	new_species	Bacillus					1285_AN_run189_run193
+1285_AO	13687	389	new_species	Sphingomonas					1285_AO_run189_run193
+1285_AP	1839	390	new_species	Nocardioides					1285_AP_run189_run193_run202_run206
+1285_AQ	13687	391	new_species	Sphingomonas					1285_AQ_run189
+1285_AR	407	392	new_species	Methylobacterium					1285_AR_run189
+1285_AT	13687	389	new_species	Sphingomonas					1285_AT_run189_run193
+1285_AU		393							1285_AU_run189_run193
+1285_AV	554335	394	new_species	Rhizobium sp. CpLB236					1285_AV_run189_run193
+1285_AW	13687	395	new_species	Sphingomonas					1285_AW_run189_run193
+1285_AY	33886	396	new_genus	Rathayibacter					1285_AY_run189
+1285_AZ	13687	389	new_species	Sphingomonas					1285_AZ_run189
+1285_BA	60919	397	new_species	Sanguibacter					1285_BA_run189
+1285_BB	13687	398	new_species	Sphingomonas					1285_BB_run189
+1285_BC	13687	391	new_species	Sphingomonas					1285_BC_run189
+1285_BD	59732	399	new_species	Chryseobacterium					1285_BD_run189
+1285_BE	1172533	400	new_species	Rhodococcus sp. I_48-J6PC12A					1285_BE_run189_run193
+1285_BF	1707	285	new_species	Cellulomonas					1285_BF_run189_run193_run202_run206
+1285_BG	33882	401	new_species	Microbacterium					1285_BG_run189
+1285_BH	2037	402	new_family	Actinomycetales					1285_BH_run189
+1285_BI	158754	403	new_species	uncultured Sphingomonas sp.					1285_BI_run189
+1285_BJ	1386	404	new_species	Bacillus					1285_BJ_run189
+1285_BK	13687	405	new_species	Sphingomonas					1285_BK_run189
+1285_BL	1663	406	new_species	Arthrobacter					1285_BL_run189
+1285_BN	59732	407	new_species	Chryseobacterium					1285_BN_run189
+1285_BO	460257	379	new_species	Aeromicrobium ponti					1285_BO_run189
+1285_BP	13687	408	new_species	Sphingomonas					1285_BP_run189
+1285_BQ	747294	382	new_genus	Pseudorhodoferax					1285_BQ_run189
+1285_BS	407	409	new_species	Methylobacterium					1285_BS_run189_run193
+1285_BT	338	410	new_species	Xanthomonas					1285_BT_run189
+1285_BU	33882	411	new_species	Microbacterium					1285_BU_run189_run193
+1285_BV	16	412	new_species	Methylophilus					1285_BV_run189_run193
+1285_BW	237	413	new_species	Flavobacterium					1285_BW_run189
+1285_BX	96492	414	new_genus	Frigoribacterium					1285_BX_run189
+1285_BY	875239	415	new_species	Modestobacter sp. R-36506					1285_BY_run189
+1285_BZ	407	392	new_species	Methylobacterium					1285_BZ_run189
+1285_C	33886	396	new_genus	Rathayibacter					1285_C_run188
+1285_CA	96492	414	new_genus	Frigoribacterium					1285_CA_run189
+1285_CB	407	381	new_species	Methylobacterium					1285_CB_run189
+1285_CC	41275	416	new_species	Brevundimonas					1285_CC_run189
+1285_CD	33882	401	new_species	Microbacterium					1285_CD_run189
+1285_CF	92511	417	new_species	Curtobacterium sp. B20					1285_CF_run189
+1285_CG	257003	418	new_strain	Sphingomonas phyllosphaerae					1285_CG_run189
+1285_CH	13687	389	new_species	Sphingomonas					1285_CH_run189
+1285_CI	684063	419	new_species	Paenibacillus algorifonticola					1285_CI_run189
+1285_CJ	407	387	new_species	Methylobacterium					1285_CJ_run189
+1285_CK	460257	379	new_species	Aeromicrobium ponti					1285_CK_run189
+1285_CL	33882	401	new_species	Microbacterium					1285_CL_run189
+1285_CM	114707	420	new_species	uncultured Pseudomonas sp.					1285_CM_run189
+1285_CN	407	387	new_species	Methylobacterium					1285_CN_run189
+1285_CO	875239	415	new_species	Modestobacter sp. R-36506					1285_CO_run189
+1285_CP	80864	421	new_genus	Comamonadaceae					1285_CP_run189
+1285_CQ	12916	422	new_species	Acidovorax					1285_CQ_run189
+1285_CR	13687	423	new_species	Sphingomonas					1285_CR_run189
+1285_D	33886	396	new_genus	Rathayibacter					1285_D_run188_run192
+1285_E	110932	424	new_species	Leifsonia					1285_E_run188
+1285_F	13687	425	new_species	Sphingomonas					1285_F_run188
+1285_G	165695	426	new_species	Sphingobium					1285_G_run188
+1285_H	33882	359	new_species	Microbacterium					1285_H_run188_run192
+1285_I	96492	414	new_genus	Frigoribacterium					1285_I_run188_run192
+1285_K	407	427	new_species	Methylobacterium					1285_K_run188
+1285_L	1827	428	new_species	Rhodococcus					1285_L_run188
+1285_M	1663	429	new_species	Arthrobacter					1285_M_run188
+1285_N	80864	421	new_genus	Comamonadaceae					1285_N_run188
+1285_O	286	430	new_species	Pseudomonas					1285_O_run188
+1285_Q	407	381	new_species	Methylobacterium					1285_Q_run188
+1285_T	1150508	274	new_species	Leifsonia sp. MN6-25					1285_T_run188
+1285_U	379	431	new_species	Rhizobium					1285_U_run188
+1285_W	407	409	new_species	Methylobacterium					1285_W_run188_run192
+1285_X	13687	389	new_species	Sphingomonas					1285_X_run188
+1285_Y	407	381	new_species	Methylobacterium					1285_Y_run188
+1285_Z	13687	432	new_species	Sphingomonas					1285_Z_run188_run192
+1286_A	96492	414	new_genus	Frigoribacterium					1286_A_run191
+1286_AA	13687	408	new_species	Sphingomonas					1286_AA_run191_run197
+1286_AB	255475	433	new_genus	Aurantimonadaceae					1286_AB_run191_run197
+1286_AC	286	434	new_species	Pseudomonas					1286_AC_run191_run197
+1286_AD	1278652	435	new_species	Chryseobacterium sp. T85L.09.P.BNT.GC.H.Gill.D.M					1286_AD_run191_run197
+1286_AE	34072	436	new_species	Variovorax					1286_AE_run191_run197
+1286_AF	454586	437	new_strain	Pedobacter agri					1286_AF_run191_run197
+1286_AG	1256701	394	new_species	Rhizobium sp. BA-57-09					1286_AG_run191
+1286_AH	13687	398	new_species	Sphingomonas					1286_AH_run191_run197
+1286_AJ	96492	438	new_genus	Frigoribacterium					1286_AJ_run191_run197
+1286_AK	407	387	new_species	Methylobacterium					1286_AK_run191_run197
+1286_AL	407	409	new_species	Methylobacterium					1286_AL_run191_run197
+1286_AM	374	439	new_species	Bradyrhizobium					1286_AM_run191
+1286_AN	33882	401	new_species	Microbacterium					1286_AN_run191_run197
+1286_AO	255475	440	new_genus	Aurantimonadaceae					1286_AO_run191_run197
+1286_AP	1385	441	new_family	Bacillales					1286_AP_run191_run197
+1286_AQ	41275	416	new_species	Brevundimonas					1286_AQ_run191_run197
+1286_AR	407	387	new_species	Methylobacterium					1286_AR_run191_run197
+1286_AS	13687	398	new_species	Sphingomonas					1286_AS_run191_run197
+1286_AT	85023	385	new_genus	Microbacteriaceae					1286_AT_run191_run197
+1286_AU	1827	442	new_species	Rhodococcus					1286_AU_run191_run197
+1286_AV	190323	443	new_genus	Plantibacter					1286_AV_run191_run197_run206
+1286_AW	33882	411	new_species	Microbacterium					1286_AW_run191_run197
+1286_AX	13687	389	new_species	Sphingomonas					1286_AX_run191_run197
+1286_AY	1663	444	new_species	Arthrobacter					1286_AY_run191_run197
+1286_AZ	13687	398	new_species	Sphingomonas					1286_AZ_run191_run197
+1286_BA	407	387	new_species	Methylobacterium					1286_BA_run191_run197
+1286_BC	543	445	new_genus	Enterobacteriaceae					1286_BC_run191_run197
+1286_BD	16	412	new_species	Methylophilus					1286_BD_run191_run197
+1286_BE	85023	385	new_genus	Microbacteriaceae					1286_BE_run191
+1286_BF	379	277	new_species	Rhizobium					1286_BF_run191
+1286_BG	338	410	new_species	Xanthomonas					1286_BG_run191_run197
+1286_BH	407	392	new_species	Methylobacterium					1286_BH_run191
+1286_BI	554335	394	new_species	Rhizobium sp. CpLB236					1286_BI_run191_run197
+1286_BJ	12916	422	new_species	Acidovorax					1286_BJ_run191_run197
+1286_BK	46913	446	new_genus	Devosia					1286_BK_run191
+1286_BL	96492	414	new_genus	Frigoribacterium					1286_BL_run191_run197
+1286_BN	13687	398	new_species	Sphingomonas					1286_BN_run191
+1286_BO	407	381	new_species	Methylobacterium					1286_BO_run191
+1286_BP	85023	385	new_genus	Microbacteriaceae					1286_BP_run191_run197
+1286_BQ	407	381	new_species	Methylobacterium					1286_BQ_run191
+1286_BR	149698	447	new_species	Massilia					1286_BR_run191_run197
+1286_BT	13687	448	new_species	Sphingomonas					1286_BT_run191_run197
+1286_BU	16	412	new_species	Methylophilus					1286_BU_run191_run197
+1286_BV	85413	293	new_genus	Bosea					1286_BV_run191
+1286_BX	174951	449	new_species	Ramlibacter					1286_BX_run191
+1286_BY	59732	435	new_species	Chryseobacterium					1286_BY_run191
+1286_C	13687	389	new_species	Sphingomonas					1286_C_run191_run197
+1286_CA	407	381	new_species	Methylobacterium					1286_CA_run191
+1286_CB	190323	443	new_genus	Plantibacter					1286_CB_run191_run197
+1286_CC	414371	450	new_species	Aureimonas					1286_CC_run191
+1286_CD	407	381	new_species	Methylobacterium					1286_CD_run191
+1286_CE	379	431	new_species	Rhizobium					1286_CE_run191
+1286_CF	469	451	new_species	Acinetobacter					1286_CF_run191_run197
+1286_CG	86796	452	new_genus	Marmoricola aurantiacus					1286_CG_run191
+1286_CH	286	453	new_species	Pseudomonas					1286_CH_run191
+1286_CI	33886	396	new_genus	Rathayibacter					1286_CI_run191
+1286_CJ	407	454	new_species	Methylobacterium					1286_CJ_run191
+1286_CK	53335	455	new_species	Pantoea					1286_CK_run191_run197
+1286_CL	33882	456	new_species	Microbacterium					1286_CL_run191_run197
+1286_CM	13687	398	new_species	Sphingomonas					1286_CM_run191
+1286_CN	407	387	new_species	Methylobacterium					1286_CN_run191_run197
+1286_CO	351343	457	new_species	Pedobacter aquatilis					1286_CO_run191_run197_run206
+1286_CQ	563996	398	new_species	Sphingomonas hankookensis					1286_CQ_run191_run197_run206
+1286_CR	46913	446	new_genus	Devosia					1286_CR_run191
+1286_E	80864	324	new_genus	Comamonadaceae					1286_E_run191
+1286_F	13687	398	new_species	Sphingomonas					1286_F_run191_run197
+1286_G	1385	458	new_family	Bacillales					1286_G_run191
+1286_H	379	459	new_species	Rhizobium					1286_H_run191_run197
+1286_I	407	387	new_species	Methylobacterium					1286_I_run191_run197
+1286_K	428988	460	new_species	Flavobacterium lindanitolerans					1286_K_run191_run197_run206
+1286_L	1256701	394	new_species	Rhizobium sp. BA-57-09					1286_L_run191_run197
+1286_M	1071583	461	new_species	Microbacterium sp. C23(2011)					1286_M_run191_run197
+1286_N	13687	462	new_species	Sphingomonas					1286_N_run191_run197
+1286_Q	454048	463	new_species	Bacillus sp. M5-3					1286_Q_run191
+1286_T	407	409	new_species	Methylobacterium					1286_T_run191_run197
+1286_U	13687	398	new_species	Sphingomonas					1286_U_run191_run197
+1286_V	292407	464	new_species	Dyadobacter crusticola					1286_V_run191
+1286_W	286	465	new_species	Pseudomonas					1286_W_run191_run197
+1286_X	80864	466	new_genus	Comamonadaceae					1286_X_run191_run197
+1286_Y	255475	440	new_genus	Aurantimonadaceae					1286_Y_run191_run197
+1287_AA	55080	467	new_species	Brevibacillus					1287_AA_run192_run197
+1287_AE	349273	302	new_species	uncultured Phenylobacterium sp.					1287_AE_run192_run197
+1287_AF	33882	325	new_species	Microbacterium					1287_AF_run192_run197
+1287_AG	1071583	461	new_species	Microbacterium sp. C23(2011)					1287_AG_run192_run197
+1287_AL	68	275	new_species	Lysobacter					1287_AL_run192_run197
+1287_AN	1883	306	new_species	Streptomyces					1287_AN_run192_run197
+1287_AO	12916	422	new_species	Acidovorax					1287_AO_run192_run197
+1287_AT	379	303	new_species	Rhizobium					1287_AT_run192_run197
+1287_AV	1839	468	new_species	Nocardioides					1287_AV_run192_run197
+1287_AW	407	387	new_species	Methylobacterium					1287_AW_run192_run197_run206
+1287_B	575302	469	new_species	Burkholderia sp. IMER-A1-17					1287_B_run192
+1287_BC	2062	279	new_genus	Streptomycetaceae					1287_BC_run192_run197
+1287_BD	367298	350	new_genus	Phycicoccus					1287_BD_run192
+1287_BF	407	409	new_species	Methylobacterium					1287_BF_run192_run197
+1287_BG	379	277	new_species	Rhizobium					1287_BG_run192_run197
+1287_BL	424797	347	new_species	Nocardioides terrigena					1287_BL_run192_run197
+1287_BM	379	277	new_species	Rhizobium					1287_BM_run192
+1287_BN	84567	470	new_species	Pedobacter					1287_BN_run192
+1287_BO	34038	471	new_strain	Rahnella aquatilis					1287_BO_run192
+1287_BR	379	303	new_species	Rhizobium					1287_BR_run192
+1287_BU	1839	390	new_species	Nocardioides					1287_BU_run192
+1287_BV	407	387	new_species	Methylobacterium					1287_BV_run192
+1287_BW	96492	414	new_genus	Frigoribacterium					1287_BW_run192
+1287_BZ	80864	370	new_genus	Comamonadaceae					1287_BZ_run192_run197
+1287_C	1663	472	new_species	Arthrobacter					1287_C_run192
+1287_CC	75654	473	new_species	Duganella					1287_CC_run192_run197
+1287_CD	13687	398	new_species	Sphingomonas					1287_CD_run192_run197
+1287_CG	149698	474	new_species	Massilia					1287_CG_run192_run197
+1287_CH	80864	321	new_genus	Comamonadaceae					1287_CH_run192_run197
+1287_CI	75	320	new_species	Caulobacter					1287_CI_run192_run197_run206
+1287_CK	2034	475	new_species	Curtobacterium					1287_CK_run192_run197
+1287_CL	407	392	new_species	Methylobacterium					1287_CL_run192_run206
+1287_CM	379	334	new_species	Rhizobium					1287_CM_run192_run206
+1287_CP	379	272	new_species	Rhizobium					1287_CP_run192_run206
+1287_D	1663	476	new_species	Arthrobacter					1287_D_run192_run197
+1287_F	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1287_F_run192_run197
+1287_G	106591	266	new_species	Ensifer					1287_G_run192_run197
+1287_H	41985	477	new_species	Agromyces fucosus					1287_H_run192
+1287_I	407	387	new_species	Methylobacterium					1287_I_run192_run197
+1287_N	162491	307	new_genus	Oerskovia					1287_N_run192_run197
+1287_O	443157	265	new_species	Nocardioides hankookensis					1287_O_run192_run197
+1287_P	245876	363	new_species	Nitratireductor					1287_P_run192_run197
+1287_W	80864	478	new_genus	Comamonadaceae					1287_W_run192_run197
+1287_Y	40323	479	new_species	Stenotrophomonas					1287_Y_run192_run197
+1365_A	29580	294	new_species	Janthinobacterium					1365_A_run201
+1365_B	68	480	new_species	Lysobacter					1365_B_run201_run206
+1365_D	41275	481	new_species	Brevundimonas					1365_D_run201_run206
+1365_E	75	320	new_species	Caulobacter					1365_E_run201
+1365_F	361177	482	new_genus	Altererythrobacter					1365_F_run201
+1365_G	1386	483	new_species	Bacillus					1365_G_run201
+1365_H	41275	481	new_species	Brevundimonas					1365_H_run201
+1365_I	110932	274	new_species	Leifsonia					1365_I_run201_run206
+1365_O	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1365_O_run201
+1365_P	1167741	351	new_genus	Pelomonas sp. JGI 001013-K11					1365_P_run201

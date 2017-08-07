@@ -1,0 +1,286 @@
+#!/usr/bin/perl
+# VERSION 1.2
+my $version = '1.2';
+# 1.1b: config parameter 'multi' introduced to allow parallel execution
+# 1.1c: printing annotation to STDERR ( even of annotation files is produced)
+# 1.1d: gff-support
+# 1.1e: fixed bug that expanded the flanking regions outside the sequence
+#      more streamlined parsing of XML between core program and wrapper program
+#     (core now only produces XML and HMM reports ( not gff and fsa ) the wrapper will
+#     parse the XML of the core if need
+#     Be aware, that since fasta and gff is created from XML, these two formats
+#     can't be printed at the same time, when fasta output is set to '-' (STDOUT)
+# 1.2 outputs length of sequence entry
+
+use Getopt::Long;
+use strict;
+use Cwd 'abs_path';
+use File::Basename;
+
+#############################################################
+##      RNAmmer Wrapper version ('rnammer')                ##
+#############################################################
+
+#############################################################
+## This is a wrapper program for the RNAmmer               ##
+## It uses 'core-rnammer'. Current wrappers are:           ##
+## See the program documentation for further information   ##
+#############################################################
+
+## INITIATION OF VARIABLES
+
+my ($TEMP_WORKING_DIR , $multi,@MOL,%MOL_KEYS,$mol,$kingdom,%FLANK,$gff, $xml , $fsa,$hmmreport,@TEMP_FILES,$keep,$debug,@CONCAT);
+
+## PROGRAM CONFIGURATION BEGIN
+
+# the path of the program
+my $INSTALL_PATH = dirname(abs_path($0));
+
+# The library in which HMMs can be found
+my $HMM_LIBRARY = "$INSTALL_PATH/lib";
+my $XML2GFF = "$INSTALL_PATH/xml2gff";
+my $XML2FSA = "$INSTALL_PATH/xml2fsa";
+
+# The location of the RNAmmer core module
+my $RNAMMER_CORE     = "$INSTALL_PATH/core-rnammer";
+
+# path to hmmsearch of HMMER package
+chomp ( my $uname = `uname`);
+my $HMMSEARCH_BINARY;
+my $PERL;
+if ( $uname eq "Linux" ) {
+	$HMMSEARCH_BINARY = "$INSTALL_PATH/hmmsearch";
+	$PERL = "/usr/bin/perl";
+} elsif ( $uname eq "IRIX64" ) {
+	$HMMSEARCH_BINARY = "/usr/cbs/bio/bin/irix64/hmmsearch";
+	$PERL = "/usr/sbin/perl";
+} else {
+	die "unknown platform\n";
+}
+
+# your Perl executable
+
+# set flanking regions around spotter hits. Leave untouched if in doubt
+$FLANK{begin}{TSU} =  150;
+$FLANK{begin}{LSU} = 4500;
+$FLANK{begin}{SSU} = 2500;
+$FLANK{stop}{TSU}  =  150;
+$FLANK{stop}{LSU}  = 4500;
+$FLANK{stop}{SSU}  = 2500;
+
+# Score/Evalue cutoffs. Leave untouched if in doubt
+#my $global_spottermodel_evalue = 0.1;
+#my $domain_spottermodel_evalue = '';
+#my $global_fullmodel_evalue = 0.1;
+#my $domain_fullmodel_evalue = '';
+
+my $global_spottermodel_evalue = 1e-5;
+my $domain_spottermodel_evalue = 1e-5;
+my $global_fullmodel_evalue = 1e-5;
+my $domain_fullmodel_evalue = 1e-5;
+my $global_spottermodel_score = 0;
+my $domain_spottermodel_score = 0;
+my $global_fullmodel_score = 0;
+my $domain_fullmodel_score = 0;
+
+################################################
+################################################
+############# PROGRAM CONFIGURATION END ########
+################################################
+################################################
+my $v; #show version
+
+&GetOptions ("v" => \$v  , "T:s", \$TEMP_WORKING_DIR ,"S:s", \$kingdom , 'd' => \$debug, 'multi' => \$multi,  "m:s", \$mol ,  'f:s' , \$fsa , 'k' => \$keep , 'gff:s' , \$gff , 'xml:s' , \$xml, 'h:s' , \$hmmreport);
+
+
+if ( $v ) {
+	print "This rnammer $version, running from '$INSTALL_PATH'\n";
+	exit 0;
+}
+
+#use Cwd qw();
+#$TEMP_WORKING_DIR = Cwd::abs_path();
+$TEMP_WORKING_DIR = './' unless -d $TEMP_WORKING_DIR;
+$TEMP_WORKING_DIR .= '/' unless $TEMP_WORKING_DIR =~ /\/$/;
+my $TEMP_XML = $TEMP_WORKING_DIR."temp.".$$.'.xml';
+my $TEMP_FSAINP = $TEMP_WORKING_DIR.'temp.'.$$.'.fsa';
+push @TEMP_FILES , "$TEMP_FSAINP";
+
+seq_from_stdin ( $TEMP_FSAINP ) ;
+
+sub seq_from_stdin {
+	open FASTAOUT , ">$_[0]";
+	while (<>) {
+		print FASTAOUT $_;
+	}
+	close FASTAOUT;
+}
+
+sub usage {
+	print "usage(): rnammer -S arc/bac/euk (-multi) (-m tsu,lsu,ssu) (-f) (-k) (-gff [gff file]) (-xml [xml file]) (-f [fasta file]) (-h [HMM report]) [sequence]\n";
+	exit 1;
+}
+
+# set the molecule types
+if ($mol !~ /[tls]{1,1}su/i) {
+	@MOL = ('tsu' , 'lsu' , 'ssu');
+} else {
+	foreach my $elem (split(/[,\s;:\.\-]+/ , lc($mol) ) ) {
+		$MOL_KEYS{$1} = 1 if $elem =~ /^([tls]{1,1}su)$/;
+	}
+	@MOL = keys ( %MOL_KEYS );
+}
+# set the kingdom
+$kingdom = 'arc' if $kingdom =~ /^a/i;
+$kingdom = 'bac' if $kingdom =~ /^b/i;
+$kingdom = 'euk' if $kingdom =~ /^e/i;
+
+&fault_exit ("unknown kingdom : '$kingdom'") unless $kingdom =~ /^arc|bac|euk$/;
+
+sub fault_exit {
+	print "$_[0]\n";
+	exit 1;
+}
+
+# PROKARYOTIC
+my %LABELS;
+$LABELS{bac}{TSU} = "5s";
+$LABELS{bac}{SSU} = "16s";
+$LABELS{bac}{LSU} = "23s";
+
+$LABELS{arc}{TSU} = "5s";
+$LABELS{arc}{SSU} = "16s";
+$LABELS{arc}{LSU} = "23s";
+
+# EUKARYOTIC
+$LABELS{euk}{TSU} = "8s";
+$LABELS{euk}{SSU} = "18s";
+$LABELS{euk}{LSU} = "28s";
+
+my $faultstring = "";
+
+foreach my $type (@MOL) {
+	my $TEMP_CF_FILE = $TEMP_WORKING_DIR."$$.$type.cf";
+	fault_exit ( "Could not open temporary config file for RNAmmer: '$TEMP_CF_FILE';$!" ) unless open CF , ">$TEMP_CF_FILE";
+	print CF "[global_spottermodel_evalue]=$global_spottermodel_evalue\n";
+	print CF "[xml_output]=$TEMP_WORKING_DIR$$.$type.xml\n";
+	print CF "[hmm_output]=$TEMP_WORKING_DIR$$.$type.hmmreport\n" if $hmmreport;
+	print CF "[global_spottermodel_score]=$global_spottermodel_score\n";
+	print CF "[domain_spottermodel_evalue]=$domain_spottermodel_evalue\n";
+	print CF "[domain_spottermodel_score]=$domain_spottermodel_score\n";
+	print CF "[global_fullmodel_evalue]=$global_fullmodel_evalue\n";
+	print CF "[global_fullmodel_score]=$global_fullmodel_score\n";
+	print CF "[domain_fullmodel_evalue]=$domain_fullmodel_evalue\n";
+	print CF "[domain_fullmodel_score]=$domain_fullmodel_score\n";
+	print CF "[tempdir]=$TEMP_WORKING_DIR\n";
+	print CF "[sequence]=$TEMP_FSAINP\n";
+	print CF "[postmodel]=$HMM_LIBRARY/$kingdom.$type.rnammer.hmm\n";
+	print CF "[spottermodel]=$HMM_LIBRARY/$kingdom.$type.rnammer.initial.hmm\n";
+	print CF "[feature]=rRNA\n";
+	print CF "[description]=",$LABELS{$kingdom}{uc($type)},"_rRNA\n";
+	print CF "[hmmsearch]=$HMMSEARCH_BINARY\n";
+	print CF "[flankBegin]=",$FLANK{begin}{uc($type)},"\n";
+	print CF "[flankStop]=",$FLANK{stop}{uc($type)},"\n";
+	unless  ($debug) {
+		print CF "[mode]=silent\n";
+	}
+	close CF;
+	push  @TEMP_FILES , $TEMP_CF_FILE unless $keep;
+	if ($multi) {
+		unless (fork) {
+			open CORE , "$PERL $RNAMMER_CORE $TEMP_CF_FILE |"; 
+			while (<CORE>) {
+				$faultstring .= $_;
+			}
+			&fault_exit($faultstring) unless close CORE;
+			last if $? != 0;
+			exit;
+		}
+	} else {
+			open CORE , "$PERL $RNAMMER_CORE $TEMP_CF_FILE |"; 
+			while (<CORE>) {
+				$faultstring .= $_;
+			}
+			&fault_exit($faultstring) unless close CORE;
+			last if $? != 0;
+	}
+}
+if ( $multi ) {
+	while (wait != -1) {
+		sleep 1;
+	}
+}
+
+open XML , ">$TEMP_XML";
+(my $sec,my $min,my $hour,my $mday,my $mon,my $year,my $wday,my $yday,my $isdst) = localtime;
+$mon++;
+$year += 1900;
+print XML "<?xml version='1.0'?>\n";
+print XML  "<output>\n";
+print XML  "	<predictionTitle>Prediction of ribosomal RNA</predictionTitle>\n";
+print XML  "	<predictor>RNAmmer-$version</predictor>\n";
+print XML  "	<reference>Lagesen K, Hallin PF, Rodland EA, Staerfeldt HH, Rognes T, Ussery DW. RNAmmer: consistent and rapid annotation of ribosomal RNA genes.2007;35(9):3100-8. Epub 2007 Apr 22</reference>\n";
+print XML  sprintf ("<predictionDate>%04d-%02d-%02d</predictionDate>\n",$year,$mon,$mday);
+print XML  "	<entries>\n";
+foreach my $type (@MOL) {
+	my $fn = $TEMP_WORKING_DIR.$$.'.'.$type.'.xml';
+	push @TEMP_FILES , $fn;
+	open IN , $fn or fault_exit("Could not open file '$fn' for reading:$!") ;
+	while (<IN>) {
+		print XML $_;
+	}
+	close IN;
+}
+print XML   "	</entries>\n";
+print XML  "</output>\n";
+close XML;
+push @TEMP_FILES , $TEMP_XML;
+
+if ( $xml ) {
+	open XMLIN ,  $TEMP_XML  or failt_exit ( "error opening xml document '$TEMP_XML' for reading:$!" ) ;
+	open XMLOUT , ">$xml" or failt_exit ( "error opening xml document '$xml' for writing:$!" ) ;
+	while (<XMLIN>) {
+		print XMLOUT $_;
+	}
+	close XMLOUT;
+	close XMLIN;
+}
+
+if ( $hmmreport ) {
+	open HMMREPORT , ">$hmmreport" or failt_exit ( "error opening file '$hmmreport' for writing:$!" ) ;
+	foreach my $type (@MOL) {
+		my $fn = "$TEMP_WORKING_DIR$$.$type.hmmreport";
+		open IN , $fn or fault_exit("error opening file '$fn' for reading:$!") ;
+		push @TEMP_FILES , $fn;
+		while (<IN>) {
+			print HMMREPORT $_;
+		}
+		close IN;
+	}
+	close HMMREPORT;
+}
+
+if ($gff ne '') {
+	my $error = "";
+	open CONVERT , "perl $XML2GFF $TEMP_XML |";
+	open OUT , ">$gff";
+	while (<CONVERT>) {
+		print OUT $_;
+	}
+	close CONVERT or fault_exit ( "error converting xml into gff" );
+}
+
+if ($fsa ne '') {
+	my $error = "";
+	open CONVERT , "perl $XML2FSA $TEMP_XML |";
+	open OUT , ">$fsa";
+	while (<CONVERT>) {
+		print OUT $_;
+	}
+	close CONVERT or fault_exit ( "error converting xml into fsa" );
+}
+
+foreach my $file (@TEMP_FILES) {
+	unlink $file if -e $file and $;
+}
+
