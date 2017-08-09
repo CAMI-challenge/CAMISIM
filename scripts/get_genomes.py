@@ -401,7 +401,8 @@ def create_configs(i, out_path, config, abundances, downloaded):
         with open(sample_path + "metadata.tsv",'wb') as metadata:
             metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
             for genome_id in downloaded[k]:
-                ncbi_id = downloaded[k][genome_id][0]
+                path_to_genome = downloaded[k][genome_id][0]
+                ncbi_id = path_to_genome.rsplit("/",1)[-1].rsplit(".",1)[0] # split at path and then strip file ending
                 otu = downloaded[k][genome_id][1]
                 metadata.write("%s\t%s\t%s\t%s\n" % (genome_id,otu,ncbi_id,"new_strain")) #check multiple matchings
         filename = sample_path + "metadata.tsv"
