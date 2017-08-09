@@ -76,6 +76,7 @@ class MetagenomeSimulation(ArgumentHandler):
                     directory_out_distributions, self._number_of_samples)
                 for file_path_src, file_path_dst in zip(self._input_list_of_file_paths_distributions, list_of_file_paths_distributions):
                     shutil.copy2(file_path_src, file_path_dst)
+                self.write_profile_gold_standard(meta_data_table, list_of_file_paths_distributions)
             elif self._phase_design_community:
                 self._logger.info("Design Communities")
                 genome_id_to_path_map, list_of_file_paths_distributions = self._design_community()
@@ -175,6 +176,27 @@ class MetagenomeSimulation(ArgumentHandler):
     #
     # #########################
 
+    def write_profile_gold_standard(self, meta_data_table, list_of_file_paths_distribution):
+        taxonomy = NcbiTaxonomy(
+            taxonomy_path=self._directory_ncbi_taxdump,
+            build_node_tree=False,
+            verbose=self._verbose,
+            logfile=self._logfile
+        )
+
+        taxonomic_profile = TaxonomicProfile(
+            taxonomy=taxonomy,
+            logfile=self._logfile,
+            verbose=self._verbose,
+            debug=self._debug
+        )
+        taxonomic_profile.write_taxonomic_profile_from_abundance_files(
+            metadata_table=meta_data_table,
+            list_of_file_paths=list_of_file_paths_distribution,
+            directory_output=self._directory_output,
+            sample_id=""
+        )
+
     def get_dict_gid_to_genome_file_path(self):
         """
         Get map genome id to genome file path
@@ -232,26 +254,8 @@ class MetagenomeSimulation(ArgumentHandler):
             directory_out_metadata=directory_out_metadata,
             directory_in_template=directory_simulation_template)
         #     directory_out_distributions=directory_out_distributions,
+        self.write_profile_gold_standard(meta_data_table, list_of_file_paths_distribution)
 
-        taxonomy = NcbiTaxonomy(
-            taxonomy_path=self._directory_ncbi_taxdump,
-            build_node_tree=False,
-            verbose=self._verbose,
-            logfile=self._logfile
-        )
-
-        taxonomic_profile = TaxonomicProfile(
-            taxonomy=taxonomy,
-            logfile=self._logfile,
-            verbose=self._verbose,
-            debug=self._debug
-        )
-        taxonomic_profile.write_taxonomic_profile_from_abundance_files(
-            metadata_table=meta_data_table,
-            list_of_file_paths=list_of_file_paths_distribution,
-            directory_output=self._directory_output,
-            sample_id=""
-        )
         file_path_metadata = self._project_file_folder_handler.get_genome_metadata_file_path()
         meta_data_table.write(file_path_metadata, column_names=True)
         return merged_genome_id_to_path_map, list_of_file_paths_distribution
