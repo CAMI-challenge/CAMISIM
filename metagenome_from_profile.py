@@ -51,7 +51,7 @@ def parse_options():
     
     return args
 
-def create_config(args,cfg,numg):
+def create_config(args,cfg):
     config = ConfigParser()
     config.read(cfg)
 
@@ -59,15 +59,15 @@ def create_config(args,cfg,numg):
 
     if args.seed is not None:
         config.set('Main', "seed", args.seed)
-    name = os.path.join(args.o,'') + "config.ini"
+    name = os.path.join(args.o,"config.ini")
     with open(name,'wb') as cfg_path:
         config.write(cfg_path)
     return name
 
 if __name__ == "__main__":
     args = parse_options()
-    numg,config = GG.generate_input(args) # total number of genomes and path to updated config
-    c = create_config(args,config,numg)
+    config = GG.generate_input(args) # total number of genomes and path to updated config
+    c = create_config(args,config)
     if args.debug:
         os.system("./metagenomesimulation.py %s --debug" % c)
     else:
