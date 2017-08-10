@@ -102,7 +102,10 @@ def map_to_ncbi_id(lin, taxonomy):
     sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
     ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
     if ncbi_ids is None:
-        ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name, True)
+        sci_name = retrieve_scientific_name(lineage, True)
+        sci_name.encode('ascii','ignore') # and hope that this does not break something
+        sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
+        ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
         if ncbi_ids is None:
             return None, True, sci_name
     ncbi_id = ncbi_ids.pop() # TODO do not take first if more than one?
