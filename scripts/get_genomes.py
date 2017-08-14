@@ -70,6 +70,7 @@ def transform_profile(biom_profile, no_samples, taxonomy):
                         warnings_rank.append((RANKS[BIOM_RANKS[sci_name[0]]],sci_name[1]))
                     else:
                         warnings_sciname.append(sci_name)
+                    continue # do not add empty hits
                 elif i > 0:
                     continue # this warning has been produced and there is no mapped genome
                 profile[id] = (ncbi_id, tax_path, [weight])
