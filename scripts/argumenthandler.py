@@ -181,10 +181,10 @@ samtools={samtools}
 
 # ART_Illumina (2008-2015) (Weichun Huang at whduke@gmail.com). Version 2.3.6 recommended!
 # file path to executable
-art_illumina={art_illumina}
+readsim={art_illumina}
 
 # Directory containing error profiles for ART_Illumina
-art_error_profiles={error_profiles}
+error_profiles={error_profiles}
 
 # Supported profiles: "mi": EmpMiSeq250R, "hi": EmpHiSeq2kR, "hi150": HiSeq2500L150R
 profile={error}
@@ -193,7 +193,7 @@ profile={error}
 size={gbps}
 
 # Read simulator type (only ART is currently supported)
-type={readsim}
+type={readsim_type}
 
 # Mean size (bp) of fragment simulated by ART (read length depends on error profile)
 fragments_size_mean={fmean}
@@ -229,11 +229,11 @@ number_of_samples={samples}
             # bps=self._sample_size_in_base_pairs,
             # out_size=expected_output_size,
             samtools=self._executable_samtools,
-            art_illumina=self._executable_art_illumina,
-            error_profiles=self._directory_art_error_profiles,
+            readsim=self._executable_readsim,
+            error_profiles=self._directory_error_profiles,
             error=self._error_profile,
             gbps=float(self._sample_size_in_base_pairs)/self._base_pairs_multiplication_factor,
-            readsim=self._read_simulator_type,
+            readsim_type=self._read_simulator_type,
             fmean=self._fragments_size_mean_in_bp,
             fsd=self._fragment_size_standard_deviation_in_bp,
             # plasmid=self.plasmid_file
@@ -400,52 +400,44 @@ view={view}
         if self._read_simulator_type is None:
             self._logger.error("'-rs' No read simulator declared!")
             self._valid_arguments = False
-        elif self._read_simulator_type == 'art' or self._read_simulator_type == 'wgsim' or self._read_simulator_type == 'pbsim' or self._read_simulator_type == 'nanosim':
-            if self._directory_art_error_profiles is None:
-                self._logger.error("Art illumina error profile directory is required!")
+        elif self._read_simulator_type in self._valid_read_simulators:
+            if self._directory_error_profiles is None and self._read_simulator_type != 'wgsim': # wgsim does not need an error_profile folder
+                self._logger.error("For %s an error profile directory is required!" % self._read_simulator_type)
                 self._valid_arguments = False
-            elif not self._validator.validate_dir(self._directory_art_error_profiles):
+            elif not self._validator.validate_dir(self._directory_error_profiles) and self._read_simulator_type != 'wgsim':
                 self._valid_arguments = False
-            else:
-                self._directory_art_error_profiles = self._validator.get_full_path(self._directory_art_error_profiles)
+            elif self._read_simulator_type != 'wgsim':
+                self._directory_error_profiles = self._validator.get_full_path(self._directory_error_profiles)
 
-            if self._executable_art_illumina is None:
-                self._logger.error("Art illumina executable is required!")
+            if self._executable_readsim is None:
+                self._logger.error("Read simulator executable is required!")
                 self._valid_arguments = False
-            elif not self._validator.validate_file(self._executable_art_illumina, executable=True):
-                self._valid_arguments = False
-            else:
-                self._executable_art_illumina = self._validator.get_full_path(self._executable_art_illumina)
-
-            if self._directory_art_error_profiles is None:
-                self._logger.error("Art illumina error profile directory is required!")
-                self._valid_arguments = False
-            elif not self._validator.validate_dir(self._directory_art_error_profiles):
+            elif not self._validator.validate_file(self._executable_readsim, executable=True):
                 self._valid_arguments = False
             else:
-                self._directory_art_error_profiles = self._validator.get_full_path(self._directory_art_error_profiles)
+                self._executable_readsim = self._validator.get_full_path(self._executable_readsim)
 
             if self._error_profile is None:
-                self._logger.error("'-ep' An error profile for 'art' was not chosen!")
+                self._logger.error("No error profile is given, check manual for possible choices!")
                 self._valid_arguments = False
 
-            if self._fragments_size_mean_in_bp is None:
-                self._logger.error("'-fmean' For the simulation with 'art' a mean size of the fragments is required!")
+            if self._fragments_size_mean_in_bp is None and self._read_simulator_type != 'nanosim':
+                self._logger.error("'-fmean' For the simulation with 'art', 'pbsim' and 'wgsim' the fragment size mean is required!")
                 self._valid_arguments = False
-            elif not self._validator.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean'):
+            elif not self._validator.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean') and self._read_simulator_type != 'nanosim':
                 self._valid_arguments = False
 
-            if self._fragment_size_standard_deviation_in_bp is None:
-                self._logger.error("'-fsd' For the simulation with 'art' a standard_deviation of the fragments size is required!")
+            if self._fragment_size_standard_deviation_in_bp is None and self._read_simulator_type != 'nanosim':
+                self._logger.error("'-fsd' For the simulation with 'art', 'pbsim' and 'wgsim' a standard_deviation of the fragments size is required!")
                 self._valid_arguments = False
-            elif not self._validator.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd'):
+            elif not self._validator.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd') and self._read_simulator_type != 'nanosim':
                 self._logger.error(
                     "'-fsd' The standard_deviation of the fragments size must be a positive number: '{}'".format(
                         self._fragment_size_standard_deviation_in_bp))
                 self._valid_arguments = False
         else:
-            self._logger.error("Only art illumina is currently supported!")
-
+            self._logger.error("The chosen read simulator %s is not supported, must be one of %s" % (self._read_simulator_type, self._valid_read_simulators))
+        
         expected_output_size = self._expected_output_size_in_giga_byte()
         expected_tmp_size = expected_output_size / self._number_of_samples
         assert isinstance(self._directory_output, basestring)

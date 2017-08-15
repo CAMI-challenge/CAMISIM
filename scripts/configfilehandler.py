@@ -83,11 +83,11 @@ class ConfigFileHandler(DefaultValues):
         if self._executable_samtools is None:
             self._executable_samtools = self._config.get_value("samtools", is_path=True, silent=True)
 
-        if self._executable_art_illumina is None:
-            self._executable_art_illumina = self._config.get_value("art_illumina", silent=True, is_path=True)
+        if self._executable_readsim is None:
+            self._executable_readsim = self._config.get_value("readsim", silent=True, is_path=True)
 
-        if self._directory_art_error_profiles is None:
-            self._directory_art_error_profiles = self._config.get_value("art_error_profiles", silent=True, is_path=True)
+        if self._directory_error_profiles is None:
+            self._directory_error_profiles = self._config.get_value("error_profiles", silent=True, is_path=True)
 
         if self._error_profile is None:
             self._error_profile = self._config.get_value("profile", silent=True)
@@ -199,8 +199,8 @@ class ConfigFileHandler(DefaultValues):
         @param output_stream:
         """
         output_stream.write("[ReadSimulator]\n")
-        output_stream.write("art_illumina={}\n".format(self._executable_art_illumina))
-        output_stream.write("art_error_profiles={}\n".format(self._directory_art_error_profiles or ""))
+        output_stream.write("readsim={}\n".format(self._executable_readsim))
+        output_stream.write("error_profiles={}\n".format(self._directory_error_profiles or ""))
         output_stream.write("samtools={}\n".format(self._executable_samtools))
         output_stream.write("profile={}\n".format(self._error_profile))
         output_stream.write("size={}\n".format(self._sample_size_in_base_pairs/self._base_pairs_multiplication_factor))

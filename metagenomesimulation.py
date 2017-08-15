@@ -319,8 +319,8 @@ class MetagenomeSimulation(ArgumentHandler):
             raise ValueError("Read simulator type '{}' not supported.".format(self._read_simulator_type))
 
         simulator = dict_of_read_simulators[self._read_simulator_type](
-            file_path_executable=self._executable_art_illumina,
-            directory_error_profiles=self._directory_art_error_profiles,
+            file_path_executable=self._executable_readsim,
+            directory_error_profiles=self._directory_error_profiles,
             separator=self._separator,
             max_processes=self._max_processors,
             logfile=self._logfile,

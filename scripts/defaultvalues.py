@@ -33,13 +33,13 @@ class DefaultValues(DefaultLogging):
     # ############
     # executables
     # ############
-    _executable_art_illumina = None
+    _executable_readsim = None
     _executable_samtools = None
 
     # ############
     # reference directories
     # ############
-    _directory_art_error_profiles = None
+    _directory_error_profiles = None
     _directory_ncbi_taxdump = None
 
     # ############
@@ -54,6 +54,7 @@ class DefaultValues(DefaultLogging):
     # ############
     # [read_simulator]
     # ############
+    _valid_read_simulators = ['art','wgsim','pbsim','nanosim']
     _sample_size_in_base_pairs = None
 
     _read_simulator_type = None
@@ -117,7 +118,7 @@ class DefaultValues(DefaultLogging):
         # ############
         # reference directories
         # ############
-        self._DEFAULT_directory_art_error_profiles = None
+        self._DEFAULT_directory_error_profiles = None
         self._DEFAULT_directory_ncbi_taxdump = None
 
         # ############
@@ -185,13 +186,13 @@ class DefaultValues(DefaultLogging):
         # ############
         # executables
         # ############
-        self._DEFAULT_executable = config.get_value("art_illumina", silent=True, is_path=True)
+        self._DEFAULT_executable = config.get_value("readsim", silent=True, is_path=True)
         self._DEFAULT_executable_samtools = config.get_value("samtools", is_path=True, silent=True)
 
         # ############
         # reference directories
         # ############
-        self._DEFAULT_directory_art_error_profiles = config.get_value("art_error_profiles", silent=True, is_path=True)
+        self._DEFAULT_directory_error_profiles = config.get_value("error_profiles", silent=True, is_path=True)
         self._DEFAULT_directory_ncbi_taxdump = config.get_value("ncbi_taxdump", is_path=True)
 
         # ############
@@ -255,13 +256,13 @@ class DefaultValues(DefaultLogging):
         # ############
         # executables
         # ############
-        self._executable_art_illumina = self._executable_art_illumina or self._DEFAULT_executable
+        self._executable_readsim = self._executable_readsim or self._DEFAULT_executable
         self._executable_samtools = self._executable_samtools or self._DEFAULT_executable_samtools
 
         # ############
         # reference directories
         # ############
-        self._directory_art_error_profiles = self._directory_art_error_profiles or self._DEFAULT_directory_art_error_profiles
+        self._directory_error_profiles = self._directory_error_profiles or self._DEFAULT_directory_error_profiles
         self._directory_ncbi_taxdump = self._directory_ncbi_taxdump or self._DEFAULT_directory_ncbi_taxdump
 
         # ############
