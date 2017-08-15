@@ -472,7 +472,23 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
 
         self._logger.debug("Multiplication factor: {}".format(factor))
         self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
-        sam_from_reads.write_all(directory_output, dict_id_file_path)
+        self._sam_from_reads(directory_output, dict_id_file_path)
+
+    def _sam_from_reads(self, directory_output, dict_id_file_path):
+        files = os.listdir(directory_output)
+        id_to_cigar_map = {}
+        for f in files:
+            if f.endswith("_error_profile"): # these are the introduced errors by Nanosim
+                prefix = f.rsplit("_",2)[0] # get basename
+                id_to_cigar_map[prefix] = sam_from_reads.get_cigars_nanosim(os.path.join(directory_output,f))
+        for f in files:
+            if f.endswith("_reads.fasta"):
+                prefix = f.rsplit(".",1)[0].rsplit("_",1)[0]
+                read_file = os.path.join(directory_output,f)
+                cigars = id_to_cigar_map[prefix]
+                reference_path = dict_id_file_path[prefix]
+                new_prefix = sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
+                sam_from_reads.convert_fasta(read_file, new_prefix)
 
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
         """
@@ -516,11 +532,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
     """
     _label = "ReadSimulationWgsim"
     
-    _wgsim_options = ['errorfree', 'standard'] #TODO make options fully customizable?
-    
     def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
         super(ReadSimulationWgsim, self).__init__(file_path_executable, **kwargs)
-        self._profile = 'standard'
 
     def simulate(
         self, file_path_distribution, file_path_genome_locations, directory_output,
@@ -551,8 +564,9 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
         assert self.validate_dir(directory_output)
         if profile is not None:
-            assert profile in self._wgsim_options
             self._profile = profile
+        else:
+            self._profile = 0.0 # default
 
         if fragment_size_mean and fragment_size_standard_deviation:
             assert self.validate_number(fragment_size_mean, minimum=1)
@@ -564,7 +578,7 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
                 assert fragment_size_mean is not None, "Both, mean and sd are requires."
             if fragment_size_mean:
                 assert fragment_size_standard_deviation is not None, "Both, mean and standard deviation, are required."
-        self._logger.info("Using '{}' error profile.".format(profile))
+        self._logger.info("Simulating with '{}'% errors".format(profile))
 
         dict_id_abundance = self._read_distribution_file(file_path_distribution)
         dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
@@ -576,7 +590,7 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
 
         self._logger.debug("Multiplication factor: {}".format(factor))
         self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
-        
+
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
         """
         Build system command to be run.
@@ -603,18 +617,19 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
             '-2', str(self._read_length),
             '-S', str(self._get_seed()),
             ]
-        if self._profile == 'errorfree':
-            arguments.extend([
-                '-e', "0",
-                '-r', "0",
-                '-R', "0",
-                # 'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
-                # 'A', MAX_N_RATIO,
-            ])
+        # errors
+        arguments.extend([
+            '-e', "0", # base error rate ("sequencing error" - these are untractable, so we use mutations as sequencing errors)
+            '-r', str(self._profile), # rate of mutations, used as sequencing errors
+            '-R', "0", # no indels by default
+            # 'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
+            # 'A', MAX_N_RATIO,
+        ])
         arguments.extend([
             file_path_input,
             "{}".format(file_path_output_prefix + '1.fq'),
-            "{}".format(file_path_output_prefix + '2.fq')
+            "{}".format(file_path_output_prefix + '2.fq'),
+            "{}".format(file_path_output_prefix + '.sam')
             ])
             
         if self._logfile:
