@@ -619,8 +619,8 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
             ]
         # errors
         arguments.extend([
-            '-e', "0", # base error rate ("sequencing error" - these are untractable, so we use mutations as sequencing errors)
-            '-r', str(self._profile), # rate of mutations, used as sequencing errors
+            '-e', str(self._profile), # base error rate ("sequencing error")
+            '-r', "0", # rate of mutations in the genome - unwanted
             '-R', "0", # no indels by default
             # 'X', "0", # this doesnt have to be set to 0 if R is 0 (p for extending indels is 0 if no indels are existent)
             # 'A', MAX_N_RATIO,
