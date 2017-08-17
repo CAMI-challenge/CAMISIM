@@ -275,6 +275,7 @@ but should only appear once in the out directory.
 """
 def download_genomes(list_of_genomes, ftp_list, out_path):
     metadata = dict() # create the metadata table (pathes to genomes)
+    warnings = []
     ftp = FTP('ftp.ncbi.nlm.nih.gov') 
     ftp.login() # anonymous login
     sample_path = os.path.join(out_path,"genomes")
@@ -293,13 +294,25 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         out_name_gz = out_name + ".gz"
         metadata.update({genome_id:(out_name, otu)})
         ftp.cwd(cwd)
-        ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+        try: 
+            ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+        except:
+            try: # try twice if something odd happends
+                ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+            except:
+                warnings.append("File %s could not be downloaded (Genome ID %s/NCBI ID %s" % (to_dl,genome_id,out_name))
+                metadata[genome_id] = None
+                continue
         gf = gzip.open(out_name_gz) 
         outF = open(out_name,'wb')
         outF.write(gf.read())
         gf.close()
         os.remove(out_name_gz) # remove the now unzipped archives
         outF.close()
+    if len(warnings):
+        log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings)
+        for warning in warnings:
+            log.debug(warning)
     return metadata
 
 """
@@ -377,6 +390,9 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
         with open(filename,'wb') as abundance_i:
             for genome in abundances:
                 abundance = abundances[genome][i]
+                if genome not in downloaded:
+                    log.warning("Genome with abundance %s was not downloaded" % abundance)
+                    continue # this has not been downloaded
                 abundance_i.write("%s\t%s\n" % (genome,abundance))
         filenames.append(filename)
 
