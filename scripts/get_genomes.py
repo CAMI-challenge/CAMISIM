@@ -22,7 +22,7 @@ RANKS=['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 #map BIOM ranks to CAMI ranks
 BIOM_RANKS={'s':0,'g':1,'f':2,'o':3,'c':4,'p':5,'k':6}
 THRESHOLD="family" #level up to which related genomes are to be found
-log = logger(verbose=False)
+_log = None
 
 """
 Reads a biom (from e.g. QIIME) profile and transforms it so it can be used for the pipeline
@@ -34,7 +34,7 @@ def transform_profile(biom_profile, no_samples, taxonomy):
         try:
             return read_profile(biom_profile) # file is not a biom file: CAMI format
         except:
-            log.error("Incorrect file format of input profile")
+            _log.error("Incorrect file format of input profile")
             return
     ids = table.ids(axis="observation")
     samples = table.ids() # the samples' ids of the biom file
@@ -45,9 +45,9 @@ def transform_profile(biom_profile, no_samples, taxonomy):
     warnings_sciname = [] # if scientific name wasnt found
     for sample in samples:
         metadata = []
-        log.debug("Processing sample %s" % i)
+        _log.info("Processing sample %s" % i)
         if no_samples is not None and no_samples != len(samples) and no_samples != 1 and i > 0: # no. samples not equal to samples in biom file, simulate using only the first sample
-            log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
+            _log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
             break
         for id in ids:
             abundance = table.get_value_by_ids(id,sample)
@@ -78,13 +78,13 @@ def transform_profile(biom_profile, no_samples, taxonomy):
                 profile[id][2].append(weight)
         i += 1
     if len(warnings_rank):
-        log.warning("Some genomes had a too high rank and were omitted")
+        _log.warning("Some genomes had a too high rank and were omitted")
         for warning in warnings_rank:
-            log.debug("Rank (%s) of genome %s was too high" % warning)
+            _log.info("Rank (%s) of genome %s was too high" % warning)
     if len(warnings_sciname):
-        log.warning("Some scientific names were not found and omitted")
+        _log.warning("Some scientific names were not found and omitted")
         for warning in warnings_sciname:
-            log.debug("Scientific name %s did not match any in NCBI" % warning)
+            _log.info("Scientific name %s did not match any in NCBI" % warning)
     return profile, i
 
 """Given the biom lineage, calculate the NCBI lineage"""
@@ -132,9 +132,9 @@ adpated from the profile evaluation biobox, extendeded by the following: We only
 """
 def read_profile(file_path):
     if not isinstance(file_path, basestring):
-        log.error("file_path is invalid: %s" % file_path)
+        _log.error("file_path is invalid: %s" % file_path)
     if isinstance(file_path, str) and not os.path.isfile(file_path):
-        log.error("16S profile not found in: %s" % file_path)
+        _log.error("16S profile not found in: %s" % file_path)
         raise Exception("File not found")
     # check whether profile is biom or cami format
     
@@ -173,7 +173,7 @@ scientific name is for debugging, the ftp address the address of the correspondi
 def read_genome_list(file_path):
     assert isinstance(file_path, basestring)
     if isinstance(file_path, str) and not os.path.isfile(file_path):
-        log.error("Reference genome list not found in: %s" % file_path)
+        _log.error("Reference genome list not found in: %s" % file_path)
         raise Exception("File not found")
     tax_ids = list()
     sci_name = {}
@@ -231,7 +231,7 @@ than one of these genomes is chosen as the "closest related" genome.
 def map_to_full_genomes(ref_tax_ids, profile, tax, seed):
     extended_genome_list = extend_genome_list(ref_tax_ids,tax)
     to_download = dict() # ncbi id of genomes to download
-    log.debug("Downloading genomes from NCBI")
+    _log.info("Downloading genomes from NCBI")
     warnings = [] # warnings if no complete genomes are found
     for ids in profile:
         taxid = profile[ids][0]
@@ -243,7 +243,7 @@ def map_to_full_genomes(ref_tax_ids, profile, tax, seed):
             try:
                 lineage = tax.get_lineage_of_legal_ranks(taxid,ranks = RANKS)
             except ValueError: #tax ID was not found in reference data base
-                log.warning("Genome %s not found in reference, maybe your reference is deprecated?" % taxid)
+                _log.warning("Genome %s not found in reference, maybe your reference is deprecated?" % taxid)
                 continue
             i = 0
             for higher_taxid in lineage: # rank is a number corresponding to the ranks defined in RANKS with species being the lowers (0)
@@ -258,9 +258,9 @@ def map_to_full_genomes(ref_tax_ids, profile, tax, seed):
         if not found_genome: # No reference genome up until THRESHOLD
             warnings.append(taxid)
     if len(warnings):
-        log.warning("Some NCBI IDs did not map to complete genomes")
+        _log.warning("Some NCBI IDs did not map to complete genomes")
         for warning in warnings:
-            log.debug("No genome corresponding to ID %s found, omitted." % warning)
+            _log.info("No genome corresponding to ID %s found, omitted." % warning)
     return to_download
 
 """
@@ -278,7 +278,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
     ftp = FTP('ftp.ncbi.nlm.nih.gov') 
     ftp.login() # anonymous login
     sample_path = os.path.join(out_path,"genomes")
-    log.debug("Downloading %s genomes" % len(list_of_genomes))
+    _log.info("Downloading %s genomes" % len(list_of_genomes))
     if not os.path.exists(sample_path):
         os.makedirs(sample_path)
     for genome_id in list_of_genomes:
@@ -430,7 +430,7 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 def generate_input(args):
     #genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
     genome_list, profile, tax_path, seed, no_samples, out_path, config, tax = read_args(args)
-    
+
     tax_ids, sci_names, ftp = read_genome_list(genome_list)
     
     profile, nr_samples = transform_profile(profile,args.samples,tax) # might be multiple ones if biom file

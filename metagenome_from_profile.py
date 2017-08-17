@@ -2,6 +2,7 @@
 
 from scripts.Validator.validator import Validator
 from scripts.configfilehandler import ConfigFileHandler
+from scripts.loggingwrapper import LoggingWrapper as logger
 try:
     from configparser import ConfigParser
 except ImportError:
@@ -66,6 +67,7 @@ def create_config(args,cfg):
 
 if __name__ == "__main__":
     args = parse_options()
+    GG._log = logger(verbose = args.debug)
     config = GG.generate_input(args) # total number of genomes and path to updated config
     c = create_config(args,config)
     if args.debug:
