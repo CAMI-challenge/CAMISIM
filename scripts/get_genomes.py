@@ -310,7 +310,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         os.remove(out_name_gz) # remove the now unzipped archives
         outF.close()
     if len(warnings):
-        log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings)
+        log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings))
         for warning in warnings:
             log.debug(warning)
     return metadata
