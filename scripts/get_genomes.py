@@ -40,11 +40,11 @@ def transform_profile(biom_profile, no_samples, taxonomy):
     samples = table.ids() # the samples' ids of the biom file
         
     profile = {} 
-    i = 0
     warnings_rank = [] # collect all warnings
     warnings_sciname = [] # if scientific name wasnt found
     if no_samples is not None and no_samples != len(samples) and no_samples != 1: # no. samples not equal to samples in biom file, simulate using only the first sample
         _log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
+        no_samples = 1
     for id in ids:
         lineage = table.metadata(id,axis="observation") # retrieving lineage
         if lineage is None: 
@@ -76,7 +76,7 @@ def transform_profile(biom_profile, no_samples, taxonomy):
         _log.warning("Some scientific names were not found and omitted")
         for warning in warnings_sciname:
             _log.info("Scientific name %s did not match any in NCBI" % warning)
-    return profile, i
+    return profile, no_samples
 
 """Given the biom lineage, calculate the NCBI lineage"""
 def map_to_ncbi_id(lin, taxonomy):
