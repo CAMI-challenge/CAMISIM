@@ -45,6 +45,8 @@ def transform_profile(biom_profile, no_samples, taxonomy):
     if no_samples is not None and no_samples != len(samples) and no_samples != 1: # no. samples not equal to samples in biom file, simulate using only the first sample
         _log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
         no_samples = 1
+    elif no_samples is None:
+        no_samples = len(samples)
     for id in ids:
         lineage = table.metadata(id,axis="observation") # retrieving lineage
         if lineage is None: 
