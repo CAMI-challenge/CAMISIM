@@ -38,45 +38,36 @@ def transform_profile(biom_profile, no_samples, taxonomy):
             return
     ids = table.ids(axis="observation")
     samples = table.ids() # the samples' ids of the biom file
-    
+        
     profile = {} 
     i = 0
     warnings_rank = [] # collect all warnings
     warnings_sciname = [] # if scientific name wasnt found
-    for sample in samples:
-        metadata = []
-        _log.info("Processing sample %s" % i)
-        if no_samples is not None and no_samples != len(samples) and no_samples != 1 and i > 0: # no. samples not equal to samples in biom file, simulate using only the first sample
-            _log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
-            break
-        for id in ids:
-            abundance = table.get_value_by_ids(id,sample)
-            lineage = table.metadata(id,axis="observation") # retrieving lineage
-            if lineage is None: 
-                lineage = id.split(";") # in prepared biom files the id is already the taxonomy TODO (might need to split by | or other char)
+    if no_samples is not None and no_samples != len(samples) and no_samples != 1: # no. samples not equal to samples in biom file, simulate using only the first sample
+        _log.warning("Number of samples in biom file does not match number of samples in biom file, using first biom sample for simulation")
+    for id in ids:
+        lineage = table.metadata(id,axis="observation") # retrieving lineage
+        if lineage is None: 
+            lineage = id.split(";") # in prepared biom files the id is already the taxonomy TODO (might need to split by | or other char)
+        else:
+            lineage = lineage["taxonomy"] # "original" biom file stores taxonomy in metadata/taxonomy
+            try:
+                lineage = lineage.split(";") # sometimes this is still needed, grr
+            except:
+                pass
+        abundances = []
+        for sample in samples[:no_samples]:
+            metadata = []
+            abundances.append(table.get_value_by_ids(id,sample))
+        ncbi_id, tax_path, sci_name = map_to_ncbi_id(lineage, taxonomy)
+        if ncbi_id is None:
+            if not tax_path: # rank was too high
+                warnings_rank.append((RANKS[BIOM_RANKS[sci_name[0]]],sci_name[1]))
             else:
-                lineage = lineage["taxonomy"] # "original" biom file stores taxonomy in metadata/taxonomy
-                try:
-                    lineage = lineage.split(";") # sometimes this is still needed, grr
-                except:
-                    pass
-            if len(lineage) > 1: # if length of lineage is one then the strain cannot be assigned
-                metadata.append((id,lineage,abundance))
-        for id, lin, weight in metadata:
-            if id not in profile: # first sample - we dont have values for this id from a previous sample
-                ncbi_id, tax_path, sci_name = map_to_ncbi_id(lin, taxonomy)
-                if ncbi_id is None and i == 0:
-                    if not tax_path: # rank was too high
-                        warnings_rank.append((RANKS[BIOM_RANKS[sci_name[0]]],sci_name[1]))
-                    else:
-                        warnings_sciname.append(sci_name)
-                    continue # do not add empty hits
-                elif i > 0:
-                    continue # this warning has been produced and there is no mapped genome
-                profile[id] = (ncbi_id, tax_path, [weight])
-            else: # all subsequent samples
-                profile[id][2].append(weight)
-        i += 1
+                warnings_sciname.append(sci_name)
+            continue # do not add empty hits
+        profile[id] = (ncbi_id, tax_path, abundances)
+    
     if len(warnings_rank):
         _log.warning("Some genomes had a too high rank and were omitted")
         for warning in warnings_rank:
@@ -101,12 +92,14 @@ def map_to_ncbi_id(lin, taxonomy):
     sci_name = retrieve_scientific_name(lineage, False)
     sci_name.encode('ascii','ignore') # and hope that this does not break something
     sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
-    ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
+    ncbi_ids = taxonomy.get_taxids_by_scientific_name(sci_name, True)
+    #ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
     if ncbi_ids is None:
         sci_name = retrieve_scientific_name(lineage, True)
         sci_name.encode('ascii','ignore') # and hope that this does not break something
         sci_name = str(sci_name) # since it has been encoded this cast shouldnt fail
-        ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
+        ncbi_ids = taxonomy.get_taxids_by_scientific_name(sci_name,True)
+        #ncbi_ids = taxonomy.get_taxids_by_scientific_name_wildcard(sci_name)
         if ncbi_ids is None:
             return None, True, sci_name
     ncbi_id = ncbi_ids.pop() # TODO do not take first if more than one?
@@ -420,6 +413,7 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
         genomes_total = len(downloaded)
     config.set('community0','genomes_total',str(genomes_total))
      # TODO what if strains should be simulated?
+     # TODO error if genome_total and num_real are set but too small
 
     filename_list = "" # write all filenames as comma-separated list
     for filename in filenames[:-1]:
