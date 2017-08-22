@@ -102,7 +102,7 @@ class DefaultValues(DefaultLogging):
         self._DEFAULT_phase = 0
         self._DEFAULT_phase_gsa = True
         self._DEFAULT_phase_pooled_gsa = True
-        self._DEFAULT_phase_anonymize = True
+        self._DEFAULT_phase_anonymize = False
 
         self._DEFAULT_phase_compress = False
         self._DEFAULT_compresslevel = 0
