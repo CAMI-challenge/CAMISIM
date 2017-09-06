@@ -654,12 +654,14 @@ class ReadSimulationArt(ReadSimulationWrapper):
     _art_error_profiles = {
         "mi": "EmpMiSeq250R",
         "hi": "EmpHiSeq2kR",
-        "hi150": "HiSeq2500L150R"}
+        "hi150": "HiSeq2500L150R",
+        "mbarc": "ART_MBARC-26_HiSeq_R"}
 
     _art_read_length = {
         "mi": 250,
         "hi": 100,
-        "hi150": 150}
+        "hi150": 150,
+        "mbarc": 150}
 
     def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
         super(ReadSimulationArt, self).__init__(file_path_executable, **kwargs)
@@ -671,8 +673,8 @@ class ReadSimulationArt(ReadSimulationWrapper):
             ]
         assert self.validate_dir(directory_error_profiles, file_names=file_names_of_error_profiles)
         # set default profile
-        self._profile = "hi150"
-        self._read_length = self._art_read_length["hi150"]
+        self._profile = "mbarc"
+        self._read_length = self._art_read_length["mbarc"]
         self._directory_error_profiles = directory_error_profiles
 
     def simulate(
@@ -1004,10 +1006,10 @@ def main(args=None):
 
     group_input.add_argument(
         "-ep", "--error_profile",
-        default="hi150",
+        default="mbarc",
         type=str,
         choices=ReadSimulationArt._art_error_profiles.keys(),  # ["mi", "hi", "hi150"],
-        help="mi: MiSeq, hi: HiSeq 100, hi150: HiSeq 150")
+        help="mi: MiSeq, hi: HiSeq 100, hi150: HiSeq 150, mbarc: New HiSeq (recommended)")
 
     group_input.add_argument(
         "-sd", "--fragment_size_standard_deviation",

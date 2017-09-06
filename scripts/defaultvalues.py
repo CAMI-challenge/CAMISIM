@@ -134,7 +134,7 @@ class DefaultValues(DefaultLogging):
         self._DEFAULT_sample_size_in_base_pairs = 1 * 1000000000
 
         self._DEFAULT_read_simulator_type = 'art'
-        self._DEFAULT_error_profile = 'hi150'
+        self._DEFAULT_error_profile = 'mbarc'
         self._DEFAULT_fragment_size_standard_deviation_in_bp = 27
         self._DEFAULT_fragments_size_mean_in_bp = 270
 
