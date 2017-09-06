@@ -84,7 +84,7 @@ def transform_profile(biom_profile, no_samples, taxonomy):
 def map_to_ncbi_id(lin, taxonomy):
     lineage = []
     for rank in lin: # only the lineage
-        taxon = rank.split("__") # split biom-string
+        taxon = rank.strip().split("__") # split biom-string
         if len(taxon) != 2: # there is no name
             break
         if taxon[1] == '': 
