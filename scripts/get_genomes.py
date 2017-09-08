@@ -286,10 +286,10 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         gen_name = split_path[-1].rstrip() # genome name is last in address
         to_dl = gen_name + "_genomic.fna.gz"
         out_name = os.path.join(sample_path,gen) + ".fa"  # out name is the ncbi id of the downloaded genome
+        metadata.update({genome_id:(out_name, otu)})
         if (os.path.isfile(out_name)): # we already downloaded this genome
             continue
         out_name_gz = out_name + ".gz"
-        metadata.update({genome_id:(out_name, otu)})
         try:
             ftp.cwd(cwd)
         except: # huh, lets try again
