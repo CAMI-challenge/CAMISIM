@@ -271,7 +271,7 @@ but should only appear once in the out directory.
 def download_genomes(list_of_genomes, ftp_list, out_path):
     metadata = dict() # create the metadata table (pathes to genomes)
     warnings = []
-    ftp = FTP('ftp.ncbi.nlm.nih.gov') 
+    ftp = FTP('ftp.ncbi.nlm.nih.gov') #reduce timeout?
     ftp.login() # anonymous login
     sample_path = os.path.join(out_path,"genomes")
     _log.info("Downloading %s genomes" % len(list_of_genomes))
@@ -286,18 +286,27 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         gen_name = split_path[-1].rstrip() # genome name is last in address
         to_dl = gen_name + "_genomic.fna.gz"
         out_name = os.path.join(sample_path,gen) + ".fa"  # out name is the ncbi id of the downloaded genome
+        if (os.path.isfile(out_name)): # we already downloaded this genome
+            continue
         out_name_gz = out_name + ".gz"
         metadata.update({genome_id:(out_name, otu)})
-        ftp.cwd(cwd)
-        try: 
-            ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
-        except:
-            try: # try twice if something odd happends
+        try:
+            ftp.cwd(cwd)
+        except: # huh, lets try again
+            ftp = FTP('ftp.ncbi.nlm.nih.gov') #reduce timeout?
+            ftp.login() # anonymous login
+            ftp.cwd(cwd)
+        counter = 0
+        while (counter < 10):
+            try: 
                 ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+                break
             except:
-                warnings.append("File %s could not be downloaded (Genome ID %s/NCBI ID %s" % (to_dl,genome_id,out_name))
-                metadata[genome_id] = None
-                continue
+                counter += 1
+        if (counter == 10):
+            warnings.append("File %s could not be downloaded (Genome ID %s/NCBI ID %s" % (to_dl,genome_id,out_name))
+            metadata[genome_id] = None
+            continue
         gf = gzip.open(out_name_gz) 
         outF = open(out_name,'wb')
         outF.write(gf.read())
@@ -386,7 +395,7 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
             for genome in abundances:
                 abundance = abundances[genome][i]
                 if genome not in downloaded:
-                    log.warning("Genome with abundance %s was not downloaded" % abundance)
+                    _log.warning("Genome with abundance %s was not downloaded" % abundance)
                     continue # this has not been downloaded
                 abundance_i.write("%s\t%s\n" % (genome,abundance))
         filenames.append(filename)
