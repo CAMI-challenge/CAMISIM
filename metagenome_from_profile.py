@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 from scripts.Validator.validator import Validator
 from scripts.configfilehandler import ConfigFileHandler
 from scripts.loggingwrapper import LoggingWrapper as logger
@@ -25,7 +26,7 @@ def parse_options():
     # download the mapped full genomes?
     #parser.add_argument("-no-dl", "--dont-download-genomes", action='store_false', default=True, help=helptext)
 
-    helptext="Output directory, make sure this directory exists!"
+    helptext="Output directory, default: out/"
     # out path
     parser.add_argument("-o", default="out/", type=str, help=helptext,metavar="OUT PATH")
     
@@ -33,21 +34,24 @@ def parse_options():
     # temporary path
     parser.add_argument("-tmp", default=None, type=str, help=helptext)
 
-    helptext="File pointing to reference genomes of the format: NCBI id\tScientific name\tNCBI ftp address of full genome"
+    default="tools/assembly_summary_complete_genomes.txt"
     # file pointing to reference genomes
-    parser.add_argument("-ref","--reference-genomes", default="tools/assembly_summary_complete_genomes.txt", help=helptext)
+    parser.add_argument("-ref","--reference-genomes", default=default, help="File pointing to reference genomes of the format: NCBI id\tScientific name\tNCBI ftp address of full genome. Default: %s" % default)
 
-    helptext="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path"
+    default = "defaults/default_config.ini"
     # optional config file (out_path will get overwritten if it is set in config file)
-    parser.add_argument("-c","--config",default="defaults/default_config.ini",help=helptext,metavar="CONFIG FILE")
+    parser.add_argument("-c","--config",default=default,help="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path, default: %s" % default,metavar="CONFIG FILE")
 
-    helptext="Path to the NCBI taxdump for finding corresponding reference genomes"
-    parser.add_argument("--ncbi",default="tools/ncbi-taxonomy_20170222.tar.gz",help=helptext)
+    default = "tools/ncbi-taxonomy_20170222.tar.gz"
+    parser.add_argument("--ncbi",default=default,help="Path to the NCBI taxdump for finding corresponding reference genomes, default = %s" % default)
     
     helptext="Seed for the random generator"
     parser.add_argument("--seed",default=None,help=helptext)
 
     parser.add_argument("--debug",action='store_true',default=False,help="get more debug information")
+    if not len(sys.argv) > 1:
+        parser.print_help()
+        return None
     args = parser.parse_args()
     
     return args
@@ -67,10 +71,11 @@ def create_config(args,cfg):
 
 if __name__ == "__main__":
     args = parse_options()
-    GG._log = logger(verbose = args.debug)
-    config = GG.generate_input(args) # total number of genomes and path to updated config
-    c = create_config(args,config)
-    if args.debug:
-        os.system("./metagenomesimulation.py %s --debug" % c)
-    else:
-        os.system("./metagenomesimulation.py %s" % c)
+    if not args is None:
+        GG._log = logger(verbose = args.debug)
+        config = GG.generate_input(args) # total number of genomes and path to updated config
+        c = create_config(args,config)
+        if args.debug:
+            os.system("./metagenomesimulation.py %s --debug" % c)
+        else:
+            os.system("./metagenomesimulation.py %s" % c)
