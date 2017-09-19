@@ -149,12 +149,12 @@ def read_profile(file_path):
             rank = profile_info[1]
             taxpath = profile_info[2]
             taxpath_sciname = profile_info[3]
-            sciname = taxpath_sciname.split('|')[-1] # depeest scientific name
+            sciname = taxpath_sciname.split('|')[-1] # deepest scientific name
             weight = float(profile_info[4])
             if weight == 0:
                 # Ignore zero weighted taxIDs
                 continue
-            if (rank == 'species'): # only search for genomes on species level
+            if (rank == 'species'): # only search for genomes on species level, make variable
                 profile[sciname] = (taxid, taxpath, [weight]) # cami format currently only supports single sample
     return profile 
 
@@ -418,11 +418,7 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
     config.set('community0','metadata',filename)
     
     config.set('community0','num_real_genomes',str(len(downloaded)))
-    try:
-        genomes_total = config.get('community0', 'genomes_total')
-    except:
-        genomes_total = len(downloaded)
-    config.set('community0','genomes_total',str(genomes_total))
+    config.set('community0','genomes_total',str(len(downloaded)))
      # TODO what if strains should be simulated?
      # TODO error if genome_total and num_real are set but too small
 
