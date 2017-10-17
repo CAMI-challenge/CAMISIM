@@ -8,6 +8,7 @@ import os
 import shutil
 import traceback
 import tempfile
+from Bio import SeqIO
 from fastaanonymizer import FastaAnonymizer
 from scripts.Archive.compress import Compress
 from scripts.argumenthandler import ArgumentHandler
@@ -114,6 +115,11 @@ class MetagenomeSimulation(ArgumentHandler):
                 self._logger.info("Anonymize Data")
                 self._logger.debug(", ".join(list_of_output_gsa))
                 self._anonymize_data(list_of_output_gsa, file_path_output_gsa_pooled)
+            #elif self._phase_pooled_gsa: 
+            else: # in any case create binning gold standard
+                self._logger.info("Creating binning gold standard")
+                self._logger.debug(", ".join(list_of_output_gsa))
+                self._create_binning_gs(list_of_output_gsa, file_path_output_gsa_pooled)
 
             # Compress Data
             if self._phase_compress:
@@ -450,6 +456,135 @@ class MetagenomeSimulation(ArgumentHandler):
                 shutil.move(file_path_output_gsa_pooled, gsa_pooled_output)
 
         return file_path_output_gsa_pooled
+
+    def _create_binning_gs(self, list_of_output_gsa, file_path_output_gsa_pooled):
+        """
+        Create binning gold standard without anonymization first
+
+        @param list_of_output_gsa: List of file paths of assemblies
+        @type list_of_output_gsa: list[str|unicode]
+        @param file_path_output_gsa_pooled: file paths of assembly from all samples
+        @type file_path_output_gsa_pooled: str | unicode
+
+        @rtype: None
+        """
+
+        gff = GoldStandardFileFormat(logfile = self._logfile, verbose = self._verbose)
+        # read-based binning
+        file_path_metadata = self._project_file_folder_handler.get_genome_metadata_file_path()
+        file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
+        dict_sequence_to_genome_id = gff.get_dict_sequence_to_genome_id(file_path_genome_locations)
+        dict_genome_id_to_tax_id = gff.get_dict_genome_id_to_tax_id(file_path_metadata)
+        
+        directories_fastq_dir_in = [
+            self._project_file_folder_handler.get_reads_dir(True, str(sample_index))
+            for sample_index in range(self._number_of_samples)]
+
+        if (self._read_simulator_type == "art" or self._read_simulator_type == "wgsim"):
+            paired_end = True
+        else:
+            paired_end = False
+        
+        for sample_index in range(self._number_of_samples):
+            sample_id = str(sample_index)
+            readfiles = directories_fastq_dir_in[sample_index]
+            if self._phase_compress:
+                file_path_gs_mapping = tempfile.mktemp(
+                    dir=self._project_file_folder_handler.get_tmp_wd(),
+                    prefix="gs_mapping")
+            else:
+                file_path_anonymous_gs_mapping = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
+            samtools = SamtoolsWrapper(
+                file_path_samtools=self._executable_samtools,
+                max_processes=self._max_processors,
+                tmp_dir=self._project_file_folder_handler.get_tmp_wd(),
+                logfile=self._logfile,
+                verbose=self._verbose,
+                debug=self._debug
+                )
+            with open(file_path_anonymous_gs_mapping, 'w') as stream_output:
+                row_format = "{aid}\t{gid}\t{tid}\t{sid}\n"
+                line = '#' + row_format.format(
+                    aid="anonymous_read_id",
+                    gid="genome_id",
+                    tid="tax_id",
+                    sid="read_id")
+                stream_output.write(line)
+                starts = samtools.read_start_positions_from_dir_of_sam(readfiles)
+                with open(starts, 'r') as reads:
+                    for read in reads:
+                        seq_id = read.strip().split(' ')[0]
+                        gen_id = read.strip().split('-')[0]
+                        genome_id = dict_sequence_to_genome_id[gen_id]
+                        tax_id = dict_genome_id_to_tax_id[genome_id]
+                        line = row_format.format(
+                            aid=seq_id,
+                            gid=genome_id,
+                            tid=tax_id,
+                            sid=seq_id,
+                        )
+                        stream_output.write(line)
+            if self._phase_compress:
+                self._list_tuple_archive_files.append(
+                    (file_path_gs_mapping, self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)+".gz"))
+            
+            gsa = self._project_file_folder_handler.get_gsa_file_path(str(sample_index))
+            if self._phase_compress:
+                file_path_gsa_mapping = tempfile.mktemp(
+                    dir=self._project_file_folder_handler.get_tmp_wd(),
+                    prefix="anonymous_gsa_mapping")
+            else:
+                file_path_gsa_mapping = self._project_file_folder_handler.get_anonymous_gsa_map_file_path(sample_id)
+            samtools = SamtoolsWrapper(
+                file_path_samtools=self._executable_samtools,
+                max_processes=self._max_processors,
+                tmp_dir=self._project_file_folder_handler.get_tmp_wd(),
+                logfile=self._logfile,
+                verbose=self._verbose,
+                debug=self._debug
+                )
+            list_file_paths_read_positions = [
+                samtools.read_start_positions_from_dir_of_bam(self._project_file_folder_handler.get_bam_dir(sample_id))
+                ]
+            dict_original_seq_pos = gff.get_dict_sequence_name_to_positions(list_file_paths_read_positions)
+            file_path_output_anonymous_gsa_out = self._project_file_folder_handler.get_anonymous_gsa_file_path(sample_id)
+
+            with open(gsa, 'r') as gs:
+                with open(file_path_gsa_mapping, 'w') as stream_output:
+                    row_format = "{name}\t{genome_id}\t{tax_id}\t{seq_id}\t{count}\t{position_0}\t{position_1}\n"
+                    stream_output.write("#contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
+                    for seq_id in gs:
+                        if not seq_id.startswith(">"):
+                            continue
+                        seq_info = seq_id[1:].strip().rsplit("_from_", 1)
+                        # print(seq_info)
+                        sequence_id = seq_info[0]
+                        # pos_start, pos_end = re.findall(r'\d+', seq_info[1])[:2]
+                        pos_start = int(seq_info[1].split("_", 1)[0])
+                        pos_end = int(seq_info[1].split("_to_", 1)[1].split("_", 1)[0])
+
+                        # check if read is in contig
+                        count = 0
+                        for number in dict_original_seq_pos[sequence_id]:
+                            if pos_start <= number <= pos_end:
+                                count += 1
+
+                        genome_id = dict_sequence_to_genome_id[sequence_id]
+                        tax_id = dict_genome_id_to_tax_id[genome_id]
+                        stream_output.write(row_format.format(
+                            name=sequence_id,
+                            genome_id=genome_id,
+                            tax_id=tax_id,
+                            seq_id=sequence_id,
+                            count=count,
+                            position_0=pos_start,
+                            position_1=pos_end)
+                            )
+                if self._phase_compress:
+                    self._list_tuple_archive_files.append(
+                        (file_path_gsa_mapping, self._project_file_folder_handler.get_anonymous_gsa_map_file_path(sample_id)))
+                else:
+                    shutil.move(file_path_gsa_mapping, file_path_output_anonymous_gsa_out)
 
     # #########################
     #
