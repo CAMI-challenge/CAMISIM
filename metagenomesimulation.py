@@ -119,7 +119,7 @@ class MetagenomeSimulation(ArgumentHandler):
             else: # in any case create binning gold standard
                 self._logger.info("Creating binning gold standard")
                 self._logger.debug(", ".join(list_of_output_gsa))
-                self._create_binning_gs(list_of_output_gsa, file_path_output_gsa_pooled)
+                self._create_binning_gs(list_of_output_gsa)
 
             # Compress Data
             if self._phase_compress:
@@ -457,7 +457,7 @@ class MetagenomeSimulation(ArgumentHandler):
 
         return file_path_output_gsa_pooled
 
-    def _create_binning_gs(self, list_of_output_gsa, file_path_output_gsa_pooled):
+    def _create_binning_gs(self, list_of_output_gsa):
         """
         Create binning gold standard without anonymization first
 
@@ -468,6 +468,7 @@ class MetagenomeSimulation(ArgumentHandler):
 
         @rtype: None
         """
+        self._logger.debug(list_of_output_gsa)
 
         gff = GoldStandardFileFormat(logfile = self._logfile, verbose = self._verbose)
         # read-based binning
