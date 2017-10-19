@@ -446,6 +446,8 @@ The file name should then be out_path/taxID.fa.gz so it can be found
 #returns number of genomes
 def generate_input(args):
     #genome_list, profile, tax_path, download, seed, no_samples, out_path, config, tax = read_args(args)
+    global _log
+    _log = logger(verbose = args.debug)
     genome_list, profile, tax_path, seed, no_samples, out_path, config, tax = read_args(args)
 
     tax_ids, sci_names, ftp = read_genome_list(genome_list)
@@ -454,5 +456,7 @@ def generate_input(args):
     
     downloaded, abundances = create_full_profiles(profile, tax_ids, ftp, tax, seed, config, out_path)
 
-    return create_configs(out_path, config, abundances, downloaded, nr_samples)
+    res = create_configs(out_path, config, abundances, downloaded, nr_samples)
+    _log = None
+    return res
 

@@ -72,7 +72,6 @@ def create_config(args,cfg):
 if __name__ == "__main__":
     args = parse_options()
     if not args is None:
-        GG._log = logger(verbose = args.debug)
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
         if args.debug:
