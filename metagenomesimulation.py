@@ -119,7 +119,7 @@ class MetagenomeSimulation(ArgumentHandler):
             else: # in any case create binning gold standard
                 self._logger.info("Creating binning gold standard")
                 self._logger.debug(", ".join(list_of_output_gsa))
-                self._create_binning_gs(list_of_output_gsa)
+                self._create_binning_gs()
 
             # Compress Data
             if self._phase_compress:
@@ -457,7 +457,7 @@ class MetagenomeSimulation(ArgumentHandler):
 
         return file_path_output_gsa_pooled
 
-    def _create_binning_gs(self, list_of_output_gsa):
+    def _create_binning_gs(self):
         """
         Create binning gold standard without anonymization first
 
@@ -468,8 +468,6 @@ class MetagenomeSimulation(ArgumentHandler):
 
         @rtype: None
         """
-        self._logger.debug(list_of_output_gsa)
-
         gff = GoldStandardFileFormat(logfile = self._logfile, verbose = self._verbose)
         # read-based binning
         file_path_metadata = self._project_file_folder_handler.get_genome_metadata_file_path()
@@ -503,6 +501,10 @@ class MetagenomeSimulation(ArgumentHandler):
                 verbose=self._verbose,
                 debug=self._debug
                 )
+            list_file_paths_read_positions = [ 
+                samtools.read_start_positions_from_dir_of_bam(self._project_file_folder_handler.get_bam_dir(sample_id))
+                ]
+            dict_original_seq_pos = gff.get_dict_sequence_name_to_positions(list_file_paths_read_positions)
             with open(file_path_anonymous_gs_mapping, 'w') as stream_output:
                 row_format = "{aid}\t{gid}\t{tid}\t{sid}\n"
                 line = '#' + row_format.format(
@@ -511,20 +513,18 @@ class MetagenomeSimulation(ArgumentHandler):
                     tid="tax_id",
                     sid="read_id")
                 stream_output.write(line)
-                starts = samtools.read_start_positions_from_dir_of_sam(readfiles)
-                with open(starts, 'r') as reads:
-                    for read in reads:
-                        seq_id = read.strip().split(' ')[0]
-                        gen_id = read.strip().split('-')[0]
-                        genome_id = dict_sequence_to_genome_id[gen_id]
-                        tax_id = dict_genome_id_to_tax_id[genome_id]
-                        line = row_format.format(
-                            aid=seq_id,
-                            gid=genome_id,
-                            tid=tax_id,
-                            sid=seq_id,
-                        )
-                        stream_output.write(line)
+                for read in dict_original_seq_pos:
+                    seq_id = read.strip().split(' ')[0]
+                    gen_id = read.strip().split('-')[0]
+                    genome_id = dict_sequence_to_genome_id[gen_id]
+                    tax_id = dict_genome_id_to_tax_id[genome_id]
+                    line = row_format.format(
+                        aid=seq_id,
+                        gid=genome_id,
+                        tid=tax_id,
+                        sid=seq_id,
+                    )
+                    stream_output.write(line)
             if self._phase_compress:
                 self._list_tuple_archive_files.append(
                     (file_path_gs_mapping, self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)+".gz"))
@@ -552,35 +552,28 @@ class MetagenomeSimulation(ArgumentHandler):
 
             with open(gsa, 'r') as gs:
                 with open(file_path_gsa_mapping, 'w') as stream_output:
-                    row_format = "{name}\t{genome_id}\t{tax_id}\t{seq_id}\t{count}\t{position_0}\t{position_1}\n"
-                    stream_output.write("#contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
+                    row_format = "{name}\t{genome_id}\t{tax_id}\t{length}\n"
+                    stream_output.write("@@SEQUENCEID\tBINID\tTAXID\t_LENGTH\n")
                     for seq_id in gs:
                         if not seq_id.startswith(">"):
                             continue
-                        seq_info = seq_id[1:].strip().rsplit("_from_", 1)
+                        seq_id = seq_id[1:].strip()
+                        seq_info = seq_id.rsplit("_from_", 1)
                         # print(seq_info)
                         sequence_id = seq_info[0]
                         # pos_start, pos_end = re.findall(r'\d+', seq_info[1])[:2]
                         pos_start = int(seq_info[1].split("_", 1)[0])
                         pos_end = int(seq_info[1].split("_to_", 1)[1].split("_", 1)[0])
 
-                        # check if read is in contig
-                        count = 0
-                        for number in dict_original_seq_pos[sequence_id]:
-                            if pos_start <= number <= pos_end:
-                                count += 1
-
                         genome_id = dict_sequence_to_genome_id[sequence_id]
                         tax_id = dict_genome_id_to_tax_id[genome_id]
                         stream_output.write(row_format.format(
-                            name=sequence_id,
+                            name=seq_id,
                             genome_id=genome_id,
                             tax_id=tax_id,
-                            seq_id=sequence_id,
-                            count=count,
-                            position_0=pos_start,
-                            position_1=pos_end)
+                            length=str(pos_end-pos_start+1)
                             )
+                        )
                 if self._phase_compress:
                     self._list_tuple_archive_files.append(
                         (file_path_gsa_mapping, self._project_file_folder_handler.get_anonymous_gsa_map_file_path(sample_id)))
