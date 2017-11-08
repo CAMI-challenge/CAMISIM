@@ -46,7 +46,7 @@ def parse_options():
     parser.add_argument("--ncbi",default=default,help="Path to the NCBI taxdump for finding corresponding reference genomes, default = %s" % default)
     
     helptext="Seed for the random generator"
-    parser.add_argument("--seed",default=None,help=helptext)
+    parser.add_argument("--seed",type=int,default=None,help=helptext)
 
     parser.add_argument("--debug",action='store_true',default=False,help="get more debug information")
     if not len(sys.argv) > 1:
