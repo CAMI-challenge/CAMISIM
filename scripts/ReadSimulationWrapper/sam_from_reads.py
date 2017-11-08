@@ -1,4 +1,5 @@
 import os
+import re
 
 def read_reference(reference_path):
     refseq = ""
@@ -58,7 +59,7 @@ def get_cigars_nanosim(error_profile):
         for line in ep:
             if line.startswith("Seq"):
                 continue # header
-            name, pos, error_type, length, refseq, qseq = line.split('\t')
+            name, pos, error_type, length, refseq, qseq = re.split(r'\t|\s{2,}',line) # split at tab and multiple whitespace
             if error_type == "mis":
                 continue # this version ignores mismatches
             seqname = name.split("_")
