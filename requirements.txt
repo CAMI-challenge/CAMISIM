@@ -1,0 +1,4 @@
+numpy==1.13.0
+biopython==1.69.0
+matplotlib==2.0.2
+biom-format==2.1.6
