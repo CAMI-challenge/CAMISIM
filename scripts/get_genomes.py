@@ -265,8 +265,6 @@ iterates over the list of genomes in the profile, retrieves the mapped full geno
 based from this downloads the file.
 The path contains more files, the sequence ends with _genomic.fna.gz
 We might also download the _genomic.gff.gz for genes/evolution
-Also note that, if by chance multiple original genomes mapped to the same reference genome, this will get downloaded multiple times,
-but should only appear once in the out directory.
 """
 def download_genomes(list_of_genomes, ftp_list, out_path):
     metadata = dict() # create the metadata table (pathes to genomes)
@@ -331,9 +329,10 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
         max_strains = 3 # no max_strains have been set for this community - use cami value
         mu = 1
         sigma = 2 # this aint particularily beatiful
+        _log.warning("Some options have not been set, using defaults") #TODO 
     np_rand.seed(seed)
     if max_strains >= 2:
-        strains_to_draw = (np_rand.geometric(2./max_strains) % max_strains) + 1 # TODO +1 needed?
+        strains_to_draw = max((np_rand.geometric(2./max_strains) % max_strains),1) # make sure we draw at least one
     else:
         strains_to_draw = 1
     # mean will be ~max_strains/2 and a minimum of 1 strain is drawn
@@ -343,10 +342,13 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
         total_abundances = profile[elem][2] # profile has a taxid - weight map at pos 2
         mapped_genomes = list_of_genomes[elem][0]
         otu = list_of_genomes[elem][1]
+        if len(mapped_genomes) == 0:
+            _log.warning("All mapping genomes for OTU %s have been used" % otu)
+            continue
         if len(mapped_genomes) >= strains_to_draw: # if more genomes mapped than needed, do a selection
             mapped_genomes = [mapped_genomes[x] for x in np_rand.choice(len(mapped_genomes), strains_to_draw)] # sample genomes    
-        for used_genome in mapped_genomes:
-            list_of_genomes[elem][0].remove(used_genome) # sample without replacement
+        for used_genome in mapped_genomes: # sample without replacement (remove used)
+            list_of_genomes[elem][0].remove(used_genome) 
         log_normal_vals = np_rand.lognormal(mu,sigma,len(mapped_genomes))
         sum_log_normal = sum(log_normal_vals)
         i = 0
