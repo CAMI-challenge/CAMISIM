@@ -328,7 +328,7 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
         mu = int(config.get("Main", "log_mu"))
         sigma = int(config.get("Main", "log_sigma"))
     except:
-        max_strains = 1 # no max_strains have been set for this community
+        max_strains = 3 # no max_strains have been set for this community - use cami value
         mu = 1
         sigma = 2 # this aint particularily beatiful
     np_rand.seed(seed)
@@ -345,6 +345,8 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
         otu = list_of_genomes[elem][1]
         if len(mapped_genomes) >= strains_to_draw: # if more genomes mapped than needed, do a selection
             mapped_genomes = [mapped_genomes[x] for x in np_rand.choice(len(mapped_genomes), strains_to_draw)] # sample genomes    
+        for used_genome in mapped_genomes:
+            list_of_genomes[elem][0].remove(used_genome) # sample without replacement
         log_normal_vals = np_rand.lognormal(mu,sigma,len(mapped_genomes))
         sum_log_normal = sum(log_normal_vals)
         i = 0
