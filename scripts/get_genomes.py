@@ -323,13 +323,16 @@ Given the list of genomes and the profile, create an abundance table for the dow
 def create_abundance_table(list_of_genomes, seed, config, profile):
     try:
         max_strains = int(config.get("Main", max_strains_per_otu))
+    except:
+        max_strains = 3 # no max_strains have been set for this community - use cami value
+        _log.warning("Max strains per OTU not set, using default (3)")
+    try:
         mu = int(config.get("Main", "log_mu"))
         sigma = int(config.get("Main", "log_sigma"))
     except:
-        max_strains = 3 # no max_strains have been set for this community - use cami value
         mu = 1
         sigma = 2 # this aint particularily beatiful
-        _log.warning("Some options have not been set, using defaults") #TODO 
+        _log.warning("Mu and sigma have not been set, using defaults (1,2)") #TODO 
     np_rand.seed(seed)
     if max_strains >= 2:
         strains_to_draw = max((np_rand.geometric(2./max_strains) % max_strains),1) # make sure we draw at least one
@@ -347,8 +350,6 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
             continue
         if len(mapped_genomes) >= strains_to_draw: # if more genomes mapped than needed, do a selection
             mapped_genomes = [mapped_genomes[x] for x in np_rand.choice(len(mapped_genomes), strains_to_draw)] # sample genomes    
-        for used_genome in mapped_genomes: # sample without replacement (remove used)
-            list_of_genomes[elem][0].remove(used_genome) 
         log_normal_vals = np_rand.lognormal(mu,sigma,len(mapped_genomes))
         sum_log_normal = sum(log_normal_vals)
         i = 0
@@ -363,6 +364,8 @@ def create_abundance_table(list_of_genomes, seed, config, profile):
                     abundances[genome_id] = [current_abundance] # relative abundance in lognormal (%) times total_abundance (in profile)
                 else:
                     abundances[genome_id].append(current_abundance)
+        for used_genome in mapped_genomes: # sample without replacement (remove used)
+            list_of_genomes[elem][0].remove(used_genome) 
     return abundances, genome_selection
 
 # read args
