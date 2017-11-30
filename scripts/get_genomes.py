@@ -281,13 +281,13 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         path = ftp_list[gen]
         split_path = path.split('/')
         cwd = "/" + "/".join(split_path[3:]).rstrip() # get /address/to/genome
-        gen_name = split_path[-1].rstrip() # genome name is last in address
-        to_dl = gen_name + "_genomic.fna.gz"
-        out_name = os.path.join(sample_path,gen) + ".fa"  # out name is the ncbi id of the downloaded genome
-        metadata.update({genome_id:(out_name, otu)})
-        if (os.path.isfile(out_name)): # we already downloaded this genome
-            continue
-        out_name_gz = out_name + ".gz"
+        out_name = split_path[-1].rstrip()
+        out_path = os.path.join(sample_path, out_name + ".fa") # genome name is last in address, used as name
+        to_dl = out_name + "_genomic.fna.gz"
+        metadata.update({genome_id:(out_path, gen, otu)})
+        #if (os.path.isfile(out_name)): # we already downloaded this genome (shouldnt happen anymore)
+        #    continue
+        out_path_gz = out_path + ".gz"
         try:
             ftp.cwd(cwd)
         except: # huh, lets try again
@@ -297,7 +297,7 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         counter = 0
         while (counter < 10):
             try: 
-                ftp.retrbinary("RETR %s" % to_dl, open(out_name_gz,'wb').write) #download genomes
+                ftp.retrbinary("RETR %s" % to_dl, open(out_path_gz,'wb').write) #download genomes
                 break
             except:
                 counter += 1
@@ -305,16 +305,16 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
             warnings.append("File %s could not be downloaded (Genome ID %s/NCBI ID %s" % (to_dl,genome_id,out_name))
             metadata[genome_id] = None
             continue
-        gf = gzip.open(out_name_gz) 
-        outF = open(out_name,'wb')
+        gf = gzip.open(out_path_gz) 
+        outF = open(out_path,'wb')
         outF.write(gf.read())
         gf.close()
-        os.remove(out_name_gz) # remove the now unzipped archives
+        os.remove(out_path_gz) # remove the now unzipped archives
         outF.close()
     if len(warnings):
-        log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings))
+        _log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings))
         for warning in warnings:
-            log.debug(warning)
+            _log.debug(warning)
     return metadata
 
 """
@@ -410,8 +410,8 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
     filename = os.path.join(out_path,"genome_to_id.tsv")
     with open(filename,'wb') as gpath:
         for genome_id in downloaded:
-            tax_id = downloaded[genome_id][0]
-            gpath.write("%s\t%s\n" % (genome_id,tax_id))
+            genome_path = downloaded[genome_id][0]
+            gpath.write("%s\t%s\n" % (genome_id,genome_path))
     config.set('community0','id_to_genome_file',filename)
    
     filename = os.path.join(out_path,"metadata.tsv")
@@ -419,8 +419,8 @@ def create_configs(out_path, config, abundances, downloaded, nr_samples):
         metadata.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # header
         for genome_id in downloaded:
             path_to_genome = downloaded[genome_id][0]
-            ncbi_id = path_to_genome.rsplit("/",1)[-1].rsplit(".",1)[0] # split at path and then strip file ending
-            otu = downloaded[genome_id][1]
+            ncbi_id = downloaded[genome_id][1]  
+            otu = downloaded[genome_id][2]
             metadata.write("%s\t%s\t%s\t%s\n" % (genome_id,otu,ncbi_id,"new_strain")) #check multiple matchings
     config.set('community0','metadata',filename)
     
