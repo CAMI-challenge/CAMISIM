@@ -1,6 +1,6 @@
 import sys
 import os
-from ftplib import FTP 
+import urllib2
 import gzip
 import random
 import biom #TODO required software
@@ -269,8 +269,6 @@ We might also download the _genomic.gff.gz for genes/evolution
 def download_genomes(list_of_genomes, ftp_list, out_path):
     metadata = dict() # create the metadata table (pathes to genomes)
     warnings = []
-    ftp = FTP('ftp.ncbi.nlm.nih.gov') #reduce timeout?
-    ftp.login() # anonymous login
     sample_path = os.path.join(out_path,"genomes")
     _log.info("Downloading %s genomes" % len(list_of_genomes))
     if not os.path.exists(sample_path):
@@ -278,30 +276,17 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
     for genome_id in list_of_genomes:
         gen = list_of_genomes[genome_id][0]
         otu = list_of_genomes[genome_id][1]
-        path = ftp_list[gen]
-        split_path = path.split('/')
-        cwd = "/" + "/".join(split_path[3:]).rstrip() # get /address/to/genome
-        out_name = split_path[-1].rstrip()
-        out_path = os.path.join(sample_path, out_name + ".fa") # genome name is last in address, used as name
-        to_dl = out_name + "_genomic.fna.gz"
-        metadata.update({genome_id:(out_path, gen, otu)})
-        #if (os.path.isfile(out_name)): # we already downloaded this genome (shouldnt happen anymore)
-        #    continue
+        path = ftp_list[gen].rstrip()
+        out_name = path.split('/')[-1].rstrip() # genome name is last in address, used as name
+        out_path = os.path.join(sample_path, out_name + ".fa") 
         out_path_gz = out_path + ".gz"
+        to_dl = os.path.join(path, out_name + "_genomic.fna.gz")
+        metadata.update({genome_id:(out_path, gen, otu)})
         try:
-            ftp.cwd(cwd)
-        except: # huh, lets try again
-            ftp = FTP('ftp.ncbi.nlm.nih.gov') #reduce timeout?
-            ftp.login() # anonymous login
-            ftp.cwd(cwd)
-        counter = 0
-        while (counter < 10):
-            try: 
-                ftp.retrbinary("RETR %s" % to_dl, open(out_path_gz,'wb').write) #download genomes
-                break
-            except:
-                counter += 1
-        if (counter == 10):
+            opened_url = urllib2.urlopen(to_dl)
+            with open(out_path_gz,'w') as write_file:
+                write_file.write(opened_url.read())
+        except ValueError:
             warnings.append("File %s could not be downloaded (Genome ID %s/NCBI ID %s" % (to_dl,genome_id,out_name))
             metadata[genome_id] = None
             continue
@@ -313,6 +298,8 @@ def download_genomes(list_of_genomes, ftp_list, out_path):
         outF.close()
     if len(warnings):
         _log.warning("Downloading %s genomes failed, try running with --debug if this happends regularily" % len(warnings))
+        _log.error("Missing genomes")
+        raise ValueError # TODO maybe retry download
         for warning in warnings:
             _log.debug(warning)
     return metadata
