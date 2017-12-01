@@ -182,7 +182,7 @@ def read_genome_list(file_path):
                 continue
             tax_ids.append(temp[0])
             sci_name[temp[1]] = temp[0]
-            ftp_address[temp[0]] = temp[2]
+            ftp_address[temp[0]] = temp[2].replace("ftp://","https://",1)
     return tax_ids, sci_name, ftp_address
 """
 extends the list of tax ids to a list of list to include higher level taxonomic ranks
@@ -448,6 +448,9 @@ def generate_input(args):
     
     profile, nr_samples = transform_profile(profile,args.samples,tax) # might be multiple ones if biom file
     
+    downloaded, abundances = create_full_profiles(profile, tax_ids, ftp, tax, seed, config, out_path)
+
+    res = create_configs(out_path, config, abundances, downloaded, nr_samples)
     downloaded, abundances = create_full_profiles(profile, tax_ids, ftp, tax, seed, config, out_path)
 
     res = create_configs(out_path, config, abundances, downloaded, nr_samples)
