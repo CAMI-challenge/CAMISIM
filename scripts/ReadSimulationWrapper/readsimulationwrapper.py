@@ -481,6 +481,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
             if f.endswith("_error_profile"): # these are the introduced errors by Nanosim
                 prefix = f.rsplit("_",2)[0] # get basename
                 id_to_cigar_map[prefix] = sam_from_reads.get_cigars_nanosim(os.path.join(directory_output,f))
+                os.remove(f) # error_profile files are huge (TODO temporary requirement is still high)
         for f in files:
             if f.endswith("_reads.fasta"):
                 prefix = f.rsplit(".",1)[0].rsplit("_",1)[0]

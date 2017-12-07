@@ -160,6 +160,14 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
                 _log.warning(warning)
     return otu_genome_map
 
+
+"""
+Take fasta input file and split by any N occurence (and remove Ns)
+"""
+def split_by_N(fasta_path, out_path):
+    os.system("scripts/split_fasta.pl %s %s" % (fasta_path, out_path))
+    os.remove(fasta_path)
+
 """
 Downloads the given genome and returns the out path
 """
@@ -170,17 +178,19 @@ def download_genome(genome, out_path):
     out_name = genome.rstrip().split('/')[-1]
     http_address = os.path.join(genome, out_name + "_genomic.fna.gz")
     opened = urllib2.urlopen(http_address)
-    out_path = os.path.join(genome_path, out_name + ".fa")
-    out_gz = out_path + ".gz"
+    out = os.path.join(genome_path, out_name + ".fa")
+    tmp_out = os.path.join(genome_path, out_name + "tmp.fa")
+    out_gz = out + ".gz"
     with open(out_gz,'wb') as outF:
         outF.write(opened.read())
     gf = gzip.open(out_gz)
-    new_out = open(out_path,'wb')
+    new_out = open(tmp_out,'wb')
     new_out.write(gf.read())
     gf.close()
     os.remove(out_gz)
     new_out.close()
-    return out_path
+    split_by_N(tmp_out, out)
+    return out
 
 """
 Given the created maps and the old config files, creates the required files and new config
@@ -232,6 +242,7 @@ def write_config(otu_genome_map, out_path, config):
 def generate_input(args):
     global _log
     _log = logger(verbose = args.debug)
+    np_rand.seed(args.seed)
     config = ConfigParser()
     config.read(args.config)
     try:
