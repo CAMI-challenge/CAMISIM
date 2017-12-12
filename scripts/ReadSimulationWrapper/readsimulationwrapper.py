@@ -133,6 +133,7 @@ class ReadSimulationWrapper(GenomePreparation):
         metadata_table = MetadataTable(logfile=self._logfile, verbose=self._verbose, separator=self._separator)
         iterator_distributions = metadata_table.parse_file(file_path, as_list=True)
         # for genome_id, abundance, genome_length, file_path_genome in iterator_distributions:
+        abundance_sum = 0.
         for genome_id, abundance in iterator_distributions:
             assert genome_id != '', "Invalid genom id: '{}'".format(genome_id)
             assert abundance != '', "Invalid abundance: '{}'".format(genome_id)
@@ -141,6 +142,8 @@ class ReadSimulationWrapper(GenomePreparation):
 
             assert genome_id not in dict_id_abundance, "Genome '{}' not unique in the distribution file!".format(genome_id)
             dict_id_abundance[genome_id] = abundance
+            abundance_sum += abundance
+        dict_id_abundance = [dict_id_abundance[x]/abundance_sum for x in dict_id_abundance] # normalise to 1
         return dict_id_abundance
 
     def get_multiplication_factor(
