@@ -143,7 +143,7 @@ class ReadSimulationWrapper(GenomePreparation):
             assert genome_id not in dict_id_abundance, "Genome '{}' not unique in the distribution file!".format(genome_id)
             dict_id_abundance[genome_id] = abundance
             abundance_sum += abundance
-        dict_id_abundance = [dict_id_abundance[x]/abundance_sum for x in dict_id_abundance] # normalise to 1
+        dict_id_abundance = {x : dict_id_abundance[x]/abundance_sum for x in dict_id_abundance} # normalise to 1
         return dict_id_abundance
 
     def get_multiplication_factor(
