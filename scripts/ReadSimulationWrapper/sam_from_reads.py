@@ -6,9 +6,9 @@ def read_reference(reference_path):
     with open(reference_path, 'r') as ref:
         for line in ref:
             if not line.startswith('>'): # seq name
-                refseq += line.strip() # drop newlines
+                refseq += line.strip() # dont count newlines
             else:
-                prefix = line[1:].strip()
+                prefix = line[1:].strip().split()[0]
     return refseq, prefix
 
 def write_header(sam_file, length, sequence_id):
@@ -24,19 +24,23 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
         for line in reads:
             if line.startswith('>'):
                 name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
-                QNAME = prefix + "-" + index # first sign of name is ">"
-                query = name[1:] + "-" + index # nanosim replaces _ by -
+                QNAME = prefix + "-" + index 
+                query = name[1:] + "-" + index # first sign of name is ">"
                 if strand == 'R':
                     FLAG = str(16)
                 else:
                     FLAG = str(0)
-                RNAME = prefix
                 if align_status == "unaligned": #special cigar/no pos for non-mapping reads
                     POS = str(0)
                     CIGAR = "*"
+                    RNAME = "*" # treated as unmapped
                 else:
                     POS = start
-                    CIGAR, pos = id_to_cigar_map[query]
+                    RNAME = prefix
+                    try:
+                        CIGAR, pos = id_to_cigar_map[query]
+                    except KeyError: #sequence did not have any errors
+                        CIGAR, pos = "%sM" % align_length, align_length
                 MAPQ = str(255)
                 RNEXT = '*'
                 PNEXT = '0'
@@ -115,5 +119,5 @@ def convert_fasta(fasta_reads, name):
                     out.write("@" + name + "-" + index + '\n')
                 else:
                     out.write(line)
-                    out.write("+" + name + "-" + index + '\n')
+                    out.write("+\n")
                     out.write("I" * (len(line) - 1) + '\n') # no quality information is available
