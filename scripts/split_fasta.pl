@@ -18,7 +18,18 @@ while(<IN>){
         my $ctgcount=0;
         foreach my $ctgseq (@seqgaps){
           $ctgcount++;
-          print $OUT "$name contig$ctgcount (size=".length($ctgseq).")\n$ctgseq\n";
+          my @fasta_names = split(/\s/,$name);
+          my $fasta_name = "";
+          my $i = 0;
+          foreach my $spl (@fasta_names){
+            $fasta_name .= $spl;
+            if ($ctgcount > 1 and $i == 0){
+                $fasta_name .= "_".$ctgcount;
+            }
+            $i++;
+            $fasta_name .= " ";
+          }
+          print $OUT "$fasta_name (size=".length($ctgseq).")\n$ctgseq\n";
         }
       }else{
         print $OUT "$name\n$seq\n";
