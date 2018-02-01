@@ -44,6 +44,8 @@ def parse_options():
 
     default = "tools/ncbi-taxonomy_20170222.tar.gz"
     parser.add_argument("--ncbi",default=default,help="Path to the NCBI taxdump for finding corresponding reference genomes, default = %s" % default)
+
+    parser.add_argument("-nr", "--no-replace", action='store_false',default=True, help="Use sampling without replacing, so genomes are used for exactly one OTU only (decreases accuracy)")
     
     helptext="Seed for the random generator"
     parser.add_argument("--seed",type=int,default=None,help=helptext)
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     if not args is None:
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
-        if args.debug:
-            os.system("./metagenomesimulation.py %s --debug" % c)
-        else:
-            os.system("./metagenomesimulation.py %s" % c)
+        #if args.debug:
+        #    os.system("./metagenomesimulation.py %s --debug" % c)
+        #else:
+        #    os.system("./metagenomesimulation.py %s" % c)

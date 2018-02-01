@@ -82,9 +82,9 @@ def get_genomes_per_rank(genomes_map, ranks, max_rank):
             if ranks[tax_id] in per_rank_map: # if we are a legal rank
                 rank_map = per_rank_map[ranks[tax_id]]
                 if tax_id in rank_map: # tax id already has a genome
-                    rank_map[tax_id].extend(genomes_map[genome][1]) # add http address
+                    rank_map[tax_id].append((genomes_map[genome][1][0],genome)) # add http address
                 else:
-                    rank_map[tax_id] = genomes_map[genome][1]
+                    rank_map[tax_id] = [(genomes_map[genome][1][0],genome)]
     return per_rank_map
 
 """
@@ -112,7 +112,7 @@ def transform_lineage(lineage, ranks, max_rank):
 """
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug):
+def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, replace):
     otu_genome_map = {}
     warnings = []
     for otu in profile:
@@ -134,24 +134,26 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
             available_genomes = genomes[tax_id]
             strains_to_draw = max((np_rand.geometric(2./max_strains) % max_strains),1)
             if len(available_genomes) >= strains_to_draw:
-                used_genomes = set(np_rand.choice(available_genomes,strains_to_draw,replace=False))
+                used_indices = np_rand.choice(len(available_genomes),strains_to_draw,replace=False)
+                used_genomes = set([available_genomes[i] for i in used_indices])
             else:
                 used_genomes = set(available_genomes) # if not enough genomes: use all
             log_normal_vals = np_rand.lognormal(mu,sigma, len(used_genomes))
             sum_log_normal = sum(log_normal_vals)
             i = 0
-            for g in used_genomes:
+            for path, genome_id in used_genomes:
                 otu_id = otu + "." + str(i)
-                otu_genome_map[otu_id] = (tax_id, g, []) # taxid, http path, abundances per sample
+                otu_genome_map[otu_id] = (tax_id, genome_id, path, []) # taxid, genomeid, http path, abundances per sample
                 relative_abundance = log_normal_vals[i]/sum_log_normal
                 i += 1
                 for abundance in abundances: # calculate abundance per sample
                     current_abundance = relative_abundance * abundance
-                    otu_genome_map[otu_id][2].append(current_abundance)
-                for new_rank in per_rank_map:
-                    for taxid in per_rank_map[new_rank]:
-                        if g in per_rank_map[new_rank][taxid]:
-                            per_rank_map[new_rank][taxid].remove(g)
+                    otu_genome_map[otu_id][-1].append(current_abundance)
+                if (not replace): # sampling without replacement:
+                    for new_rank in per_rank_map:
+                        for taxid in per_rank_map[new_rank]:
+                            if (path, genome_id) in per_rank_map[new_rank][taxid]:
+                                per_rank_map[new_rank][taxid].remove((path,genome_id))
             break # genome(s) found: we can break
     if len(warnings) > 0:
         _log.warning("Some OTUs could not be mapped")
@@ -206,11 +208,11 @@ def write_config(otu_genome_map, out_path, config):
     abundances = [os.path.join(out_path,"abundance%s.tsv" % i) for i in xrange(no_samples)]
     _log.info("Downloading %s genomes" % len(otu_genome_map))
     for otu in otu_genome_map:
-        taxid, genome, curr_abundances = otu_genome_map[otu]
+        taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
         counter = 0
         while counter < 10:
             try:
-                genome_path = download_genome(genome, out_path)
+                genome_path = download_genome(path, out_path)
                 break
             except:
                 counter += 1
@@ -219,7 +221,7 @@ def write_config(otu_genome_map, out_path, config):
         with open(genome_to_id,'ab') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
         with open(metadata,'ab') as md:
-            md.write("%s\t%s\t%s\t%s\n" % (otu,otu.rsplit(".",1)[0],taxid,"new_strain"))
+            md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,"new_strain"))
         i = 0
         for abundance in abundances:
             with open(abundance, 'ab') as ab:
@@ -260,7 +262,7 @@ def generate_input(args):
     tax_profile = read_taxonomic_profile(args.profile, config, args.samples)
     genomes_map = read_genomes_list(args.reference_genomes)
     per_rank_map = get_genomes_per_rank(genomes_map, RANKS, MAX_RANK)
-    otu_genome_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug)
+    otu_genome_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace)
     cfg_path = write_config(otu_genome_map, args.o, config)
     _log = None
     return cfg_path
