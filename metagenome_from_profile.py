@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if not args is None:
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
-        #if args.debug:
-        #    os.system("./metagenomesimulation.py %s --debug" % c)
-        #else:
-        #    os.system("./metagenomesimulation.py %s" % c)
+        if args.debug:
+            os.system("./metagenomesimulation.py %s --debug" % c)
+        else:
+            os.system("./metagenomesimulation.py %s" % c)
