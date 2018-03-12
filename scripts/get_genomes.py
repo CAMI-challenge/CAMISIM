@@ -3,6 +3,7 @@ import os
 import urllib2
 import gzip
 import biom
+import shutil
 from numpy import random as np_rand
 from ete2 import NCBITaxa
 from scripts.loggingwrapper import LoggingWrapper as logger
@@ -53,8 +54,11 @@ def read_taxonomic_profile(biom_profile, config, no_samples = None):
 """
 Reads list of available genomes in the (tsv) format:
 NCBI_ID Scientific_Name ftp_path
+Additional files might be provided with:
+NCBI_ID Scientific_Name genome_path
+were path might either be online or offline/local
 """
-def read_genomes_list(genomes_path):
+def read_genomes_list(genomes_path, additional_file = None):
     genomes_map = {}
     with open(genomes_path,'r') as genomes:
         for line in genomes:
@@ -64,6 +68,14 @@ def read_genomes_list(genomes_path):
                 genomes_map[ncbi_id][1].append(http)
             else:
                 genomes_map[ncbi_id] = (sci_name, [http]) # sci_name is always the same for same taxid (?)
+    if additional_file is not None:
+        with open(additional_file,'r') as add:
+            for line in add:
+                ncbi_id, sci_name, path = line.strip().split('\t')
+                if ncbi_id in genomes_map:
+                    genomes_map[ncbi_id][1].append(path)
+                else:
+                    genomes_map[ncbi_id] = (sci_name, [path]) # this might not be a http path
     return genomes_map
 
 """
@@ -175,8 +187,6 @@ Downloads the given genome and returns the out path
 """
 def download_genome(genome, out_path):
     genome_path = os.path.join(out_path,"genomes")
-    if not os.path.exists(genome_path):
-        os.makedirs(genome_path)
     out_name = genome.rstrip().split('/')[-1]
     http_address = os.path.join(genome, out_name + "_genomic.fna.gz")
     opened = urllib2.urlopen(http_address)
@@ -207,16 +217,27 @@ def write_config(otu_genome_map, out_path, config):
     no_samples = int(config.get("Main","number_of_samples"))
     abundances = [os.path.join(out_path,"abundance%s.tsv" % i) for i in xrange(no_samples)]
     _log.info("Downloading %s genomes" % len(otu_genome_map))
+    
+    create_path = os.path.join(out_path,"genomes")
+    if not os.path.exists(create_path):
+        os.makedirs(create_path)
     for otu in otu_genome_map:
         taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
         counter = 0
         while counter < 10:
             try:
-                genome_path = download_genome(path, out_path)
+                if path.startswith('http') or path.startswith('ftp'):
+                    genome_path = download_genome(path, out_path)
+                else:
+                    out_name = path.rstrip().split('/')[-1]
+                    genome_path = os.path.join(create_path, out_name)
+                    shutil.copy2(path, genome_path)
                 break
-            except:
+            except Exception as e:
+                error = e
                 counter += 1
         if counter == 10:
+            _log.error("Caught exception %s while moving/downloading genomes" % e)
             _log.error("Genome %s (from %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome))
         with open(genome_to_id,'ab') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
@@ -260,7 +281,7 @@ def generate_input(args):
         sigma = 2 # this aint particularily beatiful
         _log.warning("Mu and sigma have not been set, using defaults (1,2)") #TODO 
     tax_profile = read_taxonomic_profile(args.profile, config, args.samples)
-    genomes_map = read_genomes_list(args.reference_genomes)
+    genomes_map = read_genomes_list(args.reference_genomes, args.additional_references)
     per_rank_map = get_genomes_per_rank(genomes_map, RANKS, MAX_RANK)
     otu_genome_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace)
     cfg_path = write_config(otu_genome_map, args.o, config)
