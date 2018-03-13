@@ -38,12 +38,18 @@ def parse_options():
     # file pointing to reference genomes
     parser.add_argument("-ref","--reference-genomes", default=default, help="File pointing to reference genomes of the format: NCBI id\tScientific name\tNCBI ftp address of full genome. Default: %s" % default)
 
+    default=None
+    # additional files containing genomes which should be considered for mapping
+    parser.add_argument("-ar", "--additional-references", default=default, help="File containing additional reference genomes, same format as reference genomes, might be online sources (http/ftp) or local, default None")
+
     default = "defaults/default_config.ini"
     # optional config file (out_path will get overwritten if it is set in config file)
     parser.add_argument("-c","--config",default=default,help="Path to config file. Careful when setting \"metadata\", \"id_to_genome_file\", \"distribution_file_paths\"(they will be set by the pipeline) and the out path differently from the command line out path, default: %s" % default,metavar="CONFIG FILE")
 
     default = "tools/ncbi-taxonomy_20170222.tar.gz"
     parser.add_argument("--ncbi",default=default,help="Path to the NCBI taxdump for finding corresponding reference genomes, default = %s" % default)
+
+    parser.add_argument("-nr", "--no-replace", action='store_false',default=True, help="Use sampling without replacing, so genomes are used for exactly one OTU only (decreases accuracy)")
     
     helptext="Seed for the random generator"
     parser.add_argument("--seed",type=int,default=None,help=helptext)

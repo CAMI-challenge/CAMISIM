@@ -133,6 +133,7 @@ class ReadSimulationWrapper(GenomePreparation):
         metadata_table = MetadataTable(logfile=self._logfile, verbose=self._verbose, separator=self._separator)
         iterator_distributions = metadata_table.parse_file(file_path, as_list=True)
         # for genome_id, abundance, genome_length, file_path_genome in iterator_distributions:
+        abundance_sum = 0.
         for genome_id, abundance in iterator_distributions:
             assert genome_id != '', "Invalid genom id: '{}'".format(genome_id)
             assert abundance != '', "Invalid abundance: '{}'".format(genome_id)
@@ -141,6 +142,8 @@ class ReadSimulationWrapper(GenomePreparation):
 
             assert genome_id not in dict_id_abundance, "Genome '{}' not unique in the distribution file!".format(genome_id)
             dict_id_abundance[genome_id] = abundance
+            abundance_sum += abundance
+        dict_id_abundance = {x : dict_id_abundance[x]/abundance_sum for x in dict_id_abundance} # normalise to 1
         return dict_id_abundance
 
     def get_multiplication_factor(
@@ -481,6 +484,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
             if f.endswith("_error_profile"): # these are the introduced errors by Nanosim
                 prefix = f.rsplit("_",2)[0] # get basename
                 id_to_cigar_map[prefix] = sam_from_reads.get_cigars_nanosim(os.path.join(directory_output,f))
+                os.remove(os.path.join(directory_output,f)) # error_profile files are huge (TODO temporary requirement is still high)
         for f in files:
             if f.endswith("_reads.fasta"):
                 prefix = f.rsplit(".",1)[0].rsplit("_",1)[0]
@@ -489,6 +493,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
                 reference_path = dict_id_file_path[prefix]
                 new_prefix = sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
                 sam_from_reads.convert_fasta(read_file, new_prefix)
+                os.remove(os.path.join(directory_output,f)) # do not store read file twice
 
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
         """
@@ -513,7 +518,8 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
             '-n', str(fold_coverage),  # rename this, because its not the fold_coverage for wgsim
             '-r', file_path_input,
             '-o', file_path_output_prefix,
-            '-c', "tools/nanosim_profile/ecoli"
+            '-c', "tools/nanosim_profile/ecoli",
+            '--seed', str(self._get_seed() % 2**32 - 1) # nanosim seed cannot be > 2**32 -1
             ]
             
         if self._logfile:
