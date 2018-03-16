@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 
+## [1.0.0] - 2018-03-16
+
+### Added
+- Added default config for long read simulation
+- Added docker support
+- Added no-replace option for genomes in from_profile (default True)
+- Genomes are per default split at N positions
+- Added new 2018 taxonomy
+- Added changelog!
+
+### Changed
+- Loads of Bugfixes
+- Changed libraries for downloading genome (now uses https)
+- from_profile now uses ete2 API for NCBI
+
 ## [0.2.2] - 2017-09-12
 
 ### Changed
@@ -49,7 +64,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 - Folder structure now separates external tools and internal scripts
 
-[Unreleased](https://github.com/CAMI-challenge/CAMISIM/compare/0.2.1...aedit)
+[Unreleased](https://github.com/CAMI-challenge/CAMISIM/compare/1.0.0...HEAD)
+[1.0.0](https://github.com/CAMI-challenge/CAMISIM/compare/0.2.2...1.0.0)
 [0.2.2](https://github.com/CAMI-challenge/CAMISIM/compare/0.2.1...0.2.2)
 [0.2.1](https://github.com/CAMI-challenge/CAMISIM/compare/0.2...0.2.1)
 [0.2](https://github.com/CAMI-challenge/CAMISIM/compare/0.1...0.2)
