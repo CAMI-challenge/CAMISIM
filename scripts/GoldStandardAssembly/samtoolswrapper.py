@@ -16,7 +16,7 @@ class SamtoolsWrapper(Validator):
 	_sam_file_extension = ".sam"
 	_bam_file_extension = ".bam"
 
-	def __init__(self, file_path_samtools="samtools", max_processes=1, tmp_dir=None, logfile=None, verbose=True, debug=False):
+	def __init__(self, file_path_samtools="samtools", max_processes=1, max_memory=1, compression_level=5,tmp_dir=None, logfile=None, verbose=True, debug=False):
 		"""
 			Collection of Methods to accomplish samtools tasks
 
@@ -26,6 +26,10 @@ class SamtoolsWrapper(Validator):
 			@type file_path_samtools: str | unicode
 			@param max_processes: Maximum number of processes used in parallel
 			@type max_processes: int | long
+			@param max_memory: Maximum available Memory (RAM) in gigabyte
+			@type max_memory: int | long
+			@param compression_level: Compression level used. 0-9 (0 means no compression)
+			@type compression_level: int | long
 			@param tmp_dir: Temp directory for temporary data if needed
 			@type tmp_dir: str | unicode
 			@param logfile: file handler or file path to a log file
@@ -46,12 +50,19 @@ class SamtoolsWrapper(Validator):
 		assert isinstance(tmp_dir, basestring)
 		assert isinstance(verbose, bool), "Verbose must be true or false"
 		assert isinstance(max_processes, (int, long)), "'max_processes' must be a digit"
+		assert isinstance(max_memory, (int, long)), "'max_memory' must be a digit"
+		assert isinstance(compression_level, (int, long)), "'compression_level' must be a digit"
+		self.validate_number(max_processes, zero=False, minimum=1)
+		self.validate_number(max_memory, zero=False, minimum=1)
+		self.validate_number(compression_level, zero=False, minimum=0, maximum=9)
 		assert self.validate_dir(tmp_dir)
 		assert self.validate_file(file_path=file_path_samtools, executable=True)
 
 		self._tmp_dir = tmp_dir
 		self._file_path_samtools = file_path_samtools
 		self._max_processes = max_processes
+		self._max_memory = max_memory
+		self._compression_level = compression_level
 
 	# #######################################################
 	#
@@ -59,10 +70,10 @@ class SamtoolsWrapper(Validator):
 	#
 	# #######################################################
 
-	def _get_sam_to_bam_cmd(self, file_path_sam, output_dir):
+	def _get_sam_to_bam_cmd(self, file_path_sam, output_dir, max_memory=-1):
 		"""
 			Return system command as string.
-			Command will create a sorted and indexed bam file from a sam file.
+			Command will create a sorted by position and indexed bam file from a sam file.
 
 			@attention:
 
@@ -70,17 +81,31 @@ class SamtoolsWrapper(Validator):
 			@type file_path_sam: str | unicode
 			@param output_dir: output directory
 			@type output_dir: str | unicode
+			@param max_memory: maximum available memory in gigabyte
+			@type max_memory: int | long
 
 			@return: system command
 			@rtype: str
 		"""
+		if max_memory == -1:
+			max_memory = self._max_memory
 		file_name = os.path.splitext(os.path.basename(file_path_sam))[0]
 		file_path_bam = os.path.join(output_dir, file_name)
-		cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
+		# cmd = "{samtools} view -bS {input} | {samtools} sort - {output}; {samtools} index {output}.bam"
+		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_sam_to_sorted_bam")
+
+		cmd_stream_sam_file = "{samtools} view -bS {input}"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory}G -o {output}.bam -O bam -T {prefix}"
+		cmd_index_bam_file = "{samtools} index {output}.bam"
+
+		cmd = cmd_stream_sam_file + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
 		return cmd.format(
 			samtools=self._file_path_samtools,
 			input=file_path_sam,
-			output=file_path_bam
+			compression=self._compression_level,
+			memory=max_memory,
+			output=file_path_bam,
+			prefix=prefix_temp_files
 			)
 
 	def convert_sam_to_bam(self, directory_sam, output_dir="./"):
@@ -153,7 +178,7 @@ class SamtoolsWrapper(Validator):
 	#
 	# #######################################################
 
-	def _get_merge_bam_cmd(self, list_of_file_paths, file_name_output):
+	def _get_merge_bam_cmd(self, list_of_file_paths, file_name_output, max_memory=-1):
 		"""
 			Return system command as string.
 			Command will create a sorted and indexed bam file from a sam file.
@@ -168,11 +193,23 @@ class SamtoolsWrapper(Validator):
 			@return: system command
 			@rtype: str
 		"""
-		cmd = "{samtools} merge - '{input_list}' | {samtools} sort - {output}; {samtools} index {output}.bam"
+		if max_memory == -1:
+			max_memory = self._max_memory
+		prefix_temp_files = tempfile.mktemp(dir=self._tmp_dir, prefix="temp_merged_to_sorted_bam")
+
+		cmd_merge_bam_files = "{samtools} merge -u - '{input_list}'"
+		cmd_sort_bam_file = "{samtools} sort -l {compression} -m {memory}G -o {output}.bam -O bam -T {prefix}"
+		cmd_index_bam_file = "{samtools} index {output}.bam"
+		cmd = cmd_merge_bam_files + " | " + cmd_sort_bam_file + "; " + cmd_index_bam_file
+
+		# cmd = "{samtools} merge - '{input_list}' | {samtools} sort - {output}; {samtools} index {output}.bam"
 		return cmd.format(
 			samtools=self._file_path_samtools,
 			input_list="' '".join(list_of_file_paths),
-			output=file_name_output
+			compression=self._compression_level,
+			memory=max_memory,
+			output=file_name_output,
+			prefix=prefix_temp_files
 			)
 
 	def merge_bam_files_by_dict(self, dict_of_bam_files, output_dir):
@@ -275,7 +312,7 @@ class SamtoolsWrapper(Validator):
 			@raises: AssertionError
 		"""
 		if output_file is None:
-			output_file = tempfile.mktemp(dir=self._tmp_dir)
+			output_file = tempfile.mktemp(dir=self._tmp_dir, prefix="start_positions")
 		assert isinstance(list_of_file_paths, list)
 		assert isinstance(output_file, basestring)
 		assert self.validate_dir(output_file, only_parent=True)

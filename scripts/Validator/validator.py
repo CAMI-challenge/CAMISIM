@@ -11,12 +11,13 @@ from scripts.loggingwrapper import DefaultLogging
 
 class Validator(DefaultLogging):
 
-	_label = "Validator"
-
 	_boolean_states = {
 		'yes': True, 'true': True, 'on': True,
 		'no': False, 'false': False, 'off': False,
 		'y': True, 't': True, 'n': False, 'f': False}
+
+	def __init__(self, logfile=None, verbose=False, debug=False, label="Validator"):
+		super(Validator, self).__init__(label=label, logfile=logfile, verbose=verbose, debug=debug)
 
 	def is_boolean_state(self, word):
 		"""

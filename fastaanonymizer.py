@@ -36,7 +36,6 @@ class FastaAnonymizer(SequenceValidator):
 
 	"""
 
-	_label = "FastaAnonymizer"
 	_legal_formats = ["fastq", "fasta"]
 	_random_source_file_path = None
 
@@ -69,7 +68,7 @@ class FastaAnonymizer(SequenceValidator):
 		else:
 			tmp_dir = tempfile.gettempdir()
 		self._tmp_dir = tmp_dir
-		super(FastaAnonymizer, self).__init__(logfile, verbose, debug)
+		super(FastaAnonymizer, self).__init__(logfile, verbose, debug, label="FastaAnonymizer")
 
 		if seed is not None:
 			random.seed(seed)

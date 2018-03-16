@@ -1,0 +1,157 @@
+[Main]
+# Starting point of the simulation
+# 0: Do it all, 1: Only community design, 2: Start with read simulation
+phase=0
+
+# Maximum number of available processors
+max_processors=50
+
+# ID prefix used for anonymous sequences
+dataset_id=RH
+
+# Directory where the output will be stored. Will be created if it does not exist.
+output_directory=/bbx/mnt/output/output_high
+
+# Directory for temporary data (Example: /tmp)
+temp_directory=
+
+# Make perfect assembly based on simulated reads of each sample
+gsa=true
+
+# Make perfect assembly based on simulated reads of all samples
+pooled_gsa=true
+
+# Anonymize all sequences
+anonymous=true
+
+# Compress output data (0-9) with 9 being the strongest compression, but very slow.
+compress=5
+
+# An optional seed to get consistent results
+seed=
+
+[ReadSimulator]
+# Samtools (http://www.htslib.org/) takes care of sam/bam files. Version 1.0 or higher required!
+# file path to executable
+samtools=tools/samtools-1.3/samtools
+
+# ART_Illumina (2008-2015) (Weichun Huang at whduke@gmail.com). Version 2.3.6 recommended!
+# file path to executable
+art_illumina=tools/art_illumina-2.3.6/art_illumina
+
+# Directory containing error profiles for ART_Illumina
+art_error_profiles=tools/art_illumina-2.3.6/profiles/
+
+# Supported profiles: "mi": EmpMiSeq250R, "hi": EmpHiSeq2kR, "hi150": HiSeq2500L150R
+profile=hi150
+
+# Simulate samples of this size (giga base pairs)
+size=15
+
+# Read simulator type (only ART is currently supported)
+type=art
+
+# Mean size (bp) of fragment simulated by ART (read length depends on error profile)
+fragments_size_mean=270
+# Standard deviation (bp) of fragments simulated by ART
+fragment_size_standard_deviation=27
+
+[CommunityDesign]
+# Directory with files of a ncbi taxdump
+# "nodes.dmp", "merged.dmp", "names.dmp"
+ncbi_taxdump=ref/ncbi-taxonomy/
+
+# Directory of strain simulation template (optional, required if trains are to be simulated)
+strain_simulation_template=scripts/StrainSimulationWrapper/sgEvolver/simulation_dir/
+
+# The amount of samples to be simulated
+number_of_samples=5
+
+# The amount of (sub)communities used for a sample.
+# A sample can be made from several (sub)communities. For example: Eukaryote / Bacteria / Archaea / Virus / Plasmid
+number_of_communities=2
+
+
+[community0]
+# Metadata table, required tabseparated columns: genome_ID, OTU, NCBI_ID, novelty_category
+metadata=metadata_high.tsv
+
+# File with genome file locations. Format: GENOME_ID \t FILEPATH \n
+id_to_genome_file=genome_locations.tsv
+
+# File with genome gen annotation file locations. Format: GENOME_ID \t FILEPATH \n
+id_to_gff_file=genome_gen_anotation_locations.tsv
+
+# Total number of genomes to be used based on this community
+genomes_total=596
+
+# Real number of genomes to be drawn from this community, rest will be simulated
+genomes_real=542
+
+# For more diversity, strains are drawn from the same otu only up to a maximum.
+# Maximum is exceeded if no other genomes available.
+max_strains_per_otu=5
+
+# Base pair ratio between communities.
+# If one has a ratio of 1 and the other a ratio of 2, the second will have twice the genome abundance
+ratio=1
+
+# Simulated distribution
+# Options: replicates, timeseries_normal, timeseries_lognormal, differential
+mode=differential
+
+# mu of a log distribution
+log_mu=1.5
+# sigma of a log distribution
+log_sigma=1
+
+# mu of a gauss distribution (mode=timeseries_normal)
+gauss_mu=1
+# sigma of a gauss distribution (mode=timeseries_normal)
+gauss_sigma=1
+
+# View and confirm distribution (requires x-window)
+view=false
+
+
+[community1]
+# Metadata table, required tabseparated columns: genome_ID, OTU, NCBI_ID, novelty_category
+metadata=metadata_plasmids_high.tsv
+
+# File with genome file locations. Format: GENOME_ID \t FILEPATH \n
+id_to_genome_file=plasmids_locations.tsv
+
+# File with genome gen annotation file locations. Format: GENOME_ID \t FILEPATH \n
+id_to_gff_file=empty.tsv
+
+# Total number of genomes to be used based on this community
+genomes_total=478
+
+# Real number of genomes to be drawn from this community, rest will be simulated
+genomes_real=478
+
+# For more diversity, strains are drawn from the same otu only up to a maximum.
+# Maximum is exceeded if no other genomes available.
+max_strains_per_otu=3
+
+# Base pair ratio between communities.
+# If one has a ratio of 1 and the other a ratio of 2, the second will have twice the size
+ratio=15
+
+# Simulated distribution
+# Options: replicates, timeseries_normal, timeseries_lognormal, differential
+mode=differential
+
+# mu of a log distribution
+log_mu=1.5
+# sigma of a log distribution
+log_sigma=1
+
+# mu of a gauss distribution (mode=timeseries_normal)
+gauss_mu=1
+# sigma of a gauss distribution (mode=timeseries_normal)
+gauss_sigma=1
+
+# View and confirm distribution (requires x-window)
+view=false
+

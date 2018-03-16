@@ -1,0 +1,4 @@
+This version is an adapted version of wgsim 0.3.0, introducing some changes compared to the original wgsim 0.3.0
+1. wgsim produces an sam-file in addition to the read files, indicating the mapping of the reads to the reference genome
+2. Instead of using recurrent sequencing errors, random sequencing errors are re-introduced (commented out in original wgsim code)
+

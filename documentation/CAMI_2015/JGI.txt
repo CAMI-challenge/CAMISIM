@@ -1,0 +1,116 @@
+[Main]
+# Run all, or only a specific part
+# 0: Full run (Default), 1: Marker gene extraction, 2: Gene alignment and clustering, 3: Annotation of Genomes
+phase=0
+
+# Maximum number of available processors
+max_processors=4
+
+# Directory where the output will be stored. Will be created if it does not exist.
+output_directory=output_JGI
+
+# Directory for temporary data
+temp_directory=
+
+# Decide if the file format of genomes should be validated before running the pipeline.
+validate_genomes=T
+
+
+
+
+[MarkerGeneExtraction]
+hmmer=2
+# available choices of hmmer:
+# '2': rnammer (HMMER 2.x)  ! recommended, but slow !
+# '3': HMMER 3.0            ! much faster, but not as good !
+
+rnammer=tools/rnammer-1.2/rnammer
+# path the the RNAmmer binary
+# RNAmmer is using hmmer2
+# if hmmer=2
+
+hmmerBinDir=tools/hmmer-3
+# Directory containing the HMMER 3.0 installation (supported version: 3.0)
+# relative path is assumed to be relative to the tools directory
+# if hmmer=3
+
+rnaHmmInstallDir=tools//MetagenomeSimulationPipeline/rnahmm/rna_hmm
+# Directory location of the 'rna_hmm' folder.
+# Part of pipeline: /../MetagenomeSimulationPipeline/rnahmm/rna_hmm
+# Contains wrapper for finding Marker genes, oroginal from http://weizhong-lab.ucsd.edu/meta_rna/
+
+reference_genomes_file=/bbx/mnt/input/locations_genoms_ref.tsv
+reference_genomes_map_file=/bbx/mnt/input/map_ref_genoms.tsv
+# path to a file containing list of reference genomes
+# Format: <genome_id>\\t<path>
+# No column names!
+
+input_reference_fna_file=/bbx/mnt/input/empty
+# path to a fasta file containing the 16S marker genes of the reference genomes
+# if not available, leave empty
+
+input_genomes_file=/bbx/mnt/input/locations_genoms_query.tsv
+# path to a file containing list of query genomes
+# Format: <genome_id>\\t<path>
+# No column names!
+
+minSeqLen=900
+# Min. length of a sequence, shorter sequences will not be searched for marker genes
+
+
+
+
+[MarkerGeneClustering]
+mothur=tools/mothur-1.34/mothur
+#path to the mothur binary (Mothur version=1.34)
+
+metadata_table_in=/bbx/mnt/input/meta_data.tsv
+# path to file containing tab separated list of query genomes
+# at a minimum metadata_table_in should contain a single column of genome ids with the column head 'genome_ID'
+
+silva_reference_directory=/bbx/mnt/ref/mothur/
+# Directory that contains:
+# "mothur_ref_distances"          SILVA distance-matrix, precalculated from unique SILVA reference alignment
+# "mothur_alignment_ref.fasta"    SILVA reference alignment (unique)
+# "mothur_ref_names"              SILVA reference name file (unique)
+# "map.tsv"                       Mapping of all sequence identifier to a shorter space saving one.
+
+
+cluster_method=furthest
+# method used for clustering
+# available:
+#    'average'
+#    'furthest'
+#    'nearest'
+# 'average' can cause distance thresholds to be ignored, sometimes ending with 'unique' as only threshold left
+
+max_threshold=0.08
+#only distances up to the threshold will be calculated. Default: 0.04"
+
+otu_distance=0.03
+#genetic relative distances at which cluster will be assumed to be otus. Default: 0.03"
+
+classification_distance=0.02
+#minimum distance threshold classification starts at. Default: 0.02
+
+
+
+
+[MarkerGeneAnnotation]
+ncbi_reference_directory=ref/ncbi-taxonomy/
+# Directory that contains a NCBI taxonomy dump files:
+# "nodes.dmp"
+# "merged.dmp"
+# "names.dmp"
+
+nucmer=tools/NUCmer-3.1/nucmer
+
+# also, novelty based clustering
+classify=T
+
+# novelty by comparing with reference taxonomic ids
+novelty=T
+
+otu=T
+
+ani=F

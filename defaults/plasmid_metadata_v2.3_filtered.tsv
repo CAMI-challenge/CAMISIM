@@ -1,0 +1,599 @@
+genome_ID	N50	source	technlogy	NCBI_ID	NCBI_name	name	contact	Other	copy number	OTU	novelty_category	description
+Sample22_100	4955	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_100	tuesparholt@gmail.com	Circular virus-like	16	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_101	4890	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_101	tuesparholt@gmail.com	Circular element	86	2	=	circular elements
+Sample22_102	4872	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_102	tuesparholt@gmail.com	Circular element	100	2	=	circular elements
+Sample22_11	13524	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_11	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_110	4709	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_110	tuesparholt@gmail.com	Circular element	72	2	=	circular elements
+Sample22_112	4691	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_112	tuesparholt@gmail.com	plasmid	21	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_114	4678	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_114	tuesparholt@gmail.com	Circular element	152	2	=	circular elements
+Sample22_149	3933	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_149	tuesparholt@gmail.com	plasmid	22	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_151	3926	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_151	tuesparholt@gmail.com	plasmid	35	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_16	11424	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_16	tuesparholt@gmail.com	plasmid	98	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_167	3769	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_167	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_168	3754	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_168	tuesparholt@gmail.com	plasmid	154	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_17	10890	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_17	tuesparholt@gmail.com	plasmid	10	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_187	3466	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_187	tuesparholt@gmail.com	Circular element	92	2	=	circular elements
+Sample22_193	3404	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_193	tuesparholt@gmail.com	Circular element	128	2	=	circular elements
+Sample22_2	30879	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_2	tuesparholt@gmail.com	Circular virus-like	33	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_210	3284	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_210	tuesparholt@gmail.com	plasmid	111	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_214	3251	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_214	tuesparholt@gmail.com	plasmid	74	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_218	3239	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_218	tuesparholt@gmail.com	plasmid	37	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_22	10109	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_22	tuesparholt@gmail.com	plasmid	158	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_221	3193	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_221	tuesparholt@gmail.com	plasmid	2	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_235	3144	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_235	tuesparholt@gmail.com	plasmid	90	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_240	3106	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_240	tuesparholt@gmail.com	plasmid	62	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_241	3110	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_241	tuesparholt@gmail.com	Circular element	52	2	=	circular elements
+Sample22_252	2980	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_252	tuesparholt@gmail.com	plasmid	140	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_264	2848	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_264	tuesparholt@gmail.com	plasmid	173	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_283	2721	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_283	tuesparholt@gmail.com	plasmid	177	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_30	9127	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_30	tuesparholt@gmail.com	plasmid	183	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_305	2583	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_305	tuesparholt@gmail.com	plasmid	55	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_306	2540	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_306	tuesparholt@gmail.com	Circular element	17	2	=	circular elements
+Sample22_34	8730	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_34	tuesparholt@gmail.com	Circular element	47	2	=	circular elements
+Sample22_373	2159	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_373	tuesparholt@gmail.com	Circular element	199	2	=	circular elements
+Sample22_397	2010	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_397	tuesparholt@gmail.com	plasmid	186	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_40	7855	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_40	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample22_404	2003	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_404	tuesparholt@gmail.com	plasmid	13	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_408	1971	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_408	tuesparholt@gmail.com	Circular element	169	2	=	circular elements
+Sample22_416	1935	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_416	tuesparholt@gmail.com	Circular element	31	2	=	circular elements
+Sample22_456	1827	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_456	tuesparholt@gmail.com	Circular element	89	2	=	circular elements
+Sample22_473	1751	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_473	tuesparholt@gmail.com	plasmid	148	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_478	1740	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_478	tuesparholt@gmail.com	Circular element	24	2	=	circular elements
+Sample22_482	1728	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_482	tuesparholt@gmail.com	Circular element	38	2	=	circular elements
+Sample22_519	1615	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_519	tuesparholt@gmail.com	Circular element	41	2	=	circular elements
+Sample22_530	1572	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_530	tuesparholt@gmail.com	Circular element	18	2	=	circular elements
+Sample22_561	1500	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_561	tuesparholt@gmail.com	Circular element	122	2	=	circular elements
+Sample22_57	6280	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_57	tuesparholt@gmail.com	Circular virus-like	147	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_570	1484	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_570	tuesparholt@gmail.com	plasmid	127	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_575	1475	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_575	tuesparholt@gmail.com	plasmid	63	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_596	1426	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_596	tuesparholt@gmail.com	Circular element	130	2	=	circular elements
+Sample22_61	6073	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_61	tuesparholt@gmail.com	Circular virus-like	200	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_625	1361	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_625	tuesparholt@gmail.com	plasmid	114	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_66	5948	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_66	tuesparholt@gmail.com	Circular virus-like	51	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_700	1234	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_700	tuesparholt@gmail.com	Circular element	43	2	=	circular elements
+Sample22_762	1136	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_762	tuesparholt@gmail.com	Circular element	136	2	=	circular elements
+Sample22_77	5526	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_77	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample22_770	1124	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_770	tuesparholt@gmail.com	Circular element	70	2	=	circular elements
+Sample22_823	1068	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_823	tuesparholt@gmail.com	Circular element	160	2	=	circular elements
+Sample22_836	1023	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample22_836	tuesparholt@gmail.com	Circular element	103	2	=	circular elements
+Sample22_87	5266	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_87	tuesparholt@gmail.com	Circular virus-like	182	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_89	5236	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_89	tuesparholt@gmail.com	Circular virus-like	175	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample22_90	5229	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample22_90	tuesparholt@gmail.com	plasmid	116	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample22_94	5154	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample22_94	tuesparholt@gmail.com	Circular virus-like	189	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample23_101	2965	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_101	tuesparholt@gmail.com	Circular element	123	2	=	circular elements
+Sample23_102	2954	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_102	tuesparholt@gmail.com	Circular element	134	2	=	circular elements
+Sample23_106	2925	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_106	tuesparholt@gmail.com	plasmid	73	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_107	2951	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_107	tuesparholt@gmail.com	plasmid	44	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_111	2877	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_111	tuesparholt@gmail.com	plasmid	102	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_112	2852	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_112	tuesparholt@gmail.com	plasmid	190	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_122	2709	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_122	tuesparholt@gmail.com	plasmid	197	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_136	2606	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_136	tuesparholt@gmail.com	plasmid	53	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_138	2577	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_138	tuesparholt@gmail.com	plasmid	76	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_142	2556	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_142	tuesparholt@gmail.com	Circular element	66	2	=	circular elements
+Sample23_145	2542	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_145	tuesparholt@gmail.com	plasmid	4	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_147	2537	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_147	tuesparholt@gmail.com	Circular element	78	2	=	circular elements
+Sample23_148	2533	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_148	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample23_153	2507	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_153	tuesparholt@gmail.com	plasmid	60	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_155	2488	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_155	tuesparholt@gmail.com	Circular element	104	2	=	circular elements
+Sample23_156	2480	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_156	tuesparholt@gmail.com	plasmid	124	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_167	2426	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_167	tuesparholt@gmail.com	plasmid	137	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_169	2393	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_169	tuesparholt@gmail.com	Circular element	48	2	=	circular elements
+Sample23_17	5250	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_17	tuesparholt@gmail.com	plasmid	115	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_175	2317	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_175	tuesparholt@gmail.com	plasmid	181	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_176	2310	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_176	tuesparholt@gmail.com	Circular element	167	2	=	circular elements
+Sample23_179	2295	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_179	tuesparholt@gmail.com	plasmid	25	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_184	2268	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_184	tuesparholt@gmail.com	plasmid	99	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_189	2217	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_189	tuesparholt@gmail.com	Circular element	93	2	=	circular elements
+Sample23_194	2130	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_194	tuesparholt@gmail.com	plasmid	97	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_195	2129	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_195	tuesparholt@gmail.com	Circular element	132	2	=	circular elements
+Sample23_206	2078	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_206	tuesparholt@gmail.com	Circular element	194	2	=	circular elements
+Sample23_215	2012	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_215	tuesparholt@gmail.com	plasmid	126	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_22	4920	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_22	tuesparholt@gmail.com	Circular element	162	2	=	circular elements
+Sample23_221	1971	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_221	tuesparholt@gmail.com	Circular element	163	2	=	circular elements
+Sample23_230	1945	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_230	tuesparholt@gmail.com	plasmid	155	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_236	1930	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_236	tuesparholt@gmail.com	plasmid	101	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_242	1897	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_242	tuesparholt@gmail.com	plasmid	79	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_243	1887	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_243	tuesparholt@gmail.com	Circular element	23	2	=	circular elements
+Sample23_245	1884	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_245	tuesparholt@gmail.com	Circular element	59	2	=	circular elements
+Sample23_25	4866	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample23_25	tuesparholt@gmail.com	Circular virus-like	9	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample23_253	1825	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_253	tuesparholt@gmail.com	plasmid	179	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_257	1808	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_257	tuesparholt@gmail.com	Circular element	185	2	=	circular elements
+Sample23_267	1768	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_267	tuesparholt@gmail.com	Circular element	144	2	=	circular elements
+Sample23_269	1758	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_269	tuesparholt@gmail.com	Circular element	54	2	=	circular elements
+Sample23_271	1739	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_271	tuesparholt@gmail.com	Circular element	57	2	=	circular elements
+Sample23_273	1734	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_273	tuesparholt@gmail.com	plasmid	26	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_283	1679	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_283	tuesparholt@gmail.com	plasmid	188	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_288	1666	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_288	tuesparholt@gmail.com	Circular element	84	2	=	circular elements
+Sample23_291	1658	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_291	tuesparholt@gmail.com	Circular element	82	2	=	circular elements
+Sample23_295	1640	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_295	tuesparholt@gmail.com	Circular element	83	2	=	circular elements
+Sample23_303	1637	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_303	tuesparholt@gmail.com	Circular element	87	2	=	circular elements
+Sample23_304	1620	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_304	tuesparholt@gmail.com	Circular element	27	2	=	circular elements
+Sample23_307	1607	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_307	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample23_311	1592	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_311	tuesparholt@gmail.com	Circular element	80	2	=	circular elements
+Sample23_314	1584	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_314	tuesparholt@gmail.com	Circular element	168	2	=	circular elements
+Sample23_315	1584	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_315	tuesparholt@gmail.com	Circular element	138	2	=	circular elements
+Sample23_316	1584	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_316	tuesparholt@gmail.com	Circular element	95	2	=	circular elements
+Sample23_319	1574	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_319	tuesparholt@gmail.com	Circular element	118	2	=	circular elements
+Sample23_32	4607	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_32	tuesparholt@gmail.com	plasmid	170	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_324	1559	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_324	tuesparholt@gmail.com	Circular element	129	2	=	circular elements
+Sample23_325	1559	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_325	tuesparholt@gmail.com	Circular element	58	2	=	circular elements
+Sample23_327	1554	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_327	tuesparholt@gmail.com	Circular element	145	2	=	circular elements
+Sample23_329	1547	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_329	tuesparholt@gmail.com	Circular element	62	2	=	circular elements
+Sample23_336	1537	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_336	tuesparholt@gmail.com	Circular element	157	2	=	circular elements
+Sample23_339	1528	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_339	tuesparholt@gmail.com	Circular element	67	2	=	circular elements
+Sample23_340	1527	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_340	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample23_343	1513	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_343	tuesparholt@gmail.com	Circular element	34	2	=	circular elements
+Sample23_346	1509	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_346	tuesparholt@gmail.com	Circular element	153	2	=	circular elements
+Sample23_349	1527	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_349	tuesparholt@gmail.com	Circular element	49	2	=	circular elements
+Sample23_358	1474	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_358	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample23_370	1419	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_370	tuesparholt@gmail.com	plasmid	65	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_378	1401	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_378	tuesparholt@gmail.com	Circular element	164	2	=	circular elements
+Sample23_387	1374	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_387	tuesparholt@gmail.com	Circular element	39	2	=	circular elements
+Sample23_392	1358	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_392	tuesparholt@gmail.com	Circular element	171	2	=	circular elements
+Sample23_394	1371	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_394	tuesparholt@gmail.com	Circular element	91	2	=	circular elements
+Sample23_398	1326	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_398	tuesparholt@gmail.com	Circular element	143	2	=	circular elements
+Sample23_4	6077	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample23_4	tuesparholt@gmail.com	Circular virus-like	106	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample23_42	4161	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_42	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample23_434	1244	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_434	tuesparholt@gmail.com	Circular element	32	2	=	circular elements
+Sample23_441	1267	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_441	tuesparholt@gmail.com	plasmid	85	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_443	1232	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_443	tuesparholt@gmail.com	Circular element	166	2	=	circular elements
+Sample23_447	1230	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_447	tuesparholt@gmail.com	Circular element	149	2	=	circular elements
+Sample23_45	4104	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_45	tuesparholt@gmail.com	plasmid	68	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_454	1220	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_454	tuesparholt@gmail.com	Circular element	131	2	=	circular elements
+Sample23_455	1220	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_455	tuesparholt@gmail.com	Circular element	193	2	=	circular elements
+Sample23_477	1170	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_477	tuesparholt@gmail.com	Circular element	81	2	=	circular elements
+Sample23_496	1123	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_496	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample23_50	3991	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_50	tuesparholt@gmail.com	Circular element	156	2	=	circular elements
+Sample23_512	1105	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_512	tuesparholt@gmail.com	Circular element	50	2	=	circular elements
+Sample23_513	1104	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_513	tuesparholt@gmail.com	Circular element	28	2	=	circular elements
+Sample23_519	1089	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_519	tuesparholt@gmail.com	Circular element	113	2	=	circular elements
+Sample23_520	1088	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_520	tuesparholt@gmail.com	Circular element	40	2	=	circular elements
+Sample23_532	1065	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_532	tuesparholt@gmail.com	Circular element	30	2	=	circular elements
+Sample23_54	3860	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_54	tuesparholt@gmail.com	plasmid	142	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_543	1044	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_543	tuesparholt@gmail.com	Circular element	92	2	=	circular elements
+Sample23_557	1020	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_557	tuesparholt@gmail.com	Circular element	196	2	=	circular elements
+Sample23_58	3786	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_58	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_589	959	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_589	tuesparholt@gmail.com	Circular element	96	2	=	circular elements
+Sample23_59	3716	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_59	tuesparholt@gmail.com	Circular element	46	2	=	circular elements
+Sample23_601	943	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_601	tuesparholt@gmail.com	Circular element	187	2	=	circular elements
+Sample23_62	3680	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_62	tuesparholt@gmail.com	plasmid	94	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_64	3658	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_64	tuesparholt@gmail.com	plasmid	192	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_74	3352	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_74	tuesparholt@gmail.com	plasmid	75	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_75	3330	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_75	tuesparholt@gmail.com	plasmid	141	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_76	3319	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_76	tuesparholt@gmail.com	plasmid	135	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample23_84	3158	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample23_84	tuesparholt@gmail.com	Circular element	178	2	=	circular elements
+Sample23_87	3117	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample23_87	tuesparholt@gmail.com	plasmid	146	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_100	2502	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample24_100	tuesparholt@gmail.com	Circular element	159	2	=	circular elements
+Sample24_101	2491	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_101	tuesparholt@gmail.com	plasmid	184	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_109	2364	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_109	tuesparholt@gmail.com	plasmid	117	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_145	1901	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_145	tuesparholt@gmail.com	plasmid	76	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_20	5295	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_20	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_215	1341	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_215	tuesparholt@gmail.com	plasmid	150	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_320	965	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample24_320	tuesparholt@gmail.com	Circular element	107	2	=	circular elements
+Sample24_37	4102	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_37	tuesparholt@gmail.com	plasmid	180	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_41	3947	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_41	tuesparholt@gmail.com	plasmid	176	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_45	3856	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_45	tuesparholt@gmail.com	plasmid	112	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_51	3691	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_51	tuesparholt@gmail.com	plasmid	119	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_56	3396	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_56	tuesparholt@gmail.com	plasmid	36	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_59	3322	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_59	tuesparholt@gmail.com	plasmid	56	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_63	3165	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_63	tuesparholt@gmail.com	plasmid	61	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_64	3081	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_64	tuesparholt@gmail.com	plasmid	109	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_66	2972	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_66	tuesparholt@gmail.com	plasmid	121	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_68	2916	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_68	tuesparholt@gmail.com	plasmid	197	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_72	2858	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_72	tuesparholt@gmail.com	plasmid	139	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_74	2813	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_74	tuesparholt@gmail.com	plasmid	125	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample24_88	2640	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample24_88	tuesparholt@gmail.com	Circular virus-like	133	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample24_92	2626	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample24_92	tuesparholt@gmail.com	plasmid	110	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_102	1551	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_102	tuesparholt@gmail.com	Circular element	71	2	=	circular elements
+Sample9_104	1519	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_104	tuesparholt@gmail.com	plasmid	174	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_109	1476	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_109	tuesparholt@gmail.com	Circular element	32	2	=	circular elements
+Sample9_110	1472	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_110	tuesparholt@gmail.com	Circular element	162	2	=	circular elements
+Sample9_115	1462	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_115	tuesparholt@gmail.com	Circular element	165	2	=	circular elements
+Sample9_119	1440	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_119	tuesparholt@gmail.com	Circular element	170	2	=	circular elements
+Sample9_122	1428	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_122	tuesparholt@gmail.com	plasmid	155	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_124	1406	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_124	tuesparholt@gmail.com	Circular element	120	2	=	circular elements
+Sample9_125	1405	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_125	tuesparholt@gmail.com	Circular element	161	2	=	circular elements
+Sample9_128	1384	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_128	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample9_134	1372	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_134	tuesparholt@gmail.com	Circular element	108	2	=	circular elements
+Sample9_139	1318	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_139	tuesparholt@gmail.com	Circular element	42	2	=	circular elements
+Sample9_144	1299	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_144	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample9_145	1297	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_145	tuesparholt@gmail.com	Circular element	133	2	=	circular elements
+Sample9_147	1281	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_147	tuesparholt@gmail.com	Circular element	64	2	=	circular elements
+Sample9_149	1268	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_149	tuesparholt@gmail.com	Circular element	100	2	=	circular elements
+Sample9_156	1215	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_156	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample9_157	1212	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_157	tuesparholt@gmail.com	Circular element	56	2	=	circular elements
+Sample9_158	1212	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_158	tuesparholt@gmail.com	Circular element	45	2	=	circular elements
+Sample9_16	3484	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_16	tuesparholt@gmail.com	plasmid	64	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_165	1168	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_165	tuesparholt@gmail.com	Circular element	82	2	=	circular elements
+Sample9_170	1153	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_170	tuesparholt@gmail.com	Circular element	47	2	=	circular elements
+Sample9_172	1140	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_172	tuesparholt@gmail.com	Circular element	75	2	=	circular elements
+Sample9_177	1120	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_177	tuesparholt@gmail.com	Circular element	87	2	=	circular elements
+Sample9_179	1099	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_179	tuesparholt@gmail.com	Circular element	45	2	=	circular elements
+Sample9_180	1097	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_180	tuesparholt@gmail.com	Circular element	98	2	=	circular elements
+Sample9_183	1083	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_183	tuesparholt@gmail.com	Circular element	25	2	=	circular elements
+Sample9_188	1046	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_188	tuesparholt@gmail.com	Circular element	22	2	=	circular elements
+Sample9_189	1040	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_189	tuesparholt@gmail.com	Circular element	81	2	=	circular elements
+Sample9_19	3355	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_19	tuesparholt@gmail.com	plasmid	82	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_190	1040	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_190	tuesparholt@gmail.com	Circular element	89	2	=	circular elements
+Sample9_192	1027	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_192	tuesparholt@gmail.com	Circular element	72	2	=	circular elements
+Sample9_193	1026	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_193	tuesparholt@gmail.com	Circular element	41	2	=	circular elements
+Sample9_2	5544	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample9_2	tuesparholt@gmail.com	Circular virus-like	93	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample9_20	3345	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_20	tuesparholt@gmail.com	plasmid	72	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_200	999	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_200	tuesparholt@gmail.com	Circular element	96	2	=	circular elements
+Sample9_207	982	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_207	tuesparholt@gmail.com	Circular element	64	2	=	circular elements
+Sample9_212	965	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_212	tuesparholt@gmail.com	Circular element	83	2	=	circular elements
+Sample9_213	965	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_213	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample9_217	959	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_217	tuesparholt@gmail.com	Circular element	33	2	=	circular elements
+Sample9_22	3210	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_22	tuesparholt@gmail.com	Circular element	92	2	=	circular elements
+Sample9_221	951	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_221	tuesparholt@gmail.com	Circular element	10	2	=	circular elements
+Sample9_224	939	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_224	tuesparholt@gmail.com	Circular element	71	2	=	circular elements
+Sample9_226	929	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_226	tuesparholt@gmail.com	Circular element	40	2	=	circular elements
+Sample9_232	901	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_232	tuesparholt@gmail.com	Circular element	60	2	=	circular elements
+Sample9_24	3079	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_24	tuesparholt@gmail.com	Circular element	92	2	=	circular elements
+Sample9_3	5446	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_3	tuesparholt@gmail.com	plasmid	70	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_32	2861	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_32	tuesparholt@gmail.com	plasmid	95	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_33	2774	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_33	tuesparholt@gmail.com	plasmid	57	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_35	2722	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_35	tuesparholt@gmail.com	Circular element	69	2	=	circular elements
+Sample9_37	2686	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_37	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_39	2588	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_39	tuesparholt@gmail.com	plasmid	56	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_40	2566	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_40	tuesparholt@gmail.com	plasmid	36	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_57	2263	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_57	tuesparholt@gmail.com	Circular element	59	2	=	circular elements
+Sample9_6	4605	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_6	tuesparholt@gmail.com	plasmid	86	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_63	2109	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_63	tuesparholt@gmail.com	plasmid	29	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_64	2096	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_64	tuesparholt@gmail.com	Circular element	60	2	=	circular elements
+Sample9_65	2080	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_65	tuesparholt@gmail.com	Circular element	22	2	=	circular elements
+Sample9_66	2074	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample9_66	tuesparholt@gmail.com	Circular virus-like	13	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample9_68	2037	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_68	tuesparholt@gmail.com	Circular element	35	2	=	circular elements
+Sample9_7	4448	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_7	tuesparholt@gmail.com	plasmid	61	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_70	1995	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_70	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample9_73	1940	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_73	tuesparholt@gmail.com	Circular element	63	2	=	circular elements
+Sample9_74	1932	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_74	tuesparholt@gmail.com	plasmid	33	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_78	1882	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_78	tuesparholt@gmail.com	plasmid	18	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_82	1740	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_82	tuesparholt@gmail.com	Circular element	21	2	=	circular elements
+Sample9_9	3954	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_9	tuesparholt@gmail.com	plasmid	89	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_91	1670	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_91	tuesparholt@gmail.com	Circular element	82	2	=	circular elements
+Sample9_93	1650	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_93	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample9_96	1627	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_96	tuesparholt@gmail.com	plasmid	20	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_98	1610	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample9_98	tuesparholt@gmail.com	plasmid	90	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample9_99	1595	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample9_99	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample15_1	16790	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_1	tuesparholt@gmail.com	plasmid	13	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_101	1081	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_101	tuesparholt@gmail.com	Circular element	75	2	=	circular elements
+Sample15_102	1080	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_102	tuesparholt@gmail.com	Circular element	72	2	=	circular elements
+Sample15_103	1078	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_103	tuesparholt@gmail.com	Circular element	34	2	=	circular elements
+Sample15_104	1076	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_104	tuesparholt@gmail.com	Circular element	60	2	=	circular elements
+Sample15_105	1076	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_105	tuesparholt@gmail.com	Circular element	49	2	=	circular elements
+Sample15_107	1059	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_107	tuesparholt@gmail.com	Circular element	34	2	=	circular elements
+Sample15_108	1044	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_108	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample15_109	1041	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_109	tuesparholt@gmail.com	Circular element	91	2	=	circular elements
+Sample15_114	998	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_114	tuesparholt@gmail.com	Circular element	91	2	=	circular elements
+Sample15_115	986	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_115	tuesparholt@gmail.com	Circular element	79	2	=	circular elements
+Sample15_119	961	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_119	tuesparholt@gmail.com	Circular element	59	2	=	circular elements
+Sample15_123	923	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_123	tuesparholt@gmail.com	Circular element	42	2	=	circular elements
+Sample15_13	5863	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample15_13	tuesparholt@gmail.com	Circular virus-like	89	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample15_17	4649	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_17	tuesparholt@gmail.com	plasmid	58	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_18	4463	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_18	tuesparholt@gmail.com	plasmid	83	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_19	4321	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_19	tuesparholt@gmail.com	plasmid	4	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_22	3894	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_22	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample15_24	3435	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_24	tuesparholt@gmail.com	plasmid	63	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_25	3374	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_25	tuesparholt@gmail.com	plasmid	51	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_27	3271	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_27	tuesparholt@gmail.com	plasmid	74	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_28	3209	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_28	tuesparholt@gmail.com	Circular element	87	2	=	circular elements
+Sample15_29	3053	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_29	tuesparholt@gmail.com	plasmid	79	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_3	13826	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_3	tuesparholt@gmail.com	plasmid	51	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_33	2856	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_33	tuesparholt@gmail.com	plasmid	95	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_35	2740	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_35	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_36	2651	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_36	tuesparholt@gmail.com	plasmid	87	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_4	12659	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_4	tuesparholt@gmail.com	plasmid	5	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_48	2202	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_48	tuesparholt@gmail.com	plasmid	48	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_49	2163	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample15_49	tuesparholt@gmail.com	Circular virus-like	53	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample15_50	2147	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_50	tuesparholt@gmail.com	Circular element	63	2	=	circular elements
+Sample15_54	2068	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_54	tuesparholt@gmail.com	Circular element	66	2	=	circular elements
+Sample15_6	10855	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_6	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample15_60	1736	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_60	tuesparholt@gmail.com	Circular element	48	2	=	circular elements
+Sample15_65	1614	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_65	tuesparholt@gmail.com	plasmid	37	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_67	1533	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_67	tuesparholt@gmail.com	plasmid	81	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_69	1465	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_69	tuesparholt@gmail.com	plasmid	6	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_7	10006	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_7	tuesparholt@gmail.com	plasmid	64	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_71	1408	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_71	tuesparholt@gmail.com	Circular element	60	2	=	circular elements
+Sample15_73	1366	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_73	tuesparholt@gmail.com	Circular element	60	2	=	circular elements
+Sample15_75	1321	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_75	tuesparholt@gmail.com	Circular element	43	2	=	circular elements
+Sample15_78	1283	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_78	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample15_8	7334	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample15_8	tuesparholt@gmail.com	plasmid	71	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample15_81	1276	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_81	tuesparholt@gmail.com	Circular element	61	2	=	circular elements
+Sample15_82	1261	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_82	tuesparholt@gmail.com	Circular element	64	2	=	circular elements
+Sample15_84	1258	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_84	tuesparholt@gmail.com	Circular element	48	2	=	circular elements
+Sample15_85	1251	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_85	tuesparholt@gmail.com	Circular element	69	2	=	circular elements
+Sample15_86	1239	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_86	tuesparholt@gmail.com	Circular element	28	2	=	circular elements
+Sample15_91	1164	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_91	tuesparholt@gmail.com	Circular element	55	2	=	circular elements
+Sample15_94	1121	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_94	tuesparholt@gmail.com	Circular element	92	2	=	circular elements
+Sample15_95	1119	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_95	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample15_97	1103	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_97	tuesparholt@gmail.com	Circular element	83	2	=	circular elements
+Sample15_98	1100	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_98	tuesparholt@gmail.com	Circular element	75	2	=	circular elements
+Sample15_99	1100	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample15_99	tuesparholt@gmail.com	Circular element	62	2	=	circular elements
+Sample16_110	2751	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_110	tuesparholt@gmail.com	plasmid	48	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_112	2712	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_112	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_127	2415	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_127	tuesparholt@gmail.com	plasmid	74	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_136	2221	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_136	tuesparholt@gmail.com	plasmid	35	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_138	2153	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_138	tuesparholt@gmail.com	Circular element	74	2	=	circular elements
+Sample16_144	2084	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_144	tuesparholt@gmail.com	Circular element	76	2	=	circular elements
+Sample16_154	1945	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_154	tuesparholt@gmail.com	plasmid	22	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_163	1861	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_163	tuesparholt@gmail.com	plasmid	52	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_169	1759	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_169	tuesparholt@gmail.com	Circular element	61	2	=	circular elements
+Sample16_174	1736	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_174	tuesparholt@gmail.com	Circular element	95	2	=	circular elements
+Sample16_184	1637	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_184	tuesparholt@gmail.com	Circular element	79	2	=	circular elements
+Sample16_19	12897	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_19	tuesparholt@gmail.com	Circular element	99	2	=	circular elements
+Sample16_194	1587	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_194	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample16_195	1584	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_195	tuesparholt@gmail.com	Circular element	68	2	=	circular elements
+Sample16_196	1580	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_196	tuesparholt@gmail.com	Circular element	58	2	=	circular elements
+Sample16_207	1523	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_207	tuesparholt@gmail.com	Circular element	100	2	=	circular elements
+Sample16_21	11933	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_21	tuesparholt@gmail.com	plasmid	55	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_211	1477	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_211	tuesparholt@gmail.com	Circular element	10	2	=	circular elements
+Sample16_212	1470	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_212	tuesparholt@gmail.com	Circular element	96	2	=	circular elements
+Sample16_245	1260	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_245	tuesparholt@gmail.com	Circular element	49	2	=	circular elements
+Sample16_25	10225	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_25	tuesparholt@gmail.com	Circular element	70	2	=	circular elements
+Sample16_269	1160	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_269	tuesparholt@gmail.com	Circular element	96	2	=	circular elements
+Sample16_27	9626	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_27	tuesparholt@gmail.com	plasmid	78	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_271	1156	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_271	tuesparholt@gmail.com	Circular element	66	2	=	circular elements
+Sample16_289	1101	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_289	tuesparholt@gmail.com	Circular element	85	2	=	circular elements
+Sample16_29	9433	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_29	tuesparholt@gmail.com	plasmid	39	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_319	994	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_319	tuesparholt@gmail.com	Circular element	45	2	=	circular elements
+Sample16_335	939	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_335	tuesparholt@gmail.com	Circular element	77	2	=	circular elements
+Sample16_339	930	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_339	tuesparholt@gmail.com	Circular element	34	2	=	circular elements
+Sample16_342	929	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_342	tuesparholt@gmail.com	Circular element	90	2	=	circular elements
+Sample16_37	7544	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_37	tuesparholt@gmail.com	Circular element	27	2	=	circular elements
+Sample16_56	5029	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_56	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_57	5022	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_57	tuesparholt@gmail.com	plasmid	71	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_58	5018	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_58	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_65	4580	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample16_65	tuesparholt@gmail.com	Circular element	17	2	=	circular elements
+Sample16_69	4523	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_69	tuesparholt@gmail.com	plasmid	21	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_72	4386	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_72	tuesparholt@gmail.com	plasmid	94	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_78	4069	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_78	tuesparholt@gmail.com	plasmid	53	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_83	3904	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_83	tuesparholt@gmail.com	plasmid	52	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample16_87	3536	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample16_87	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_1	14087	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_1	tuesparholt@gmail.com	plasmid	89	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_11	7297	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_11	tuesparholt@gmail.com	plasmid	64	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_112	2382	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_112	tuesparholt@gmail.com	plasmid	92	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_113	2361	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_113	tuesparholt@gmail.com	plasmid	70	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_121	2295	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_121	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample18_127	2239	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_127	tuesparholt@gmail.com	plasmid	28	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_131	2190	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_131	tuesparholt@gmail.com	Circular element	84	2	=	circular elements
+Sample18_138	2119	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_138	tuesparholt@gmail.com	Circular element	42	2	=	circular elements
+Sample18_14	6883	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_14	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample18_153	1898	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_153	tuesparholt@gmail.com	plasmid	88	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_154	1890	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_154	tuesparholt@gmail.com	plasmid	91	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_159	1851	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_159	tuesparholt@gmail.com	Circular element	57	2	=	circular elements
+Sample18_167	1816	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_167	tuesparholt@gmail.com	plasmid	85	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_176	1710	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_176	tuesparholt@gmail.com	plasmid	49	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_179	1695	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_179	tuesparholt@gmail.com	Circular element	65	2	=	circular elements
+Sample18_195	1574	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_195	tuesparholt@gmail.com	Circular element	96	2	=	circular elements
+Sample18_199	1531	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_199	tuesparholt@gmail.com	plasmid	55	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_2	13831	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_2	tuesparholt@gmail.com	plasmid	89	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_209	1461	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_209	tuesparholt@gmail.com	Circular element	69	2	=	circular elements
+Sample18_213	1441	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_213	tuesparholt@gmail.com	plasmid	43	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_214	1438	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_214	tuesparholt@gmail.com	plasmid	33	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_224	1381	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_224	tuesparholt@gmail.com	Circular element	79	2	=	circular elements
+Sample18_225	1379	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_225	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample18_227	1369	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_227	tuesparholt@gmail.com	Circular element	30	2	=	circular elements
+Sample18_236	1319	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_236	tuesparholt@gmail.com	plasmid	29	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_238	1308	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_238	tuesparholt@gmail.com	Circular element	37	2	=	circular elements
+Sample18_24	5512	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_24	tuesparholt@gmail.com	plasmid	46	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_241	1300	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_241	tuesparholt@gmail.com	Circular element	81	2	=	circular elements
+Sample18_248	1260	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_248	tuesparholt@gmail.com	Circular element	23	2	=	circular elements
+Sample18_249	1260	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_249	tuesparholt@gmail.com	Circular element	44	2	=	circular elements
+Sample18_25	5471	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_25	tuesparholt@gmail.com	Circular element	76	2	=	circular elements
+Sample18_26	5429	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_26	tuesparholt@gmail.com	plasmid	37	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_262	1212	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_262	tuesparholt@gmail.com	Circular element	40	2	=	circular elements
+Sample18_264	1200	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_264	tuesparholt@gmail.com	Circular element	44	2	=	circular elements
+Sample18_265	1199	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_265	tuesparholt@gmail.com	Circular element	72	2	=	circular elements
+Sample18_267	1197	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_267	tuesparholt@gmail.com	Circular element	75	2	=	circular elements
+Sample18_273	1176	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_273	tuesparholt@gmail.com	Circular element	35	2	=	circular elements
+Sample18_278	1167	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_278	tuesparholt@gmail.com	Circular element	41	2	=	circular elements
+Sample18_280	1160	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_280	tuesparholt@gmail.com	Circular element	63	2	=	circular elements
+Sample18_281	1160	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_281	tuesparholt@gmail.com	Circular element	97	2	=	circular elements
+Sample18_285	1139	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_285	tuesparholt@gmail.com	Circular element	94	2	=	circular elements
+Sample18_291	1124	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_291	tuesparholt@gmail.com	Circular element	26	2	=	circular elements
+Sample18_293	1120	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_293	tuesparholt@gmail.com	Circular element	30	2	=	circular elements
+Sample18_294	1119	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_294	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample18_296	1112	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_296	tuesparholt@gmail.com	plasmid	62	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_3	13166	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_3	tuesparholt@gmail.com	plasmid	46	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_300	1100	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_300	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample18_301	1100	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_301	tuesparholt@gmail.com	Circular element	14	2	=	circular elements
+Sample18_302	1099	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_302	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample18_306	1084	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_306	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample18_307	1081	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_307	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample18_308	1079	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_308	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample18_309	1079	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_309	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample18_310	1079	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_310	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample18_316	1061	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_316	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample18_324	1042	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_324	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample18_332	1021	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_332	tuesparholt@gmail.com	Circular element	10	2	=	circular elements
+Sample18_334	1018	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_334	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample18_335	1017	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_335	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample18_336	1016	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_336	tuesparholt@gmail.com	Circular element	17	2	=	circular elements
+Sample18_341	1001	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_341	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample18_349	998	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_349	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample18_35	4234	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_35	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_356	967	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_356	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample18_358	964	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_358	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample18_360	961	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_360	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample18_363	959	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_363	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample18_364	957	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_364	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample18_369	925	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_369	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample18_370	924	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_370	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample18_41	3886	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_41	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_45	3665	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_45	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample18_5	9932	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_5	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_52	3527	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_52	tuesparholt@gmail.com	plasmid	4	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_54	3469	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_54	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_55	3449	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_55	tuesparholt@gmail.com	plasmid	13	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_57	3420	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_57	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_58	3387	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_58	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_59	3323	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_59	tuesparholt@gmail.com	plasmid	16	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_6	9299	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_6	tuesparholt@gmail.com	plasmid	1	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_60	3284	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_60	tuesparholt@gmail.com	plasmid	6	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_62	3219	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_62	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_69	2994	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_69	tuesparholt@gmail.com	plasmid	20	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_70	2964	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_70	tuesparholt@gmail.com	plasmid	19	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_77	2827	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_77	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_8	8320	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_8	tuesparholt@gmail.com	plasmid	6	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_82	2774	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_82	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample18_83	2741	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_83	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_86	2734	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_86	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_87	2721	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_87	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_90	2692	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_90	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_91	2646	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample18_91	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample18_94	2599	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_94	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample18_97	2551	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample18_97	tuesparholt@gmail.com	plasmid	2	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_105	2536	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_105	tuesparholt@gmail.com	Circular element	10	2	=	circular elements
+Sample19_106	2527	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_106	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_117	2395	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_117	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample19_13	15051	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_13	tuesparholt@gmail.com	plasmid	3	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_146	2144	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_146	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample19_153	2092	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_153	tuesparholt@gmail.com	plasmid	16	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_175	1830	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_175	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample19_180	1763	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_180	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_19	9977	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_19	tuesparholt@gmail.com	plasmid	6	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_20	9957	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_20	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_209	1602	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_209	tuesparholt@gmail.com	Circular element	18	2	=	circular elements
+Sample19_21	9848	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_21	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_212	1567	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_212	tuesparholt@gmail.com	plasmid	20	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_215	1547	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_215	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample19_220	1506	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_220	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample19_241	1433	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_241	tuesparholt@gmail.com	plasmid	5	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_242	1431	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_242	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample19_247	1381	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_247	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample19_25	8557	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_25	tuesparholt@gmail.com	plasmid	9	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_254	1369	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_254	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample19_275	1298	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_275	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample19_280	1284	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_280	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample19_286	1258	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_286	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample19_29	7539	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_29	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample19_293	1228	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_293	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample19_309	1207	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_309	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample19_31	7394	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample19_31	tuesparholt@gmail.com	Circular virus-like	10	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample19_315	1154	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_315	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample19_32	7394	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_32	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample19_34	7284	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample19_34	tuesparholt@gmail.com	Circular virus-like	18	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample19_350	1053	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_350	tuesparholt@gmail.com	Circular element	3	2	=	circular elements
+Sample19_366	948	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_366	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample19_367	1012	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_367	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample19_37	6306	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_37	tuesparholt@gmail.com	Circular element	2	2	=	circular elements
+Sample19_38	6303	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample19_38	tuesparholt@gmail.com	Circular virus-like	14	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample19_39	6180	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_39	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_391	962	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_391	tuesparholt@gmail.com	Circular element	13	2	=	circular elements
+Sample19_392	960	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_392	tuesparholt@gmail.com	Circular element	18	2	=	circular elements
+Sample19_52	4959	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample19_52	tuesparholt@gmail.com	Circular virus-like	15	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample19_54	4937	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_54	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample19_56	4900	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_56	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_61	4410	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample19_61	tuesparholt@gmail.com	Circular virus-like	3	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample19_62	4323	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_62	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_67	3939	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_67	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_75	3524	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_75	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_77	3416	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_77	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_78	3349	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample19_78	tuesparholt@gmail.com	plasmid	19	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample19_89	2939	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample19_89	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample20_1	9789	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_1	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample20_10	6059	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_10	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_101	1364	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_101	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample20_108	1284	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_108	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_11	5837	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample20_11	tuesparholt@gmail.com	Circular virus-like	6	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample20_114	1232	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_114	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample20_122	1175	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_122	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample20_124	1163	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_124	tuesparholt@gmail.com	Circular element	10	2	=	circular elements
+Sample20_130	1121	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_130	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample20_131	1120	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_131	tuesparholt@gmail.com	Circular element	18	2	=	circular elements
+Sample20_136	1085	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_136	tuesparholt@gmail.com	Circular element	20	2	=	circular elements
+Sample20_145	1040	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_145	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample20_154	1000	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_154	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample20_158	970	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_158	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample20_16	4712	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample20_16	tuesparholt@gmail.com	Circular virus-like	13	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample20_175	902	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_175	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample20_20	4244	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_20	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_24	3948	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_24	tuesparholt@gmail.com	plasmid	19	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_25	3918	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_25	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_33	3336	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_33	tuesparholt@gmail.com	plasmid	3	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_37	3311	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_37	tuesparholt@gmail.com	plasmid	5	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_40	3238	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_40	tuesparholt@gmail.com	plasmid	10	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_43	3125	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_43	tuesparholt@gmail.com	plasmid	6	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_5	7767	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_5	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_58	2531	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_58	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample20_70	2173	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_70	tuesparholt@gmail.com	Circular element	17	2	=	circular elements
+Sample20_78	1876	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_78	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample20_79	1855	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_79	tuesparholt@gmail.com	Circular element	5	2	=	circular elements
+Sample20_80	1817	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_80	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample20_85	1725	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_85	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample20_90	1614	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample20_90	tuesparholt@gmail.com	plasmid	10	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample20_94	1464	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample20_94	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample6_102	3912	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_102	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_107	3843	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_107	tuesparholt@gmail.com	plasmid	2	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_110	3815	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_110	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_125	3537	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_125	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample6_130	3489	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_130	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_16	7001	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_16	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_171	3013	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_171	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_173	2999	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_173	tuesparholt@gmail.com	Circular element	17	2	=	circular elements
+Sample6_180	2924	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_180	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_183	2905	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_183	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_186	2914	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_186	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_188	2865	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_188	tuesparholt@gmail.com	plasmid	14	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_192	2835	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_192	tuesparholt@gmail.com	plasmid	4	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_199	2797	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_199	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_203	2778	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_203	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_206	2769	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_206	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_217	2700	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_217	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample6_219	2685	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_219	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_224	2658	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_224	tuesparholt@gmail.com	plasmid	16	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_227	2665	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_227	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_235	2620	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_235	tuesparholt@gmail.com	plasmid	13	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_260	2496	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_260	tuesparholt@gmail.com	plasmid	17	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_273	2431	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_273	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample6_289	2362	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_289	tuesparholt@gmail.com	plasmid	16	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_306	2285	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_306	tuesparholt@gmail.com	plasmid	11	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_323	2201	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_323	tuesparholt@gmail.com	plasmid	8	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_33	6059	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_33	tuesparholt@gmail.com	plasmid	7	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_333	2175	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_333	tuesparholt@gmail.com	plasmid	18	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_342	2100	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_342	tuesparholt@gmail.com	plasmid	15	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_35	5936	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_35	tuesparholt@gmail.com	plasmid	20	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_355	2035	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_355	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample6_389	1902	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_389	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample6_39	5790	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_39	tuesparholt@gmail.com	plasmid	18	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_391	1899	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_391	tuesparholt@gmail.com	Circular element	18	2	=	circular elements
+Sample6_40	5674	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_40	tuesparholt@gmail.com	plasmid	1	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_421	1796	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_421	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample6_423	1849	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_423	tuesparholt@gmail.com	Circular element	15	2	=	circular elements
+Sample6_47	5367	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_47	tuesparholt@gmail.com	plasmid	3	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_476	1678	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample6_476	tuesparholt@gmail.com	Circular virus-like	6	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample6_485	1627	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_485	tuesparholt@gmail.com	plasmid	3	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_49	5285	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample6_49	tuesparholt@gmail.com	Circular virus-like	2	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample6_506	1590	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_506	tuesparholt@gmail.com	plasmid	1	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_508	1587	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_508	tuesparholt@gmail.com	plasmid	19	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_527	1550	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample6_527	tuesparholt@gmail.com	Circular virus-like	10	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample6_535	1537	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_535	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample6_55	5064	rat cecum	Illumina HiSeq2000 2x100nt	10239	Viruses	Sample6_55	tuesparholt@gmail.com	Circular virus-like	7	0	-	dsDNA or ssDNA circular viral sequences (viral replication of capsid/envelope gene)
+Sample6_553	1502	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_553	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample6_564	1478	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_564	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample6_566	1470	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_566	tuesparholt@gmail.com	plasmid	1	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_588	1432	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_588	tuesparholt@gmail.com	plasmid	3	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_590	1430	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_590	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample6_608	1384	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_608	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample6_617	1364	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_617	tuesparholt@gmail.com	Circular element	4	2	=	circular elements
+Sample6_632	1335	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_632	tuesparholt@gmail.com	Circular element	11	2	=	circular elements
+Sample6_634	1332	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_634	tuesparholt@gmail.com	Circular element	8	2	=	circular elements
+Sample6_670	1282	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_670	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample6_680	1304	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_680	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample6_72	4562	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_72	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample6_722	1210	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_722	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample6_74	4514	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_74	tuesparholt@gmail.com	plasmid	1	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_746	1178	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_746	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample6_752	1165	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_752	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample6_793	1106	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_793	tuesparholt@gmail.com	Circular element	7	2	=	circular elements
+Sample6_823	1054	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_823	tuesparholt@gmail.com	Circular element	16	2	=	circular elements
+Sample6_837	1036	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_837	tuesparholt@gmail.com	Circular element	12	2	=	circular elements
+Sample6_84	4339	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_84	tuesparholt@gmail.com	Circular element	1	2	=	circular elements
+Sample6_843	1028	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_843	tuesparholt@gmail.com	Circular element	6	2	=	circular elements
+Sample6_863	1007	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_863	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample6_89	4183	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_89	tuesparholt@gmail.com	plasmid	18	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_894	976	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_894	tuesparholt@gmail.com	Circular element	9	2	=	circular elements
+Sample6_936	983	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_936	tuesparholt@gmail.com	Circular element	19	2	=	circular elements
+Sample6_94	4103	rat cecum	Illumina HiSeq2000 2x100nt	45202	unidentified plasmid	Sample6_94	tuesparholt@gmail.com	plasmid	12	1	+	plasmid sequences (plasmid replication, mobilization or stability genes)
+Sample6_96	4006	rat cecum	Illumina HiSeq2000 2x100nt	32644	unidentified	Sample6_96	tuesparholt@gmail.com	Circular element	10	2	=	circular elements

@@ -261,7 +261,7 @@ class NoveltyCategory(object):
 
 		if drawn_strain_count_overall < total:
 			# out += overhead[0:total-drawn_strain_cound_overall]
-			print "\n", total-drawn_strain_count_overall, len(overhead), len(drawn_strain), "\n"
+			#print "\n", total-drawn_strain_count_overall, len(overhead), len(drawn_strain), "\n"
 			drawn_strain += random.sample(overhead, total-drawn_strain_count_overall)
 		return drawn_strain
 

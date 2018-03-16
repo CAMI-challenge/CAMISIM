@@ -16,9 +16,11 @@ from scripts.MetaDataTable.metadatatable import MetadataTable
 
 
 class GenomePreparation(SequenceValidator):
-	_label = "GenomePreparation"
 
 	_filename_seq_map = "sequence_id_map.txt"
+
+	def __init__(self, label="GenomePreparation", logfile=None, verbose=False, debug=False):
+		super(GenomePreparation, self).__init__(label=label, logfile=logfile, verbose=verbose, debug=debug)
 
 	def write_genome_id_to_path_map(self, genome_id_to_path_map, file_path_output):
 		"""
@@ -90,11 +92,17 @@ class GenomePreparation(SequenceValidator):
 		@raise Exception:
 		"""
 		assert self.validate_file(file_path_input)
-		assert not self.validate_file(file_path_output, silent=True), "Overwriting files prohibited: '{}'".format(
-			file_path_output)
 		assert file_format == "fasta", "'{}' is not supported, yet.".format(file_format)
+		#assert not self.validate_file(file_path_output, silent=True), "Overwriting files prohibited: '{}'".format(
+		#	file_path_output)
 		if set_of_sequence_names is None:
 			set_of_sequence_names = []
+		
+		if (self.validate_file(file_path_output, silent=True)):
+			self._logger.warning("File %s existing, skipping" % file_path_output)
+			with open(file_path_input, 'r') as stream_input:
+				self._add_sequences_to_map(stream_input, stream_map, genome_id, sequence_min_length, set_of_sequence_names)
+			return
 		with open(file_path_input, 'r') as stream_input, open(file_path_output, 'w') as stream_output:
 			total_base_pairs = self._cleanup_and_filter_sequences(
 				stream_input, stream_output, stream_map, genome_id, sequence_min_length, set_of_sequence_names, file_format)
@@ -102,6 +110,20 @@ class GenomePreparation(SequenceValidator):
 			msg = "No valid sequences in '{}'".format(stream_input.name)
 			self._logger.error(msg)
 			raise Exception(msg)
+	
+	def _add_sequences_to_map(self, stream_input, stream_map, genome_id, sequence_min_length, set_of_sequence_names, file_format="fasta"):
+		for seq_record in SeqIO.parse(stream_input, file_format):
+			# remove description, else art illumina messes up sam format
+			seq_record.description = ''
+			if len(seq_record.seq) < sequence_min_length:
+				self._logger.debug("'{}', Removing short sequence '{}', length: {}".format(
+					os.path.basename(stream_input.name), seq_record.id, len(seq_record.seq)))
+				continue
+			if seq_record.id in set_of_sequence_names:
+				new_id = self._get_new_name(seq_record.id, set_of_sequence_names)
+				stream_map.write("{}\t{}\t{}\n".format(genome_id, seq_record.id, new_id))
+				seq_record.id = new_id
+			set_of_sequence_names.add(seq_record.id)
 
 	def _cleanup_and_filter_sequences(
 		self, stream_input, stream_output, stream_map,
