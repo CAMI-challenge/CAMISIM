@@ -65,7 +65,7 @@ def get_samples(root_paths, samples):
 
 def read_metadata(root_paths):
     """
-    Reads the metadata file of the runs to create binning gold standards later on
+    Reads the metadata files of the runs to create binning gold standards later on
     """
     metadata = {}
     for path in root_paths:
@@ -139,7 +139,7 @@ def merge_bam_files(bams_per_genome, out, threads):
         subprocess.call([cmd],shell=True) # this runs a single command at a time (but that one multi threaded)
     return out_path
 
-def create_gold_standards(bamtogold, used_samples, out, threads):
+def create_gold_standards(bamtogold, used_samples, metadata, out, threads):
     """
     Creation of the gold standards per sample. Uses the helper script bamToGold and merges all bam files of the same genome per sample across runs
     """
@@ -164,8 +164,27 @@ def create_gold_standards(bamtogold, used_samples, out, threads):
         merged = merge_bam_files(bam_per_genome, sample_path, threads)
         bamToGold(bamtogold, merged, sample_path, metadata, threads)
 
-def create_pooled_gold_standard(bamtogold, used_samples, out):
-    return
+def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads):
+    bam_per_genome = {}
+    for sample in used_samples:
+        runs = used_samples[sample]
+        for run in runs:
+            bam_dir = os.path.join(run,"bam")
+            all_files = os.listdir(bam_dir)
+            bam_files = []
+            for f in all_files:
+                if f.endswith(".bam"):
+                    bam_files.append(f)
+            for bam_file in bam_files:
+                genome = bam_file.rstrip(".bam")
+                if genome in bam_per_genome:
+                    bam_per_genome[genome].append(os.path.join(run,"bam",bam_file))
+                else:
+                    bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
+    bam_pooled = os.path.join(out, "bam")
+    os.mkdir(bam_pooled)
+    merged = merge_bam_files(bam_per_genome, bam_pooled, threads)
+    bamToGold(bamtogold, merged, bam_pooled, metadata, threads)
 
 if __name__ == "__main__":
     args = parse_options()
@@ -180,5 +199,5 @@ if __name__ == "__main__":
         used_samples = get_samples(root_paths, samples)
         metadata = read_metadata(root_paths)
         if len(root_paths) > 1: # do create individual gold standards per sample
-            create_gold_standards(bamtogold, used_samples, out, threads)
-        create_pooled_gold_standard(bamtogold, used_samples, out) # in any case, create pooled gold standard
+            create_gold_standards(bamtogold, used_samples, metadata, out, threads)
+        create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads) # in any case, create pooled gold standard
