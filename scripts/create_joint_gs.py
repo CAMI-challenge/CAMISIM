@@ -121,6 +121,32 @@ def bamToGold(bamtogold, merged, out, metadata, threads):
         )
         subprocess.call([cmd],shell=True)
 
+def fix_headers(genome, bams, out):
+    """
+    Sometimes short sequences are not present in one or the other bam file since no reads were created for them, the header of the merged file needs to have the union of all sequences in all bam files
+    """
+    sequences = set()
+    header = ""
+    header_name = os.path.join(out, genome + "_header.sam")
+    for bam in bams:
+        cmd = "samtools view -H {bam} > {hname}".format(
+            bam = bam,
+            hname = header_name
+        )
+        subprocess.call([cmd],shell=True)
+        with open(header_name, 'r') as header_file:
+            for line in header_file:
+                if line.startswith("@SQ"): # sequences 
+                    sq, sn, ln = line.strip().split('\t')
+                    sequence_name = sn.split(":",1)[1]
+                    if sequence_name not in sequences:
+                        sequences.add(sequence_name)
+                        header += line
+                elif line.startswith("@HD") and header == "": #primary header, use arbitrary one
+                    header += line 
+    with open(header_name,'w+') as header_file:
+        header_file.write(header)
+    return header_name
 
 def merge_bam_files(bams_per_genome, out, threads):
     """
@@ -130,6 +156,15 @@ def merge_bam_files(bams_per_genome, out, threads):
     os.mkdir(out_path)
     for genome in bams_per_genome:
         list_of_bam = " ".join(bams_per_genome[genome]) # can be used as input to samtools immediately
+        header = fix_headers(genome, bams_per_genome[genome], out_path)
+        if header is not None:
+            for bam in bams_per_genome[genome]: # add new header to all bam files
+                cmd = "samtools reheader {header} {bam} >> {out}/out.bam; mv {out}/out.bam {bam}".format(
+                    header = header,
+                    out = out_path,
+                    bam = bam
+                )
+                subprocess.call([cmd],shell=True)
         cmd = "samtools merge -@ {threads} - {bam_files} | samtools sort -@ {threads} - {path}/{genome}; samtools index {path}/{genome}.bam".format(
             threads = threads,
             bam_files = list_of_bam,
@@ -181,7 +216,7 @@ def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads)
                     bam_per_genome[genome].append(os.path.join(run,"bam",bam_file))
                 else:
                     bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
-    bam_pooled = os.path.join(out, "bam")
+    bam_pooled = os.path.join(out, "pooled")
     os.mkdir(bam_pooled)
     merged = merge_bam_files(bam_per_genome, bam_pooled, threads)
     bamToGold(bamtogold, merged, bam_pooled, metadata, threads)
