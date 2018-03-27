@@ -2,30 +2,36 @@ import os
 import re
 
 def read_reference(reference_path):
-    refseq = ""
+    prefixes = []
+    refseq = {}
     with open(reference_path, 'r') as ref:
         for line in ref:
             if not line.startswith('>'): # seq name
-                refseq += line.strip() # dont count newlines
+                refseq[prefix] += line.strip() # dont count newlines
             else:
                 prefix = line[1:].strip().split()[0]
-    return refseq, prefix
+                if prefix not in prefixes:
+                    prefixes.append(prefix)
+                    refseq[prefix] = ""
+    return refseq, prefixes
 
-def write_header(sam_file, length, sequence_id):
+def write_header(sam_file, lengths, sequence_ids):
         with open(sam_file, "w") as samfile:
             samfile.write("@HD\tVN:1.4\tSQ:unsorted\n")
-            samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=sequence_id, len=length))
+            for prefix in sequence_ids:
+                samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=prefix, len=lengths[prefix]))
 
 def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
-    reference, prefix = read_reference(reference_path) # orig_prefix is prefix without _ in name
+    references, prefixes = read_reference(reference_path) # orig_prefix is prefix without _ in name
     write_sam = os.path.join(read_file.rsplit("/",1)[0], orig_prefix) + ".sam"
-    write_header(write_sam, len(reference), prefix)
+    write_header(write_sam, references, prefixes)
     with open(read_file, 'r') as reads:
         for line in reads:
             if line.startswith('>'):
                 name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
-                QNAME = prefix + "-" + index 
-                query = name[1:] + "-" + index # first sign of name is ">"
+                ref_name = name[1:] # first sign of name is ">"
+                QNAME = ref_name + "-" + index 
+                query = ref_name + "-" + index 
                 if strand == 'R':
                     FLAG = str(16)
                 else:
@@ -36,7 +42,7 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                     RNAME = "*" # treated as unmapped
                 else:
                     POS = start
-                    RNAME = prefix
+                    RNAME = ref_name
                     try:
                         CIGAR, pos = id_to_cigar_map[query]
                     except KeyError: #sequence did not have any errors
@@ -54,7 +60,7 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                 clen = get_cigar_length(CIGAR)
                 with open(write_sam, 'a+') as samfile:
                     samfile.write("\t".join(sam_line) + "\n")
-    return prefix
+    return prefixes
 
 def get_cigars_nanosim(error_profile):
     errors = {}
@@ -108,13 +114,14 @@ def get_cigar_length(cigar):
             decimals = []
     return length
 
-def convert_fasta(fasta_reads, name):
+def convert_fasta(fasta_reads):
     out_name = fasta_reads.rsplit("_",1)[0] + ".fq" # /path/to/genomeid_reads.fasta
     with open(fasta_reads,'r') as reads:
         with open(out_name, 'w') as out:
             for line in reads:
                 if line.startswith(">"):
                     spl = line.strip().split("_")
+                    name = spl[0][1:] # without >
                     index = spl[3]
                     out.write("@" + name + "-" + index + '\n')
                 else:
