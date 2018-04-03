@@ -56,7 +56,7 @@ def get_samples(root_paths, samples):
                 date, time, sample, nr = f.split("_")
             except ValueError:
                 continue
-            if samples is None or nr in samples:
+            if samples is None or int(nr) in samples:
                 if nr in used_samples:
                     used_samples[nr].append(os.path.join(path,f))
                 else:
