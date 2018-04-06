@@ -8,6 +8,7 @@ b) a subset of samples from two CAMISIM runs with different sequencing technolog
 
 import sys
 import os
+import random
 import subprocess
 import shutil
 import argparse
@@ -32,6 +33,9 @@ def parse_options():
 
     helptext = "Path to the bamToGold perl script"
     parser.add_argument("-b", "--bamToGold", type=str, help=helptext)
+
+    helptext = "Seed for the random number generator for shuffling"
+    parser.add_argument("--seed", type=int, default=None, help=helptext)
 
     if not len(sys.argv) > 1:
         parser.print_help()
@@ -173,6 +177,23 @@ def merge_bam_files(bams_per_genome, out, threads):
         )
         subprocess.call([cmd],shell=True) # this runs a single command at a time (but that one multi threaded)
     return out_path
+                    
+def add_to_bam_per_genome(bam_per_genome, runs):
+    for run in runs:
+        bam_dir = os.path.join(run,"bam")
+        all_files = os.listdir(bam_dir)
+        bam_files = []
+        for f in all_files:
+            if f.endswith(".bam"):
+                bam_files.append(f)
+        for bam_file in bam_files:
+            genome = bam_file.rstrip(".bam")
+            if genome in bam_per_genome:
+                bam_per_genome[genome].append(os.path.join(run,"bam",bam_file))
+            else:
+                bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
+    return bam_per_genome
+
 
 def create_gold_standards(bamtogold, used_samples, metadata, out, threads):
     """
@@ -180,46 +201,23 @@ def create_gold_standards(bamtogold, used_samples, metadata, out, threads):
     """
     for sample in used_samples:
         runs = used_samples[sample]
-        bam_per_genome = {}
-        for run in runs:
-            bam_dir = os.path.join(run,"bam")
-            all_files = os.listdir(bam_dir)
-            bam_files = []
-            for f in all_files:
-                if f.endswith(".bam"):
-                    bam_files.append(f)
-            for bam_file in bam_files:
-                genome = bam_file.rstrip(".bam")
-                if genome in bam_per_genome:
-                    bam_per_genome[genome].append(os.path.join(run,"bam",bam_file))
-                else:
-                    bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
+        bam_per_genome = add_to_bam_per_genome({}, runs)
         sample_path = os.path.join(out,"sample_%s" % sample) # creating a folder for every sample
         os.mkdir(sample_path)
         merged = merge_bam_files(bam_per_genome, sample_path, threads)
         bamToGold(bamtogold, merged, sample_path, metadata, threads)
+        create_gsa_mapping(sample_path, metadata)
 
 def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads):
     bam_per_genome = {}
     for sample in used_samples:
         runs = used_samples[sample]
-        for run in runs:
-            bam_dir = os.path.join(run,"bam")
-            all_files = os.listdir(bam_dir)
-            bam_files = []
-            for f in all_files:
-                if f.endswith(".bam"):
-                    bam_files.append(f)
-            for bam_file in bam_files:
-                genome = bam_file.rstrip(".bam")
-                if genome in bam_per_genome:
-                    bam_per_genome[genome].append(os.path.join(run,"bam",bam_file))
-                else:
-                    bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
+        bam_per_genome = add_to_bam_per_genome(bam_to_genome, runs)
     bam_pooled = os.path.join(out, "pooled")
     os.mkdir(bam_pooled)
     merged = merge_bam_files(bam_per_genome, bam_pooled, threads)
     bamToGold(bamtogold, merged, bam_pooled, metadata, threads)
+    create_gsa_mapping(bam_pooled, metadata)
 
 if __name__ == "__main__":
     args = parse_options()
@@ -227,6 +225,7 @@ if __name__ == "__main__":
         root_paths = args.input_runs # list of input paths
         samples = args.samples
         out = args.output_directory
+        random.seed(args.seed) # set seed (default=None)
         if not os.path.exists(out):
             os.mkdir(out)
         threads = args.threads
