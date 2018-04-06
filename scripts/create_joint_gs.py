@@ -9,6 +9,7 @@ b) a subset of samples from two CAMISIM runs with different sequencing technolog
 import sys
 import os
 import random
+import gzip
 import subprocess
 import shutil
 import argparse
@@ -36,6 +37,9 @@ def parse_options():
 
     helptext = "Seed for the random number generator for shuffling"
     parser.add_argument("--seed", type=int, default=None, help=helptext)
+
+    helptext = "Anonymize and shuffle the contigs?"
+    parser.add_argument("-a", "--shuffle_anonymize",type=bool, default=True, help=helptext)
 
     if not len(sys.argv) > 1:
         parser.print_help()
@@ -177,6 +181,64 @@ def merge_bam_files(bams_per_genome, out, threads):
         )
         subprocess.call([cmd],shell=True) # this runs a single command at a time (but that one multi threaded)
     return out_path
+
+def name_to_genome(metadata):
+    """
+    Maps internal genome names to external genome names for gsa_mapping
+    """
+    name_to_genome = {}
+    for genome in metadata:
+        path = metadata[genome][-1]
+        with open(path,'r') as gen:
+            for line in gen:
+                if line.startswith(">"):
+                    name = line.strip().split()[0][1:] # internal name is first after >
+                    name_to_genome[name] = genome
+    return name_to_genome
+
+def shuffle_anonymize(fasta_stream, path, to_genome, sample_name, count, shuffle):
+    """
+    Writes the gold standard mapping anon_contig_ID-genome_ID-contig_ID-nr_reads-start-end
+    first contig ID is anonymized and assigned a shuffled contig ID to the contigs and stored in a temporary gsa file if shuffle=True
+    """
+    if path.endswith("pooled"):
+        gsa_mapping = os.path.join(path, "gsa_pooled_mapping.tsv")
+    else:
+        gsa_mapping = os.path.join(path, "gsa_mapping.tsv")
+    gsa_temp = os.path.join(path, "gsa_temp.fasta")
+    with open(gsa_temp, 'w') as gsa, open(gsa_mapping, 'w') as gsa_map:
+        gsa_map.write("#{anon}\t{genome}\t{tax}\t{contig}\t{nr}\t{start}\t{end}\n".format(
+            anon = "anonymous_contig_id",
+            genome = "genome_id",
+            tax = "tax_id",
+            contig = "contig_id",
+            number_reads = "number_reads", #this is hardly applicable for joint gs (TODO?)
+            start = "start_position",
+            end = "end_position"
+            )
+        )
+        for line in fasta_stream:
+            if not line.startswith(">"):
+                gsa.write(line)
+                continue
+            else:
+                name = line.strip().split()[0][1:]
+                genome = to_genome[name]
+
+
+def create_gsa_mapping(path, metadata, sample_name, shuffle):
+    """
+    Creates the binning gold standard/gsa mapping
+    """
+    to_genome = name_to_genome(metadata)
+    gsa_path = os.path.join(path, "anonymous_gsa.fasta") #
+    if not os.path.exists(gsa_path):
+        gsa_path = os.path.join(path, "anonymous_gsa.fasta.gz") # if zipped
+        with gzip.open(gsa_path,'r') as gsa:
+            shuffle_anonymize(gsa, path, to_genome, sample_name, shuffle)
+    else:
+        with open(gsa_path,'r') as gsa:
+            shuffle_anonymize(gsa, path, to_genome, sample_name, shuffle)
                     
 def add_to_bam_per_genome(bam_per_genome, runs):
     for run in runs:
@@ -193,7 +255,6 @@ def add_to_bam_per_genome(bam_per_genome, runs):
             else:
                 bam_per_genome[genome] = [os.path.join(run,"bam",bam_file)]
     return bam_per_genome
-
 
 def create_gold_standards(bamtogold, used_samples, metadata, out, threads):
     """
@@ -218,6 +279,12 @@ def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads)
     merged = merge_bam_files(bam_per_genome, bam_pooled, threads)
     bamToGold(bamtogold, merged, bam_pooled, metadata, threads)
     create_gsa_mapping(bam_pooled, metadata)
+
+def compress(path):
+    """
+    Compress every file created in the joint gold standard creation process
+    """
+    #TODO
 
 if __name__ == "__main__":
     args = parse_options()
