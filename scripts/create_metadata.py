@@ -97,12 +97,12 @@ def get_sample_dicts(path):
         sample_dict["Number"] = nr
         sample_dict["Name"] = f
         sample_dict["Reads"] = os.path.join(f,"reads","anonymous_reads.fq.gz")
-        sample_dict["Gold Standard Taxonomic Profile"] = "taxonomic_profile_%s.txt" % nr
-        sample_dict["Gold Standard Assembly"] = os.path.join(f,"contigs","anonymous_gsa.fasta.gz")
-        sample_dict["Gold Standard Read Binning"] = os.path.join(f,"reads","reads_mapping.tsv.gz")
-        sample_dict["Gold Standard Contig Binning"] = os.path.join(f,"contigs", "gsa_mapping.tsv.gz")
+        sample_dict["Gold_Standard_Taxonomic_Profile"] = "taxonomic_profile_%s.txt" % nr
+        sample_dict["Gold_Standard_Assembly"] = os.path.join(f,"contigs","anonymous_gsa.fasta.gz")
+        sample_dict["Gold_Standard_Read_Binning"] = os.path.join(f,"reads","reads_mapping.tsv.gz")
+        sample_dict["Gold_Standard_Contig_Binning"] = os.path.join(f,"contigs", "gsa_mapping.tsv.gz")
         bam_list = get_bam_list(path,f)
-        sample_dict["Read to genome mapping"] = bam_list
+        sample_dict["Read_to_genome_mappings"] = bam_list
         sample_dicts.append(sample_dict)
     return sample_dicts
 
@@ -111,10 +111,10 @@ def list_genomes(metadata):
     for genome in metadata: #otu, ncbi, novelty, path
         genome_dict = {}
         otu, ncbi, novelty, path = metadata[genome]
-        genome_dict["OTU Name"] = genome
-        genome_dict["OTU NCBI ID"] = otu
-        genome_dict["Genome NCBI ID"] = ncbi
-        genome_dict["Novelty category"] = novelty
+        genome_dict["OTU_Name"] = genome
+        genome_dict["OTU_NCBI_ID"] = otu
+        genome_dict["Genome_NCBI_ID"] = ncbi
+        genome_dict["Novelty_category"] = novelty
         genome_dict["Path"] = path
         genome_dicts.append(genome_dict)
     return genome_dicts
@@ -123,21 +123,21 @@ def write_json(path, metadata, config, name):
     json = {}
     json["Name"] = name
     samples = config.get('CommunityDesign', 'number_of_samples')
-    json["# Samples"] = samples
+    json["Nr_Samples"] = samples
     size = config.get('ReadSimulator', 'size')
-    json["Total size (Gbp)"] = float(size) * int(samples)
+    json["Total_size_bp"] = float(size) * int(samples)
     simulator = config.get('ReadSimulator', 'type')
-    json["Sequencing technology"] = get_sequencing_technology(simulator)
+    json["Sequencing_technology"] = get_sequencing_technology(simulator)
     if simulator != "art" and simulator != "wgsim": # these use insert sizes
-        json["Average read length in bp"] = 150
-        json["Read length standard deviation in bp"] = 0
-        json["Average insert size in bp"] = config.get('ReadSimulator', 'fragments_size_mean')
-        json["Insert size standard deviation in bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
+        json["Average_read_length_in_bp"] = 150
+        json["Read_length_standard_deviation_in_bp"] = 0
+        json["Average_insert_size_in_bp"] = config.get('ReadSimulator', 'fragments_size_mean')
+        json["Insert_size_standard_deviation_in_bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
     else: # these use read sizes
-        json["Average read length in bp"] = config.get('ReadSimulator', 'fragments_size_mean')
-        json["Read length standard deviation in bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
-        json["Average insert size in bp"] = config.get('ReadSimulator', 'fragments_size_mean')
-        json["Insert size standard deviation in bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
+        json["Average_read_length_in_bp"] = config.get('ReadSimulator', 'fragments_size_mean')
+        json["Read_length_standard_deviation_in_bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
+        json["Average_insert_size_in_bp"] = config.get('ReadSimulator', 'fragments_size_mean')
+        json["Insert_size_standard_deviation_in_bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
    if simulator == "art":
        json["Paired-end"] = True
    else:
@@ -145,12 +145,12 @@ def write_json(path, metadata, config, name):
    sample_dicts = get_sample_dicts(path)
    json["Samples"] = sample_dicts
    file_dict = {}
-   file_dict["Pooled Gold Standard Assembly"] = os.path.join(path, "anonymous_gsa_pooled.fasta.gz")
-   file_dict["Pooled Gold Standard Binning"] = os.path.join(path, "gsa_pooled_mapping.tsv.gz")
+   file_dict["Pooled_Gold_Standard_Assembly"] = os.path.join(path, "anonymous_gsa_pooled.fasta.gz")
+   file_dict["Pooled_Gold_Standard_Binning"] = os.path.join(path, "gsa_pooled_mapping.tsv.gz")
    file_dict["Genomes"] = list_genomes(metadata)
-   file_dict["CAMISIM config"] = os.path.join(path, "config.ini")
-   file_dict["CAMISIM metadata" = os.path.join(path, "metadata.tsv")
-   file_dict["CAMISIM genome mapping"] = os.path.join(path, "genome_to_id.tsv")
-   json["Other files"] = file_dict
+   file_dict["CAMISIM_config"] = os.path.join(path, "config.ini")
+   file_dict["CAMISIM_metadata" = os.path.join(path, "metadata.tsv")
+   file_dict["CAMISIM_genome_mapping"] = os.path.join(path, "genome_to_id.tsv")
+   json["Other_files"] = file_dict
    return json
 
