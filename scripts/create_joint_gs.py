@@ -137,7 +137,7 @@ def fix_headers(genome, bams, out):
     header = ""
     header_name = os.path.join(out, genome + "_header.sam")
     for bam in bams:
-        cmd = "samtools view -H {bam} > {hname}".format(
+        cmd = "samtools view -H {bam} >> {hname}".format(
             bam = bam,
             hname = header_name
         )
@@ -201,7 +201,7 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
     Writes the gold standard mapping anon_contig_ID-genome_ID-contig_ID-nr_reads-start-end
     first contig ID is anonymized and assigned a shuffled contig ID to the contigs and stored in a temporary gsa file if shuffle=True
     """
-    contig_ids = random.sample(xrange(count),replace=False)
+    contig_ids = random.sample(xrange(count),count)
     contignr = 0
     if path.endswith("pooled"):
         gsa_mapping = os.path.join(path, "gsa_pooled_mapping.tsv")
@@ -214,7 +214,7 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
             genome = "genome_id",
             tax = "tax_id",
             contig = "contig_id",
-            number_reads = "number_reads", #this is hardly applicable for joint gs (TODO?)
+            nr = "number_reads", #this is hardly applicable for joint gs (TODO?)
             start = "start_position",
             end = "end_position"
             )
@@ -224,13 +224,13 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
                 gsa.write(line)
                 continue
             else:
-                contig_id = sample_name + contig_ids[contignr]
+                contig_id = sample_name + str(contig_ids[contignr])
                 contignr += 1
                 name, f, start, t, end, tot, length = line[1:].strip().split("_")
                 genome = to_genome[name]
                 tax = metadata[genome][1] # this is the tax id (otu, tax id, novelty, path)
                 gsa.write(">{anon}\n".format(anon=contig_id))
-                gsa_map.write("#{anon}\t{genome}\t{tax}\t{contig}\t{nr}\t{start}\t{end}\n".format(
+                gsa_map.write("{anon}\t{genome}\t{tax}\t{contig}\t{nr}\t{start}\t{end}\n".format(
                     anon = contig_id,
                     genome = genome,
                     tax = tax,
@@ -256,14 +256,14 @@ def create_gsa_mapping(path, metadata, sample_name, shuffle):
                 if line.startswith('>'):
                     count += 1
         with gzip.open(gsa_path,'r') as gsa:
-            gsa_temp = shuffle_anonymize(gsa, path, to_genome, sample_name, count, shuffle)
+            gsa_temp = shuffle_anonymize(gsa, path, to_genome, metadata, sample_name, count, shuffle)
     else:
         with open(gsa_path,'r') as gsa:
             for line in gsa:
                 if line.startswith('>'):
                     count += 1
         with open(gsa_path,'r') as gsa:
-            gsa_temp = shuffle_anonymize(gsa, path, to_genome, sample_name, count, shuffle)
+            gsa_temp = shuffle_anonymize(gsa, path, to_genome, metadata, sample_name, count, shuffle)
     os.rename(gsa_temp, gsa_path)
                     
 def add_to_bam_per_genome(bam_per_genome, runs):
@@ -296,11 +296,11 @@ def create_gold_standards(bamtogold, used_samples, metadata, out, threads, shuff
         bamToGold(bamtogold, merged, sample_path, metadata, threads)
         create_gsa_mapping(sample_path, metadata, contig_name, shuffle)
 
-def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads, name="PC"):
+def create_pooled_gold_standard(bamtogold, used_samples, metadata, out, threads, shuffle, name="PC"):
     bam_per_genome = {}
     for sample in used_samples:
         runs = used_samples[sample]
-        bam_per_genome = add_to_bam_per_genome(bam_to_genome, runs)
+        bam_per_genome = add_to_bam_per_genome(bam_per_genome, runs)
     bam_pooled = os.path.join(out, "pooled")
     os.mkdir(bam_pooled)
     merged = merge_bam_files(bam_per_genome, bam_pooled, threads)
