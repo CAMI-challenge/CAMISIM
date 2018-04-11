@@ -491,8 +491,8 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
                 read_file = os.path.join(directory_output,f)
                 cigars = id_to_cigar_map[prefix]
                 reference_path = dict_id_file_path[prefix]
-                new_prefix = sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
-                sam_from_reads.convert_fasta(read_file, new_prefix)
+                sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
+                sam_from_reads.convert_fasta(read_file)
                 os.remove(os.path.join(directory_output,f)) # do not store read file twice
 
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
