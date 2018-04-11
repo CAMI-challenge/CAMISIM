@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 
+## [1.1.0]
+
+### Added
+- Added script for creating joint/hybrid gold standards
+- Added script for creating json metadata of data sets
+
+### Removed
+- (Temporarily?) removed the possibility of using readsimulationwrapper as standalone
+
 ## [1.0.0] - 2018-03-16
 
 ### Added
@@ -64,7 +73,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 - Folder structure now separates external tools and internal scripts
 
-[Unreleased](https://github.com/CAMI-challenge/CAMISIM/compare/1.0.0...HEAD)
+[Unreleased](https://github.com/CAMI-challenge/CAMISIM/compare/1.1.0...HEAD)
+[1.1.0](https://github.com/CAMI-challenge/CAMISIM/compare/1.0.0...1.1.0)
 [1.0.0](https://github.com/CAMI-challenge/CAMISIM/compare/0.2.2...1.0.0)
 [0.2.2](https://github.com/CAMI-challenge/CAMISIM/compare/0.2.1...0.2.2)
 [0.2.1](https://github.com/CAMI-challenge/CAMISIM/compare/0.2...0.2.1)
