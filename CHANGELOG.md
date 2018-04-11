@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Added script for creating joint/hybrid gold standards
 - Added script for creating json metadata of data sets
 
+### Changed
+- Output folder will now be created if it is not present
+
 ### Removed
 - (Temporarily?) removed the possibility of using readsimulationwrapper as standalone
 
