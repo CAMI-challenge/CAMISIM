@@ -7,6 +7,7 @@ This script creates a metadata file in json format
 import json
 import argparse
 import os
+import sys
 try:
     from configparser import ConfigParser
 except ImportError:
@@ -18,7 +19,7 @@ def parse_options():
     """
     parser = argparse.ArgumentParser()
 
-    helptext="Root path of input run for which metadata should be created"
+    helptext="Root path of input run for which metadata should be created, should contain metadata.tsv and genome_to_id.tsv"
     parser.add_argument("-i", "--input-run", type=str, help=helptext)
 
     helptext="output file to write metadata to"
@@ -53,6 +54,7 @@ def read_metadata(path):
         for line in gid:
             genome, path = line.strip().split('\t')
             metadata[genome].append(path)
+    return metadata
    
 def read_config(path):
     """
@@ -119,7 +121,7 @@ def list_genomes(metadata):
         genome_dicts.append(genome_dict)
     return genome_dicts
 
-def write_json(path, metadata, config, name):
+def create_json(path, metadata, config, name):
     json = {}
     json["Name"] = name
     samples = config.get('CommunityDesign', 'number_of_samples')
@@ -138,19 +140,36 @@ def write_json(path, metadata, config, name):
         json["Read_length_standard_deviation_in_bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
         json["Average_insert_size_in_bp"] = config.get('ReadSimulator', 'fragments_size_mean')
         json["Insert_size_standard_deviation_in_bp"] = config.get('ReadSimulator', 'fragment_size_standard_deviation')
-   if simulator == "art":
+    if simulator == "art":
        json["Paired-end"] = True
-   else:
+    else:
        json["Paired-end"] = False
-   sample_dicts = get_sample_dicts(path)
-   json["Samples"] = sample_dicts
-   file_dict = {}
-   file_dict["Pooled_Gold_Standard_Assembly"] = os.path.join(path, "anonymous_gsa_pooled.fasta.gz")
-   file_dict["Pooled_Gold_Standard_Binning"] = os.path.join(path, "gsa_pooled_mapping.tsv.gz")
-   file_dict["Genomes"] = list_genomes(metadata)
-   file_dict["CAMISIM_config"] = os.path.join(path, "config.ini")
-   file_dict["CAMISIM_metadata" = os.path.join(path, "metadata.tsv")
-   file_dict["CAMISIM_genome_mapping"] = os.path.join(path, "genome_to_id.tsv")
-   json["Other_files"] = file_dict
-   return json
+    sample_dicts = get_sample_dicts(path)
+    json["Samples"] = sample_dicts
+    file_dict = {}
+    file_dict["Pooled_Gold_Standard_Assembly"] = os.path.join(path, "anonymous_gsa_pooled.fasta.gz")
+    file_dict["Pooled_Gold_Standard_Binning"] = os.path.join(path, "gsa_pooled_mapping.tsv.gz")
+    file_dict["Genomes"] = list_genomes(metadata)
+    file_dict["CAMISIM_config"] = os.path.join(path, "config.ini")
+    file_dict["CAMISIM_metadata"] = os.path.join(path, "metadata.tsv")
+    file_dict["CAMISIM_genome_mapping"] = os.path.join(path, "genome_to_id.tsv")
+    json["Other_files"] = file_dict
+    return json
+
+def write_json(in_path, out_path, metadata, config, name):
+    json_path = os.path.join(out_path, "metadata.json")
+    json_dict = create_json(in_path, metadata, config, name)
+    json_string = json.dumps(json_dict)
+    with open(json_path, 'w') as json_file:
+        json_file.write(json_string)
+
+if __name__ == "__main__":
+    args = parse_options()
+    if not args is None:
+        inpath = args.input_run
+        outpath = args.output
+        name = args.name
+        metadata = read_metadata(inpath)
+        config = read_config(inpath)
+        write_json(inpath, outpath, metadata, config, name)
 
