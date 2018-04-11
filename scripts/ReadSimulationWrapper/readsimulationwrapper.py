@@ -1055,9 +1055,8 @@ def main(args=None):
         directory_output=options.directory_output,
         total_size=options.total_size,
         profile=options.error_profile.lower(),
-        fragment_size_mean=options.fragments_size_mean,
+        fragment_size_mean=options.fragment_size_mean,
         fragment_size_standard_deviation=options.fragment_size_standard_deviation)
-
 
 if __name__ == "__main__":
     main()
