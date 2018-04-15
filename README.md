@@ -15,5 +15,5 @@ It was mainly developed for the [Critical Assessment of Metagenome Annotation (C
 The CAMISIM manuscript is submitted for publication, but its preprint version is available already:
 * Fritz*, Hofmann*, et al. (2018). **CAMISIM: Simulating metagenomes and microbial communities.** *bioRxiv*, 300970. doi:[10.1101/300970](https://doi.org/10.1101/300970)
 
-CAMISIM's core functionality was briefly described in the CAMI manuscript, thus you may also cite:
+A part of CAMISIM's functionality was also described in the CAMI manuscript, thus you may also cite:
 * Sczyrba*, Hofmann*, Belmann*, et al. (2017). **Critical Assessment of Metagenome Interpretation—a benchmark of metagenomics software.** *Nature Methods*, 14, 11:1063–1071. doi:[10.1038/nmeth.4458](https://doi.org/10.1038/nmeth.4458)
