@@ -1,7 +1,7 @@
 # CAMISIM
 
 CAMISIM is a software to model abundance distributions of microbial communities and to simulate corresponding shotgun metagenome datasets.
-It was mainly developed for the [Critical Assessment of Metagenome Annotation (CAMI)](http://microbiome-cosi.org/cami) challenge, initially by [Peter Hofmann](https://github.com/p-hofmann) and later by [Adrian Fritz](https://github.com/alphasquad), with input from members of the [CAMI team](https://github.com/orgs/CAMI-challenge/people).
+It was mainly developed for the [Critical Assessment of Metagenome Annotation (CAMI)](http://microbiome-cosi.org/cami) challenge, but should be suitable for general use. Please don't hesitate to [open a new issue](https://github.com/CAMI-challenge/CAMISIM/issues) if you run into problems or need help.
 
 ### Documentation 
 * [User manual](https://github.com/CAMI-challenge/CAMISIM/wiki/User-manual)
