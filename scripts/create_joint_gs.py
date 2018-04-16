@@ -220,13 +220,10 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
             )
         )
         for line in fasta_stream:
-            if not line.startswith(">"):
-                gsa.write(line)
-                continue
-            else:
+            if line.startsiwth(">"):
                 contig_id = sample_name + str(contig_ids[contignr])
                 contignr += 1
-                name, f, start, t, end, tot, length = line[1:].strip().split("_")
+                name, f, start, t, end, tot, length = line[1:].strip().rsplit("_",6)
                 genome = to_genome[name]
                 tax = metadata[genome][1] # this is the tax id (otu, tax id, novelty, path)
                 gsa.write(">{anon}\n".format(anon=contig_id))
@@ -240,6 +237,9 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
                     end = end
                     )
                 )
+            else:
+                gsa.write(line)
+                continue
     return gsa_temp
 
 def create_gsa_mapping(path, metadata, sample_name, shuffle):
