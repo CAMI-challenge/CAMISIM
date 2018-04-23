@@ -60,14 +60,6 @@ were path might either be online or offline/local
 """
 def read_genomes_list(genomes_path, additional_file = None):
     genomes_map = {}
-    with open(genomes_path,'r') as genomes:
-        for line in genomes:
-            ncbi_id, sci_name, ftp = line.strip().split('\t')
-            http = ftp.replace("ftp://","http://") # not using ftp address but http (proxies)
-            if ncbi_id in genomes_map:
-                genomes_map[ncbi_id][1].append(http)
-            else:
-                genomes_map[ncbi_id] = (sci_name, [http]) # sci_name is always the same for same taxid (?)
     if additional_file is not None:
         with open(additional_file,'r') as add:
             for line in add:
@@ -76,6 +68,14 @@ def read_genomes_list(genomes_path, additional_file = None):
                     genomes_map[ncbi_id][1].append(path)
                 else:
                     genomes_map[ncbi_id] = (sci_name, [path]) # this might not be a http path
+    with open(genomes_path,'r') as genomes:
+        for line in genomes:
+            ncbi_id, sci_name, ftp = line.strip().split('\t')
+            http = ftp.replace("ftp://","http://") # not using ftp address but http (proxies)
+            if ncbi_id in genomes_map:
+                genomes_map[ncbi_id][1].append(http)
+            else:
+                genomes_map[ncbi_id] = (sci_name, [http]) # sci_name is always the same for same taxid (?)
     return genomes_map
 
 """
