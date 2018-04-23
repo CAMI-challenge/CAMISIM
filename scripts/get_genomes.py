@@ -124,7 +124,7 @@ def transform_lineage(lineage, ranks, max_rank):
 """
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, replace):
+def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, no_replace):
     otu_genome_map = {}
     warnings = []
     for otu in profile:
@@ -161,7 +161,7 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
                 for abundance in abundances: # calculate abundance per sample
                     current_abundance = relative_abundance * abundance
                     otu_genome_map[otu_id][-1].append(current_abundance)
-                if (not replace): # sampling without replacement:
+                if (no_replace): # sampling without replacement:
                     for new_rank in per_rank_map:
                         for taxid in per_rank_map[new_rank]:
                             if (path, genome_id) in per_rank_map[new_rank][taxid]:

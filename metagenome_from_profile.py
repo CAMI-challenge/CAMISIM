@@ -40,7 +40,7 @@ def parse_options():
 
     default=None
     # additional files containing genomes which should be considered for mapping
-    parser.add_argument("-ar", "--additional-references", default=default, help="File containing additional reference genomes, same format as reference genomes, might be online sources (http/ftp) or local, default None")
+    parser.add_argument("-ar", "--additional-references", default=default, help="File containing additional reference genomes, mapped to OTUs from the input profile")
 
     default = "defaults/default_config.ini"
     # optional config file (out_path will get overwritten if it is set in config file)
