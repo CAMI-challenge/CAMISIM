@@ -237,8 +237,8 @@ def write_config(otu_genome_map, out_path, config):
                 error = e
                 counter += 1
         if counter == 10:
-            _log.error("Caught exception %s while moving/downloading genomes" % e)
-            _log.error("Genome %s (from %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome))
+            _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
+            _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
         with open(genome_to_id,'ab') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
         with open(metadata,'ab') as md:
