@@ -51,6 +51,9 @@ def parse_options():
 
     parser.add_argument("-nr", "--no-replace", action='store_false',default=True, help="Use sampling without replacing, so genomes are used for exactly one OTU only (decreases accuracy)")
     
+    helptext = "If no genomes are found for certain OTUs, fill up with previously unused genomes"
+    parser.add_argument("-f", "--fill-up", action='store_true',default=False,help=helptext)
+    
     helptext="Seed for the random generator"
     parser.add_argument("--seed",type=int,default=None,help=helptext)
 
