@@ -132,7 +132,7 @@ def sort_by_abundance(profile):
     for otu in profile:
         lineage, abundances = profile[otu]
         avg_abundance = sum(abundances)/len(abundances)
-        sorted_keys.append(avg_abundance, otu) # average abundance
+        sorted_keys.append((avg_abundance, otu)) # average abundance
     sorted_keys = sorted(sorted_keys, reverse=True)
     return [key for ab,key in sorted_keys]
 
@@ -283,16 +283,25 @@ def write_config(otu_genome_map, out_path, config):
         config.write(cfg)
     return cfg_path
 
-def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile):
+def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug):
     genomes = per_rank_map[RANKS[0]] # lowest rank = all genomes
     otu_indices = np_rand.choice(len(unmatched_otus),len(unmatched_otus),replace=False)
     i = 0
+    set_all = False
     for tax_id in genomes:
         for path, genome_id in genomes[tax_id]:
             curr_otu = unmatched_otus[otu_indices[i]] #so we choose a random genome
-            lineage, abundances = tax_profile(curr_otu)
+            lineage, abundances = tax_profile[curr_otu]
+            lin = transform_lineage(lineage, RANKS, MAX_RANK)
             otu_genome_map[curr_otu] = (tax_id, genome_id, path, abundances)
+            if debug:
+                _log.warning("Filling up OTU %s (mapped tax id: %s) to genome with tax id %s" % (curr_otu, lin[0], tax_id))
             i += 1
+            if (i >= len(unmatched_otus)):
+                set_all = True
+                break
+        if (set_all):
+            break
     return otu_genome_map
 
 def generate_input(args):
@@ -317,8 +326,8 @@ def generate_input(args):
     genomes_map, total_genomes = read_genomes_list(args.reference_genomes, args.additional_references)
     per_rank_map = get_genomes_per_rank(genomes_map, RANKS, MAX_RANK)
     otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace, total_genomes)
-    if (args.fill_up):
-        otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile)
+    if (args.fill_up and len(unmatched_otus) > 0):
+        otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, args.debug)
     cfg_path = write_config(otu_genome_map, args.o, config)
     _log = None
     return cfg_path
