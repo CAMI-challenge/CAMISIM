@@ -55,7 +55,7 @@ def read_taxonomic_profile(biom_profile, config, no_samples = None):
 Reads list of available genomes in the (tsv) format:
 NCBI_ID Scientific_Name ftp_path
 Additional files might be provided with:
-NCBI_ID Scientific_Name genome_path
+NCBI_ID Scientific_Name genome_path novelty_category
 were path might either be online or offline/local
 """
 def read_genomes_list(genomes_path, additional_file = None):
@@ -64,11 +64,11 @@ def read_genomes_list(genomes_path, additional_file = None):
     if additional_file is not None:
         with open(additional_file,'r') as add:
             for line in add:
-                ncbi_id, sci_name, path = line.strip().split('\t')
+                ncbi_id, sci_name, path, novelty = line.strip().split('\t')
                 if ncbi_id in genomes_map:
                     genomes_map[ncbi_id][1].append(path)
                 else:
-                    genomes_map[ncbi_id] = (sci_name, [path]) # this might not be a http path
+                    genomes_map[ncbi_id] = (sci_name, [path], novelty) # this might not be a http path
                 total_genomes += 1
     with open(genomes_path,'r') as genomes:
         for line in genomes:
@@ -77,7 +77,7 @@ def read_genomes_list(genomes_path, additional_file = None):
             if ncbi_id in genomes_map:
                 genomes_map[ncbi_id][1].append(http)
             else:
-                genomes_map[ncbi_id] = (sci_name, [http]) # sci_name is always the same for same taxid (?)
+                genomes_map[ncbi_id] = (sci_name, [http], 'known_strain') # sci_name is always the same for same taxid (?)
             total_genomes += 1
     return genomes_map, total_genomes
 
@@ -228,7 +228,7 @@ def download_genome(genome, out_path):
 """
 Given the created maps and the old config files, creates the required files and new config
 """
-def write_config(otu_genome_map, out_path, config):
+def write_config(otu_genome_map, genomes_map, out_path, config):
     genome_to_id = os.path.join(out_path, "genome_to_id.tsv")
     config.set('community0','id_to_genome_file', genome_to_id)
     metadata = os.path.join(out_path, "metadata.tsv")
@@ -263,7 +263,8 @@ def write_config(otu_genome_map, out_path, config):
         with open(genome_to_id,'ab') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
         with open(metadata,'ab') as md:
-            md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,"new_strain"))
+            novelty = genomes_map[genome_id][-1]
+            md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
         i = 0
         for abundance in abundances:
             with open(abundance, 'ab') as ab:
@@ -328,7 +329,7 @@ def generate_input(args):
     otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace, total_genomes)
     if (args.fill_up and len(unmatched_otus) > 0):
         otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, args.debug)
-    cfg_path = write_config(otu_genome_map, args.o, config)
+    cfg_path = write_config(otu_genome_map, genomes_map, args.o, config)
     _log = None
     return cfg_path
 
