@@ -70,6 +70,7 @@ def create_config(args,cfg):
     config.read(cfg)
 
     config.set('Main', 'output_directory', os.path.join(args.o,''))
+    config.set('Main', 'temp_directory', os.path.join(args.tmp,''))
 
     if args.seed is not None:
         config.set('Main', "seed", args.seed)
