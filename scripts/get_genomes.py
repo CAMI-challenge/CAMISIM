@@ -306,7 +306,7 @@ def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, d
                 if path not in added_genomes:
                     genomes[taxid].append((path, genome_id))
                     added_genomes.add(path)
-    otu_indices = np_rand.choice(len(added_genomes),len(added_genomes),replace=False)
+    otu_indices = np_rand.choice(len(unmatched_otus),len(unmatched_otus),replace=False)
     i = 0
     set_all = False
     for tax_id in genomes:
