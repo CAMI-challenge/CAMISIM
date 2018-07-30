@@ -53,6 +53,9 @@ def parse_options():
     
     helptext = "If no genomes are found for certain OTUs, fill up with previously unused genomes"
     parser.add_argument("-f", "--fill-up", action='store_true',default=False,help=helptext)
+
+    helptext = "Only perform community design, do not simulate"
+    parser.add_argument("-d", "--community-only", action='store_true', default=False, help=helptext)
     
     helptext="Seed for the random generator"
     parser.add_argument("--seed",type=int,default=None,help=helptext)
@@ -91,7 +94,8 @@ if __name__ == "__main__":
             os.mkdir(args.o)
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
-        if args.debug:
-            os.system("./metagenomesimulation.py %s --debug" % c)
-        else:
-            os.system("./metagenomesimulation.py %s" % c)
+        if (not args.d):
+            if args.debug:
+                os.system("./metagenomesimulation.py %s --debug" % c)
+            else:
+                os.system("./metagenomesimulation.py %s" % c)
