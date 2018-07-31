@@ -94,7 +94,7 @@ if __name__ == "__main__":
             os.mkdir(args.o)
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
-        if (not args.d):
+        if (not args.community_only):
             if args.debug:
                 os.system("./metagenomesimulation.py %s --debug" % c)
             else:

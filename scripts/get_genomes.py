@@ -351,6 +351,7 @@ def generate_input(args):
     if (args.fill_up and len(unmatched_otus) > 0):
         otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, args.debug)
     cfg_path = write_config(otu_genome_map, genomes_map, args.o, config)
+    _log.info("Community design finished")
     _log = None
     return cfg_path
 

@@ -84,13 +84,13 @@ def read_metadata(root_paths):
             raise IOError("Metadata file not found in %s" % path)
         with open(metadata_path,'r') as md:
             for line in md:
-                if line.startswith("genome"):
+                if line.startswith("genome_ID"):
                     continue
                 genome, otu, ncbi, novelty = line.strip().split('\t')
                 if genome in metadata:
                     set_otu, set_ncbi, set_novelty = metadata[genome][:3]
                     if otu != set_otu or ncbi != set_ncbi or novelty != set_novelty:
-                        raise IOError("Metadata between runs differs, different environments and/or seeds have been used")
+                        raise IOError("Metadata between runs differs for genome %s, different environments and/or seeds have been used: (OTUs: %s / %s, NCBI: %s / %s, novelty: %s / %s)" % (genome, otu, set_otu, ncbi, set_ncbi, novelty, set_novelty))
                 else:
                     metadata[genome] = [otu, ncbi, novelty]
         genome_to_id_path = os.path.join(path, "genome_to_id.tsv")
