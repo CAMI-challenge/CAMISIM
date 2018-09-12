@@ -5,8 +5,6 @@ It was mainly developed for the [Critical Assessment of Metagenome Annotation (C
 
 ### Documentation 
 * [User manual](https://github.com/CAMI-challenge/CAMISIM/wiki/User-manual)
-* [Software and hardware dependencies](https://github.com/CAMI-challenge/CAMISIM/wiki/Dependencies)
-* [Command line Arguments](https://github.com/CAMI-challenge/CAMISIM/wiki/Command-line-Arguments)
 * [Configuration File Options](https://github.com/CAMI-challenge/CAMISIM/wiki/Configuration-File-Options)
 * [File Formats](https://github.com/CAMI-challenge/CAMISIM/wiki/File-Formats)
 
