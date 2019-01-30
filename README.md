@@ -10,7 +10,7 @@ It was mainly developed for the [Critical Assessment of Metagenome Annotation (C
 
 ### Citation
 
-The CAMISIM manuscript is submitted for publication, but its preprint version is available already:
+The CAMISIM manuscript is accepted for publication at *Microbiome*. A preprint version is available:
 * Fritz*, Hofmann*, et al. (2018). **CAMISIM: Simulating metagenomes and microbial communities.** *bioRxiv*, 300970. doi:[10.1101/300970](https://doi.org/10.1101/300970)
 
 A part of CAMISIM's functionality was also described in the CAMI manuscript, thus you may also cite:
