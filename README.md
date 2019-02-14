@@ -11,7 +11,7 @@ It was mainly developed for the [Critical Assessment of Metagenome Annotation (C
 ### Citation
 
 If you use CAMISIM, please cite the publication at *Microbiome*:
-* Fritz*, Hofmann*, et al. (2019). **CAMISIM: Simulating metagenomes and microbial communities.** *Microbiome*, 2019, 7:17 .doi:[10.1186/s40168-019-0633-6](https://doi.org/10.1186/s40168-019-0633-6)
+* Fritz*, Hofmann*, et al. (2019). **CAMISIM: Simulating metagenomes and microbial communities.** *Microbiome*, 2019, 7:17. doi:[10.1186/s40168-019-0633-6](https://doi.org/10.1186/s40168-019-0633-6)
 
 A part of CAMISIM's functionality was also described in the CAMI manuscript, thus you may also cite:
 * Sczyrba*, Hofmann*, Belmann*, et al. (2017). **Critical Assessment of Metagenome Interpretation—a benchmark of metagenomics software.** *Nature Methods*, 14, 11:1063–1071. doi:[10.1038/nmeth.4458](https://doi.org/10.1038/nmeth.4458)
