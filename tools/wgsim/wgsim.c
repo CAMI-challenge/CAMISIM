@@ -252,7 +252,9 @@ void wgsim_core(FILE *fpout1, FILE *fpout2, FILE *samout, const char *fn, int is
 	ks = kseq_init(fp_fa);
 	tot_len = n_ref = 0;
 	fprintf(stderr, "[%s] calculating the total length of the reference sequence...\n", __func__);
+    fprintf(samout, "@HD\tVN:1.4\tSQ:unsorted\n");
 	while ((l = kseq_read(ks)) >= 0) {
+        fprintf(samout, "@SQ\tSN:%s\tLN:%llu\n", ks->name.s, (long long) l);
 		tot_len += l;
 		++n_ref;
 	}
@@ -272,8 +274,6 @@ void wgsim_core(FILE *fpout1, FILE *fpout2, FILE *samout, const char *fn, int is
 		// generate mutations and print them out
 		wgsim_mut_diref(ks, is_hap, rseq, rseq+1);
 		wgsim_print_mutref(ks->name.s, ks, rseq, rseq+1);
-	    
-        fprintf(samout, "@HD\tVN:1.4\tSQ:unsorted\n@SQ\tSN:%s\tLN:%llu\n",ks->name.s, (long long) tot_len);
 
         for (ii = 0; ii != n_pairs; ++ii) { // the core loop
 			double ran;
