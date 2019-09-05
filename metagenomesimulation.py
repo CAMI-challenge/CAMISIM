@@ -119,7 +119,7 @@ class MetagenomeSimulation(ArgumentHandler):
             else: # in any case create binning gold standard
                 self._logger.info("Creating binning gold standard")
                 self._logger.debug(", ".join(list_of_output_gsa))
-                self._create_binning_gs()
+                self._create_binning_gs(list_of_output_gsa)
 
             # Compress Data
             if self._phase_compress:
@@ -457,7 +457,7 @@ class MetagenomeSimulation(ArgumentHandler):
 
         return file_path_output_gsa_pooled
 
-    def _create_binning_gs(self):
+    def _create_binning_gs(self, list_of_output_gsa):
         """
         Create binning gold standard without anonymization first
 
@@ -492,7 +492,7 @@ class MetagenomeSimulation(ArgumentHandler):
                     dir=self._project_file_folder_handler.get_tmp_wd(),
                     prefix="gs_mapping")
             else:
-                file_path_anonymous_gs_mapping = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
+                file_path_gs_mapping = self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)
             samtools = SamtoolsWrapper(
                 file_path_samtools=self._executable_samtools,
                 max_processes=self._max_processors,
@@ -505,7 +505,7 @@ class MetagenomeSimulation(ArgumentHandler):
                 samtools.read_start_positions_from_dir_of_bam(self._project_file_folder_handler.get_bam_dir(sample_id))
                 ]
             dict_original_seq_pos = gff.get_dict_sequence_name_to_positions(list_file_paths_read_positions)
-            with open(file_path_anonymous_gs_mapping, 'w') as stream_output:
+            with open(file_path_gs_mapping, 'w') as stream_output:
                 row_format = "{aid}\t{gid}\t{tid}\t{sid}\n"
                 line = '#' + row_format.format(
                     aid="anonymous_read_id",
@@ -529,7 +529,6 @@ class MetagenomeSimulation(ArgumentHandler):
                 self._list_tuple_archive_files.append(
                     (file_path_gs_mapping, self._project_file_folder_handler.get_anonymous_reads_map_file_path(sample_id)+".gz"))
             
-            gsa = self._project_file_folder_handler.get_gsa_file_path(str(sample_index))
             if self._phase_compress:
                 file_path_gsa_mapping = tempfile.mktemp(
                     dir=self._project_file_folder_handler.get_tmp_wd(),
@@ -549,7 +548,8 @@ class MetagenomeSimulation(ArgumentHandler):
                 ]
             dict_original_seq_pos = gff.get_dict_sequence_name_to_positions(list_file_paths_read_positions)
             file_path_output_anonymous_gsa_out = self._project_file_folder_handler.get_anonymous_gsa_file_path(sample_id)
-
+            
+            gsa = list_of_output_gsa[sample_index]
             with open(gsa, 'r') as gs:
                 with open(file_path_gsa_mapping, 'w') as stream_output:
                     row_format = "{name}\t{genome_id}\t{tax_id}\t{length}\n"
