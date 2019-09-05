@@ -233,16 +233,17 @@ class TaxonomicProfile(Validator):
 				lineage_sn = [self._taxonomy.get_scientific_name(tid) if tid != "" and '.' not in tid else "" for tid in lineage]
 				if '.' in tax_id:
 					lineage_sn[-1] = self._taxonomy.get_scientific_name(tax_id.split('.')[0]) + " strain"  # ""
-
-				stream_output.write(row_format.format(
-					taxid=tax_id,
-					rank=rank,
-					taxpath="|".join(lineage),
-					taxpath_sn="|".join(lineage_sn),
-					abp=percent_by_rank_by_taxid[rank][tax_id]*100,
-					gid=genome_id,
-					otu=otu
-				))
+                
+                if percent_by_rank_by_taxid[rank][tax_id] > 0:
+                    stream_output.write(row_format.format(
+                        taxid=tax_id,
+                        rank=rank,
+                        taxpath="|".join(lineage),
+                        taxpath_sn="|".join(lineage_sn),
+                        abp=percent_by_rank_by_taxid[rank][tax_id]*100,
+                        gid=genome_id,
+                        otu=otu
+                    ))
 
 	def _stream_tp_header(self, output_stream, identifier):
 		"""
