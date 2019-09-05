@@ -247,11 +247,20 @@ class NcbiTaxonomy(Validator):
                 lineage[ranks.index(original_rank)] = NcbiTaxonomy.taxid_to_name[taxid]
             else:
                 lineage[ranks.index(original_rank)] = taxid
-
+        try:
+            rank_counter = ranks.index(NcbiTaxonomy.taxid_to_rank[taxid]) # starting at rank of original tax id
+        except ValueError: # rank is not in ranks
+            rank_counter = ranks.index(ranks[-1]) # choose lowest rank then
         while taxid != "1":
             taxid = NcbiTaxonomy.taxid_to_parent_taxid[taxid]
             rank = NcbiTaxonomy.taxid_to_rank[taxid]
             if rank in ranks:
+                current_rank_counter = ranks.index(NcbiTaxonomy.taxid_to_rank[taxid])
+                rank_difference = rank_counter - current_rank_counter
+                if rank_difference > 1:
+                    for i in xrange(current_rank_counter, rank_counter - 1):
+                        lineage[i] = "" # add empty name to list if name is missing in the taxonomy
+                rank_counter = current_rank_counter
                 if as_name:
                     lineage[ranks.index(rank)] = NcbiTaxonomy.taxid_to_name[taxid]
                 else:
