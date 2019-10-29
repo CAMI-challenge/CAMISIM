@@ -400,6 +400,7 @@ class MetagenomeSimulation(ArgumentHandler):
                 dict_id_to_file_path_fasta=dict_id_to_file_path_fasta)
             list_of_output_gsa.append(file_path_output_gs)
 
+        list_of_final_output_gsa = []
         if not self._phase_anonymize:
             for index, file_path in enumerate(list_of_output_gsa):
                 file_path_output = self._project_file_folder_handler.get_gsa_file_path(str(index))
@@ -407,6 +408,9 @@ class MetagenomeSimulation(ArgumentHandler):
                     self._list_tuple_archive_files.append((file_path, file_path_output+".gz"))
                 else:
                     shutil.move(file_path, file_path_output)
+                    list_of_final_output_gsa.append(file_path_output)
+            if not self._phase_compress:
+                list_of_output_gsa = list_of_final_output_gsa
 
         return list_of_output_gsa
 
