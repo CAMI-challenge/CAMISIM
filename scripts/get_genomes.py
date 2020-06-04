@@ -14,7 +14,7 @@ except ImportError:
 
 ncbi = NCBITaxa()
 RANKS = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
-MAX_RANK = "family" # TODO
+MAX_RANK = 'family'
 _log = None
 
 """
@@ -55,11 +55,21 @@ def read_taxonomic_profile(biom_profile, config, no_samples = None):
 Reads list of available genomes in the (tsv) format:
 NCBI_ID Scientific_Name ftp_path
 Additional files might be provided with:
-NCBI_ID Scientific_Name genome_path
+NCBI_ID Scientific_Name genome_path novelty_category
 were path might either be online or offline/local
 """
 def read_genomes_list(genomes_path, additional_file = None):
     genomes_map = {}
+    total_genomes = 0
+    if additional_file is not None:
+        with open(additional_file,'r') as add:
+            for line in add:
+                ncbi_id, sci_name, path, novelty = line.strip().split('\t')
+                if ncbi_id in genomes_map:
+                    genomes_map[ncbi_id][1].append(path)
+                else:
+                    genomes_map[ncbi_id] = (sci_name, [path], novelty) # this might not be a http path
+                total_genomes += 1
     with open(genomes_path,'r') as genomes:
         for line in genomes:
             ncbi_id, sci_name, ftp = line.strip().split('\t')
@@ -67,16 +77,9 @@ def read_genomes_list(genomes_path, additional_file = None):
             if ncbi_id in genomes_map:
                 genomes_map[ncbi_id][1].append(http)
             else:
-                genomes_map[ncbi_id] = (sci_name, [http]) # sci_name is always the same for same taxid (?)
-    if additional_file is not None:
-        with open(additional_file,'r') as add:
-            for line in add:
-                ncbi_id, sci_name, path = line.strip().split('\t')
-                if ncbi_id in genomes_map:
-                    genomes_map[ncbi_id][1].append(path)
-                else:
-                    genomes_map[ncbi_id] = (sci_name, [path]) # this might not be a http path
-    return genomes_map
+                genomes_map[ncbi_id] = (sci_name, [http], 'known_strain') # sci_name is always the same for same taxid (?)
+            total_genomes += 1
+    return genomes_map, total_genomes
 
 """
 Given all available genomes, creates a map sorted by ranks of available genomes on that particular rank, ordered by their ncbi ids
@@ -84,8 +87,6 @@ Given all available genomes, creates a map sorted by ranks of available genomes 
 def get_genomes_per_rank(genomes_map, ranks, max_rank):
     per_rank_map = {}
     for rank in ranks:
-        if ranks.index(rank) > ranks.index(max_rank):
-            break # only add genomes up to predefined rank
         per_rank_map[rank] = {}
     for genome in genomes_map:
         lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
@@ -94,9 +95,12 @@ def get_genomes_per_rank(genomes_map, ranks, max_rank):
             if ranks[tax_id] in per_rank_map: # if we are a legal rank
                 rank_map = per_rank_map[ranks[tax_id]]
                 if tax_id in rank_map: # tax id already has a genome
-                    rank_map[tax_id].append((genomes_map[genome][1][0],genome)) # add http address
+                    for strain in genomes_map[genome][1]:
+                        rank_map[tax_id].append((strain,genome)) # add http address
                 else:
-                    rank_map[tax_id] = [(genomes_map[genome][1][0],genome)]
+                    rank_map[tax_id] = []
+                    for strain in genomes_map[genome][1]:
+                        rank_map[tax_id].append((strain,genome)) # add http address
     return per_rank_map
 
 """
@@ -122,22 +126,50 @@ def transform_lineage(lineage, ranks, max_rank):
     return new_lineage[::-1] # invert list, so lowest rank appears first (last in BIOM)
 
 """
+Sorts the otus in the profile by abundance
+"""
+def sort_by_abundance(profile):
+    sorted_keys = []
+    for otu in profile:
+        lineage, abundances = profile[otu]
+        avg_abundance = sum(abundances)/len(abundances)
+        sorted_keys.append((avg_abundance, otu)) # average abundance
+    sorted_keys = sorted(sorted_keys, reverse=True)
+    return [key for ab,key in sorted_keys]
+
+def all_genomes(per_rank_map):
+    added_genomes = set()
+    for rank in per_rank_map:
+        for taxid in per_rank_map[rank]:
+            for path, genome_id in per_rank_map[rank][taxid]:
+                if path not in added_genomes:
+                    added_genomes.add(path)
+    _log.info(len(added_genomes))
+
+"""
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, replace):
+def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, no_replace, max_genomes):
+    unmatched_otus = []
     otu_genome_map = {}
     warnings = []
-    for otu in profile:
+    sorted_otus = sort_by_abundance(profile)
+    genome_set_size = 0
+    for otu in sorted_otus:
+        if genome_set_size >= max_genomes and no_replace: #cancel if no genomes are available anymore
+            break
         lin, abundances = profile[otu]
         lineage = transform_lineage(lin, ranks, max_rank)
         if len(lineage) == 0:
             warnings.append("No matching NCBI ID for otu %s, scientific name %s" % (otu, lin[-1].split("__")[-1]))
+            unmatched_otus.append(otu)
         lineage_ranks = ncbi.get_rank(lineage)
         for tax_id in lineage: # lineage sorted ascending
             rank = lineage_ranks[tax_id]
             if ranks.index(rank) > ranks.index(max_rank):
                 warnings.append("Rank %s of OTU %s too high, no matching genomes found" % (rank, otu))
                 warnings.append("Full lineage was %s, mapped from BIOM lineage %s" % (lineage, lin))
+                unmatched_otus.append(otu)
                 break
             genomes = per_rank_map[rank]
             if tax_id not in genomes:
@@ -150,6 +182,7 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
                 used_genomes = set([available_genomes[i] for i in used_indices])
             else:
                 used_genomes = set(available_genomes) # if not enough genomes: use all
+            genome_set_size += len(used_genomes) # how many genomes are used
             log_normal_vals = np_rand.lognormal(mu,sigma, len(used_genomes))
             sum_log_normal = sum(log_normal_vals)
             i = 0
@@ -161,7 +194,7 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
                 for abundance in abundances: # calculate abundance per sample
                     current_abundance = relative_abundance * abundance
                     otu_genome_map[otu_id][-1].append(current_abundance)
-                if (not replace): # sampling without replacement:
+                if (no_replace): # sampling without replacement:
                     for new_rank in per_rank_map:
                         for taxid in per_rank_map[new_rank]:
                             if (path, genome_id) in per_rank_map[new_rank][taxid]:
@@ -172,7 +205,7 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
         if debug:
             for warning in warnings:
                 _log.warning(warning)
-    return otu_genome_map
+    return otu_genome_map, unmatched_otus, per_rank_map
 
 
 """
@@ -207,7 +240,7 @@ def download_genome(genome, out_path):
 """
 Given the created maps and the old config files, creates the required files and new config
 """
-def write_config(otu_genome_map, out_path, config):
+def write_config(otu_genome_map, genomes_map, out_path, config):
     genome_to_id = os.path.join(out_path, "genome_to_id.tsv")
     config.set('community0','id_to_genome_file', genome_to_id)
     metadata = os.path.join(out_path, "metadata.tsv")
@@ -237,12 +270,13 @@ def write_config(otu_genome_map, out_path, config):
                 error = e
                 counter += 1
         if counter == 10:
-            _log.error("Caught exception %s while moving/downloading genomes" % e)
-            _log.error("Genome %s (from %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome))
+            _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
+            _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
         with open(genome_to_id,'ab') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
         with open(metadata,'ab') as md:
-            md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,"new_strain"))
+            novelty = genomes_map[genome_id][-1]
+            md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
         i = 0
         for abundance in abundances:
             with open(abundance, 'ab') as ab:
@@ -262,10 +296,40 @@ def write_config(otu_genome_map, out_path, config):
         config.write(cfg)
     return cfg_path
 
+def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug):
+    genomes = {}
+    added_genomes = set()
+    for rank in per_rank_map:
+        for taxid in per_rank_map[rank]:
+            genomes[taxid] = []
+            for path, genome_id in per_rank_map[rank][taxid]:
+                if path not in added_genomes:
+                    genomes[taxid].append((path, genome_id))
+                    added_genomes.add(path)
+    otu_indices = np_rand.choice(len(unmatched_otus),len(unmatched_otus),replace=False)
+    i = 0
+    set_all = False
+    for tax_id in genomes:
+        for path, genome_id in genomes[tax_id]:
+            curr_otu = unmatched_otus[otu_indices[i]] #so we choose a random genome
+            lineage, abundances = tax_profile[curr_otu]
+            lin = transform_lineage(lineage, RANKS, MAX_RANK)
+            otu_genome_map[curr_otu] = (tax_id, genome_id, path, abundances)
+            if debug:
+                _log.warning("Filling up OTU %s (mapped tax id: %s) to genome with tax id %s" % (curr_otu, lin[0], tax_id))
+            i += 1
+            if (i >= len(unmatched_otus) or i >= len(added_genomes)):
+                set_all = True
+                break
+        if (set_all):
+            break
+    return otu_genome_map
+
 def generate_input(args):
     global _log
     _log = logger(verbose = args.debug)
     np_rand.seed(args.seed)
+    #MAX_RANK = args.maxrank
     config = ConfigParser()
     config.read(args.config)
     try:
@@ -281,10 +345,13 @@ def generate_input(args):
         sigma = 2 # this aint particularily beatiful
         _log.warning("Mu and sigma have not been set, using defaults (1,2)") #TODO 
     tax_profile = read_taxonomic_profile(args.profile, config, args.samples)
-    genomes_map = read_genomes_list(args.reference_genomes, args.additional_references)
+    genomes_map, total_genomes = read_genomes_list(args.reference_genomes, args.additional_references)
     per_rank_map = get_genomes_per_rank(genomes_map, RANKS, MAX_RANK)
-    otu_genome_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace)
-    cfg_path = write_config(otu_genome_map, args.o, config)
+    otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, args.debug, args.no_replace, total_genomes)
+    if (args.fill_up and len(unmatched_otus) > 0):
+        otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, args.debug)
+    cfg_path = write_config(otu_genome_map, genomes_map, args.o, config)
+    _log.info("Community design finished")
     _log = None
     return cfg_path
 

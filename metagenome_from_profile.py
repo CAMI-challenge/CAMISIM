@@ -40,7 +40,7 @@ def parse_options():
 
     default=None
     # additional files containing genomes which should be considered for mapping
-    parser.add_argument("-ar", "--additional-references", default=default, help="File containing additional reference genomes, same format as reference genomes, might be online sources (http/ftp) or local, default None")
+    parser.add_argument("-ar", "--additional-references", default=default, help="File containing additional reference genomes, mapped to OTUs from the input profile")
 
     default = "defaults/default_config.ini"
     # optional config file (out_path will get overwritten if it is set in config file)
@@ -50,6 +50,12 @@ def parse_options():
     parser.add_argument("--ncbi",default=default,help="Path to the NCBI taxdump for finding corresponding reference genomes, default = %s" % default)
 
     parser.add_argument("-nr", "--no-replace", action='store_false',default=True, help="Use sampling without replacing, so genomes are used for exactly one OTU only (decreases accuracy)")
+    
+    helptext = "If no genomes are found for certain OTUs, fill up with previously unused genomes"
+    parser.add_argument("-f", "--fill-up", action='store_true',default=False,help=helptext)
+
+    helptext = "Only perform community design, do not simulate"
+    parser.add_argument("-d", "--community-only", action='store_true', default=False, help=helptext)
     
     helptext="Seed for the random generator"
     parser.add_argument("--seed",type=int,default=None,help=helptext)
@@ -67,6 +73,7 @@ def create_config(args,cfg):
     config.read(cfg)
 
     config.set('Main', 'output_directory', os.path.join(args.o,''))
+    config.set('Main', 'temp_directory', os.path.join(args.tmp,''))
 
     if args.seed is not None:
         config.set('Main', "seed", args.seed)
@@ -77,16 +84,18 @@ def create_config(args,cfg):
 
 if __name__ == "__main__":
     args = parse_options()
-    log = logger(verbose = args.debug)
-    log.info("Using commands:")
-    for arg in vars(args):
-        log.info("-%s: %s" % (arg, getattr(args,arg)))
     if not args is None:
+        log = logger(verbose = args.debug)
+        if args.debug:
+            log.info("Using commands:")
+            for arg in vars(args):
+                log.info("-%s: %s" % (arg, getattr(args,arg)))
         if not os.path.exists(args.o):
             os.mkdir(args.o)
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
-        if args.debug:
-            os.system("./metagenomesimulation.py %s --debug" % c)
-        else:
-            os.system("./metagenomesimulation.py %s" % c)
+        if (not args.community_only):
+            if args.debug:
+                os.system("./metagenomesimulation.py %s --debug" % c)
+            else:
+                os.system("./metagenomesimulation.py %s" % c)

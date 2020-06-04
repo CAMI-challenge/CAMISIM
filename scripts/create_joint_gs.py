@@ -84,13 +84,13 @@ def read_metadata(root_paths):
             raise IOError("Metadata file not found in %s" % path)
         with open(metadata_path,'r') as md:
             for line in md:
-                if line.startswith("genome"):
+                if line.startswith("genome_ID"):
                     continue
                 genome, otu, ncbi, novelty = line.strip().split('\t')
                 if genome in metadata:
                     set_otu, set_ncbi, set_novelty = metadata[genome][:3]
                     if otu != set_otu or ncbi != set_ncbi or novelty != set_novelty:
-                        raise IOError("Metadata between runs differs, different environments and/or seeds have been used")
+                        raise IOError("Metadata between runs differs for genome %s, different environments and/or seeds have been used: (OTUs: %s / %s, NCBI: %s / %s, novelty: %s / %s)" % (genome, otu, set_otu, ncbi, set_ncbi, novelty, set_novelty))
                 else:
                     metadata[genome] = [otu, ncbi, novelty]
         genome_to_id_path = os.path.join(path, "genome_to_id.tsv")
@@ -220,13 +220,10 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
             )
         )
         for line in fasta_stream:
-            if not line.startswith(">"):
-                gsa.write(line)
-                continue
-            else:
+            if line.startsiwth(">"):
                 contig_id = sample_name + str(contig_ids[contignr])
                 contignr += 1
-                name, f, start, t, end, tot, length = line[1:].strip().split("_")
+                name, f, start, t, end, tot, length = line[1:].strip().rsplit("_",6)
                 genome = to_genome[name]
                 tax = metadata[genome][1] # this is the tax id (otu, tax id, novelty, path)
                 gsa.write(">{anon}\n".format(anon=contig_id))
@@ -240,6 +237,9 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
                     end = end
                     )
                 )
+            else:
+                gsa.write(line)
+                continue
     return gsa_temp
 
 def create_gsa_mapping(path, metadata, sample_name, shuffle):
