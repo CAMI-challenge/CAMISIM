@@ -91,7 +91,7 @@ class ConfigFileHandler(DefaultValues):
 
         if self._error_profile is None:
             self._error_profile = self._config.get_value("profile", silent=True)
-
+            
         if self._custom_profile_filename is None:
             self._custom_profile_filename = self._config.get_value("base_profile_name", silent=True)
         
