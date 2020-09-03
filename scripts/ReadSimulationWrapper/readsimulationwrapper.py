@@ -723,12 +723,13 @@ class ReadSimulationArt(ReadSimulationWrapper):
             assert isinstance(own_read_length, (int, long)), "Expected natural digit for read length"
             assert own_read_length > 0, "Read length must be a positive number"
             assert profile_filename, "Profile filename must be given when supplying own profile"
-            # check if supplied file is present
+            # check if supplied files are present
             own_filenames = [
                 profile_filename+file_end
                 for file_end in ['1.txt', '2.txt']
             ]
             assert self.validate_dir(self._directory_error_profiles, file_names=own_filenames)
+            # add user-supplied profiles
             self._art_error_profiles["own"] = profile_filename
             self._art_read_length["own"] = own_read_length
         if profile is not None:

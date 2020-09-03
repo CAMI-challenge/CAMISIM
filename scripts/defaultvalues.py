@@ -59,6 +59,8 @@ class DefaultValues(DefaultLogging):
 
     _read_simulator_type = None
     _error_profile = None
+    _custom_profile_filename = None
+    _custom_readlength = None
     _fragment_size_standard_deviation_in_bp = None
     _fragments_size_mean_in_bp = None
 
