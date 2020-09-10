@@ -10,6 +10,7 @@ import os
 import random
 import argparse
 import tempfile
+import string
 import StringIO
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
 from scripts.MetaDataTable.metadatatable import MetadataTable
@@ -723,6 +724,9 @@ class ReadSimulationArt(ReadSimulationWrapper):
             assert isinstance(own_read_length, (int, long)), "Expected natural digit for read length"
             assert own_read_length > 0, "Read length must be a positive number"
             assert profile_filename, "Profile filename must be given when supplying own profile"
+            # sanity check file name
+            legal_for_filename = string.ascii_letters + string.digits + '_-.'
+            assert self.validate_characters(profile_filename, legal_alphabet=legal_for_filename)
             # check if supplied files are present
             own_filenames = [
                 profile_filename+file_end
