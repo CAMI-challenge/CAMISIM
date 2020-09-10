@@ -336,7 +336,6 @@ class MetagenomeSimulation(ArgumentHandler):
             tmp_dir=self._project_file_folder_handler.get_tmp_wd())
 
         file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
-        # TODO: fix clumsy implementation
         if self._read_simulator_type == "art":
             simulator.simulate(
                 file_path_distribution=file_path_distribution,
