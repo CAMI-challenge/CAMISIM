@@ -92,7 +92,11 @@ def get_genomes_per_rank(genomes_map, ranks, max_rank):
         lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
         ranks_lin = ncbi.get_rank(lineage)
         for tax_id in lineage: # go over the lineage
-            if ranks_lin[tax_id] in per_rank_map: # if we are a legal rank
+            try:
+                check_rank = ranks_lin[tax_id]
+            except KeyError:
+                continue
+            if check_rank in per_rank_map: # if we are a legal rank
                 rank_map = per_rank_map[ranks_lin[tax_id]]
                 if tax_id in rank_map: # tax id already has a genome
                     for strain in genomes_map[genome][1]:
