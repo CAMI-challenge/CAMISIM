@@ -90,10 +90,10 @@ def get_genomes_per_rank(genomes_map, ranks, max_rank):
         per_rank_map[rank] = {}
     for genome in genomes_map:
         lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
-        ranks = ncbi.get_rank(lineage)
+        ranks_lin = ncbi.get_rank(lineage)
         for tax_id in lineage: # go over the lineage
-            if ranks[tax_id] in per_rank_map: # if we are a legal rank
-                rank_map = per_rank_map[ranks[tax_id]]
+            if ranks_lin[tax_id] in per_rank_map: # if we are a legal rank
+                rank_map = per_rank_map[ranks_lin[tax_id]]
                 if tax_id in rank_map: # tax id already has a genome
                     for strain in genomes_map[genome][1]:
                         rank_map[tax_id].append((strain,genome)) # add http address
