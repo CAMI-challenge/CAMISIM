@@ -25,7 +25,7 @@ class ArgumentHandler(ConfigFileHandler):
     _column_name_source = "source",
 
     def __init__(
-        self, args=None, version="Prototype", separator="\t",
+        self, args=None, separator="\t",
         column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
         column_name_ncbi="NCBI_ID", column_name_source="source"):
         """
@@ -55,7 +55,7 @@ class ArgumentHandler(ConfigFileHandler):
         self._column_name_ncbi = column_name_ncbi
         self._column_name_source = column_name_source
 
-        options = self._get_parser_options(args, version)
+        options = self._get_parser_options(args)
         logfile = options.logfile
         if logfile is not None:
             logfile = self._validator.get_full_path(logfile)
@@ -90,14 +90,14 @@ class ArgumentHandler(ConfigFileHandler):
         # example: tmp_dir = "/tmp"
         tmp_dir = self._tmp_dir
         directory_output = self._directory_output
-        assert isinstance(tmp_dir, basestring)
-        assert isinstance(directory_output, basestring)
+        assert isinstance(tmp_dir, str)
+        assert isinstance(directory_output, str)
 
         if self._seed is not None:
             random.seed(self._seed)
             np_random.seed(abs(hash(self._seed)) % 4294967295)  # numpy accepts only 32 bit integers
 
-        assert isinstance(self._directory_output, basestring)
+        assert isinstance(self._directory_output, str)
         self._project_file_folder_handler = ProjectFileFolderHandle(
             tmp_dir=tmp_dir,
             output_dir=directory_output,
@@ -440,7 +440,7 @@ view={view}
         
         expected_output_size = self._expected_output_size_in_giga_byte()
         expected_tmp_size = expected_output_size / self._number_of_samples
-        assert isinstance(self._directory_output, basestring)
+        assert isinstance(self._directory_output, str)
         directory_out = self._directory_output
         directory_tmp = self._tmp_dir
         if not os.path.isdir(directory_out):
@@ -588,7 +588,7 @@ view={view}
         # self._phase_pooled_gsa = options.pooled_gsa
 
     @staticmethod
-    def _get_parser_options(args=None, version="Prototype"):
+    def _get_parser_options(args=None):
         """
         Parsing of passed arguments.
 
@@ -598,14 +598,12 @@ view={view}
         """
         parser = argparse.ArgumentParser(
             usage="python %(prog)s configuration_file_path",
-            version="MetagenomeSimulationPipeline {}".format(version),
             description="""
     #######################################
     #    MetagenomeSimulationPipeline     #
-    #    Version {}#
     #######################################
 
-    Pipeline for the simulation of a metagenome""".format(version.ljust(25)),
+    Pipeline for the simulation of a metagenome""",
             formatter_class=argparse.RawTextHelpFormatter)
 
         parser.add_argument(

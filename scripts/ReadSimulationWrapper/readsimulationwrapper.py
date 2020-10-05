@@ -10,12 +10,11 @@ import os
 import random
 import argparse
 import tempfile
-import StringIO
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
 from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.GenomePreparation.genomepreparation import GenomePreparation
-import sam_from_reads
-import maf_converter
+from scripts.ReadSimulationWrapper import sam_from_reads
+from scripts.ReadSimulationWrapper import maf_converter
 
 
 class ReadSimulationWrapper(GenomePreparation):
@@ -37,9 +36,9 @@ class ReadSimulationWrapper(GenomePreparation):
         @param separator: separator to be expected in metadata files
         @type separator: str | unicode
         @param max_processes: Maximum number of processors simulating reads at the same time
-        @type max_processes: int | long
+        @type max_processes: int 
         @param logfile: file handler or file path to a log file
-        @type logfile: file | FileIO | StringIO | basestring
+        @type logfile: file | FileIO | StringIO | str
         @param verbose: Not verbose means that only warnings and errors will be past to stream
         @type verbose: bool
         @param debug: If true temporary files will be kept
@@ -47,15 +46,15 @@ class ReadSimulationWrapper(GenomePreparation):
         @param seed: Seed used for read simulator, if option available
         @type seed: object
         @param tmp_dir: Directory for storage of temporary files
-        @type tmp_dir: int | long
+        @type tmp_dir: int 
         """
         assert self.validate_file(file_path_executable, executable=True)
-        assert isinstance(separator, basestring)
-        assert isinstance(max_processes, (int, long))
+        assert isinstance(separator, str)
+        assert isinstance(max_processes, int)
         assert isinstance(verbose, bool)
         assert isinstance(debug, bool)
-        assert seed is None or isinstance(seed, (long, int, float, basestring))
-        assert tmp_dir is None or isinstance(tmp_dir, basestring)
+        assert seed is None or isinstance(seed, (int, float, str))
+        assert tmp_dir is None or isinstance(tmp_dir, str)
         if tmp_dir is not None:
             assert self.validate_dir(tmp_dir)
         else:
@@ -161,9 +160,9 @@ class ReadSimulationWrapper(GenomePreparation):
         @param dict_id_abundance: Dictionary of genome id to abundance
         @type dict_id_abundance: dict[str|unicode, float]
         @param total_size: Size of sample in base pairs
-        @type total_size: int | long
+        @type total_size: int 
         @param min_sequence_length: Minimum length of a sequence in base pairs
-        @type min_sequence_length: int | long
+        @type min_sequence_length: int 
         @param file_format: fasta or fastq
         @type file_format: str | unicode
         @param sequence_type: dna or rna or protein
@@ -176,14 +175,14 @@ class ReadSimulationWrapper(GenomePreparation):
         """
         assert isinstance(dict_id_file_path, dict), "Expected dictionary, genome id as key, file path as value"
         assert isinstance(dict_id_abundance, dict), "Expected dictionary, genome id as key, abundance as value"
-        assert isinstance(total_size, (int, long)), "Expected natural digit"
-        assert isinstance(min_sequence_length, (int, long)), "Expected natural digit"
-        assert isinstance(file_format, basestring), "Expected file format 'fasta'"
-        assert isinstance(sequence_type, basestring), "Expected sequence type 'rna' or 'dna' or 'protein'"
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(min_sequence_length, int), "Expected natural digit"
+        assert isinstance(file_format, str), "Expected file format 'fasta'"
+        assert isinstance(sequence_type, str), "Expected sequence type 'rna' or 'dna' or 'protein'"
         assert isinstance(ambiguous, bool)
 
         relative_size_total = 0
-        for genome_id, abundance in dict_id_abundance.iteritems():
+        for genome_id, abundance in dict_id_abundance.items():
             try:
                 min_seq_length, genome_length = self.get_sequence_lengths(
                     file_path=dict_id_file_path[genome_id],
@@ -215,7 +214,7 @@ class ReadSimulationWrapper(GenomePreparation):
         @param file_path: File genome id associated with the abundance of a genome
         @type file_path: str | unicode
         @param min_sequence_length: Minimum length of a sequence in base pairs
-        @type min_sequence_length: int | long
+        @type min_sequence_length: int 
         @param file_format:
         @type file_format: str | unicode
 
@@ -223,8 +222,8 @@ class ReadSimulationWrapper(GenomePreparation):
         @rtype: str | unicode
         """
         assert self.validate_file(file_path)
-        assert isinstance(min_sequence_length, (int, long)), "Expected natural digit"
-        assert isinstance(file_format, basestring), "Expected file format 'fasta'"
+        assert isinstance(min_sequence_length, int), "Expected natural digit"
+        assert isinstance(file_format, str), "Expected file format 'fasta'"
 
         file_path_output = tempfile.mktemp(dir=self._tmp_dir)
         with open(file_path) as stream_input, open(file_path_output, 'w') as stream_output:
@@ -248,14 +247,14 @@ class ReadSimulationWrapper(GenomePreparation):
         @param dict_id_file_path: Dictionary of genome id to file path
         @type dict_id_file_path: dict[str|unicode, str|unicode]
         @param factor: Factor abundances will be multiplied by
-        @type factor: float | int | long
+        @type factor: float | int 
         @param directory_output: Directory for the sam and fastq files output
         @type directory_output: str | unicode
         """
         self._logger.info("Simulating reads using %s readsimulator..." % self._label)
         assert isinstance(dict_id_file_path, dict), "Expected dictionary, genome id as key, file path as value"
         assert isinstance(dict_id_abundance, dict), "Expected dictionary, genome id as key, abundance as value"
-        assert isinstance(factor, (int, long, float)), "Factor must be numerical"
+        assert isinstance(factor, (int, float)), "Factor must be numerical"
         assert self.validate_dir(directory_output)
 
         # add commands to a list of tasks to run them in parallel instead of calling them sequentially
@@ -279,7 +278,7 @@ class ReadSimulationWrapper(GenomePreparation):
             self._logger.debug("SysCmd: '{}'".format(system_command))
             self._logger.info("Simulating reads from {}: '{}'".format(genome_id, file_path_input))
             tasks.append(TaskCmd(system_command))
-        list_of_fails = runCmdParallel(tasks, maxProc=self._max_processes)
+            list_of_fails = runCmdParallel(tasks, maxProc=self._max_processes)
 
         if list_of_fails is not None:
             self._logger.error("{} commands returned errors!".format(len(list_of_fails)))
@@ -318,17 +317,17 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
         @param directory_output: Directory for the sam and fastq files output
         @type directory_output: str | unicode
         @param total_size: Size of sample in base pairs
-        @type total_size: int | long
+        @type total_size: int 
         @param profile: wgsim options: 'errorfree', 'standard'
         @type profile: str | unicode
         @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
-        @type fragment_size_mean: int | long
+        @type fragment_size_mean: int 
         @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
-        @type fragment_size_standard_deviation: int | long
+        @type fragment_size_standard_deviation: int 
         """
-        assert isinstance(total_size, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_mean, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_standard_deviation, (int, long)), "Expected natural digit"
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(fragment_size_mean, int), "Expected natural digit"
+        assert isinstance(fragment_size_standard_deviation, int), "Expected natural digit"
         assert total_size > 0, "Total size needs to be a positive number"
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
@@ -383,7 +382,7 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
         @param file_path_input: Path to genome fasta file
         @type file_path_input: str | unicode
         @param fold_coverage: coverage of a genome
-        @type fold_coverage: int | long | float
+        @type fold_coverage: int  | float
         @param file_path_output_prefix: Output prefix used by art illumina
         @type file_path_output_prefix: str | unicode
 
@@ -391,7 +390,7 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
         @rtype: str | unicode
         """
         assert self.validate_file(file_path_input)
-        assert isinstance(fold_coverage, (int, long, float))
+        assert isinstance(fold_coverage, (int, float))
         assert self.validate_dir(file_path_output_prefix, only_parent=True)
 
         error_profile = os.path.join(self._directory_error_profiles)
@@ -446,17 +445,17 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
         @param directory_output: Directory for the sam and fastq files output
         @type directory_output: str | unicode
         @param total_size: Size of sample in base pairs
-        @type total_size: int | long
+        @type total_size: int 
         @param profile: wgsim options: 'errorfree', 'standard'
         @type profile: str | unicode
         @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
-        @type fragment_size_mean: int | long
+        @type fragment_size_mean: int 
         @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
-        @type fragment_size_standard_deviation: int | long
+        @type fragment_size_standard_deviation: int 
         """
-        assert isinstance(total_size, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_mean, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_standard_deviation, (int, long)), "Expected natural digit"
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(fragment_size_mean, int), "Expected natural digit"
+        assert isinstance(fragment_size_standard_deviation, int), "Expected natural digit"
         assert total_size > 0, "Total size needs to be a positive number"
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
@@ -502,7 +501,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
         @param file_path_input: Path to genome fasta file
         @type file_path_input: str | unicode
         @param fold_coverage: coverage of a genome
-        @type fold_coverage: int | long | float
+        @type fold_coverage: int  | float
         @param file_path_output_prefix: Output prefix used by art illumina
         @type file_path_output_prefix: str | unicode
 
@@ -510,7 +509,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
         @rtype: str | unicode
         """
         assert self.validate_file(file_path_input)
-        assert isinstance(fold_coverage, (int, long, float))
+        assert isinstance(fold_coverage, (int, float))
         assert self.validate_dir(file_path_output_prefix, only_parent=True)
 
         arguments = [
@@ -554,17 +553,17 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
         @param directory_output: Directory for the sam and fastq files output
         @type directory_output: str | unicode
         @param total_size: Size of sample in base pairs
-        @type total_size: int | long
+        @type total_size: int 
         @param profile: wgsim options: 'errorfree', 'standard'
         @type profile: str | unicode
         @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
-        @type fragment_size_mean: int | long
+        @type fragment_size_mean: int 
         @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
-        @type fragment_size_standard_deviation: int | long
+        @type fragment_size_standard_deviation: int 
         """
-        assert isinstance(total_size, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_mean, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_standard_deviation, (int, long)), "Expected natural digit"
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(fragment_size_mean, int), "Expected natural digit"
+        assert isinstance(fragment_size_standard_deviation, int), "Expected natural digit"
         assert total_size > 0, "Total size needs to be a positive number"
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
@@ -604,7 +603,7 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
         @param file_path_input: Path to genome fasta file
         @type file_path_input: str | unicode
         @param fold_coverage: coverage of a genome
-        @type fold_coverage: int | long | float
+        @type fold_coverage: int  | float
         @param file_path_output_prefix: Output prefix used by art illumina
         @type file_path_output_prefix: str | unicode
 
@@ -612,7 +611,7 @@ class ReadSimulationWgsim(ReadSimulationWrapper):
         @rtype: str | unicode
         """
         assert self.validate_file(file_path_input)
-        assert isinstance(fold_coverage, (int, long, float))
+        assert isinstance(fold_coverage, (int, float))
         assert self.validate_dir(file_path_output_prefix, only_parent=True)
 
         arguments = [
@@ -674,7 +673,7 @@ class ReadSimulationArt(ReadSimulationWrapper):
         # check availability of profiles
         file_names_of_error_profiles = [
             filename+file_end
-            for ep, filename in self._art_error_profiles.iteritems()
+            for ep, filename in self._art_error_profiles.items()
             for file_end in ['1.txt', '2.txt']
             ]
         assert self.validate_dir(directory_error_profiles, file_names=file_names_of_error_profiles)
@@ -696,17 +695,17 @@ class ReadSimulationArt(ReadSimulationWrapper):
         @param directory_output: Directory for the sam and fastq files output
         @type directory_output: str | unicode
         @param total_size: Size of sample in base pairs
-        @type total_size: int | long
+        @type total_size: int 
         @param profile: Art illumina error profile: 'low', 'mi', 'hi', 'hi150'
         @type profile: str | unicode
         @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
-        @type fragment_size_mean: int | long
+        @type fragment_size_mean: int 
         @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
-        @type fragment_size_standard_deviation: int | long
+        @type fragment_size_standard_deviation: int 
         """
-        assert isinstance(total_size, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_mean, (int, long)), "Expected natural digit"
-        assert isinstance(fragment_size_standard_deviation, (int, long)), "Expected natural digit"
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(fragment_size_mean, int), "Expected natural digit"
+        assert isinstance(fragment_size_standard_deviation, int), "Expected natural digit"
         assert total_size > 0, "Total size needs to be a positive number"
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
@@ -747,7 +746,7 @@ class ReadSimulationArt(ReadSimulationWrapper):
         @param file_path_input: Path to genome fasta file
         @type file_path_input: str | unicode
         @param fold_coverage: coverage of a genome
-        @type fold_coverage: int | long | float
+        @type fold_coverage: int  | float
         @param file_path_output_prefix: Output prefix used by art illumina
         @type file_path_output_prefix: str | unicode
 
@@ -755,7 +754,7 @@ class ReadSimulationArt(ReadSimulationWrapper):
         @rtype: str | unicode
         """
         assert self.validate_file(file_path_input)
-        assert isinstance(fold_coverage, (int, long, float))
+        assert isinstance(fold_coverage, (int, float))
         assert self.validate_dir(file_path_output_prefix, only_parent=True)
 
         # TODO: mask 'N' default: '-nf 1'

@@ -75,7 +75,7 @@ class ConfigFileHandler(DefaultValues):
         if self._sample_size_in_base_pairs is None:
             config_value = self._config.get_value("size", is_digit=True, silent=True)
             if config_value is not None:
-                self._sample_size_in_base_pairs = long(config_value * self._base_pairs_multiplication_factor)
+                self._sample_size_in_base_pairs = config_value * self._base_pairs_multiplication_factor
 
         if self._read_simulator_type is None:
             self._read_simulator_type = self._config.get_value("type", silent=True)
@@ -141,21 +141,21 @@ class ConfigFileHandler(DefaultValues):
             file_path_genome_locations = self._config.get_value('id_to_genome_file', community_section, is_path=True)
             file_path_gff_locations = self._config.get_value('id_to_gff_file', community_section, is_path=True, silent=True)
             mode = self._config.get_value('mode', community_section, silent=True)
-            if not isinstance(file_path_metadata_table, basestring):
+            if not isinstance(file_path_metadata_table, str):
                 is_valid = False
-            if not isinstance(file_path_genome_locations, basestring):
+            if not isinstance(file_path_genome_locations, str):
                 is_valid = False
-            # if not isinstance(file_path_gff_locations, basestring):
+            # if not isinstance(file_path_gff_locations, str):
             #     is_valid = False
-            # if not isinstance(mode, basestring):
+            # if not isinstance(mode, str):
             #     is_valid = False
 
             if not is_valid:
                 continue
-            assert isinstance(file_path_metadata_table, basestring)
-            assert isinstance(file_path_genome_locations, basestring)
-            assert file_path_gff_locations is None or isinstance(file_path_gff_locations, basestring)
-            assert mode is None or isinstance(mode, basestring)
+            assert isinstance(file_path_metadata_table, str)
+            assert isinstance(file_path_genome_locations, str)
+            assert file_path_gff_locations is None or isinstance(file_path_gff_locations, str)
+            assert mode is None or isinstance(mode, str)
             new_community = Community(
                 identifier=community_section,
                 genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),

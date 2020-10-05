@@ -57,7 +57,7 @@ class GoldStandardFileFormat(Validator):
             @return: Mapping of sequence id to genome id
             @rtype: dict[str | unicode, str | unicode]
         """
-        assert isinstance(file_path_genome_locations, basestring)
+        assert isinstance(file_path_genome_locations, str)
         assert self.validate_file(file_path_genome_locations)
         unique_id_to_genome_file_path = self.get_dict_unique_id_to_genome_file_path(file_path_genome_locations)
         if set_of_genome_id is None:
@@ -85,7 +85,7 @@ class GoldStandardFileFormat(Validator):
             @return: Mapping of anonymous sequence name to original sequence name
             @rtype: dict[str | unicode, str | unicode]
         """
-        assert isinstance(file_path_mapping, basestring)
+        assert isinstance(file_path_mapping, str)
 
         table = MetadataTable(logfile=self._logfile, verbose=self._verbose)
         table.read(file_path_mapping, separator=self._separator)
@@ -109,10 +109,10 @@ class GoldStandardFileFormat(Validator):
             @return: Mapping of  genome id to taxonomic id
             @rtype: dict[str | unicode, str | unicode]
         """
-        assert isinstance(file_path_metadata, basestring)
-        assert isinstance(self._column_name_gid, basestring)
-        assert isinstance(self._column_name_ncbi, basestring)
-        assert isinstance(self._separator, basestring)
+        assert isinstance(file_path_metadata, str)
+        assert isinstance(self._column_name_gid, str)
+        assert isinstance(self._column_name_ncbi, str)
+        assert isinstance(self._separator, str)
 
         table = MetadataTable(logfile=self._logfile, verbose=self._verbose)
         table.read(file_path_metadata, separator=self._separator, column_names=True)
@@ -135,7 +135,7 @@ class GoldStandardFileFormat(Validator):
             @return: Mapping of anonymous sequence name to original sequence name
             @rtype: dict[str | unicode, str | unicode]
         """
-        assert isinstance(file_path_mapping, basestring)
+        assert isinstance(file_path_mapping, str)
 
         table = MetadataTable(logfile=self._logfile, verbose=self._verbose)
         table.read(file_path_mapping, separator=self._separator)
@@ -154,7 +154,7 @@ class GoldStandardFileFormat(Validator):
             @return: Mapping of anonymous sequence name to original sequence name
             @rtype: dict[str | unicode, str | unicode]
         """
-        assert isinstance(file_path_mapping, basestring)
+        assert isinstance(file_path_mapping, str)
 
         table = MetadataTable(logfile=self._logfile, verbose=self._verbose)
         table.read(file_path_mapping, separator=self._separator)
@@ -193,7 +193,7 @@ class GoldStandardFileFormat(Validator):
                 seq_without_index = key.split("-")[0]
                 if seq_without_index not in dict_original_seq_pos:
                     dict_original_seq_pos[seq_without_index] = []
-                dict_original_seq_pos[seq_without_index].append(long(value))
+                dict_original_seq_pos[seq_without_index].append(value)
         return dict_original_seq_pos
 
     # ###############
@@ -284,7 +284,7 @@ class GoldStandardFileFormat(Validator):
 
         stream_output.write("#anonymous_contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
 
-        for original_contig_id, anonymous_contig_id in dict_sequence_name_to_anonymous.iteritems():
+        for original_contig_id, anonymous_contig_id in dict_sequence_name_to_anonymous.items():
             seq_info = original_contig_id.strip().rsplit("_from_", 1)
             # print(seq_info)
             sequence_id = seq_info[0]
@@ -295,7 +295,7 @@ class GoldStandardFileFormat(Validator):
             # check if read is in contig
             count = 0
             for number in dict_original_seq_pos[sequence_id]:
-                if pos_start <= number <= pos_end:
+                if pos_start <= int(number) <= pos_end:
                     count += 1
 
             # write output

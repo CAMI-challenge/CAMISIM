@@ -7,7 +7,7 @@ import os
 import tempfile
 import shutil
 import scripts
-from samtoolswrapper import SamtoolsWrapper
+from .samtoolswrapper import SamtoolsWrapper
 
 
 class GoldStandardAssembly(SamtoolsWrapper):
@@ -30,7 +30,7 @@ class GoldStandardAssembly(SamtoolsWrapper):
             @param tmp_dir: Temp directory for temporary data if needed
             @type tmp_dir: str | unicode
             @param logfile: file handler or file path to a log file
-            @type logfile: file | io.FileIO | StringIO.StringIO | basestring
+            @type logfile: file | io.FileIO | StringIO.StringIO | str
             @param verbose: Not verbose means that only warnings and errors will be past to stream
             @type verbose: bool
             @param debug: Display debug messages
@@ -204,7 +204,7 @@ class GoldStandardAssembly(SamtoolsWrapper):
         file_path_output = self.get_available_file_path(file_path_output)
 
         # create all contigs
-        for key, file_path_bam in dict_id_to_file_path_bam.iteritems():
+        for key, file_path_bam in dict_id_to_file_path_bam.items():
             file_path_fasta_ref = dict_id_to_file_path_fasta[key]
             self.bam_reads_to_contigs(
                 file_path_fasta_ref=file_path_fasta_ref,

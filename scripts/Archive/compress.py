@@ -3,7 +3,6 @@ __version__ = '0.0.6'
 
 import os
 import io
-import StringIO
 import time
 import datetime
 from scripts.Validator.validator import Validator
@@ -44,7 +43,7 @@ class Compress(Validator):
         @param default_compression: default compression used for files
         @type default_compression: str | unicode
         @param logfile: file handler or file path to a log file
-        @type logfile: file | io.FileIO | StringIO.StringIO | basestring
+        @type logfile: file | io.FileIO | StringIO.StringIO | str
         @param verbose: Not verbose means that only warnings and errors will be past to stream
         @type verbose: bool
         @param debug: Display debug messages
@@ -53,8 +52,8 @@ class Compress(Validator):
         @return: None
         @rtype: None
         """
-        assert logfile is None or isinstance(logfile, basestring) or self.is_stream(logfile)
-        assert isinstance(default_compression, basestring), "separator must be string"
+        assert logfile is None or isinstance(logfile, str) or self.is_stream(logfile)
+        assert isinstance(default_compression, str), "separator must be string"
         assert isinstance(verbose, bool), "verbose must be true or false"
         assert default_compression.lower() in self._open, "Unknown compression: '{}'".format(default_compression)
 
@@ -76,7 +75,7 @@ class Compress(Validator):
         @return: compression type, None if no compression
         @rtype: str | None
         """
-        assert isinstance(file_path, basestring)
+        assert isinstance(file_path, str)
         filename, extension = os.path.splitext(file_path)
 
         if extension == ".zip" and not zipfile.is_zipfile(file_path):

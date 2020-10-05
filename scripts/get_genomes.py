@@ -1,17 +1,46 @@
 import sys
 import os
-import urllib2
+import urllib
 import gzip
 import biom
 import shutil
 from numpy import random as np_rand
-from ete2 import NCBITaxa
+from ete3 import NCBITaxa
 from scripts.loggingwrapper import LoggingWrapper as logger
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
+def run_patch(): # patching ete3 version
+    try:
+        import ast
+        import inspect
+        import sys
+        _log = logger()
+        _log.info("Patching NCBITaxa's base methods. For reason, see https://github.com/etetoolkit/ete/issues/469.\n")
+        code_to_patch = """db.execute("INSERT INTO synonym (taxid, spname) VALUES (?, ?);", (taxid, spname))"""
+        patched_code = """db.execute("INSERT OR REPLACE INTO synonym (taxid, spname) VALUES (?, ?);", (taxid, spname))"""
+        ncbiquery = sys.modules[NCBITaxa.__module__]
+        lines_code = [x.replace(code_to_patch, patched_code)
+                      for x in inspect.getsourcelines(ncbiquery.upload_data)[0]]
+        # Insert info message to see if patch is really applied
+        lines_code.insert(1, "    print('\\nIf this message shows, then the patch is successful!')\n")
+        # Insert external import and constants since only this function is patched and recompiled
+        lines_code.insert(1, "    import os, sqlite3, sys\n")
+        lines_code.insert(1, "    DB_VERSION = 2\n")
+        lines_code = "".join(lines_code)
+        # Compile and apply the patch
+        ast_tree = ast.parse(lines_code)
+        patched_function = compile(ast_tree, "<string>", mode="exec")
+        mod_dummy = {}
+        exec(patched_function, mod_dummy)
+        ncbiquery.upload_data = mod_dummy["upload_data"]
+    except Exception as e:
+        _log.info(e)
+        _log.info("Patching failed, current taxonomy data downloaded from FTP may be failed to update with ETE3!")
+    finally:
+        _log.info("Patch finished.")
+        _log = None
+
+run_patch()
 ncbi = NCBITaxa()
 RANKS = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 MAX_RANK = 'family'
@@ -89,22 +118,25 @@ def get_genomes_per_rank(genomes_map, ranks, max_rank):
     for rank in ranks:
         per_rank_map[rank] = {}
     for genome in genomes_map:
-        lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
-        ranks_lin = ncbi.get_rank(lineage)
-        for tax_id in lineage: # go over the lineage
-            try:
-                check_rank = ranks_lin[tax_id]
-            except KeyError:
-                continue
-            if check_rank in per_rank_map: # if we are a legal rank
-                rank_map = per_rank_map[ranks_lin[tax_id]]
-                if tax_id in rank_map: # tax id already has a genome
-                    for strain in genomes_map[genome][1]:
-                        rank_map[tax_id].append((strain,genome)) # add http address
-                else:
-                    rank_map[tax_id] = []
-                    for strain in genomes_map[genome][1]:
-                        rank_map[tax_id].append((strain,genome)) # add http address
+        try:
+            lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
+            ranks_lin = ncbi.get_rank(lineage)
+            for tax_id in lineage: # go over the lineage
+                try:
+                    check_rank = ranks_lin[tax_id]
+                except KeyError:
+                    continue
+                if check_rank in per_rank_map: # if we are a legal rank
+                    rank_map = per_rank_map[ranks_lin[tax_id]]
+                    if tax_id in rank_map: # tax id already has a genome
+                        for strain in genomes_map[genome][1]:
+                            rank_map[tax_id].append((strain,genome)) # add http address
+                    else:
+                        rank_map[tax_id] = []
+                        for strain in genomes_map[genome][1]:
+                            rank_map[tax_id].append((strain,genome)) # add http address
+        except ValueError as e:
+           _log.warning(e)
     return per_rank_map
 
 """
@@ -226,7 +258,7 @@ def download_genome(genome, out_path):
     genome_path = os.path.join(out_path,"genomes")
     out_name = genome.rstrip().split('/')[-1]
     http_address = os.path.join(genome, out_name + "_genomic.fna.gz")
-    opened = urllib2.urlopen(http_address)
+    opened = urllib.request.urlopen(http_address)
     out = os.path.join(genome_path, out_name + ".fa")
     tmp_out = os.path.join(genome_path, out_name + "tmp.fa")
     out_gz = out + ".gz"
@@ -252,7 +284,7 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
         md.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # write header
     config.set('community0','metadata',metadata)
     no_samples = int(config.get("Main","number_of_samples"))
-    abundances = [os.path.join(out_path,"abundance%s.tsv" % i) for i in xrange(no_samples)]
+    abundances = [os.path.join(out_path,"abundance%s.tsv" % i) for i in range(no_samples)]
     _log.info("Downloading %s genomes" % len(otu_genome_map))
     
     create_path = os.path.join(out_path,"genomes")
@@ -273,17 +305,17 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
             except Exception as e:
                 error = e
                 counter += 1
+                _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
         if counter == 10:
-            _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
             _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
-        with open(genome_to_id,'ab') as gid:
+        with open(genome_to_id,'a+') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
-        with open(metadata,'ab') as md:
+        with open(metadata,'a+') as md:
             novelty = genomes_map[genome_id][-1]
             md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
         i = 0
         for abundance in abundances:
-            with open(abundance, 'ab') as ab:
+            with open(abundance, 'a+') as ab:
                 ab.write("%s\t%s\n" % (otu,curr_abundances[i]))
             i += 1
     abundance_files = ""
@@ -296,7 +328,7 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
     config.set("community0", "genomes_total", str(len(otu_genome_map)))
 
     cfg_path = os.path.join(out_path, "config.ini")
-    with open(cfg_path, 'wb') as cfg:
+    with open(cfg_path, 'w+') as cfg:
         config.write(cfg)
     return cfg_path
 

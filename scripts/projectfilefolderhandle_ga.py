@@ -48,15 +48,15 @@ class ProjectFileFolderHandle(Validator):
 		@type output_dir: str | unicode
 		@param time_stamp: timestamp as string
 		@type time_stamp: str | unicode
-		@param logfile: file | FileIO | StringIO | basestring
+		@param logfile: file | FileIO | StringIO | str
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
 		@type verbose: bool
 		@param debug: Display debug messages
 		@type debug: bool
 		"""
-		assert isinstance(tmp_dir, basestring)
-		assert isinstance(output_dir, basestring)
-		assert time_stamp is None or isinstance(time_stamp, basestring)
+		assert isinstance(tmp_dir, str)
+		assert isinstance(output_dir, str)
+		assert time_stamp is None or isinstance(time_stamp, str)
 		assert self.validate_dir(tmp_dir)
 
 		self._tmp_dir = tempfile.mkdtemp(dir=tmp_dir)

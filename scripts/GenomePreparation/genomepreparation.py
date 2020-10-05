@@ -44,7 +44,7 @@ class GenomePreparation(SequenceValidator):
 		@type genome_id_to_path_map: dict[str|unicode, str|unicode]
 		"""
 		assert self.is_stream(stream_out)
-		for genome_id, file_path in genome_id_to_path_map.iteritems():
+		for genome_id, file_path in genome_id_to_path_map.items():
 			stream_out.write("{}\t{}\n".format(genome_id, file_path))
 
 	def _get_genome_id_to_path_map(self, file_path_of_file_mapping_genome_id_to_paths, list_of_drawn_genome_id):
@@ -221,7 +221,7 @@ class GenomePreparation(SequenceValidator):
 			set_of_sequence_names = set()
 		file_path_sequence_map = os.path.join(directory_output, self._filename_seq_map)
 		with open(file_path_sequence_map, 'w') as stream_map:
-			for genome_id, genome_file_path in genome_id_to_path_map.iteritems():
+			for genome_id, genome_file_path in genome_id_to_path_map.items():
 				file_name = os.path.basename(genome_file_path)
 				new_genome_file_path = os.path.join(directory_output, file_name)
 				self._move_genome_file(
@@ -285,7 +285,7 @@ class GenomePreparation(SequenceValidator):
 			@param ambiguous: True or False, DNA example for strict 'GATC',  ambiguous example 'GATCRYWSMKHBVDN'
 			@type ambiguous: bool
 			@param key: If True, no error message will be made
-			@type key: basestring | None
+			@type key: str | None
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -293,10 +293,10 @@ class GenomePreparation(SequenceValidator):
 			@rtype: tuple[int|long, int|long]
 		"""
 		assert self.validate_file(file_path)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._formats
-		assert isinstance(sequence_type, basestring)
+		assert isinstance(sequence_type, str)
 		sequence_type = sequence_type.lower()
 		assert sequence_type in self._alphabets
 		prefix = ""
@@ -318,7 +318,7 @@ class GenomePreparation(SequenceValidator):
 				self._logger.error(msg)
 				raise IOError(msg)
 			try:
-				for seq_record in SeqIO.parse(file_handle, file_format, alphabet=alphabet):
+				for seq_record in SeqIO.parse(file_handle, file_format):
 					sequence_count += 1
 					if not self._validate_sequence_record(seq_record, set_of_seq_id, file_format, key=None, silent=False):
 						msg = "{}{}. sequence '{}' is invalid.".format(prefix, sequence_count, seq_record.id)

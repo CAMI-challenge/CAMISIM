@@ -27,7 +27,7 @@ class PopulationDistribution(Validator):
 			@attention:
 
 			@param logfile: file handler or file path to a log file
-			@type logfile: basestring | file | io.FileIO | StringIO.StringIO
+			@type logfile: str | file | io.FileIO | StringIO.StringIO
 			@param verbose: Not verbose means that only warnings and errors will be past to stream
 			@type verbose: bool
 			@param debug: If True logger will output DEBUG messages
@@ -64,9 +64,9 @@ class PopulationDistribution(Validator):
 			@return: A list of lists.
 			@rtype: list[list[float]]
 		"""
-		assert isinstance(size_of_population, (int, long))
-		assert isinstance(number_of_samples, (int, long))
-		return [[0.0] * number_of_samples for _ in xrange(size_of_population)]
+		assert isinstance(size_of_population, int)
+		assert isinstance(number_of_samples, int)
+		return [[0.0] * number_of_samples for _ in range(size_of_population)]
 
 	@staticmethod
 	def _add_initial_log_distribution(list_population, mu, sigma):
@@ -86,9 +86,9 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
-		assert isinstance(mu, (float, int, long))
-		assert isinstance(sigma, (float, int, long))
-		for index in xrange(len(list_population)):
+		assert isinstance(mu, (float, int))
+		assert isinstance(sigma, (float, int))
+		for index in range(len(list_population)):
 			list_population[index][0] = random.lognormvariate(mu, sigma)
 
 	def _add_replicates(self, list_population, mu, sigma):
@@ -108,11 +108,11 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
-		assert isinstance(mu, (float, int, long))
-		assert isinstance(sigma, (float, int, long))
-		for index_p in xrange(len(list_population)):
+		assert isinstance(mu, (float, int))
+		assert isinstance(sigma, (float, int))
+		for index_p in range(len(list_population)):
 			initial_log_distribution = list_population[index_p][0]
-			for index_i in xrange(len(list_population[index_p])-1):
+			for index_i in range(len(list_population[index_p])-1):
 				list_population[index_p][index_i+1] = self.lt_zero(initial_log_distribution + random.gauss(mu, sigma))
 
 	def _add_timeseries_gauss(self, list_population, mu, sigma):
@@ -132,10 +132,10 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
-		assert isinstance(mu, (float, int, long))
-		assert isinstance(sigma, (float, int, long))
-		for index_p in xrange(len(list_population)):
-			for index_i in xrange(len(list_population[index_p])-1):
+		assert isinstance(mu, (float, int))
+		assert isinstance(sigma, (float, int))
+		for index_p in range(len(list_population)):
+			for index_i in range(len(list_population[index_p])-1):
 				if list_population[index_p][index_i] > 0:
 					list_population[index_p][index_i+1] = self.lt_zero(list_population[index_p][index_i] + random.gauss(mu, sigma))
 				else:
@@ -162,10 +162,10 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
-		assert isinstance(mu, (float, int, long))
-		assert isinstance(sigma, (float, int, long))
-		for index_p in xrange(len(list_population)):
-			for index_i in xrange(len(list_population[index_p])-1):
+		assert isinstance(mu, (float, int))
+		assert isinstance(sigma, (float, int))
+		for index_p in range(len(list_population)):
+			for index_i in range(len(list_population[index_p])-1):
 				list_population[index_p][index_i+1] = (list_population[index_p][index_i] + random.lognormvariate(mu, sigma))/2
 
 	@staticmethod
@@ -186,10 +186,10 @@ class PopulationDistribution(Validator):
 			@rtype: None
 		"""
 		assert isinstance(list_population, list)
-		assert isinstance(mu, (float, int, long))
-		assert isinstance(sigma, (float, int, long))
-		for index_p in xrange(len(list_population)):
-			for index_i in xrange(len(list_population[index_p])-1):
+		assert isinstance(mu, (float, int))
+		assert isinstance(sigma, (float, int))
+		for index_p in range(len(list_population)):
+			for index_i in range(len(list_population[index_p])-1):
 				list_population[index_p][index_i+1] = random.lognormvariate(mu, sigma)
 
 	def display_figures(self, list_population):
@@ -265,13 +265,13 @@ class PopulationDistribution(Validator):
 			@return: Main list for all distributions
 			@rtype: list[list[float]]
 		"""
-		assert isinstance(size_of_population, (int, long))
-		assert isinstance(number_of_samples, (int, long))
-		assert isinstance(modus, basestring)
-		assert isinstance(log_mu, (float, int, long))
-		assert isinstance(log_sigma, (float, int, long))
-		assert isinstance(gauss_mu, (float, int, long))
-		assert isinstance(gauss_sigma, (float, int, long))
+		assert isinstance(size_of_population, int)
+		assert isinstance(number_of_samples, int)
+		assert isinstance(modus, str)
+		assert isinstance(log_mu, (float, int))
+		assert isinstance(log_sigma, (float, int))
+		assert isinstance(gauss_mu, (float, int))
+		assert isinstance(gauss_sigma, (float, int))
 		if gauss_mu is None:
 			gauss_mu = 0
 		if gauss_sigma is None:
@@ -313,11 +313,11 @@ class PopulationDistribution(Validator):
 			@type precision: int
 		"""
 		number_of_samples = len(list_population[0])
-		for index_i in xrange(number_of_samples):
+		for index_i in range(number_of_samples):
 			total_abundance = 0.0
-			for index_p in xrange(len(list_population)):
+			for index_p in range(len(list_population)):
 				total_abundance += list_population[index_p][index_i]
-			for index_p in xrange(len(list_population)):
+			for index_p in range(len(list_population)):
 				list_population[index_p][index_i] = round(list_population[index_p][index_i] / float(total_abundance), precision)
 
 	@staticmethod

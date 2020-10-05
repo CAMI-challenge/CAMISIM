@@ -51,7 +51,7 @@ class Validator(DefaultLogging):
 			@attention: config_file argument may be file path or stream.
 
 			@param file_path: path to a file
-			@type file_path: basestring
+			@type file_path: str
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -60,8 +60,8 @@ class Validator(DefaultLogging):
 		"""
 		assert isinstance(executable, bool)
 		assert isinstance(silent, bool)
-		assert key is None or isinstance(key, basestring)
-		assert file_path is None or isinstance(file_path, basestring)
+		assert key is None or isinstance(key, str)
+		assert file_path is None or isinstance(file_path, str)
 
 		prefix = ""
 		if key:
@@ -111,7 +111,7 @@ class Validator(DefaultLogging):
 			@param legal_alphabet: String of legal characters
 			@type legal_alphabet: str | unicode
 			@param key: If True, no error message will be made
-			@type key: basestring | None
+			@type key: str | None
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -139,13 +139,13 @@ class Validator(DefaultLogging):
 			@attention:
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 			@param only_parent: test only the existence of the parent directory
 			@type only_parent: bool
 			@param sub_directories: test the existence of sub directories
-			@type sub_directories: list[basestring]
+			@type sub_directories: list[str]
 			@param file_names: test the existence of files within the directory
-			@type file_names: list[basestring]
+			@type file_names: list[str]
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -155,7 +155,7 @@ class Validator(DefaultLogging):
 		# TODO: test for valid characters
 
 		assert isinstance(silent, bool)
-		assert key is None or isinstance(key, basestring)
+		assert key is None or isinstance(key, str)
 		assert isinstance(only_parent, bool)
 		assert not (only_parent and sub_directories is not None)
 		assert not (only_parent and file_names is not None)
@@ -165,7 +165,7 @@ class Validator(DefaultLogging):
 		if file_names is None:
 			file_names = []
 
-		assert directory is None or isinstance(directory, basestring)
+		assert directory is None or isinstance(directory, str)
 		assert isinstance(sub_directories, list)
 		assert isinstance(file_names, list)
 
@@ -216,12 +216,12 @@ class Validator(DefaultLogging):
 			@attention:
 
 			@param value: directory path or file path
-			@type value: basestring
+			@type value: str
 
 			@return: full path
 			@rtype: str
 		"""
-		assert isinstance(value, basestring)
+		assert isinstance(value, str)
 
 		parent_directory, filename = os.path.split(value)
 
@@ -244,15 +244,15 @@ class Validator(DefaultLogging):
 			Get all files within a directory
 
 			@param directory: A directory
-			@type directory: basestring
+			@type directory: str
 			@param extension: file extension to be filtered for
 			@type extension: str | unicode | None
 
 			@return: list of files that reflect the filter
 			@rtype: list[str|unicode]
 		"""
-		assert extension is None or isinstance(extension, basestring)
-		assert isinstance(directory, basestring)
+		assert extension is None or isinstance(extension, str)
+		assert isinstance(directory, str)
 		directory = Validator.get_full_path(directory)
 		assert os.path.isdir(directory)
 
@@ -327,7 +327,7 @@ class Validator(DefaultLogging):
 			@attention: Only one 'required space' argument will be accepted
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 			@param required_space_in_bytes: Required available space in bytes
 			@type required_space_in_bytes: Number
 			@param required_space_in_kb: Required available space in kilobytes
@@ -391,7 +391,7 @@ class Validator(DefaultLogging):
 			Get available free space at a target directory.
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 
 			@return: Available free space
 			@rtype: float
@@ -404,7 +404,7 @@ class Validator(DefaultLogging):
 			Get available free space at a target directory.
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 
 			@return: Available free space
 			@rtype: float
@@ -417,7 +417,7 @@ class Validator(DefaultLogging):
 			Get available free space at a target directory.
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 
 			@return: Available free space
 			@rtype: float
@@ -430,7 +430,7 @@ class Validator(DefaultLogging):
 			Get available free space at a target directory.
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 
 			@return: Available free space
 			@rtype: float
@@ -443,13 +443,13 @@ class Validator(DefaultLogging):
 			Get available free space at a target directory.
 
 			@param directory: directory path of a folder
-			@type directory: basestring
+			@type directory: str
 
 			@return: Available free space
 			@rtype: float
 		"""
 		assert power >= 0
-		assert isinstance(directory, basestring)
+		assert isinstance(directory, str)
 		assert self.validate_dir(directory)
 		if not directory or not os.path.isdir(directory):
 			return 0

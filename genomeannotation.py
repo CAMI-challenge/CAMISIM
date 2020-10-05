@@ -345,7 +345,7 @@ class GenomeAnnotation(ArgumentHandler):
 
 if __name__ == "__main__":
 	pipeline = GenomeAnnotation(
-		args=None, version=__version__, separator="\t",
+		args=None, separator="\t",
 		column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
 		column_name_ncbi="NCBI_ID")
 	pipeline.my_main()

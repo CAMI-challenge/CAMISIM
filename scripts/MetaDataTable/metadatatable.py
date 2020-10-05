@@ -4,7 +4,6 @@ __author__ = 'hofmann'
 __version__ = '0.1.2'
 
 import io
-import StringIO
 from scripts.Archive.compress import Compress
 
 
@@ -20,15 +19,15 @@ class MetadataTable(Compress):
 			@param separator: default character assumed to separate values in a file
 			@type separator: str | unicode
 			@param logfile: file handler or file path to a log file
-			@type logfile: file | io.FileIO | StringIO.StringIO | basestring
+			@type logfile: file | io.FileIO | StringIO.StringIO | str
 			@param verbose: Not verbose means that only warnings and errors will be past to stream
 			@type verbose: bool
 
 			@return: None
 			@rtype: None
 		"""
-		assert logfile is None or isinstance(logfile, basestring) or self.is_stream(logfile)
-		assert isinstance(separator, basestring), "separator must be string"
+		assert logfile is None or isinstance(logfile, str) or self.is_stream(logfile)
+		assert isinstance(separator, str), "separator must be string"
 		assert isinstance(verbose, bool), "verbose must be true or false"
 		super(MetadataTable, self).__init__(label="MetadataReader", logfile=logfile, verbose=verbose)
 
@@ -106,14 +105,14 @@ class MetadataTable(Compress):
 		"""
 		if comment_line is None:
 			comment_line = ['#']
-		elif isinstance(comment_line, basestring):
+		elif isinstance(comment_line, str):
 			comment_line = [comment_line]
 
 		if separator is None:
 			separator = self._separator
 
 		assert self.is_stream(stream_input)
-		assert isinstance(separator, basestring)
+		assert isinstance(separator, str)
 		assert isinstance(comment_line, list)
 		assert isinstance(column_names, bool)
 		self.clear()
@@ -175,15 +174,15 @@ class MetadataTable(Compress):
 		"""
 		if comment_line is None:
 			comment_line = ['#']
-		elif isinstance(comment_line, basestring):
+		elif isinstance(comment_line, str):
 			comment_line = [comment_line]
 
 		if separator is None:
 			separator = self._separator
 
-		assert isinstance(file_path, basestring)
+		assert isinstance(file_path, str)
 		assert self.validate_file(file_path)
-		assert isinstance(separator, basestring)
+		assert isinstance(separator, str)
 		assert isinstance(comment_line, list)
 		assert isinstance(column_names, bool)
 
@@ -252,15 +251,15 @@ class MetadataTable(Compress):
 		if separator is None:
 			separator = self._separator
 
-		assert isinstance(file_path, basestring)
+		assert isinstance(file_path, str)
 		assert self.validate_dir(file_path, only_parent=True)
-		assert isinstance(separator, basestring)
+		assert isinstance(separator, str)
 		assert isinstance(column_names, bool)
-		assert isinstance(compression_level, (int, long))
+		assert isinstance(compression_level, int)
 		assert 0 <= compression_level < 10
 		assert exclude is None or isinstance(exclude, bool)
 		assert value_list is None or isinstance(value_list, list)
-		assert key_column_name is None or isinstance(key_column_name, basestring), "Invalid: {}".format(key_column_name)
+		assert key_column_name is None or isinstance(key_column_name, str), "Invalid: {}".format(key_column_name)
 
 		if compression_level > 0:
 			file_handler = self.open(file_path, "w", compression_level)
@@ -268,7 +267,7 @@ class MetadataTable(Compress):
 			file_handler = open(file_path, "w")
 
 		if column_names:
-			if not isinstance(self._list_of_column_names[0], basestring):
+			if not isinstance(self._list_of_column_names[0], str):
 				header = separator.join([str(index) for index in self._list_of_column_names])
 			else:
 				header = separator.join(self._list_of_column_names)
@@ -333,7 +332,7 @@ class MetadataTable(Compress):
 			@return: index of value in a column, None if not there
 			@rtype: None | int
 		"""
-		assert isinstance(column_name, (basestring, int, long))
+		assert isinstance(column_name, (str, int))
 		assert self.has_column(column_name), "Column '{}' not found!".format(column_name)
 
 		if value in self._meta_table[column_name]:
@@ -353,7 +352,7 @@ class MetadataTable(Compress):
 			@return: True if column available
 			@rtype: bool
 		"""
-		assert isinstance(column_name, (basestring, int, long))
+		assert isinstance(column_name, (str, int))
 
 		if column_name in self._meta_table:
 			return True
@@ -372,7 +371,7 @@ class MetadataTable(Compress):
 			@return: Cell values of a column
 			@rtype: list[str|unicode]
 		"""
-		assert isinstance(column_name, (basestring, int, long))
+		assert isinstance(column_name, (str, int))
 		assert self.has_column(column_name), "Column '{}' not found!".format(column_name)
 		return list(self._meta_table[column_name])
 
@@ -388,7 +387,7 @@ class MetadataTable(Compress):
 			@return: Column with cell values set to default value
 			@rtype: list[str|unicode]
 		"""
-		assert isinstance(default_value, basestring)
+		assert isinstance(default_value, str)
 		return [default_value] * self._number_of_rows
 
 	def get_empty_row(self, default_value='', as_list=False):
@@ -405,7 +404,7 @@ class MetadataTable(Compress):
 			@return: Column with cell values set to default value
 			@rtype: dict | list
 		"""
-		assert isinstance(default_value, basestring)
+		assert isinstance(default_value, str)
 		assert isinstance(as_list, bool)
 		if as_list:
 			return [default_value] * len(self._list_of_column_names)
@@ -430,7 +429,7 @@ class MetadataTable(Compress):
 		"""
 		if column_name is None:
 			column_name = len(self._list_of_column_names)
-		assert isinstance(column_name, (basestring, int, long))
+		assert isinstance(column_name, (str, int))
 		# assert len(values) == self._number_of_rows, ""
 
 		if list_of_values is None:
@@ -487,8 +486,8 @@ class MetadataTable(Compress):
 			@return: None if key value is not there
 			@rtype: str | unicode | None
 		"""
-		assert isinstance(key_column_name, (basestring, int, long))
-		assert isinstance(value_column_name, (basestring, int, long))
+		assert isinstance(key_column_name, (str, int))
+		assert isinstance(value_column_name, (str, int))
 		assert self.has_column(key_column_name), "Column '{}' not found!".format(key_column_name)
 		assert self.has_column(value_column_name), "Column '{}' not found!".format(value_column_name)
 
@@ -575,7 +574,7 @@ class MetadataTable(Compress):
 			@rtype: None
 		"""
 
-		assert isinstance(key_column_name, (basestring, int, long))
+		assert isinstance(key_column_name, (str, int))
 		assert isinstance(list_of_values, list)
 		assert self.has_column(key_column_name), "Column '{}' not found!".format(key_column_name)
 
@@ -608,8 +607,8 @@ class MetadataTable(Compress):
 			@raises: KeyError
 		"""
 
-		assert isinstance(key_column_name, (basestring, int, long))
-		assert isinstance(value_column_name, (basestring, int, long))
+		assert isinstance(key_column_name, (str, int))
+		assert isinstance(value_column_name, (str, int))
 		assert self.has_column(key_column_name), "Column '{}' not found!".format(key_column_name)
 		assert self.has_column(value_column_name), "Column '{}' not found!".format(value_column_name)
 
@@ -646,8 +645,8 @@ class MetadataTable(Compress):
 			@return: Nothing
 			@rtype: None
 		"""
-		assert isinstance(old_column_name, (basestring, int, long))
-		assert isinstance(new_column_name, (basestring, int, long))
+		assert isinstance(old_column_name, (str, int))
+		assert isinstance(new_column_name, (str, int))
 		assert self.has_column(old_column_name), "Column '{}' not found!".format(old_column_name)
 
 		self._list_of_column_names[self._list_of_column_names.index(old_column_name)] = new_column_name

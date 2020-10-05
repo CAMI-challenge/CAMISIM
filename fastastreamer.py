@@ -6,7 +6,6 @@ import sys
 import os
 import io
 import errno
-import StringIO
 import itertools
 import argparse
 from Bio import SeqIO
@@ -47,27 +46,27 @@ class FastaStreamer(SequenceValidator):
 			@attention:
 
 			@param directory: A directory
-			@type directory: basestring
+			@type directory: str
 			@param out_stream: A stream the output will be written to.
 			@type out_stream: file | io.FileIO | StringIO.StringIO
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 			@param extension: file extension to be filtered for
-			@type extension: basestring
+			@type extension: str
 			@param paired: sequences are streamed interweaved from a pair of files if True, else consecutively
 			@type paired: bool
 
 			@return: None
 			@rtype: None
 		"""
-		assert isinstance(directory, basestring)
+		assert isinstance(directory, str)
 		directory = FastaStreamer.get_full_path(directory)
 		assert self.validate_dir(directory)
 		assert self.is_stream(out_stream)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
-		assert extension is None or isinstance(extension, basestring)
+		assert extension is None or isinstance(extension, str)
 
 		list_of_file = self.get_files_in_directory(directory, extension=extension)
 		if not paired:
@@ -82,22 +81,22 @@ class FastaStreamer(SequenceValidator):
 			@attention:
 
 			@param file_path: A file path
-			@type file_path: basestring
+			@type file_path: str
 			@param out_stream: A stream the output will be written to.
 			@type out_stream: file | io.FileIO | StringIO.StringIO
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 			@param paired: sequences are streamed as pair, else one by one
 			@type paired: bool
 
 			@return: None
 			@rtype: None
 		"""
-		assert isinstance(file_path, basestring)
+		assert isinstance(file_path, str)
 		file_path = FastaStreamer.get_full_path(file_path)
 		assert self.validate_file(file_path)
 		assert self.is_stream(out_stream)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 
@@ -110,23 +109,23 @@ class FastaStreamer(SequenceValidator):
 			@attention:
 
 			@param src: A file path or list of file paths
-			@type src: basestring | list[basestring]
+			@type src: str | list[str]
 			@param out_stream: A stream the output will be written to.
 			@type out_stream: file | io.FileIO | StringIO.StringIO
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 
 			@return: None
 			@rtype: None
 		"""
-		assert isinstance(src, (basestring, list))
+		assert isinstance(src, (str, list))
 		assert self.is_stream(out_stream)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 
 		list_of_file_paths = None
-		if isinstance(src, basestring):
+		if isinstance(src, str):
 			assert self.validate_file(src)
 			list_of_file_paths = [src]
 		elif isinstance(src, list):
@@ -169,26 +168,26 @@ class FastaStreamer(SequenceValidator):
 			@attention:
 
 			@param src: A file path or list of file paths
-			@type src: basestring | list[basestring]
+			@type src: str | list[str]
 			@param out_stream: A stream the output will be written to.
 			@type out_stream: file | io.FileIO | StringIO.StringIO
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 			@param extension: file extension to be filtered for
-			@type extension: basestring
+			@type extension: str
 
 			@return: None
 			@rtype: None
 		"""
-		assert isinstance(src, (basestring, list))
+		assert isinstance(src, (str, list))
 		assert self.is_stream(out_stream)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
-		assert isinstance(extension, basestring)
+		assert isinstance(extension, str)
 
 		list_of_file_paths = None
-		if isinstance(src, basestring):
+		if isinstance(src, str):
 			assert self.validate_file(src)
 			list_of_file_paths = [src]
 		elif isinstance(src, list):
@@ -204,7 +203,7 @@ class FastaStreamer(SequenceValidator):
 			file_path_one = file_path
 			file_path_second = file_path[:file_path.rfind(file_path_one_suffix)] + file_path_second_suffix
 
-			for seq_record_f, seq_record_b in itertools.izip_longest(SeqIO.parse(file_path_one, file_format), SeqIO.parse(file_path_second, file_format)):
+			for seq_record_f, seq_record_b in itertools.zip_longest(SeqIO.parse(file_path_one, file_format), SeqIO.parse(file_path_second, file_format)):
 				if seq_record_f is None or seq_record_b is None:
 					msg = "forward and backward file have an unequal amount of sequences:\n"
 					msg += "forward: '{}'\nbackward: '{}'\n".format(file_path_one, file_path_second)

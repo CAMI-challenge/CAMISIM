@@ -57,7 +57,7 @@ class Community(Validator):
         @param gauss_sigma: Standard deviation of gauss distribution
         @type gauss_sigma: int | long | float
         @param logfile: file handler or file path to a log file
-        @type logfile: file | FileIO | StringIO | basestring
+        @type logfile: file | FileIO | StringIO | str
         @param verbose: More output and user interaction is enabled.
         @type verbose: bool
         @param debug: Display debug messages
@@ -170,7 +170,7 @@ class CommunityDesign(GenomePreparation):
         @param tmp_dir: working directory or place temporary files can be stored
         @type tmp_dir: str | unicode
         @param logfile: file handler or file path to a log file
-        @type logfile: file | FileIO | StringIO | basestring
+        @type logfile: file | FileIO | StringIO | str
         @param verbose: Not verbose means that only warnings and errors will be past to stream
         @type verbose: bool
         @param debug: Display debug messages
@@ -189,7 +189,7 @@ class CommunityDesign(GenomePreparation):
         self._column_name_source = column_name_source
         self._column_name_ncbi = column_name_ncbi
 
-        assert isinstance(max_processors, (long, int))
+        assert isinstance(max_processors, int)
         assert max_processors > 0
         self._max_processors = max_processors
 
@@ -345,7 +345,7 @@ class CommunityDesign(GenomePreparation):
                 genome_id_to_file_path_gff=genome_id_to_file_path_gff)
             # adopt new list that includes simulated strains
             self._logger.info("Validating simulated sequence files!")
-            for genome_id, file_path in genome_id_to_path_map.iteritems():
+            for genome_id, file_path in genome_id_to_path_map.items():
                 if genome_id in list_of_drawn_genome_id:
                     continue
                 assert self.validate_sequence_file(
@@ -399,7 +399,7 @@ class CommunityDesign(GenomePreparation):
         """
         set_of_file_names = set()
         genome_id_to_file_name = {}
-        for genome_id, file_path in genome_id_to_path_map.iteritems():
+        for genome_id, file_path in genome_id_to_path_map.items():
             filename = os.path.basename(file_path)
             assert filename not in set_of_file_names, "Filename '{}' is not unique!".format(set_of_file_names)
             set_of_file_names.add(filename)
@@ -489,7 +489,7 @@ class CommunityDesign(GenomePreparation):
         @param index_sample: Index of sample
         @type index_sample: int | long
         @param stream_output: joined distribution information output
-        @type stream_output: file | FileIO | StringIO | basestring
+        @type stream_output: file | FileIO | StringIO | str
         """
         gid_to_abundance = {}
         total_abundance = 0.0
@@ -502,7 +502,7 @@ class CommunityDesign(GenomePreparation):
                 gid_to_abundance[genome_id] = float(abundance) * factor
                 total_abundance += gid_to_abundance[genome_id]
             community.close()
-        for genome_id, abundance in gid_to_abundance.iteritems():
+        for genome_id, abundance in gid_to_abundance.items():
             stream_output.write(line_format.format(
                 gid=genome_id,
                 abundance=float(abundance) / total_abundance  # saving relative abundance

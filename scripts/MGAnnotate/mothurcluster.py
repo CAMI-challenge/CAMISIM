@@ -26,7 +26,7 @@ class MothurCluster(Validator):
 		@param iid_gid_mapping: Map of internal ids to genome ids
 		@type iid_gid_mapping: dict[str|unicode, str|unicode]
 		@param logfile: File handler or file path to a log file
-		@type logfile: file | FileIO | StringIO | basestring
+		@type logfile: file | FileIO | StringIO | str
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
 		@type verbose: bool
 		@param debug: Display debug messages
@@ -34,8 +34,8 @@ class MothurCluster(Validator):
 		"""
 		assert isinstance(precision, int)
 		assert self.validate_number(precision, minimum=0)
-		assert isinstance(otu_separator, basestring)
-		assert isinstance(element_separator, basestring)
+		assert isinstance(otu_separator, str)
+		assert isinstance(element_separator, str)
 		assert iid_gid_mapping is None or isinstance(iid_gid_mapping, dict)
 		super(MothurCluster, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
 		self._precision = int(math.log10(precision))
@@ -222,8 +222,8 @@ class MothurCluster(Validator):
 		@return: True if genome id available in data
 		@rtype: bool
 		"""
-		assert isinstance(threshold, (int, float, basestring))
-		assert isinstance(gid, basestring)
+		assert isinstance(threshold, (int, float, str))
+		assert isinstance(gid, str)
 		if not threshold == "unique":
 			assert isinstance(threshold, (int, float))
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
@@ -249,7 +249,7 @@ class MothurCluster(Validator):
 		@return: List of internal ids of a otu cluster
 		@rtype: list[str|unicode]
 		"""
-		assert isinstance(threshold, (int, float, basestring))
+		assert isinstance(threshold, (int, float, str))
 		assert isinstance(cluster_index, (int, float))
 		if threshold not in self._cutoff_to_cluster:
 			self._logger.error("Bad cutoff {}".format(threshold))
@@ -271,8 +271,8 @@ class MothurCluster(Validator):
 		@return: list of cluster index and a list of those clusters
 		@rtype: tuple[int|long, list[list[str|unicode]]]
 		"""
-		assert isinstance(threshold, (int, float, basestring))
-		assert isinstance(gid, basestring)
+		assert isinstance(threshold, (int, float, str))
+		assert isinstance(gid, str)
 		if not threshold == "unique":
 			assert isinstance(threshold, (int, float)), "Bad value: '{}'".format(threshold)
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
@@ -298,7 +298,7 @@ class MothurCluster(Validator):
 		@return: List of cluster
 		@rtype: list[list[str|unicode]]]
 		"""
-		assert isinstance(threshold, (int, float, basestring))
+		assert isinstance(threshold, (int, float, str))
 		if not threshold == "unique":
 			assert isinstance(threshold, (int, float))
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
@@ -319,7 +319,7 @@ class MothurCluster(Validator):
 		@return: Amount of cluster
 		@rtype: int | long
 		"""
-		assert isinstance(threshold, (int, float, basestring))
+		assert isinstance(threshold, (int, float, str))
 		if not threshold == "unique":
 			assert isinstance(threshold, (int, float))
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)
@@ -340,7 +340,7 @@ class MothurCluster(Validator):
 		@return: Cluster at a threshold as string
 		@rtype: str|unicode
 		"""
-		assert isinstance(threshold, (int, float, basestring))
+		assert isinstance(threshold, (int, float, str))
 		if not threshold == "unique":
 			assert isinstance(threshold, (int, float))
 			threshold = "{th:.{pre}f}".format(th=threshold, pre=self._precision)

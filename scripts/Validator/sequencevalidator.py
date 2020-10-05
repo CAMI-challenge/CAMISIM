@@ -4,11 +4,9 @@ __version__ = '0.0.6'
 import io
 import os
 import string
-import StringIO
 from Bio import SeqIO
-from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
-from validator import Validator
+from .validator import Validator
 
 # Todo: allow for multiple sequence_type
 
@@ -33,9 +31,9 @@ class SequenceValidator(Validator):
 		}
 
 	_alphabets = {
-		"rna": [IUPAC.unambiguous_rna, IUPAC.ambiguous_rna],
-		"dna": [IUPAC.unambiguous_dna, IUPAC.ambiguous_dna, IUPAC.extended_dna],
-		"protein": [IUPAC.protein, IUPAC.extended_protein]
+		"rna": ["GAUC", "GAUCRYWSMKHBVDN"],
+		"dna": ["GATC", "GATCRYWSMKHBVDN", "GATCRYWSMKHBVDN"],
+		"protein": ["ACDEFGHIKLMNPQRSTVWYBXZJUO", "ACDEFGHIKLMNPQRSTVWYBXZJUO"]
 		}
 
 	_legal_text_characters = string.printable
@@ -56,9 +54,9 @@ class SequenceValidator(Validator):
 			@param ambiguous: True or False, DNA example for strict 'GATC',  ambiguous example 'GATCRYWSMKHBVDN'
 			@type ambiguous: bool
 			@param file_extension: file extension to be filtered for. Example: '.fasta' '.fq'
-			@type file_extension: basestring | None
+			@type file_extension: str | None
 			@param key: If True, no error message will be made
-			@type key: basestring | None
+			@type key: str | None
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -102,7 +100,7 @@ class SequenceValidator(Validator):
 			@param ambiguous: True or False, DNA example for strict 'GATC',  ambiguous example 'GATCRYWSMKHBVDN'
 			@type ambiguous: bool
 			@param key: If True, no error message will be made
-			@type key: basestring | None
+			@type key: str | None
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -110,10 +108,10 @@ class SequenceValidator(Validator):
 			@rtype: bool
 		"""
 		assert self.validate_file(file_path)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._formats
-		assert isinstance(sequence_type, basestring)
+		assert isinstance(sequence_type, str)
 		sequence_type = sequence_type.lower()
 		assert sequence_type in self._alphabets
 
@@ -135,7 +133,7 @@ class SequenceValidator(Validator):
 				return False
 			sequence_count = 0
 			try:
-				for seq_record in SeqIO.parse(file_handle, file_format, alphabet=alphabet):
+				for seq_record in SeqIO.parse(file_handle, file_format):
 					sequence_count += 1
 					if not self._validate_sequence_record(seq_record, set_of_seq_id, file_format, key=None, silent=False):
 						if not silent:
@@ -161,7 +159,7 @@ class SequenceValidator(Validator):
 			@rtype: bool
 		"""
 		assert self.is_stream(stream_handle)
-		assert isinstance(file_format, basestring)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._formats
 
@@ -197,7 +195,7 @@ class SequenceValidator(Validator):
 		if set_of_seq_id is None:
 			set_of_seq_id = set()
 		assert isinstance(set_of_seq_id, set)
-		assert isinstance(identifier, basestring)
+		assert isinstance(identifier, str)
 		assert isinstance(silent, bool)
 
 		prefix = ""
@@ -235,8 +233,8 @@ class SequenceValidator(Validator):
 			@return: True if valid
 			@rtype: bool
 		"""
-		assert isinstance(description, basestring)
-		assert key is None or isinstance(key, basestring)
+		assert isinstance(description, str)
+		assert key is None or isinstance(key, str)
 		assert isinstance(silent, bool)
 
 		if not self.validate_characters(description, legal_alphabet=self._legal_text_characters, key=key, silent=silent):
@@ -263,7 +261,7 @@ class SequenceValidator(Validator):
 		"""
 		assert isinstance(quality, list)
 		assert isinstance(silent, bool)
-		assert isinstance(qformat, basestring)
+		assert isinstance(qformat, str)
 		qformat = qformat.lower()
 		assert qformat in self._qformats, "{} not in {}".format(qformat, self._qformats.keys())
 
@@ -292,7 +290,7 @@ class SequenceValidator(Validator):
 			@param sequence: sequence
 			@type sequence: Seq
 			@param key: If True, no error message will be made
-			@type key: basestring | None
+			@type key: str | None
 			@param silent: If True, no error message will be made
 			@type silent: bool
 
@@ -312,6 +310,6 @@ class SequenceValidator(Validator):
 			return False
 
 		if not self.validate_characters(
-			sequence.upper(), legal_alphabet=sequence.alphabet.letters, key=key, silent=silent):
+			sequence.upper(), key=key, silent=silent):
 			return False
 		return True

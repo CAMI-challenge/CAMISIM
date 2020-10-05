@@ -92,12 +92,12 @@ class ArgumentHandler(SequenceValidator):
 		@type column_name_ncbi: str|unicode
 		"""
 		assert args is None or isinstance(args, list)
-		assert isinstance(version, basestring)
-		assert isinstance(separator, basestring)
-		assert isinstance(column_name_genome_id, basestring)
-		assert isinstance(column_name_otu, basestring)
-		assert isinstance(column_name_novelty_category, basestring)
-		assert isinstance(column_name_ncbi, basestring)
+		assert isinstance(version, str)
+		assert isinstance(separator, str)
+		assert isinstance(column_name_genome_id, str)
+		assert isinstance(column_name_otu, str)
+		assert isinstance(column_name_novelty_category, str)
+		assert isinstance(column_name_ncbi, str)
 		self._separator = separator
 		self._column_name_genome_id = column_name_genome_id
 		self._column_name_otu_id = column_name_otu
@@ -136,8 +136,8 @@ class ArgumentHandler(SequenceValidator):
 
 		tmp_dir = self._directory_temp
 		directory_output = self._directory_output
-		assert isinstance(tmp_dir, basestring)
-		assert isinstance(directory_output, basestring)
+		assert isinstance(tmp_dir, str)
+		assert isinstance(directory_output, str)
 		if not self.validate_dir(tmp_dir) or not self.validate_dir(directory_output, only_parent=True):
 			self._valid_args = False
 			return
@@ -254,9 +254,9 @@ class ArgumentHandler(SequenceValidator):
 		file_path_reference_genome_locations = self._file_path_reference_genome_locations
 		file_path_query_genomes_location_file = self._file_path_query_genomes_location_file
 		silva_reference_directory = self._silva_reference_directory
-		assert isinstance(file_path_reference_genome_locations, basestring)
-		assert isinstance(file_path_query_genomes_location_file, basestring)
-		assert isinstance(silva_reference_directory, basestring)
+		assert isinstance(file_path_reference_genome_locations, str)
+		assert isinstance(file_path_query_genomes_location_file, str)
+		assert isinstance(silva_reference_directory, str)
 		data_table_reference = MetadataTable(separator=self._separator, logfile=self._logfile, verbose=self._verbose)
 		data_table_reference.read(file_path_reference_genome_locations)
 		reference_gids = data_table_reference.get_column(0)
@@ -320,14 +320,14 @@ class ArgumentHandler(SequenceValidator):
 				return
 
 			directory_rna_hmm = self._rnaHmmInstallDir
-			assert isinstance(directory_rna_hmm, basestring)
+			assert isinstance(directory_rna_hmm, str)
 			rna_hmm_wrapper = None
 			if self._hmmer == 3:
 				if not self.validate_dir(self._hmmerBinDir, file_names=["hmmsearch"]):
 					self._valid_args = False
 					return
 				directory = self._hmmerBinDir
-				assert isinstance(directory, basestring)
+				assert isinstance(directory, str)
 				executable = os.path.join(directory, "hmmsearch")
 				if not self.validate_file(executable, executable=True):
 					self._valid_args = False
@@ -419,7 +419,7 @@ class ArgumentHandler(SequenceValidator):
 			return
 
 		directory_output = self._directory_output
-		assert isinstance(directory_output, basestring)
+		assert isinstance(directory_output, str)
 		if not os.path.exists(directory_output):
 			directory_output = os.path.dirname(directory_output)
 		if not self.validate_free_space(directory=directory_output, required_space_in_gb=expected_output_size_gb):

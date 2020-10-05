@@ -24,20 +24,20 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param probability: Proportion of simulated original genomes
-		@type probability: int | long | float
+		@type probability: int  | float
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 		@param num_real_genomes: exact number of real genomes
-		@type num_real_genomes: int | long
+		@type num_real_genomes: int 
 
 		@return:
 		@rtype: list[int]
 		"""
-		assert probability is None or isinstance(probability, (int, long, float))
+		assert probability is None or isinstance(probability, (int, float))
 		if probability:
 			assert 0 <= probability <= 1
-		assert isinstance(max_genome_amount, (int, long))
-		assert isinstance(num_real_genomes, (int, long))
+		assert isinstance(max_genome_amount, int)
+		assert isinstance(num_real_genomes, int)
 		assert isinstance(silent, bool)
 
 		if num_real_genomes is not None:
@@ -78,16 +78,16 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param probability: Proportion of simulated original genomes
-		@type probability: int | long | float
+		@type probability: int  | float
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 
 		@return: List of integers representing amount of strains
 		@rtype: list[int]
 		"""
-		assert isinstance(probability, (int, long, float))
+		assert isinstance(probability, (int, float))
 		assert 0 <= probability <= 1
-		assert isinstance(max_genome_amount, (int, long))
+		assert isinstance(max_genome_amount, int)
 
 		genome_amounts = self._get_genome_amounts_geometric(probability, max_genome_amount)
 		diverence = Counter(genome_amounts)[1] / float(len(genome_amounts))
@@ -104,16 +104,16 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param probability: Proportion of simulated original genomes
-		@type probability: int | long | float
+		@type probability: int  | float
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 
 		@return: List of integers representing amount of strains
 		@rtype: list[int]
 		"""
-		assert isinstance(probability, (int, long, float))
+		assert isinstance(probability, (int, float))
 		assert 0 <= probability <= 1
-		assert isinstance(max_genome_amount, (int, long))
+		assert isinstance(max_genome_amount, int)
 
 		final_amounts = []
 		while sum(final_amounts) < max_genome_amount:
@@ -129,15 +129,15 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param num_real_genomes: exact number of real genomes
-		@type num_real_genomes: int | long
+		@type num_real_genomes: int 
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 
 		@return: List of integers representing amount of strains
 		@rtype: list[int]
 		"""
-		assert isinstance(num_real_genomes, (int, long))
-		assert isinstance(max_genome_amount, (int, long))
+		assert isinstance(num_real_genomes, int)
+		assert isinstance(max_genome_amount, int)
 
 		final_amounts = [1] * num_real_genomes
 		index = 0
@@ -156,16 +156,16 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param probability: Proportion of simulated original genomes
-		@type probability: int | long | float
+		@type probability: int  | float
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 
 		@return: List of integers representing amount of strains
 		@rtype: list[int]
 		"""
-		assert isinstance(probability, (int, long, float))
+		assert isinstance(probability, (int, float))
 		assert 0 <= probability <= 1
-		assert isinstance(max_genome_amount, (int, long))
+		assert isinstance(max_genome_amount, int)
 
 		final_amounts = []
 		while sum(final_amounts) < max_genome_amount:
@@ -184,16 +184,16 @@ class GenomeOrganizer(Validator):
 		Get amounts of genomes by original genome
 
 		@param probability: Proportion of simulated original genomes
-		@type probability: int | long | float
+		@type probability: int  | float
 		@param max_genome_amount: Total number of genomes
-		@type max_genome_amount: int | long
+		@type max_genome_amount: int 
 
 		@return: List of integers representing amount of strains
 		@rtype: list[int]
 		"""
-		assert isinstance(probability, (int, long, float))
+		assert isinstance(probability, (int, float))
 		assert 0 <= probability <= 1
-		assert isinstance(max_genome_amount, (int, long))
+		assert isinstance(max_genome_amount, int)
 
 		final_amounts = []
 		while sum(final_amounts) < max_genome_amount:
@@ -213,12 +213,12 @@ class GenomeOrganizer(Validator):
 			@attention:
 
 			@param message: Question to be confirmed
-			@type message: basestring
+			@type message: str
 
 			@return: Nothing
 			@rtype: bool
 		"""
-		assert isinstance(message, basestring)
+		assert isinstance(message, str)
 
 		if not message:
 			raise AssertionError("asd")
@@ -267,28 +267,28 @@ class StrainSimulationWrapper(GenomeOrganizer):
 			@param keep_original: If true, original genomes will be kept, else only simulated genomes are used
 			@type keep_original: bool
 			@param max_processors: maximum number of processors available to be used
-			@type max_processors: long | int
+			@type max_processors: int
 			@param tmp_dir: working directory or place temporary files can be stored
 			@type tmp_dir: str | unicode
 			@param logfile: file handler or file path to a log file
-			@type logfile: basestring | file | io.FileIO | StringIO.StringIO
+			@type logfile: str | file | io.FileIO | StringIO.StringIO
 			@param verbose: Not verbose means that only warnings and errors will be past to stream
 			@type verbose: bool
 			@param debug: If True logger will output DEBUG messages
 			@type debug: bool
 			@param seed: The seed used for initiation of the 'random' module
-			@type seed: long | int | float | str | unicode
+			@type seed: int | float | str | unicode
 
 			@return: None
 			@rtype: None
 		"""
 		super(StrainSimulationWrapper, self).__init__(logfile, verbose)
 		assert isinstance(keep_original, bool)
-		assert isinstance(separator, basestring)
-		assert isinstance(column_name_gid, basestring)
-		assert isinstance(column_name_ncbi, basestring)
-		assert isinstance(column_name_source, basestring)
-		assert isinstance(filename_prefix, basestring)
+		assert isinstance(separator, str)
+		assert isinstance(column_name_gid, str)
+		assert isinstance(column_name_ncbi, str)
+		assert isinstance(column_name_source, str)
+		assert isinstance(filename_prefix, str)
 		assert isinstance(debug, bool)
 
 		if tmp_dir is None:
@@ -302,7 +302,7 @@ class StrainSimulationWrapper(GenomeOrganizer):
 			random.seed(seed)
 			np_random.seed(abs(hash(seed)) % 4294967295)  # numpy accepts only 32 bit integers
 
-		assert isinstance(max_processors, (long, int))
+		assert isinstance(max_processors, int)
 		self._max_processors = max_processors
 
 		self._separator = separator

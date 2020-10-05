@@ -4,7 +4,6 @@ __version__ = '0.0.5'
 import sys
 import io
 import math
-import StringIO
 import argparse
 from Bio import SeqIO
 from scripts.Validator.sequencevalidator import SequenceValidator
@@ -52,9 +51,9 @@ class Anonymizer(SequenceValidator):
 			@param output_stream: Output stream of anonymous fasta format data
 			@type output_stream: file | io.FileIO | StringIO.StringIO
 			@param sequence_prefix: Prefix of the anonymous sequence id.
-			@type sequence_prefix: basestring
+			@type sequence_prefix: str
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 
 			@return: None
 			@rtype: None
@@ -62,8 +61,8 @@ class Anonymizer(SequenceValidator):
 		assert self.is_stream(input_stream)
 		assert self.is_stream(output_stream)
 		assert self.is_stream(mapping)
-		assert isinstance(sequence_prefix, basestring)
-		assert isinstance(file_format, basestring)
+		assert isinstance(sequence_prefix, str)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 
@@ -92,9 +91,9 @@ class Anonymizer(SequenceValidator):
 			@param output_stream: Output stream of anonymous fasta format data
 			@type output_stream: file | io.FileIO | StringIO.StringIO | None
 			@param sequence_prefix: Prefix of the anonymous sequence id.
-			@type sequence_prefix: basestring
+			@type sequence_prefix: str
 			@param file_format: Fasta format of input and output. Either 'fasta' or 'fastq'.
-			@type file_format: basestring
+			@type file_format: str
 
 			@return: None
 			@rtype: None
@@ -102,8 +101,8 @@ class Anonymizer(SequenceValidator):
 		assert self.is_stream(input_stream)
 		assert self.is_stream(output_stream)
 		assert self.is_stream(mapping)
-		assert isinstance(sequence_prefix, basestring)
-		assert isinstance(file_format, basestring)
+		assert isinstance(sequence_prefix, str)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 

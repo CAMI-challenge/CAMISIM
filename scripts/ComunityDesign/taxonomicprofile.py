@@ -19,7 +19,7 @@ class TaxonomicProfile(Validator):
         @param taxonomy: taxonomy handler
         @type taxonomy: NcbiTaxonomy
         @param logfile: file handler or file path to a log file
-        @type logfile: file | FileIO | StringIO | basestring
+        @type logfile: file | FileIO | StringIO | str
         @param verbose: Not verbose means that only warnings and errors will be past to stream
         @type verbose: bool
         @param debug: Display debug messages

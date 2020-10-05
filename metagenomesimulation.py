@@ -838,7 +838,7 @@ if __name__ == "__main__":
     pipeline = None
     try:
         pipeline = MetagenomeSimulation(
-            args=None, version=__version__, separator="\t",
+            args=None, separator="\t",
             column_name_genome_id="genome_ID", column_name_otu="OTU", column_name_novelty_category="novelty_category",
             column_name_ncbi="NCBI_ID", column_name_source="source")
     except (KeyboardInterrupt, SystemExit, Exception, ValueError, RuntimeError) as e:

@@ -8,7 +8,7 @@ import os
 import time
 import fnmatch
 import tempfile
-from taxonomynode import TaxonomyNode
+from .taxonomynode import TaxonomyNode
 from scripts.Validator.validator import Validator
 from scripts.Archive.archive import Archive
 
@@ -258,7 +258,7 @@ class NcbiTaxonomy(Validator):
                 current_rank_counter = ranks.index(NcbiTaxonomy.taxid_to_rank[taxid])
                 rank_difference = rank_counter - current_rank_counter
                 if rank_difference > 1:
-                    for i in xrange(current_rank_counter, rank_counter - 1):
+                    for i in range(current_rank_counter, rank_counter - 1):
                         lineage[i] = "" # add empty name to list if name is missing in the taxonomy
                 rank_counter = current_rank_counter
                 if as_name:
@@ -555,7 +555,7 @@ class NcbiTaxonomy(Validator):
         @rtype: None
         """
         # for taxid in set_of_strains:
-        for taxid, name in self.taxid_to_name.iteritems():
+        for taxid, name in self.taxid_to_name.items():
             stream.write("{}\t{}\n".format(taxid, name))
 
     def lca(self, tax_id1, tax_id2):

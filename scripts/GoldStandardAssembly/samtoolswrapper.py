@@ -33,7 +33,7 @@ class SamtoolsWrapper(Validator):
 			@param tmp_dir: Temp directory for temporary data if needed
 			@type tmp_dir: str | unicode
 			@param logfile: file handler or file path to a log file
-			@type logfile: file | io.FileIO | StringIO.StringIO | basestring
+			@type logfile: file | io.FileIO | StringIO.StringIO | str
 			@param verbose: Not verbose means that only warnings and errors will be past to stream
 			@type verbose: bool
 			@param debug: Display debug messages
@@ -47,11 +47,11 @@ class SamtoolsWrapper(Validator):
 		if tmp_dir is None:
 			tmp_dir = tempfile.gettempdir()
 
-		assert isinstance(tmp_dir, basestring)
+		assert isinstance(tmp_dir, str)
 		assert isinstance(verbose, bool), "Verbose must be true or false"
-		assert isinstance(max_processes, (int, long)), "'max_processes' must be a digit"
-		assert isinstance(max_memory, (int, long)), "'max_memory' must be a digit"
-		assert isinstance(compression_level, (int, long)), "'compression_level' must be a digit"
+		assert isinstance(max_processes, int), "'max_processes' must be a digit"
+		assert isinstance(max_memory, int), "'max_memory' must be a digit"
+		assert isinstance(compression_level, int), "'compression_level' must be a digit"
 		self.validate_number(max_processes, zero=False, minimum=1)
 		self.validate_number(max_memory, zero=False, minimum=1)
 		self.validate_number(compression_level, zero=False, minimum=0, maximum=9)
@@ -232,13 +232,13 @@ class SamtoolsWrapper(Validator):
 		bam_is_folder = self.validate_dir(output_dir, silent=True)
 		assert isinstance(dict_of_bam_files, dict), "Expected dictionary of file paths"
 		assert bam_is_folder, "Invalid file or directory: '{}'".format(output_dir)
-		for key, list_of_bam_paths in dict_of_bam_files.iteritems():
+		for key, list_of_bam_paths in dict_of_bam_files.items():
 			for file_path in list_of_bam_paths:
 				assert self.validate_file(file_path), "Invalid file: '{}'".format(file_path)
 
 		# add commands to a list of tasks to run them in parallel
 		tasks = []
-		for filename, list_of_bam_paths in dict_of_bam_files.iteritems():
+		for filename, list_of_bam_paths in dict_of_bam_files.items():
 			if len(list_of_bam_paths) == 1:
 				# move bam instead of merge, if only one
 				file_path = list_of_bam_paths[0]
@@ -273,7 +273,7 @@ class SamtoolsWrapper(Validator):
 			@raises: AssertionError
 		"""
 		assert isinstance(list_of_dir, list)
-		assert isinstance(output_dir, basestring)
+		assert isinstance(output_dir, str)
 		assert self.validate_dir(output_dir)
 		for directory in list_of_dir:
 			assert self.validate_dir(directory)
@@ -314,7 +314,7 @@ class SamtoolsWrapper(Validator):
 		if output_file is None:
 			output_file = tempfile.mktemp(dir=self._tmp_dir, prefix="start_positions")
 		assert isinstance(list_of_file_paths, list)
-		assert isinstance(output_file, basestring)
+		assert isinstance(output_file, str)
 		assert self.validate_dir(output_file, only_parent=True)
 		for file_path in list_of_file_paths:
 			assert self.validate_file(file_path)
@@ -352,7 +352,7 @@ class SamtoolsWrapper(Validator):
 		if output_file is None:
 			output_file = tempfile.mktemp(dir=self._tmp_dir, prefix="read_start_positions")
 		assert isinstance(list_of_file_paths, list)
-		assert isinstance(output_file, basestring)
+		assert isinstance(output_file, str)
 		assert self.validate_dir(output_file, only_parent=True)
 		for file_path in list_of_file_paths:
 			assert self.validate_file(file_path)
@@ -386,8 +386,8 @@ class SamtoolsWrapper(Validator):
 
 			@raises: AssertionError
 		"""
-		assert output_file is None or isinstance(output_file, basestring)
-		assert isinstance(directory, basestring)
+		assert output_file is None or isinstance(output_file, str)
+		assert isinstance(directory, str)
 		assert self.validate_dir(directory)
 
 		list_of_file_paths = self.get_files_in_directory(directory, self._sam_file_extension)
@@ -409,8 +409,8 @@ class SamtoolsWrapper(Validator):
 
 			@raises: AssertionError
 		"""
-		assert output_file is None or isinstance(output_file, basestring)
-		assert isinstance(directory, basestring)
+		assert output_file is None or isinstance(output_file, str)
+		assert isinstance(directory, str)
 		assert self.validate_dir(directory)
 
 		list_of_file_paths = self.get_files_in_directory(directory, self._bam_file_extension)

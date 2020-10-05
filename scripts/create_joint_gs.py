@@ -201,7 +201,7 @@ def shuffle_anonymize(fasta_stream, path, to_genome, metadata, sample_name, coun
     Writes the gold standard mapping anon_contig_ID-genome_ID-contig_ID-nr_reads-start-end
     first contig ID is anonymized and assigned a shuffled contig ID to the contigs and stored in a temporary gsa file if shuffle=True
     """
-    contig_ids = random.sample(xrange(count),count)
+    contig_ids = random.sample(range(count),count)
     contignr = 0
     if path.endswith("pooled"):
         gsa_mapping = os.path.join(path, "gsa_pooled_mapping.tsv")

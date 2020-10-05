@@ -4,10 +4,7 @@ import sys
 from scripts.Validator.validator import Validator
 from scripts.configfilehandler import ConfigFileHandler
 from scripts.loggingwrapper import LoggingWrapper as logger
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser  # ver. < 3.0
+from configparser import ConfigParser
 import scripts.get_genomes as GG
 import shutil
 import os
@@ -81,7 +78,7 @@ def create_config(args,cfg):
     if args.seed is not None:
         config.set('Main', "seed", args.seed)
     name = os.path.join(args.o,"config.ini")
-    with open(name,'wb') as cfg_path:
+    with open(name,'w+') as cfg_path:
         config.write(cfg_path)
     return name
 

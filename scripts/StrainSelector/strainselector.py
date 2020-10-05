@@ -46,7 +46,7 @@ class StrainSelector(DefaultLogging):
 		@param column_name_novelty_category: Column name for
 		@type column_name_novelty_category: str
 		@param logfile: file handler or file path to a log file
-		@type logfile: file | FileIO | StringIO | basestring
+		@type logfile: file | FileIO | StringIO | str
 		@param verbose: Not verbose means that only warnings and errors will be past to stream
 		@type verbose: bool
 		@param debug: Display debug messages
@@ -57,9 +57,9 @@ class StrainSelector(DefaultLogging):
 		@rtype: None
 		"""
 		super(StrainSelector, self).__init__(logfile=logfile, verbose=verbose, debug=debug)
-		assert isinstance(column_name_genome_id, basestring)
-		assert isinstance(column_name_otu, basestring)
-		assert isinstance(column_name_novelty_category, basestring)
+		assert isinstance(column_name_genome_id, str)
+		assert isinstance(column_name_otu, str)
+		assert isinstance(column_name_novelty_category, str)
 		if seed is not None:
 			random.seed(seed)
 		self._cats = 0
@@ -208,7 +208,7 @@ class NoveltyCategory(object):
 	"""
 
 	def __init__(self, name):
-		assert isinstance(name, basestring)
+		assert isinstance(name, str)
 		self._name = name
 		self._number_of_strains = 0
 		self._otu_list = {}
@@ -289,8 +289,8 @@ class NoveltyCategory(object):
 
 		@rtype: None
 		"""
-		assert isinstance(otu_id, basestring)
-		assert isinstance(strain_id, basestring)
+		assert isinstance(otu_id, str)
+		assert isinstance(strain_id, str)
 		if otu_id not in self._otu_list:
 			self._otu_list[otu_id] = []
 		self._otu_list[otu_id].append(strain_id)

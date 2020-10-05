@@ -109,7 +109,7 @@ def get_cigar_length(cigar):
             decimals.append(x)
         except:
             if char != "D":
-                for i in xrange(len(decimals)):
+                for i in range(len(decimals)):
                     length += 10**(len(decimals) - i - 1) * decimals[i]
             decimals = []
     return length

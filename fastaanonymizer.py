@@ -5,7 +5,6 @@ import sys
 import os
 import io
 import random
-import StringIO
 import tempfile
 import subprocess
 from scripts.Validator.sequencevalidator import SequenceValidator
@@ -61,8 +60,8 @@ class FastaAnonymizer(SequenceValidator):
 		"""
 		assert isinstance(verbose, bool)
 		assert isinstance(debug, bool)
-		assert seed is None or isinstance(seed, (long, int, float, basestring))
-		assert tmp_dir is None or isinstance(tmp_dir, basestring)
+		assert seed is None or isinstance(seed, (long, int, float, str))
+		assert tmp_dir is None or isinstance(tmp_dir, str)
 		if tmp_dir is not None:
 			assert self.validate_dir(tmp_dir)
 		else:
@@ -114,17 +113,17 @@ class FastaAnonymizer(SequenceValidator):
 			@return: System command line
 			@rtype: str
 		"""
-		assert isinstance(path_input, basestring)
+		assert isinstance(path_input, str)
 		assert self.validate_dir(path_input, silent=True) or self.validate_file(path_input, silent=True)
-		assert isinstance(file_path_output, basestring)
+		assert isinstance(file_path_output, str)
 		assert self.validate_dir(file_path_output, only_parent=True)
-		assert isinstance(file_path_mapping, basestring)
+		assert isinstance(file_path_mapping, str)
 		assert self.validate_dir(file_path_mapping, only_parent=True)
-		assert isinstance(sequence_prefix, basestring)
-		assert isinstance(file_format, basestring)
+		assert isinstance(sequence_prefix, str)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
-		assert file_extension is None or isinstance(file_extension, basestring)
+		assert file_extension is None or isinstance(file_extension, str)
 		assert isinstance(paired, bool)
 
 		# https://www.gnu.org/software/coreutils/manual/html_node/Random-sources.html#Random-sources
@@ -210,14 +209,14 @@ class FastaAnonymizer(SequenceValidator):
 			file_path_output = tempfile.mktemp(dir=self._tmp_dir)
 		if file_path_mapping is None:
 			file_path_mapping = tempfile.mktemp(dir=self._tmp_dir)
-		assert isinstance(path_input, basestring)
+		assert isinstance(path_input, str)
 		assert self.validate_dir(path_input, silent=True) or self.validate_file(path_input, silent=True)
-		assert isinstance(file_path_output, basestring)
+		assert isinstance(file_path_output, str)
 		assert self.validate_dir(file_path_output, only_parent=True)
-		assert isinstance(file_path_mapping, basestring)
+		assert isinstance(file_path_mapping, str)
 		assert self.validate_dir(file_path_mapping, only_parent=True)
-		assert isinstance(prefix, basestring)
-		assert isinstance(file_format, basestring)
+		assert isinstance(prefix, str)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 
@@ -266,14 +265,14 @@ class FastaAnonymizer(SequenceValidator):
 			file_path_output = tempfile.mktemp(dir=self._tmp_dir)
 		if file_path_mapping is None:
 			file_path_mapping = tempfile.mktemp(dir=self._tmp_dir)
-		assert isinstance(path_input, basestring)
+		assert isinstance(path_input, str)
 		assert self.validate_dir(path_input, silent=True) or self.validate_file(path_input, silent=True)
-		assert isinstance(file_path_output, basestring)
+		assert isinstance(file_path_output, str)
 		assert self.validate_dir(file_path_output, only_parent=True)
-		assert isinstance(file_path_mapping, basestring)
+		assert isinstance(file_path_mapping, str)
 		assert self.validate_dir(file_path_mapping, only_parent=True)
-		assert isinstance(prefix, basestring)
-		assert isinstance(file_format, basestring)
+		assert isinstance(prefix, str)
+		assert isinstance(file_format, str)
 		file_format = file_format.lower()
 		assert file_format in self._legal_formats
 
