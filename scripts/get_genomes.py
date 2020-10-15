@@ -248,7 +248,7 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
 Take fasta input file and split by any N occurence (and remove Ns)
 """
 def split_by_N(fasta_path, out_path):
-    os.system("scripts/split_fasta.pl %s %s" % (fasta_path, out_path))
+    os.system(os.path.join(os.path.dirname(__file__), "split_fasta.pl") + " %s %s" % (fasta_path, out_path))
     os.remove(fasta_path)
 
 """
