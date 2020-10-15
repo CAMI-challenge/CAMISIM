@@ -327,6 +327,16 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
     config.set("community0", "num_real_genomes", str(len(otu_genome_map)))
     config.set("community0", "genomes_total", str(len(otu_genome_map)))
 
+    # set tools abspath
+    config.set("ReadSimulator", "samtools",
+               os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config.get("ReadSimulator", "samtools"))))
+    config.set("ReadSimulator", "readsim",
+               os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config.get("ReadSimulator", "readsim"))))
+    config.set("ReadSimulator", "error_profiles",
+               os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config.get("ReadSimulator", "error_profiles"))))   
+    config.set("CommunityDesign", "strain_simulation_template",
+               os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config.get("CommunityDesign", "strain_simulation_template")))) 
+
     cfg_path = os.path.join(out_path, "config.ini")
     with open(cfg_path, 'w+') as cfg:
         config.write(cfg)

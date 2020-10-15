@@ -77,6 +77,10 @@ def create_config(args,cfg):
 
     if args.seed is not None:
         config.set('Main', "seed", str(args.seed))
+
+    if args.ncbi is not None:
+        config.set("CommunityDesign", "ncbi_taxdump", os.path.abspath(args.ncbi))
+
     name = os.path.join(args.o,"config.ini")
     with open(name,'w+') as cfg_path:
         config.write(cfg_path)
