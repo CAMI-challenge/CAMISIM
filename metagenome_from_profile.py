@@ -92,10 +92,13 @@ if __name__ == "__main__":
                 log.info("-%s: %s" % (arg, getattr(args,arg)))
         if not os.path.exists(args.o):
             os.mkdir(args.o)
+        if (args.tmp is not None) and (not os.path.exists(args.tmp)):
+            os.makedirs(args.tmp, exist_ok=True)
+        
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
         if (not args.community_only):
             if args.debug:
-                os.system("./metagenomesimulation.py %s --debug" % c)
+                os.system(os.path.join(os.path.dirname(__file__), "metagenomesimulation.py") +  " %s --debug" % c)
             else:
-                os.system("./metagenomesimulation.py %s" % c)
+                os.system(os.path.join(os.path.dirname(__file__), "metagenomesimulation.py") + " %s" % c)
