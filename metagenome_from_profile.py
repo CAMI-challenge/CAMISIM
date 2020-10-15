@@ -62,7 +62,7 @@ def parse_options():
         parser.print_help()
         return None
     args = parser.parse_args()
-    
+
     return args
 
 def create_config(args,cfg):
@@ -76,7 +76,7 @@ def create_config(args,cfg):
         config.set('Main', 'temp_directory', "/tmp")
 
     if args.seed is not None:
-        config.set('Main', "seed", args.seed)
+        config.set('Main', "seed", str(args.seed))
     name = os.path.join(args.o,"config.ini")
     with open(name,'w+') as cfg_path:
         config.write(cfg_path)
