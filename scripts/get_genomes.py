@@ -290,34 +290,41 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
     create_path = os.path.join(out_path,"genomes")
     if not os.path.exists(create_path):
         os.makedirs(create_path)
-    for otu in otu_genome_map:
-        taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
-        counter = 0
-        while counter < 10:
-            try:
-                if path.startswith('http') or path.startswith('ftp'):
-                    genome_path = download_genome(path, out_path)
-                else:
-                    out_name = path.rstrip().split('/')[-1]
-                    genome_path = os.path.join(create_path, out_name)
-                    shutil.copy2(path, genome_path)
-                break
-            except Exception as e:
-                error = e
-                counter += 1
-                _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
-        if counter == 10:
-            _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
-        with open(genome_to_id,'a+') as gid:
+
+    for abundance in abundances:
+        if os.path.exists(abundance):
+            os.remove(abundance)
+
+    with open(genome_to_id, 'w') as gid, open(metadata, 'w') as md:
+        for otu in otu_genome_map:
+            taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
+            counter = 0
+            while counter < 10:
+                try:
+                    if path.startswith('http') or path.startswith('ftp'):
+                        genome_path = download_genome(path, out_path)
+                    else:
+                        out_name = path.rstrip().split('/')[-1]
+                        genome_path = os.path.join(create_path, out_name)
+                        shutil.copy2(path, genome_path)
+                    break
+                except Exception as e:
+                    counter += 1
+                    _log.error("Caught exception %s while moving/downloading genomes" % repr(e))
+            if counter == 10:
+                _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
+        
             gid.write("%s\t%s\n" % (otu, genome_path))
-        with open(metadata,'a+') as md:
+        
             novelty = genomes_map[genome_id][-1]
             md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
-        i = 0
-        for abundance in abundances:
-            with open(abundance, 'a+') as ab:
-                ab.write("%s\t%s\n" % (otu,curr_abundances[i]))
-            i += 1
+
+            i = 0
+            for abundance in abundances:
+                with open(abundance, 'a+') as ab:
+                    ab.write("%s\t%s\n" % (otu,curr_abundances[i]))
+                i += 1
+    
     abundance_files = ""
     for abundance in abundances[:-1]:
         abundance_files += abundance
@@ -338,7 +345,7 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config.get("CommunityDesign", "strain_simulation_template")))) 
 
     cfg_path = os.path.join(out_path, "config.ini")
-    with open(cfg_path, 'w+') as cfg:
+    with open(cfg_path, 'w') as cfg:
         config.write(cfg)
     return cfg_path
 
@@ -379,7 +386,7 @@ def generate_input(args):
     config = ConfigParser()
     config.read(args.config)
     try:
-        max_strains = int(config.get("Main", max_strains_per_otu))
+        max_strains = int(config.get("Main", "max_strains_per_otu"))
     except:
         max_strains = 3 # no max_strains have been set for this community - use cami value
         _log.warning("Max strains per OTU not set, using default (3)")
