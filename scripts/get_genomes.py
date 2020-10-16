@@ -280,8 +280,6 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
     genome_to_id = os.path.abspath(os.path.join(out_path, "genome_to_id.tsv"))
     config.set('community0','id_to_genome_file', genome_to_id)
     metadata = os.path.abspath(os.path.join(out_path, "metadata.tsv"))
-    with open(metadata,'w') as md:
-        md.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # write header
     config.set('community0','metadata',metadata)
     no_samples = int(config.get("Main","number_of_samples"))
     abundances = [os.path.abspath(os.path.join(out_path,"abundance%s.tsv" % i)) for i in range(no_samples)]
@@ -296,6 +294,7 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
             os.remove(abundance)
 
     with open(genome_to_id, 'w') as gid, open(metadata, 'w') as md:
+        md.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # write header
         for otu in otu_genome_map:
             taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
             counter = 0
