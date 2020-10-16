@@ -314,7 +314,7 @@ def write_config(otu_genome_map, genomes_map, out_path, config):
             if counter == 10:
                 _log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
         
-            gid.write("%s\t%s\n" % (otu, genome_path))
+            gid.write("%s\t%s\n" % (otu, os.path.abspath(genome_path)))
         
             novelty = genomes_map[genome_id][-1]
             md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
