@@ -69,9 +69,9 @@ def create_config(args,cfg):
     config = ConfigParser()
     config.read(cfg)
 
-    config.set('Main', 'output_directory', os.path.join(args.o,''))
+    config.set('Main', 'output_directory', os.path.abspath(os.path.join(args.o,'')))
     if args.tmp is not None:
-        config.set('Main', 'temp_directory', os.path.join(args.tmp,''))
+        config.set('Main', 'temp_directory', os.path.abspath(os.path.join(args.tmp,'')))
     else:
         config.set('Main', 'temp_directory', "/tmp")
 
@@ -101,6 +101,7 @@ if __name__ == "__main__":
         
         config = GG.generate_input(args) # total number of genomes and path to updated config
         c = create_config(args,config)
+        sys.exit(0)
         if (not args.community_only):
             if args.debug:
                 os.system(os.path.join(os.path.dirname(__file__), "metagenomesimulation.py") +  " %s --debug" % c)

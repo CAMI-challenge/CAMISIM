@@ -277,14 +277,14 @@ def download_genome(genome, out_path):
 Given the created maps and the old config files, creates the required files and new config
 """
 def write_config(otu_genome_map, genomes_map, out_path, config):
-    genome_to_id = os.path.join(out_path, "genome_to_id.tsv")
+    genome_to_id = os.path.abspath(os.path.join(out_path, "genome_to_id.tsv"))
     config.set('community0','id_to_genome_file', genome_to_id)
-    metadata = os.path.join(out_path, "metadata.tsv")
+    metadata = os.path.abspath(os.path.join(out_path, "metadata.tsv"))
     with open(metadata,'w') as md:
         md.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # write header
     config.set('community0','metadata',metadata)
     no_samples = int(config.get("Main","number_of_samples"))
-    abundances = [os.path.join(out_path,"abundance%s.tsv" % i) for i in range(no_samples)]
+    abundances = [os.path.abspath(os.path.join(out_path,"abundance%s.tsv" % i)) for i in range(no_samples)]
     _log.info("Downloading %s genomes" % len(otu_genome_map))
     
     create_path = os.path.join(out_path,"genomes")
@@ -386,16 +386,19 @@ def generate_input(args):
     config = ConfigParser()
     config.read(args.config)
     try:
-        max_strains = int(config.get("Main", "max_strains_per_otu"))
+        max_strains = int(config.get("community0", "max_strains_per_otu"))
     except:
         max_strains = 3 # no max_strains have been set for this community - use cami value
+        config.set("community0", "max_strains_per_otu", 3)
         _log.warning("Max strains per OTU not set, using default (3)")
     try:
-        mu = int(config.get("Main", "log_mu"))
-        sigma = int(config.get("Main", "log_sigma"))
+        mu = int(config.get("community0", "log_mu"))
+        sigma = int(config.get("community0", "log_sigma"))
     except:
         mu = 1
+        config.set("community0", "log_mu", mu)
         sigma = 2 # this aint particularily beatiful
+        config.set("community0", "log_sigma", "sigma")
         _log.warning("Mu and sigma have not been set, using defaults (1,2)") #TODO 
     tax_profile = read_taxonomic_profile(args.profile, config, args.samples)
     genomes_map, total_genomes = read_genomes_list(args.reference_genomes, args.additional_references)
