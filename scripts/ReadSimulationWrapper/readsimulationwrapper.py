@@ -725,14 +725,16 @@ class ReadSimulationArt(ReadSimulationWrapper):
             assert own_read_length > 0, "Read length must be a positive number"
             assert profile_filename, "Profile filename must be given when supplying own profile"
             # sanity check file name
-            legal_for_filename = string.ascii_letters + string.digits + '_-.'
+            legal_for_filename = string.ascii_letters + string.digits + '_-./\\'
             assert self.validate_characters(profile_filename, legal_alphabet=legal_for_filename)
             # check if supplied files are present
             own_filenames = [
                 profile_filename+file_end
                 for file_end in ['1.txt', '2.txt']
             ]
-            assert self.validate_dir(self._directory_error_profiles, file_names=own_filenames)
+            #assert self.validate_dir(self._directory_error_profiles, file_names=own_filenames)
+            for own_file in own_filenames:
+                assert self.validate_file(own_file)
             # add user-supplied profiles
             self._art_error_profiles["own"] = profile_filename
             self._art_read_length["own"] = own_read_length
