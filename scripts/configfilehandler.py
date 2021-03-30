@@ -129,7 +129,7 @@ class ConfigFileHandler(DefaultValues):
 
         community_sections = set()
         community_key_options = {
-            "genomes_total", 'genomes_real', 'max_strains_per_otu', 'ratio',
+            "genomes_total", 'num_real_genomes', 'max_strains_per_otu', 'ratio',
             'log_mu', 'log_sigma', 'gauss_mu', 'gauss_sigma'}
         for key_options in community_key_options:
             community_sections = community_sections.union(self._config.search_sections_of(key_options))
@@ -159,7 +159,7 @@ class ConfigFileHandler(DefaultValues):
             new_community = Community(
                 identifier=community_section,
                 genomes_total=self._config.get_value('genomes_total', community_section, is_digit=True),
-                genomes_real=self._config.get_value('genomes_real', community_section, is_digit=True, silent=True),
+                genomes_real=self._config.get_value('num_real_genomes', community_section, is_digit=True, silent=True),
                 limit_per_otu=self._config.get_value('max_strains_per_otu', community_section, is_digit=True, silent=True),
                 file_path_metadata_table=file_path_metadata_table,
                 file_path_genome_locations=file_path_genome_locations,
@@ -231,7 +231,7 @@ class ConfigFileHandler(DefaultValues):
             output_stream.write("id_to_genome_file={}\n".format(community.file_path_genome_locations or ""))
             output_stream.write("id_to_gff_file={}\n".format(community.file_path_gff_locations or ""))
             output_stream.write("genomes_total={}\n".format(community.genomes_total))
-            output_stream.write("genomes_real={}\n".format(community.genomes_real))
+            output_stream.write("num_real_genomes={}\n".format(community.genomes_real))
             output_stream.write("max_strains_per_otu={}\n".format(community.limit_per_otu))
             output_stream.write("ratio={}\n".format(community.ratio))
             output_stream.write("mode={}\n".format(community.mode))
