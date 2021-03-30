@@ -120,10 +120,10 @@ class TaxonomicProfile(Validator):
         percent_by_rank_by_taxid = self._get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent)
 
         # add strain_id to metadata
-        for row_index, genome_id in enumerate(column_genome_id):
-            column_strain_id[row_index] = genome_id_to_strain_id[genome_id]
-        assert len(column_strain_id) == len(set(column_strain_id))
-        metadata_table.insert_column(column_strain_id, "strain_id")
+        #for row_index, genome_id in enumerate(column_genome_id):
+        #    column_strain_id[row_index] = genome_id_to_strain_id[genome_id]
+        #assert len(column_strain_id) == len(set(column_strain_id))
+        #metadata_table.insert_column(column_strain_id, "strain_id")
 
         # stream taxonomic profile
         self._stream_tp_header(stream_output, sample_id)
