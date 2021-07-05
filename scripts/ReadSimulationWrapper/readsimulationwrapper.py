@@ -264,7 +264,7 @@ class ReadSimulationWrapper(GenomePreparation):
             abundance = dict_id_abundance[genome_id]
             if abundance == 0:
                 continue
-            if self._label == "ReadSimulationWgsim" or self._label == "ReadSimulationNanosim":
+            if self._label == "ReadSimulationWgsim" or "ReadSimulationNanosim" in self._label:
                 # name "fold_coverage" is misleading for wgsim/nanosim, which use number of reads as input
                 fold_coverage = int(round(abundance * factor / self._fragment_size_mean))
             else:
@@ -414,6 +414,113 @@ class ReadSimulationPBsim(ReadSimulationWrapper):
         arguments.extend([
             file_path_input,
             ])
+            
+        if self._logfile:
+            arguments.append(">> '{}'".format(self._logfile))
+
+        cmd = "{exe} {args}".format(exe=self._file_path_executable, args=" ".join(arguments))
+        return cmd
+
+class ReadSimulationNanosim3(ReadSimulationWrapper):
+    """
+    Simulate long reads(Oxford Nanopore) using nanosim
+    """
+
+    _label = "ReadSimulationNanosim"
+
+    def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
+        super(ReadSimulationNanosim3, self).__init__(file_path_executable, **kwargs)
+        self._profile = 'standard'
+
+    def simulate(
+        self, file_path_distribution, file_path_genome_locations, directory_output,
+        total_size, profile, fragment_size_mean, fragment_size_standard_deviation):
+        """
+        Simulate reads based on a given sample distribution
+
+        @param file_path_distribution: File genome id associated with the abundance of a genome
+        @type file_path_distribution: str | unicode
+        @param file_path_genome_locations: File genome id associated with the file path of a genome
+        @type file_path_genome_locations: str | unicode
+        @param directory_output: Directory for the sam and fastq files output
+        @type directory_output: str | unicode
+        @param total_size: Size of sample in base pairs
+        @type total_size: int 
+        @param profile: wgsim options: 'errorfree', 'standard'
+        @type profile: str | unicode
+        @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
+        @type fragment_size_mean: int 
+        @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
+        @type fragment_size_standard_deviation: int 
+        """
+        assert isinstance(total_size, (float, int)), "Expected natural digit"
+        assert isinstance(fragment_size_mean, int), "Expected natural digit"
+        assert isinstance(fragment_size_standard_deviation, int), "Expected natural digit"
+        assert total_size > 0, "Total size needs to be a positive number"
+        assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
+        assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
+        assert self.validate_dir(directory_output)
+        if profile is not None:
+            self._profile = profile
+
+        dict_id_abundance = self._read_distribution_file(file_path_distribution)
+        dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
+        locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
+        assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
+
+        self._fragment_size_mean = 7408 # nanosim does not use fragment size, this is for getting the correct number of reads
+        # this value has been calculated using the script tools/nanosim_profile/get_mean from the values in nanosim_profile
+        factor = total_size  # nanosim needs number of reads as input not coverage
+
+        self._logger.debug("Multiplication factor: {}".format(factor))
+        self._simulate_reads(dict_id_abundance, dict_id_file_path, factor, directory_output)
+        self._sam_from_reads(directory_output, dict_id_file_path)
+
+    def _sam_from_reads(self, directory_output, dict_id_file_path):
+        files = os.listdir(directory_output)
+        id_to_cigar_map = {}
+        for f in files:
+            if f.endswith("_error_profile"): # these are the introduced errors by Nanosim
+                prefix = f.rsplit("_",2)[0] # get basename
+                id_to_cigar_map[prefix] = sam_from_reads.get_cigars_nanosim(os.path.join(directory_output,f))
+                os.remove(os.path.join(directory_output,f)) # error_profile files are huge (TODO temporary requirement is still high)
+        for f in files:
+            if f.endswith("_reads.fasta"):
+                prefix = f.rsplit(".",1)[0].rsplit("_",1)[0]
+                read_file = os.path.join(directory_output,f)
+                cigars = id_to_cigar_map[prefix]
+                reference_path = dict_id_file_path[prefix]
+                sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
+                sam_from_reads.convert_fasta(read_file)
+                os.remove(os.path.join(directory_output,f)) # do not store read file twice
+
+    def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
+        """
+        Build system command to be run.
+
+        @param file_path_input: Path to genome fasta file
+        @type file_path_input: str | unicode
+        @param fold_coverage: coverage of a genome
+        @type fold_coverage: int  | float
+        @param file_path_output_prefix: Output prefix used by art illumina
+        @type file_path_output_prefix: str | unicode
+
+        @return: System command to run art illumina
+        @rtype: str | unicode
+        """
+        assert self.validate_file(file_path_input)
+        assert isinstance(fold_coverage, (int, float))
+        assert self.validate_dir(file_path_output_prefix, only_parent=True)
+
+        arguments = [
+            'genome',
+            '-n', str(fold_coverage),  # rename this, because its not the fold_coverage for wgsim
+            '-rg', file_path_input,
+            '-o', file_path_output_prefix,
+            '-c', "tools/nanosim_profile/training",
+            '--seed', str(self._get_seed() % 2**32 - 1), # nanosim seed cannot be > 2**32 -1
+            '-dna_type linear'
+            ]
             
         if self._logfile:
             arguments.append(">> '{}'".format(self._logfile))
@@ -917,5 +1024,6 @@ dict_of_read_simulators = {
     "art": ReadSimulationArt,
     "wgsim": ReadSimulationWgsim,
     "nanosim": ReadSimulationNanosim,
+    "nanosim3": ReadSimulationNanosim3,
     "pbsim": ReadSimulationPBsim
 }

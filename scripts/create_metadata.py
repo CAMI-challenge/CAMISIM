@@ -74,7 +74,8 @@ def get_sequencing_technology(read_simulator):
         "art" : "Illumina HiSeq2500",
         "wgsim" : "Illumina",
         "pbsim" : "Pacific Biosciences",
-        "nanosim" : "Oxford Nanopore"
+        "nanosim" : "Oxford Nanopore",
+        "nanosim" : "Oxford Nanopore, R9 chemistry"
     }
     return dict_of_simulators[read_simulator]
 

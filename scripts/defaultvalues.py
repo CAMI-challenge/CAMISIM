@@ -54,7 +54,7 @@ class DefaultValues(DefaultLogging):
     # ############
     # [read_simulator]
     # ############
-    _valid_read_simulators = ['art','wgsim','pbsim','nanosim']
+    _valid_read_simulators = ['art','wgsim','pbsim','nanosim','nanosim3']
     _sample_size_in_base_pairs = None
 
     _read_simulator_type = None

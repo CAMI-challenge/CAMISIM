@@ -421,16 +421,16 @@ view={view}
                 self._logger.error("No error profile is given, check manual for possible choices!")
                 self._valid_arguments = False
 
-            if self._fragments_size_mean_in_bp is None and self._read_simulator_type != 'nanosim':
+            if self._fragments_size_mean_in_bp is None and 'nanosim' not in self._read_simulator_type:
                 self._logger.error("'-fmean' For the simulation with 'art', 'pbsim' and 'wgsim' the fragment size mean is required!")
                 self._valid_arguments = False
-            elif not self._validator.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean') and self._read_simulator_type != 'nanosim':
+            elif not self._validator.validate_number(self._fragments_size_mean_in_bp, minimum=1, key='-fmean') and 'nanosim' not in self._read_simulator_type:
                 self._valid_arguments = False
 
             if self._fragment_size_standard_deviation_in_bp is None and self._read_simulator_type != 'nanosim':
                 self._logger.error("'-fsd' For the simulation with 'art', 'pbsim' and 'wgsim' a standard_deviation of the fragments size is required!")
                 self._valid_arguments = False
-            elif not self._validator.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd') and self._read_simulator_type != 'nanosim':
+            elif not self._validator.validate_number(self._fragment_size_standard_deviation_in_bp, minimum=1, key='-fsd') and 'nanosim' not in self._read_simulator_type:
                 self._logger.error(
                     "'-fsd' The standard_deviation of the fragments size must be a positive number: '{}'".format(
                         self._fragment_size_standard_deviation_in_bp))
