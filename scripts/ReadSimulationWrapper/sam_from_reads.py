@@ -1,37 +1,27 @@
 import os
 import re
+from Bio import SeqIO
 
-def read_reference(reference_path):
-    prefixes = []
-    refseq = {}
-    with open(reference_path, 'r') as ref:
-        for line in ref:
-            if not line.startswith('>'): # seq name
-                refseq[prefix] += line.strip() # dont count newlines
-            else:
-                prefix = line[1:].strip().split()[0]
-                if prefix not in prefixes:
-                    prefixes.append(prefix)
-                    refseq[prefix] = ""
-    return refseq, prefixes
-
-def write_header(sam_file, lengths, sequence_ids):
+def write_header(sam_file, sequence_ids):
         with open(sam_file, "w") as samfile:
             samfile.write("@HD\tVN:1.4\tSQ:unsorted\n")
             for prefix in sequence_ids:
-                samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=prefix, len=lengths[prefix]))
+                samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=prefix, len=len(sequence_ids[prefix])))
 
 def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
-    references, prefixes = read_reference(reference_path) # orig_prefix is prefix without _ in name
+    references = SeqIO.to_dict(SeqIO.parse(reference_path, "fasta"))
+    fixed_names = {x.split('.',1)[0].replace("_","-"):x for x in references}
     write_sam = os.path.join(read_file.rsplit("/",1)[0], orig_prefix) + ".sam"
-    write_header(write_sam, references, prefixes)
+    print(write_sam)
+    if (not os.path.exists(write_sam)):
+        write_header(write_sam, references)
     with open(read_file, 'r') as reads:
         for line in reads:
             if line.startswith('>'):
-                name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().split('_')
+                name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().replace(';','_').split('_')
                 ref_name = name[1:] # first sign of name is ">"
+                query = ref_name + "-" + start 
                 QNAME = ref_name + "-" + index 
-                query = ref_name + "-" + index 
                 if strand == 'R':
                     FLAG = str(16)
                 else:
@@ -40,13 +30,15 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                     POS = str(0)
                     CIGAR = "*"
                     RNAME = "*" # treated as unmapped
+                    FLAG = str(4)
                 else:
                     POS = start
-                    RNAME = ref_name
                     try:
                         CIGAR, pos = id_to_cigar_map[query]
                     except KeyError: #sequence did not have any errors
                         CIGAR, pos = "%sM" % align_length, align_length
+                    ref_name_fixed = fixed_names[ref_name]
+                    RNAME = ref_name_fixed
                 MAPQ = str(255)
                 RNEXT = '*'
                 PNEXT = '0'
@@ -60,7 +52,7 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                 clen = get_cigar_length(CIGAR)
                 with open(write_sam, 'a+') as samfile:
                     samfile.write("\t".join(sam_line) + "\n")
-    return prefixes
+    return references
 
 def get_cigars_nanosim(error_profile):
     errors = {}
@@ -114,17 +106,14 @@ def get_cigar_length(cigar):
             decimals = []
     return length
 
-def convert_fasta(fasta_reads):
-    out_name = fasta_reads.rsplit("_",1)[0] + ".fq" # /path/to/genomeid_reads.fasta
-    with open(fasta_reads,'r') as reads:
-        with open(out_name, 'w') as out:
-            for line in reads:
-                if line.startswith(">"):
-                    spl = line.strip().split("_")
-                    name = spl[0][1:] # without >
-                    index = spl[3]
-                    out.write("@" + name + "-" + index + '\n')
-                else:
-                    out.write(line)
-                    out.write("+\n")
-                    out.write("I" * (len(line) - 1) + '\n') # no quality information is available
+def convert_fasta(read_file, reference_path):
+    references = SeqIO.to_dict(SeqIO.parse(reference_path, "fasta"))
+    fixed_names = {x.split('.',1)[0].replace("_","-"):x for x in references}
+    out_name = read_file.rsplit("_",2)[0] + ".fq" # /path/to/genomeid_reads.fasta
+    records = SeqIO.parse(read_file, "fasta")
+    with open(out_name, 'a+') as fastq:
+        for record in records:
+            record.letter_annotations["phred_quality"] = [40] * len(record)
+            record.id = fixed_names[record.id.split("_")[0]] + "-" + record.id.split("_")[3] # this is the index of the read
+            record.description = fixed_names[record.description.split("_")[0]] + "-" + record.description.split("_")[3]
+            SeqIO.write(record, fastq, "fastq")

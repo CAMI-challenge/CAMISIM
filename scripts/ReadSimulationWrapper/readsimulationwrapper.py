@@ -481,18 +481,18 @@ class ReadSimulationNanosim3(ReadSimulationWrapper):
         id_to_cigar_map = {}
         for f in files:
             if f.endswith("_error_profile"): # these are the introduced errors by Nanosim
-                prefix = f.rsplit("_",2)[0] # get basename
+                prefix = f.rsplit("_",3)[0] # get basename (changed in NanoSim3)
                 id_to_cigar_map[prefix] = sam_from_reads.get_cigars_nanosim(os.path.join(directory_output,f))
-                os.remove(os.path.join(directory_output,f)) # error_profile files are huge (TODO temporary requirement is still high)
+                #os.remove(os.path.join(directory_output,f)) # error_profile files are huge (TODO temporary requirement is still high)
         for f in files:
             if f.endswith("_reads.fasta"):
-                prefix = f.rsplit(".",1)[0].rsplit("_",1)[0]
+                prefix = f.rsplit(".",1)[0].rsplit("_",2)[0] #_aligned
                 read_file = os.path.join(directory_output,f)
                 cigars = id_to_cigar_map[prefix]
                 reference_path = dict_id_file_path[prefix]
                 sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
-                sam_from_reads.convert_fasta(read_file)
-                os.remove(os.path.join(directory_output,f)) # do not store read file twice
+                sam_from_reads.convert_fasta(read_file, reference_path)
+                #os.remove(os.path.join(directory_output,f)) # do not store read file twice
 
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
         """
@@ -598,7 +598,7 @@ class ReadSimulationNanosim(ReadSimulationWrapper):
                 cigars = id_to_cigar_map[prefix]
                 reference_path = dict_id_file_path[prefix]
                 sam_from_reads.write_sam(read_file, cigars, reference_path, prefix)
-                sam_from_reads.convert_fasta(read_file)
+                sam_from_reads.convert_fasta(read_file, reference_path)
                 os.remove(os.path.join(directory_output,f)) # do not store read file twice
 
     def _get_sys_cmd(self, file_path_input, fold_coverage, file_path_output_prefix):
