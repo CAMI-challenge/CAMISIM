@@ -12,7 +12,6 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
     references = SeqIO.to_dict(SeqIO.parse(reference_path, "fasta"))
     fixed_names = {x.split('.',1)[0].replace("_","-"):x for x in references}
     write_sam = os.path.join(read_file.rsplit("/",1)[0], orig_prefix) + ".sam"
-    print(write_sam)
     if (not os.path.exists(write_sam)):
         write_header(write_sam, references)
     with open(read_file, 'r') as reads:
@@ -20,8 +19,9 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
             if line.startswith('>'):
                 name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().replace(';','_').split('_')
                 ref_name = name[1:] # first sign of name is ">"
+                ref_name_fixed = fixed_names[ref_name]
                 query = ref_name + "-" + start 
-                QNAME = ref_name + "-" + index 
+                QNAME = ref_name_fixed + "-" + index 
                 if strand == 'R':
                     FLAG = str(16)
                 else:
@@ -37,7 +37,6 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                         CIGAR, pos = id_to_cigar_map[query]
                     except KeyError: #sequence did not have any errors
                         CIGAR, pos = "%sM" % align_length, align_length
-                    ref_name_fixed = fixed_names[ref_name]
                     RNAME = ref_name_fixed
                 MAPQ = str(255)
                 RNEXT = '*'
@@ -114,6 +113,7 @@ def convert_fasta(read_file, reference_path):
     with open(out_name, 'a+') as fastq:
         for record in records:
             record.letter_annotations["phred_quality"] = [40] * len(record)
+            record.id = record.id.replace(";","_")
             record.id = fixed_names[record.id.split("_")[0]] + "-" + record.id.split("_")[3] # this is the index of the read
             record.description = fixed_names[record.description.split("_")[0]] + "-" + record.description.split("_")[3]
             SeqIO.write(record, fastq, "fastq")
