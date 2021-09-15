@@ -46,7 +46,9 @@ def write_sam(read_file, id_to_cigar_map, reference_path, orig_prefix):
                 SEQ = line.strip()
                 TLEN = str(len(SEQ)) 
                 if CIGAR != '*': # unmapped bases counted as insertions in read
-                    CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+                    CIGAR = str(len(SEQ)) + "M"
+                #    CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+                #    ###temporarily disabled###
                 sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
                 clen = get_cigar_length(CIGAR)
                 with open(write_sam, 'a+') as samfile:
@@ -88,7 +90,7 @@ def get_cigars_nanosim(error_profile):
                 CIGAR += str(length) + "D"
                 ref_len = int(pos) + int(length)
         # if deletion at the end, the number of matches has to be reduces
-        cigars[sequence] = (CIGAR, int(pos) + int(length))
+        cigars[sequence] = (CIGAR, int(pos) + int(length)) 
     return cigars
 
 def get_cigar_length(cigar):
