@@ -167,7 +167,7 @@ class FastaAnonymizer(SequenceValidator):
 			anonymizer_args.append("-log '{}'".format(self._logfile))
 			fastastreamer_args.append("-log '{}'".format(self._logfile))
 
-		command = continuous_random_byte_stream + "python '{fastastreamer}' {fastastreamer_args}".format(
+		command = continuous_random_byte_stream + "python3 '{fastastreamer}' {fastastreamer_args}".format(
 			fastastreamer=self._fastastreamer,
 			fastastreamer_args=" ".join(fastastreamer_args),
 			)
@@ -175,7 +175,7 @@ class FastaAnonymizer(SequenceValidator):
 			shuf=" ".join(shuffle),
 			shuffle_args=" ".join(shuffle_args),
 			)
-		command += " | tr -d '\\000' | python '{anonymizer}' {anonymizer_args}".format(
+		command += " | tr -d '\\000' | python3 '{anonymizer}' {anonymizer_args}".format(
 			anonymizer=self._anonymizer,
 			anonymizer_args=" ".join(anonymizer_args)
 			)
