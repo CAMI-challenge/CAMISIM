@@ -336,14 +336,26 @@ class MetagenomeSimulation(ArgumentHandler):
             tmp_dir=self._project_file_folder_handler.get_tmp_wd())
 
         file_path_genome_locations = self._project_file_folder_handler.get_genome_location_file_path()
-        simulator.simulate(
-            file_path_distribution=file_path_distribution,
-            file_path_genome_locations=file_path_genome_locations,
-            directory_output=directory_output_tmp,
-            total_size=self._sample_size_in_base_pairs,
-            profile=self._error_profile,
-            fragment_size_mean=self._fragments_size_mean_in_bp,
-            fragment_size_standard_deviation=self._fragment_size_standard_deviation_in_bp)
+        if self._read_simulator_type == "art":
+            simulator.simulate(
+                file_path_distribution=file_path_distribution,
+                file_path_genome_locations=file_path_genome_locations,
+                directory_output=directory_output_tmp,
+                total_size=self._sample_size_in_base_pairs,
+                profile=self._error_profile,
+                fragment_size_mean=self._fragments_size_mean_in_bp,
+                fragment_size_standard_deviation=self._fragment_size_standard_deviation_in_bp,
+                profile_filename=self._custom_profile_filename,
+                own_read_length=self._custom_readlength)
+        else:
+            simulator.simulate(
+                file_path_distribution=file_path_distribution,
+                file_path_genome_locations=file_path_genome_locations,
+                directory_output=directory_output_tmp,
+                total_size=self._sample_size_in_base_pairs,
+                profile=self._error_profile,
+                fragment_size_mean=self._fragments_size_mean_in_bp,
+                fragment_size_standard_deviation=self._fragment_size_standard_deviation_in_bp)
 
         # convert sam to bam
         samtools = SamtoolsWrapper(

@@ -91,6 +91,12 @@ class ConfigFileHandler(DefaultValues):
 
         if self._error_profile is None:
             self._error_profile = self._config.get_value("profile", silent=True)
+            
+        if self._custom_profile_filename is None:
+            self._custom_profile_filename = self._config.get_value("base_profile_name", silent=True)
+        
+        if self._custom_readlength is None:
+            self._custom_readlength = self._config.get_value("profile_read_length", is_digit=True, silent=True)
 
         if self._fragment_size_standard_deviation_in_bp is None:
             self._fragment_size_standard_deviation_in_bp = self._config.get_value(
@@ -203,6 +209,8 @@ class ConfigFileHandler(DefaultValues):
         output_stream.write("error_profiles={}\n".format(self._directory_error_profiles or ""))
         output_stream.write("samtools={}\n".format(self._executable_samtools))
         output_stream.write("profile={}\n".format(self._error_profile))
+        output_stream.write("base_profile_name={}\n".format(self._custom_profile_filename or ""))
+        output_stream.write("profile_read_length={}\n".format(self._custom_readlength or ""))
         output_stream.write("size={}\n".format(self._sample_size_in_base_pairs/self._base_pairs_multiplication_factor))
         output_stream.write("type={}\n".format(self._read_simulator_type))
         output_stream.write("fragments_size_mean={}\n".format(self._fragments_size_mean_in_bp))
