@@ -10,6 +10,7 @@ import os
 import random
 import argparse
 import tempfile
+import string
 import StringIO
 from scripts.parallel import TaskCmd, runCmdParallel, reportFailedCmd
 from scripts.MetaDataTable.metadatatable import MetadataTable
@@ -685,7 +686,8 @@ class ReadSimulationArt(ReadSimulationWrapper):
 
     def simulate(
         self, file_path_distribution, file_path_genome_locations, directory_output,
-        total_size, profile, fragment_size_mean, fragment_size_standard_deviation):
+        total_size, profile, fragment_size_mean, fragment_size_standard_deviation,
+        profile_filename=None, own_read_length=None):
         """
         Simulate reads based on a given sample distribution
 
@@ -697,12 +699,16 @@ class ReadSimulationArt(ReadSimulationWrapper):
         @type directory_output: str | unicode
         @param total_size: Size of sample in base pairs
         @type total_size: int | long
-        @param profile: Art illumina error profile: 'low', 'mi', 'hi', 'hi150'
+        @param profile: Art illumina error profile: 'low', 'mi', 'hi', 'hi150', 'own'
         @type profile: str | unicode
         @param fragment_size_mean: Size of the fragment of which the ends are used as reads in base pairs
         @type fragment_size_mean: int | long
         @param fragment_size_standard_deviation: Standard deviation of the fragment size in base pairs.
         @type fragment_size_standard_deviation: int | long
+        @param profile_filename: Optional base name of user-supplied error profile files (without "[1/2].txt").
+        @type profile_filename: str | unicode | None
+        @param own_read_length: Optional read length for user-supplied error profile.
+        @type own_read_length: int | long | None
         """
         assert isinstance(total_size, (int, long)), "Expected natural digit"
         assert isinstance(fragment_size_mean, (int, long)), "Expected natural digit"
@@ -711,6 +717,27 @@ class ReadSimulationArt(ReadSimulationWrapper):
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
         assert self.validate_dir(directory_output)
+        # if user specifies own profile, add corresponding parameters
+        if profile == "own":
+            # sanity checks
+            assert own_read_length, "Read length must be given when supplying own profile"
+            assert isinstance(own_read_length, (int, long)), "Expected natural digit for read length"
+            assert own_read_length > 0, "Read length must be a positive number"
+            assert profile_filename, "Profile filename must be given when supplying own profile"
+            # sanity check file name
+            legal_for_filename = string.ascii_letters + string.digits + '_-./\\'
+            assert self.validate_characters(profile_filename, legal_alphabet=legal_for_filename)
+            # check if supplied files are present
+            own_filenames = [
+                profile_filename+file_end
+                for file_end in ['1.txt', '2.txt']
+            ]
+            #assert self.validate_dir(self._directory_error_profiles, file_names=own_filenames)
+            for own_file in own_filenames:
+                assert self.validate_file(own_file)
+            # add user-supplied profiles
+            self._art_error_profiles["own"] = profile_filename
+            self._art_read_length["own"] = own_read_length
         if profile is not None:
             assert profile in self._art_error_profiles, "Unknown art illumina profile: '{}'".format(profile)
             assert profile in self._art_read_length,  "Unknown art illumina profile: '{}'".format(profile)
