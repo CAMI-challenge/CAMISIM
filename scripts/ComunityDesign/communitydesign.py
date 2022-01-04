@@ -92,10 +92,10 @@ class Community(Validator):
         self.id = identifier
 
     def has_valid_values(self):
-        if not self.validate_characters(self.id) or self.id is '':
+        if not self.validate_characters(self.id) or self.id == '':
             return False
 
-        if not self.validate_characters(self.mode) or self.mode is '':
+        if not self.validate_characters(self.mode) or self.mode == '':
             return False
 
         if not self.validate_number(self.genomes_total, self.genomes_real):
