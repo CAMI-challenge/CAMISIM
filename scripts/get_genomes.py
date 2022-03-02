@@ -42,7 +42,7 @@ def run_patch(): # patching ete3 version
 
 run_patch()
 ncbi = NCBITaxa()
-ncbi.update_taxonomy_database()
+#ncbi.update_taxonomy_database()
 RANKS = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 MAX_RANK = 'family'
 _log = None

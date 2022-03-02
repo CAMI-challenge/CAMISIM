@@ -278,7 +278,7 @@ class ReadSimulationWrapper(GenomePreparation):
             self._logger.debug("SysCmd: '{}'".format(system_command))
             self._logger.info("Simulating reads from {}: '{}'".format(genome_id, file_path_input))
             tasks.append(TaskCmd(system_command))
-            list_of_fails = runCmdParallel(tasks, maxProc=self._max_processes)
+        list_of_fails = runCmdParallel(tasks, maxProc=self._max_processes)
 
         if list_of_fails is not None:
             self._logger.error("{} commands returned errors!".format(len(list_of_fails)))
