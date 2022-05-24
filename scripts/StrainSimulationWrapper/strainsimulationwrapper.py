@@ -456,7 +456,8 @@ class StrainSimulationWrapper(GenomeOrganizer):
 			file_path_empty_file = self.get_full_path(tempfile.mktemp(dir=self._tmp_dir))
 			touch(file_path_empty_file)
 
-		for genome_id in genome_id_to_file_path_genome.keys():
+		genome_id_to_file_path_genome_copy = genome_id_to_file_path_genome.copy()
+		for genome_id in genome_id_to_file_path_genome_copy.keys():
 			if self._keep_original and genome_id_to_amounts[genome_id] == 1:
 				continue
 			directory_strain = self._directory_strain.format(gid=genome_id)
@@ -501,7 +502,8 @@ class StrainSimulationWrapper(GenomeOrganizer):
 		"""
 		assert isinstance(meta_table, MetadataTable)
 
-		for genome_id in genome_id_to_file_path_genome.keys():
+		genome_id_to_file_path_genome_copy2 = genome_id_to_file_path_genome.copy()
+		for genome_id in genome_id_to_file_path_genome_copy2.keys():
 			if self._keep_original and genome_id_to_amounts[genome_id] == 1:
 				continue
 			directory_strain = self._directory_strain.format(gid=genome_id)
