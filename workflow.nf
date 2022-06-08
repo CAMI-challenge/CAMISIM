@@ -2,6 +2,13 @@
 
 nextflow.enable.dsl=2
 
+
+/*
+ * Defining the module / subworkflow path, and include the elements
+ */
+read_simulator_folder = "./read_simulators/"
+include { read_simulator_nansoim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
+
 // this channel holds the files with the specified distributions of sample
 genome_distribution_ch = Channel.fromPath( "./nextflow_defaults/distribution_0.txt" )
 
@@ -20,27 +27,9 @@ workflow {
     // joining of the channels results in new map: key = genome_id, first value = absolute path to genome, second value = distribution
     genome_location_distribution_ch = genome_location_ch.join(genome_distribution_split_ch)
     
-    // simulate reads via nanosim3
-    simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch)
-}
-
-
-process simulate_reads_nanosim3 {
-	
-    input:
-    // map: key = genome_id, first value = absolute path to genome, second value = distribution
-    tuple val(genome_id), path(fasta_file), val(abundance)
-    
-    output:
-    0
-    
-    script:
-    seed = params.seed
-    total_size = params.total_size
-    
-    number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean_nanosim
-    number_of_reads = number_of_reads.round(0).toInteger()
-    """
-    /home/jfunk/CAMISIM/NanoSim/NanoSim/src/simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o reads -c /home/jfunk/CAMISIM/code/CAMISIM_2/CAMISIM/read_simulators/nanosim_profile/training --seed ${seed} -dna_type linear
-    """
+    // simulate the reads according to the given simulator type
+    if(params.type.equals("nanosim3")) {
+        // simulate the reads with nanosim3
+        read_simulator_nansoim3(genome_location_distribution_ch)
+    }
 }
