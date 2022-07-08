@@ -15,6 +15,7 @@ from scripts.MetaDataTable.metadatatable import MetadataTable
 from scripts.GenomePreparation.genomepreparation import GenomePreparation
 from scripts.ReadSimulationWrapper import sam_from_reads
 from scripts.ReadSimulationWrapper import maf_converter
+from tools.nanosim_profile import get_mean_fromkde
 
 
 class ReadSimulationWrapper(GenomePreparation):
@@ -430,7 +431,8 @@ class ReadSimulationNanosim3(ReadSimulationWrapper):
 
     def __init__(self, file_path_executable, directory_error_profiles, **kwargs):
         super(ReadSimulationNanosim3, self).__init__(file_path_executable, **kwargs)
-        self._profile = 'standard'
+        self._directory_error_profiles = directory_error_profiles
+        # set to None because it has to be calculated from the training data
 
     def simulate(
         self, file_path_distribution, file_path_genome_locations, directory_output,
@@ -460,16 +462,20 @@ class ReadSimulationNanosim3(ReadSimulationWrapper):
         assert fragment_size_mean > 0, "Mean fragments size needs to be a positive number"
         assert fragment_size_standard_deviation > 0, "Fragment size standard deviation needs to be a positive number"
         assert self.validate_dir(directory_output)
-        if profile is not None:
-            self._profile = profile
 
         dict_id_abundance = self._read_distribution_file(file_path_distribution)
         dict_id_file_path = self._read_genome_location_file(file_path_genome_locations)
         locs = set(dict_id_abundance.keys()) - set(dict_id_file_path.keys())
         assert set(dict_id_file_path.keys()).issuperset(dict_id_abundance.keys()), "Some ids do not have a genome location %s" % locs
-
-        self._fragment_size_mean = 7408 # nanosim does not use fragment size, this is for getting the correct number of reads
+        if profile is not None:
+            self._profile = profile
+        # TODO: this is calculated for every sample due to...reasons right now
+        read_length_file = os.path.join(self._directory_error_profiles,profile) + "_aligned_reads.pkl"
+        # this is the default filename for Nanosim3 training data
+        self._fragment_size_mean = get_mean_fromkde.integrate_mean(read_length_file)
+        # nanosim does not use fragment size, this is for getting the correct number of reads
         # this value has been calculated using the script tools/nanosim_profile/get_mean from the values in nanosim_profile
+
         factor = total_size  # nanosim needs number of reads as input not coverage
 
         self._logger.debug("Multiplication factor: {}".format(factor))
@@ -517,7 +523,7 @@ class ReadSimulationNanosim3(ReadSimulationWrapper):
             '-n', str(fold_coverage),  # rename this, because its not the fold_coverage for wgsim
             '-rg', file_path_input,
             '-o', file_path_output_prefix,
-            '-c', "tools/nanosim_profile/training",
+            '-c', os.path.join(self._directory_error_profiles,self._profile),
             '--seed', str(self._get_seed() % 2**32 - 1), # nanosim seed cannot be > 2**32 -1
             '-dna_type linear'
             ]
