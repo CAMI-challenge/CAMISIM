@@ -8,6 +8,8 @@
 use strict;
 use POSIX;
 use File::Basename;
+use FindBin;
+use lib "$FindBin::Bin/simulation_dir";
 require simujobparams;
 
 if( @ARGV < 3 ){
