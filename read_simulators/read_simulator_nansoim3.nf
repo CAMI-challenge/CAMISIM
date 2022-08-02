@@ -24,7 +24,7 @@ process simulate_reads_nanosim3 {
     number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean_nanosim
     number_of_reads = number_of_reads.round(0).toInteger()
     """
-    /home/jfunk/CAMISIM/NanoSim/NanoSim/src/simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o ${genome_id} -c /home/jfunk/CAMISIM/code/CAMISIM_2/CAMISIM/read_simulators/nanosim_profile/training --seed ${seed} -dna_type linear
+    /home/jfunk/CAMISIM/NanoSim/NanoSim/src/simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o ${genome_id} -c ${projectDir}/tools/nanosim_profile/training --seed ${seed} -dna_type linear
     """
 }
 
@@ -39,6 +39,6 @@ process sam_from_reads {
 
     script:
     """
-    /home/jfunk/CAMISIM/code/CAMISIM/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file}
+    ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file}
     """
 }
