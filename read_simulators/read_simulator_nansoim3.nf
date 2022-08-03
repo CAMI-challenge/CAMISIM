@@ -6,6 +6,8 @@ workflow read_simulator_nansoim3 {
         simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch)
 
         sam_from_reads(simulated_reads_ch)
+    emit:
+        sam_from_reads.out
 }
 
 process simulate_reads_nanosim3 {
@@ -15,7 +17,7 @@ process simulate_reads_nanosim3 {
     tuple val(genome_id), path(fasta_file), val(abundance)
     
     output:
-    tuple path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
+    tuple val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
     
     script:
     seed = params.seed
@@ -32,10 +34,10 @@ process sam_from_reads {
 
     input: 
     // the error profile files that need to be converted into a sam format
-    tuple val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
+    tuple val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
 
     output:
-    path '*.sam'
+    tuple val(genome_id), path('*.sam')
 
     script:
     """

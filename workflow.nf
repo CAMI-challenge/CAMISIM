@@ -2,7 +2,6 @@
 
 nextflow.enable.dsl=2
 
-
 /*
  * Defining the module / subworkflow path, and include the elements
  */
@@ -30,6 +29,31 @@ workflow {
     // simulate the reads according to the given simulator type
     if(params.type.equals("nanosim3")) {
         // simulate the reads with nanosim3
-        read_simulator_nansoim3(genome_location_distribution_ch)
+        sam_files_channel = read_simulator_nansoim3(genome_location_distribution_ch)
     }
+
+    // convert sam files to sorted bam files
+    bam_files_channel = sam_to_bam(sam_files_channel)
+}
+
+/** 
+Takes a tuple with the genome id and the sam file to converts.
+Returns a tuple with the genome id and a bam sorted bam file coverted from the given sam file.
+**/
+process sam_to_bam {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(genome_id), path(sam_file)
+
+    output:
+    tuple val(genome_id), path('*.bam')
+
+    script:
+    """
+    samtools view -bS ${sam_file} -o alignment_to_sort.bam
+    samtools sort -o ${genome_id}.bam alignment_to_sort.bam
+    """
+
 }
