@@ -25,6 +25,8 @@ workflow read_simulator_nansoim3 {
 *         third value = path to fasta file with the aligned reads, fourth value = path to reference genome
 **/
 process simulate_reads_nanosim3 {
+
+    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
     tuple val(genome_id), path(fasta_file), val(abundance)
@@ -39,7 +41,7 @@ process simulate_reads_nanosim3 {
     number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean_nanosim
     number_of_reads = number_of_reads.round(0).toInteger()
     """
-    /home/jfunk/CAMISIM/NanoSim/NanoSim/src/simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o ${genome_id} -c ${projectDir}/tools/nanosim_profile/training --seed ${seed} -dna_type linear
+    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o ${genome_id} -c ${projectDir}/tools/nanosim_profile/training --seed ${seed} -dna_type linear
     """
 }
 
