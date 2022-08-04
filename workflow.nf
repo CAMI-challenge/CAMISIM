@@ -5,8 +5,15 @@ nextflow.enable.dsl=2
 /*
  * Defining the module / subworkflow path, and include the elements
  */
+
+ // include read simulator here:
 read_simulator_folder = "./read_simulators/"
+// include read simulator nanaosim3
 include { read_simulator_nansoim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
+
+// include workflow for generating gold standard assemblies
+include { gold_standard_assembly } from "${projectDir}/gold_standard_assembly"
+
 
 // this channel holds the files with the specified distributions of sample
 genome_distribution_ch = Channel.fromPath( "./nextflow_defaults/distribution_0.txt" )
@@ -37,9 +44,8 @@ workflow {
     // convert sam files to sorted bam files
     bam_files_channel = sam_to_bam(sam_files_channel)
 
-    generate_gold_standart_assembly(bam_files_channel)
-
-    generate_gold_standart_assembly.out.view()
+    // generate a gold standard assembly for every genome of one sample
+    gold_standard_assembly(bam_files_channel)
 }
 
 /* 
@@ -65,27 +71,4 @@ process sam_to_bam {
     samtools sort -o ${genome_id}.bam alignment_to_sort.bam
     """
 
-}
-
-/*
-* This process generates a gold standard assembly for one genome.
-* Takes:
-*     A tuple with key = genome_id, first value = a sorted bam file, second value = the reference genome (fasta).
-* Output:
-*     A fasta file with the gold standard assembly of the given genome.
- */
-process generate_gold_standart_assembly {
-
-    conda 'bioconda::samtools'
-
-    input:
-    tuple val(genome_id), path(bam_file), path(reference_fasta_file)
-    
-    output:
-    path('*.fasta')
-    
-    script:
-    """
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${genome_id}_gsa.fasta
-    """
 }
