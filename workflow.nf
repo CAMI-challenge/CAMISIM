@@ -34,21 +34,25 @@ workflow {
 
     // convert sam files to sorted bam files
     bam_files_channel = sam_to_bam(sam_files_channel)
+
+    generate_gold_standart_assembly(bam_files_channel)
+
+    generate_gold_standart_assembly.out.view()
 }
 
 /** 
-Takes a tuple with the genome id and the sam file to converts.
-Returns a tuple with the genome id and a bam sorted bam file coverted from the given sam file.
+Takes a tuple with the genome id and the sam file to convert. And the reference fasta file.
+Returns a tuple with the genome id and a bam sorted bam file coverted from the given sam file. And the reference fasta file.
 **/
 process sam_to_bam {
 
     conda 'bioconda::samtools'
 
     input:
-    tuple val(genome_id), path(sam_file)
+    tuple val(genome_id), path(sam_file), path(fasta_file)
 
     output:
-    tuple val(genome_id), path('*.bam')
+    tuple val(genome_id), path('*.bam'), path(fasta_file)
 
     script:
     """
@@ -56,4 +60,27 @@ process sam_to_bam {
     samtools sort -o ${genome_id}.bam alignment_to_sort.bam
     """
 
+}
+
+/** 
+Takes:
+    1. A tuple constisting of the genome Id,
+    2. the bam file to be converted into contigs and
+    3. the reference fasta file from which the bam file was created.
+Returns the gold standard assembly of the given genome.
+**/
+process generate_gold_standart_assembly {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(genome_id), path(bam_file), path(reference_fasta_file)
+    
+    output:
+    path('*.fasta')
+    
+    script:
+    """
+    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${genome_id}_gsa.fasta
+    """
 }

@@ -37,7 +37,7 @@ process sam_from_reads {
     tuple val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
 
     output:
-    tuple val(genome_id), path('*.sam')
+    tuple val(genome_id), path('*.sam'), path(fasta_file)
 
     script:
     """
