@@ -14,7 +14,9 @@ genome_distribution_ch = Channel.fromPath( "./nextflow_defaults/distribution_0.t
 // this channel holds the file with the specified locations of the genomes
 genome_location_ch = Channel.from( "./nextflow_defaults/genome_locations.tsv" )
 
-
+/*
+ * This is the main workflow and starting point of this nextflow pipeline.
+ */
 workflow {
    
     // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
@@ -40,10 +42,13 @@ workflow {
     generate_gold_standart_assembly.out.view()
 }
 
-/** 
-Takes a tuple with the genome id and the sam file to convert. And the reference fasta file.
-Returns a tuple with the genome id and a bam sorted bam file coverted from the given sam file. And the reference fasta file.
-**/
+/* 
+* This process converts a sam to a bam file.
+* Takes:
+*     A tuple with key = genome_id, first value = the sam file to convert, second value = the reference genome (fasta).
+* Output:
+*     A tuple with key = genome_id, first value = a sorted bam file, second value = the reference genome (fasta).
+ */
 process sam_to_bam {
 
     conda 'bioconda::samtools'
@@ -62,13 +67,13 @@ process sam_to_bam {
 
 }
 
-/** 
-Takes:
-    1. A tuple constisting of the genome Id,
-    2. the bam file to be converted into contigs and
-    3. the reference fasta file from which the bam file was created.
-Returns the gold standard assembly of the given genome.
-**/
+/*
+* This process generates a gold standard assembly for one genome.
+* Takes:
+*     A tuple with key = genome_id, first value = a sorted bam file, second value = the reference genome (fasta).
+* Output:
+*     A fasta file with the gold standard assembly of the given genome.
+ */
 process generate_gold_standart_assembly {
 
     conda 'bioconda::samtools'
