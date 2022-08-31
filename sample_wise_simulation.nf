@@ -42,11 +42,16 @@ workflow sample_wise_simulation {
         grouped_gsa_for_every_genome_ch = gsa_for_every_genome_ch.groupTuple()
 
         // create fasta files holding all gsa of one samples reads
-        gsa_for_all_reads_of_one_sample_ch = get_fasta_for_sample(grouped_gsa_for_every_genome_ch)
+        get_fasta_for_sample(grouped_gsa_for_every_genome_ch)
+
+        // group bam files by sample id
+        bam_files_by_sample_ch = bam_files_channel.groupTuple().map { a -> tuple(a[0], a[2]) }
+        // create bam files holding all bam files of one samples reads 
+        merge_bam_files(bam_files_by_sample_ch)
 
 
-    emit:
-        0
+    emit: merge_bam_files.out
+    emit: get_fasta_for_sample.out
 }
 
 /*
@@ -70,8 +75,6 @@ process generate_gold_standard_assembly {
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
-    mkdir --parents ${projectDir}/nextflow_out/gold_standard_assembly/sample_${sample_id}
-    cp ${file_name} ${projectDir}/nextflow_out/gold_standard_assembly/sample_${sample_id}
     """
 }
 
@@ -95,5 +98,34 @@ process get_fasta_for_sample {
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
     cat ${fasta_files} > ${file_name}
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/contigs
+    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/contigs/anonymous_gsa.fasta
+    """
+}
+
+/*
+* This process merges all given bam files with samtools.
+* Takes:
+*     A tuple with key = sample_id, value = the paths to all bam files, that need to be combined.
+* Output:
+*     A tuple with key = sample_id, value = the path to the merged bam file.
+ */
+process merge_bam_files {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(sample_id), path(bam_files)
+
+    output:
+    tuple val(sample_id), path(file_name)
+
+    script:
+    file_name = 'sample'.concat(sample_id.toString()).concat('.bam')
+    compression = 5
+    memory = 1
+    """
+    samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools index ${file_name}
     """
 }
