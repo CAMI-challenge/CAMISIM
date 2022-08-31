@@ -3,7 +3,7 @@
 * Takes:
 *     A channel containing tuples with key = sample_id, first value = genome_id, second value = path to genome, third value = distribution.
 * Emits: 
-*     A channel containing tuples with key = sample_id, first value = genome id, second value = simulated sam file, third value = the reference fasta file.
+*     A channel containing tuples with key = sample_id, first value = genome id, second value = simulated bam file, third value = the reference fasta file.
 **/
 workflow read_simulator_nansoim3 {
 
@@ -13,8 +13,9 @@ workflow read_simulator_nansoim3 {
         simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch)
 
         sam_file_channel = sam_from_reads(simulated_reads_ch)
+        bam_file_channel = sam_to_bam(sam_file_channel)
     emit:
-        sam_file_channel
+        bam_file_channel
 }
 
 /**
@@ -30,7 +31,7 @@ process simulate_reads_nanosim3 {
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
-    tuple val(sample_id), val(genome_id), path(fasta_file), val(abundance)
+    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id)
     
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
@@ -66,4 +67,29 @@ process sam_from_reads {
     """
     ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file}
     """
+}
+
+/* 
+* This process converts a sam to a bam file.
+* Takes:
+*     A tuple with key = sample_id, first value = genome id, second value = sam file to convert, third value = the reference fasta file.
+* Output:
+*     A tuple with key = sample_id, first value = genome_id, second value = a sorted bam file, third value = the reference genome (fasta).
+ */
+process sam_to_bam {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(sample_id), val(genome_id), path(sam_file), path(fasta_file)
+
+    output:
+    tuple val(sample_id), val(genome_id), path('sample*.bam'), path(fasta_file)
+
+    script:
+    """
+    samtools view -bS ${sam_file} -o alignment_to_sort.bam
+    samtools sort -o sample${sample_id}_${genome_id}.bam alignment_to_sort.bam
+    """
+
 }
