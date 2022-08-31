@@ -60,3 +60,10 @@ target/
 # Nextflow
 work/
 .nextflow*
+
+# Output folder
+out/
+nextflow_out/
+
+# dumps
+taxdump.tar.gz
