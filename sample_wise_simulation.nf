@@ -118,7 +118,7 @@ process merge_bam_files {
     tuple val(sample_id), path(bam_files)
 
     output:
-    tuple path(file_name)
+    path file_name
 
     script:
     file_name = 'sample_'.concat(sample_id.toString()).concat('.bam')
