@@ -108,7 +108,7 @@ process get_fasta_for_sample {
 * Takes:
 *     A tuple with key = sample_id, value = the paths to all bam files, that need to be combined.
 * Output:
-*     A tuple with key = sample_id, value = the path to the merged bam file.
+*     The path to the merged bam file.
  */
 process merge_bam_files {
 
@@ -118,10 +118,10 @@ process merge_bam_files {
     tuple val(sample_id), path(bam_files)
 
     output:
-    tuple val(sample_id), path(file_name)
+    tuple path(file_name)
 
     script:
-    file_name = 'sample'.concat(sample_id.toString()).concat('.bam')
+    file_name = 'sample_'.concat(sample_id.toString()).concat('.bam')
     compression = 5
     memory = 1
     """

@@ -23,6 +23,48 @@ workflow {
     // simulate reads sample wise
     sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
-    merged_bam_per_sample = sample_wise_simulation.out[0]
-    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]
+    merged_bam_per_sample = sample_wise_simulation.out[0].collect()
+    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
+
+    // merge the bam files of the required samples
+    merged_bam_file = merge_bam_files(merged_bam_per_sample)
+}
+
+/*
+* This process merges all given bam files specified in the pooled_gsa parameter.
+* Takes:
+*     A list with the paths to all bam files, that should be merged, if the condition is fullfilled.
+* Output:
+*     The path to the merged bam file.
+ */
+process merge_bam_files {
+
+    conda 'bioconda::samtools'
+
+    input:
+    path bam_files
+
+    output:
+    path file_name
+
+    script:
+    file_name = 'merged.bam'
+    compression = 5
+    memory = 1
+
+    bam_to_merge = ''
+
+    bam_files.each { 
+
+        bam_file_name = (String) it
+        sample_id = bam_file_name.split('_')[1][0].toInteger()
+        
+        if(sample_id in params.pooled_gsa){
+            bam_to_merge = bam_to_merge.concat(' ').concat(bam_file_name)
+        }
+    }
+    """
+    samtools merge -u - ${bam_to_merge} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools index ${file_name}
+    """
 }
