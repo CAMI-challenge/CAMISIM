@@ -24,8 +24,14 @@ workflow sample_wise_simulation {
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
         genome_location_ch = genome_location_file_ch.splitCsv(sep:'\t')
 
-        // create a channel, that holds the path to the genome distribution file by the sample id (key = sample id, first value = genome_id, second value = distribution)
-        genome_distribution_ch = genome_distribution_file_ch.map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
+        // create a channel, that holds the path to the genome distribution file by the sample id (key = genome_id, first value = distribution, second value = sample id)
+        genome_distribution_ch = genome_distribution_file_ch.map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[0], tuple(a[1][0], a[1][1])) }.groupTuple()
+        
+        // normalise the abundances of all genomes to 1 for every sample.
+        normalised_distribution_ch = normalise_abundance(genome_distribution_ch)
+
+        // create a channel, that holds the genome distribution by genome id and sample id (key = genome_id, first value = distribution, second value = sample id)
+        genome_distribution_ch = normalised_distribution_ch.map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
         
         // combining of the channels results in new map: key = sample_id, first value = genome_id, second value = path to genome, third value = distribution
         genome_location_distribution_ch = genome_location_ch.combine(genome_distribution_ch, by: 0)
@@ -51,7 +57,7 @@ workflow sample_wise_simulation {
 
 
     emit: merge_bam_files.out
-    emit: get_fasta_for_sample.out
+    emit: get_fasta_for_sample.out 
 }
 
 /*
@@ -127,5 +133,49 @@ process merge_bam_files {
     """
     samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
     samtools index ${file_name}
+    """
+}
+
+/*
+* This process normalises the abundance for the given abundance map for one sample to 1.
+* Takes:
+*     A tuple with key = sample_id, value = a map with key = genome id and value = abundance.
+* Output:
+*     The path to file with the normalised abundances.
+ */
+process normalise_abundance {
+
+    input:
+    tuple val(sample_id), val(abundance_map)
+
+    output:
+    path file_name
+
+    script:
+    file_name = 'normalised_distributions_'.concat(sample_id).concat('.txt')
+
+    double abundance_sum = 0.0
+
+    abundance_map.each { 
+
+        double abundance = Double.parseDouble((String) it[1])
+        abundance_sum = abundance_sum + abundance
+    }
+
+    String output = ''
+
+    abundance_map.eachWithIndex { item, index ->
+
+        double abundance = Double.parseDouble((String) item[1])
+        normalised_abundance = abundance / abundance_sum
+
+        if(index!=0){
+            output = output.concat('\n')
+        }
+
+        output = output.concat((String) item[0]).concat('\t').concat(Double.toString(normalised_abundance))
+    }
+    """
+    echo "${output}" > ${file_name}
     """
 }
