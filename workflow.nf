@@ -28,6 +28,12 @@ workflow {
 
     // merge the bam files of the required samples
     merged_bam_file = merge_bam_files(merged_bam_per_sample)
+
+    reference_fasta_files_ch = genome_location_file_ch.splitCsv(sep:'\t').map { a -> a[1] }
+
+
+    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+
 }
 
 /*
@@ -66,5 +72,30 @@ process merge_bam_files {
     """
     samtools merge -u - ${bam_to_merge} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
     samtools index ${file_name}
+    """
+}
+
+/*
+* This process generates the pooled gold standard assembly for serveral samples.
+* Takes:
+*     A tuple with first_value = a sorted bam file and second value = the reference genome (fasta).
+* Output:
+*     The path to fasta file with the pooled gold standard assembly.
+ */
+process generate_pooled_gold_standard_assembly {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple path(bam_file), path(reference_fasta_files)
+
+    output:
+    path file_name
+    
+    script:
+    file_name = 'gsa_pooled.fasta'
+    """
+    cat ${reference_fasta_files} > reference.fasta
+    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     """
 }
