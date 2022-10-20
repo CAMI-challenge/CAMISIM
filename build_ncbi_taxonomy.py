@@ -58,10 +58,10 @@ def write_taxonomic_profile_from_abundance_files(list_of_file_paths):
         file_path_output = os.path.join("./", filename_taxonomic_profile.format(
             sample_index=index_abundance))
         with open(file_path_output, 'w') as stream_output:
-            write_taxonomic_profile(community_abundance, stream_output)
+            write_taxonomic_profile(community_abundance, stream_output, index_abundance)
 
 
-def write_taxonomic_profile(community_abundance, stream_output):
+def write_taxonomic_profile(community_abundance, stream_output, sample_id):
 
     """
     Stream a taxonomic profile by list of relative abundances
@@ -70,6 +70,8 @@ def write_taxonomic_profile(community_abundance, stream_output):
     @type community_abundance: generator[ dict[int|long|str|unicode, str|unicode] ]
     @param stream_output: Output of taxonomic profile
     @type stream_output: file | FileIO | StringIO
+    @param sample_id: The sample ID of this taxonomy profile.
+    @type output_stream: str
     """
 
     genome_abundance = {}
@@ -87,10 +89,10 @@ def write_taxonomic_profile(community_abundance, stream_output):
     for key, value in genome_abundance.items():
         genome_abundance[key] = value / total_abundance
 
-    stream_taxonomic_profile(stream_output, genome_abundance)
+    stream_taxonomic_profile(stream_output, genome_abundance, sample_id)
 
 
-def stream_taxonomic_profile(stream_output, genome_id_to_percent):
+def stream_taxonomic_profile(stream_output, genome_id_to_percent, sample_id):
 
     """
     Stream a taxonomic profile by list of percentages by genome id
@@ -99,6 +101,8 @@ def stream_taxonomic_profile(stream_output, genome_id_to_percent):
     @type stream_output: file | FileIO | StringIO
     @param genome_id_to_percent: Percentage for each genome id
     @type genome_id_to_percent: dict[str|unicode, float]
+    @param sample_id: The sample ID of this taxonomy profile.
+    @type output_stream: str
     """
 
     strain_id_to_genome_id = {}
@@ -130,14 +134,8 @@ def stream_taxonomic_profile(stream_output, genome_id_to_percent):
 
     percent_by_rank_by_taxid = get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent)
 
-    # add strain_id to metadata
-    #for row_index, genome_id in enumerate(column_genome_id):
-    #    column_strain_id[row_index] = genome_id_to_strain_id[genome_id]
-    #assert len(column_strain_id) == len(set(column_strain_id))
-    #metadata_table.insert_column(column_strain_id, "strain_id")
-
     # stream taxonomic profile
-    stream_tp_header(stream_output)
+    stream_tp_header(stream_output, sample_id)
     stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_id, genome_id_to_otu)
 
 
@@ -208,15 +206,16 @@ def get_scientific_name(taxid):
     raise ValueError("Invalid taxid")
 
 
-def stream_tp_header(output_stream):
+def stream_tp_header(output_stream, sample_id):
         """
         Stream the header of the taxonomic profile.
 
         @param output_stream: Output of taxonomic profile
         @type output_stream: file | FileIO | StringIO
+        @param sample_id: The sample ID of this taxonomy profile.
+        @type output_stream: str
         """
-        identifier = ""
-        output_stream.write("@SampleID:{}\n".format(identifier))
+        output_stream.write("@SampleID:{}\n".format(sample_id))
         output_stream.write("@Version:{}\n".format(taxonomic_profile_version))
         output_stream.write("@Ranks:{ranks}\n\n".format(ranks="|".join(ranks)))
         output_stream.write("@@TAXID\tRANK\tTAXPATH\tTAXPATHSN\tPERCENTAGE\t_CAMI_genomeID\t_CAMI_OTU\n")
