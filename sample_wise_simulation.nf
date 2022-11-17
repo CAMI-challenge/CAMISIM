@@ -6,6 +6,7 @@
 read_simulator_folder = "./read_simulators/"
 // include read simulator nanosim3
 include { read_simulator_nansoim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
+include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
 
 /** 
 * This workflow simulates reads for every sample.
@@ -36,6 +37,10 @@ workflow sample_wise_simulation {
         // combining of the channels results in new map: key = sample_id, first value = genome_id, second value = path to genome, third value = distribution
         genome_location_distribution_ch = genome_location_ch.combine(genome_distribution_ch, by: 0)
 
+        if(params.type.equals("art")) {
+            // simulate the reads with art 
+            bam_files_channel = read_simulator_art(genome_location_distribution_ch)
+        }
         if(params.type.equals("nanosim3")) {
             // simulate the reads with nanosim3
             bam_files_channel = read_simulator_nansoim3(genome_location_distribution_ch)
