@@ -40,7 +40,7 @@ process simulate_reads_nanosim3 {
     seed = params.seed
     total_size = params.size
     
-    number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean_nanosim
+    number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean
     number_of_reads = number_of_reads.round(0).toInteger()
     """
     simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${projectDir}/tools/nanosim_profile/training --seed ${seed} -dna_type linear
