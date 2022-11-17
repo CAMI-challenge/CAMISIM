@@ -10,7 +10,8 @@ workflow read_simulator_art {
 
     take: genome_location_distribution_ch
     main:
-        bam_file_channel = simulate_reads_art(genome_location_distribution_ch)
+        sam_file_channel = simulate_reads_art(genome_location_distribution_ch)
+        bam_file_channel = sam_to_bam(sam_file_channel)
     emit:
         bam_file_channel
 }
@@ -32,7 +33,7 @@ process simulate_reads_art {
     tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id)
     
     output:
-    tuple val(sample_id), val(genome_id), path(fasta_file), path('*.sam')
+    tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file) 
    
     script:
     seed = params.seed
@@ -65,6 +66,7 @@ process sam_to_bam {
 
     script:
     """
+    echo ${sam_file} >> debug
     samtools view -bS ${sam_file} -o alignment_to_sort.bam
     samtools sort -o sample${sample_id}_${genome_id}.bam alignment_to_sort.bam
     """
