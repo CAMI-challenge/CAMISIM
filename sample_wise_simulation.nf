@@ -20,6 +20,7 @@ workflow sample_wise_simulation {
 
     take: genome_location_file_ch
     take: genome_distribution_file_ch
+    take: read_length_ch
     main:
 
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
@@ -39,11 +40,11 @@ workflow sample_wise_simulation {
 
         if(params.type.equals("art")) {
             // simulate the reads with art 
-            bam_files_channel = read_simulator_art(genome_location_distribution_ch)
+            bam_files_channel = read_simulator_art(genome_location_distribution_ch, read_length_ch)
         }
         if(params.type.equals("nanosim3")) {
             // simulate the reads with nanosim3
-            bam_files_channel = read_simulator_nansoim3(genome_location_distribution_ch)
+            bam_files_channel = read_simulator_nansoim3(genome_location_distribution_ch, read_length_ch)
         }
 
         // generate gold standard assembly for every genome and copy it into output folder

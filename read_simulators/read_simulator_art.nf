@@ -9,8 +9,9 @@
 workflow read_simulator_art {
 
     take: genome_location_distribution_ch
+    take: read_length_ch
     main:
-        sam_file_channel = simulate_reads_art(genome_location_distribution_ch)
+        sam_file_channel = simulate_reads_art(genome_location_distribution_ch, read_length_ch)
         bam_file_channel = sam_to_bam(sam_file_channel)
     emit:
         bam_file_channel
@@ -31,6 +32,7 @@ process simulate_reads_art {
     
     input:
     tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id)
+    val(read_length_ch)
     
     output:
     tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file) 
@@ -40,7 +42,6 @@ process simulate_reads_art {
     fragment_size_mean = params.fragment_size_mean
     fragment_size_sd = params.fragment_size_sd
     profile = params.base_profile_name
-    read_length = params.profile_read_length //TODO: update config file accordingly (only using custom error profiles)
     fold_coverage = abundance // TODO is the abundance already normalised?
     """
     art_illumina -sam -na -i ${fasta_file} -l ${read_length} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}

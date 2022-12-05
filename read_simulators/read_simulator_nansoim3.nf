@@ -8,9 +8,10 @@
 workflow read_simulator_nansoim3 {
 
     take: genome_location_distribution_ch
+    take: read_length_ch
     main:
         // simulate reads via nanosim3
-        simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch)
+        simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch, read_length_ch)
 
         sam_file_channel = sam_from_reads(simulated_reads_ch)
         bam_file_channel = sam_to_bam(sam_file_channel)
@@ -31,7 +32,8 @@ process simulate_reads_nanosim3 {
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
-    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id)
+    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id) 
+    val(read_length_ch)
     
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
@@ -39,11 +41,12 @@ process simulate_reads_nanosim3 {
     script:
     seed = params.seed
     total_size = params.size
+    profile = params.base_profile_name
     
-    number_of_reads = (total_size*1000000000) * abundance.toFloat() / params.fragment_size_mean
+    number_of_reads = (total_size*1000000000) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     """
-    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${projectDir}/tools/nanosim_profile/training --seed ${seed} -dna_type linear
+    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${seed} -dna_type linear
     """
 }
 

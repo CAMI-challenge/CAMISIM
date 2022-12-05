@@ -27,8 +27,15 @@ workflow {
     number_of_samples = genome_distribution_file_ch.count()
     buildTaxonomy(ncbi_taxdump_file_ch.combine(number_of_samples))
     
+    if(params.type.equals("nanosim3")) {
+        read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
+    }
+    else {
+        read_length_ch = params.profile_read_length
+    }
+
     // simulate reads sample wise
-    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch)
+    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
     merged_bam_per_sample = sample_wise_simulation.out[0].collect()
     gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
@@ -40,6 +47,42 @@ workflow {
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 
+}
+
+/*
+* This process calculates the average read length of Nanosim reads from the pickle of the predefined profile
+*
+*/
+process calculate_Nanosim_read_length {
+    // TODO: Packages which are needed multiple times should be loaded only once
+    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 conda-forge::joblib=1.2.0'
+
+    input:
+    val profile
+
+    output:
+    stdout
+
+    script:
+    """
+    #!/usr/bin/env python
+    import joblib
+    import sys
+    import numpy as np
+    from scipy.integrate import quad
+    from sklearn.neighbors import KernelDensity
+
+    read_length_file = "${profile}_aligned_reads.pkl"
+    #default is {prefix}_aligned_reads.pkl
+
+    kde = joblib.load(read_length_file) # length is stored as joblib pkl
+
+    # the kd has a probability density function from which we can get mean and variance via integration
+    # it is the log density function though, need to np.exp
+    pdf = lambda x : np.exp(kde.score_samples([[x]]))[0]
+    mean = quad(lambda x: x * pdf(x), a=-np.inf, b=np.inf)[0]
+    print(mean)
+    """
 }
 
 /*
