@@ -23,6 +23,9 @@ ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz"
  */
 workflow {
 
+    // calculate the genome distributions for each sample for one community
+    //genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch)
+
     // build ncbi taxonomy from given tax dump
     number_of_samples = genome_distribution_file_ch.count()
     buildTaxonomy(ncbi_taxdump_file_ch.combine(number_of_samples))
@@ -172,5 +175,34 @@ process buildTaxonomy {
     ${projectDir}/build_ncbi_taxonomy.py **/names.dmp **/merged.dmp **/nodes.dmp ${number_of_samples} ${projectDir}/nextflow_defaults/distribution_{0..${index_number_of_samples}}.txt
     mkdir --parents ${projectDir}/nextflow_out/
     cp taxonomic_profile_*.txt ${projectDir}/nextflow_out/
+    """
+}
+
+/*
+* This process calculates the distribution of the genomes for one community.
+* Takes: The file with the location to the drawn genomes.
+*     
+* Output: A file for each sample with the calculcated distributions.
+*     
+ */
+process getCommunityDistribution {
+
+    input:
+    path(file_path_of_drawn_genome_location)
+
+    output:
+    path 'distribution_*.txt'
+
+    script:
+    number_of_samples = params.sample_size
+    mode = params.mode
+    log_mu = params.log_mu
+    log_sigma = params.log_sigma
+    gauss_mu = params.gauss_mu
+    gauss_sigma = params.gauss_sigma
+    verbose = params.verbose
+    seed = params.seed
+    """
+    python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
     """
 }
