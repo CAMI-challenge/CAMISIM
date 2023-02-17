@@ -47,6 +47,9 @@ process simulate_reads_nanosim3 {
     number_of_reads = number_of_reads.round(0).toInteger()
     """
     simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${seed} -dna_type linear
+
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    cp *_aligned_reads.fasta ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
 }
 

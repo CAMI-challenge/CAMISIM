@@ -27,20 +27,30 @@ workflow sample_wise_simulation {
         genome_location_ch = genome_location_file_ch.splitCsv(sep:'\t')
 
         // create a channel, that holds the path to the genome distribution file by the sample id (key = genome_id, first value = distribution, second value = sample id)
-        genome_distribution_ch = genome_distribution_file_ch.map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[0], tuple(a[1][0], a[1][1])) }.groupTuple()
+        genome_distribution_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[0], tuple(a[1][0], a[1][1])) }.groupTuple()
         
         // normalise the abundances of all genomes to 1 for every sample.
         normalised_distribution_ch = normalise_abundance(genome_distribution_ch)
-
+        
         // create a channel, that holds the genome distribution by genome id and sample id (key = genome_id, first value = distribution, second value = sample id)
         genome_distribution_ch = normalised_distribution_ch.map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
-        
-        // combining of the channels results in new map: key = sample_id, first value = genome_id, second value = path to genome, third value = distribution
+
+        // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
         genome_location_distribution_ch = genome_location_ch.combine(genome_distribution_ch, by: 0)
 
         if(params.type.equals("art")) {
             // simulate the reads with art 
-            bam_files_channel = read_simulator_art(genome_location_distribution_ch, read_length_ch)
+
+            // create a channel that holds: key = sample_id, first value = distribution file, second value = file with all genome locations
+            genome_distribution_location_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.combine(genome_location_file_ch)
+
+            // get the multiplication factor to calculate the fold coverage later (key = sample id, value = factor)
+            factor_for_sample_id_ch = get_multiplication_factor(genome_distribution_location_ch)
+            
+            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = factor
+            genome_location_distribution_factor_ch = genome_location_distribution_ch.map { tuple( it[3], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
+
+            bam_files_channel = read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
         }
         if(params.type.equals("nanosim3")) {
             // simulate the reads with nanosim3
@@ -183,5 +193,33 @@ process normalise_abundance {
     }
     """
     echo "${output}" > ${file_name}
+    """
+}
+
+/*
+* This process calculates the multiplication factor for every every sample.
+* This factor is needed in some read simulators for the calculation of the fold coverage. The factor has the same value for every genome of one sample.
+* Takes:
+*     A tuple with key = sample_id, first value = the file with all genome locations, second value = the file with the distributions of this sample.
+* Output:
+*     A tuple with key = sample_id, value = the calculated multiplication factor.
+ */
+process get_multiplication_factor {
+
+    input:
+    tuple val(sample_id), path(file_path_distribution), path(genome_locations)
+
+    output:
+    //tuple val(sample_id), path('factor.txt')
+    tuple val(sample_id), stdout
+
+    script:
+    factor = 0
+    fragment_size_mean = params.fragment_size_mean
+    fragment_size_standard_deviation = params.fragment_size_sd
+    total_size = (params.size*1000000000)
+
+    """
+    ${projectDir}/calculate_multiplication_factor.py ${fragment_size_mean} ${fragment_size_standard_deviation} ${total_size} ${genome_locations} ${file_path_distribution}
     """
 }

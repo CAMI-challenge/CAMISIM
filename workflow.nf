@@ -26,12 +26,14 @@ workflow {
     // calculate the genome distributions for each sample for one community
     //genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch)
 
+    
     // build ncbi taxonomy from given tax dump
     number_of_samples = genome_distribution_file_ch.count()
     buildTaxonomy(ncbi_taxdump_file_ch.combine(number_of_samples))
     
     if(params.type.equals("nanosim3")) {
-        read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
+        // read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
+        read_length_ch = 4508
     }
     else {
         read_length_ch = params.profile_read_length
@@ -204,5 +206,7 @@ process getCommunityDistribution {
     seed = params.seed
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
+    mkdir --parents ${projectDir}/nextflow_out/distributions/
+    cp distribution_*.txt ${projectDir}/nextflow_out/distributions/
     """
 }

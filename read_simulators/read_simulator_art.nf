@@ -1,7 +1,8 @@
 /**
 * This workflow simulates reads using the ART read simuator
 * Takes:
-*     A channel containing tuples with key = sample_id, first value = genome_id, second value = path to genome, third value = distribution.
+*     A channel containing tuples with key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = factor.
+*     A channel containing the read length.
 * Emits: 
 *     A channel containing tuples with key = sample_id, first value = genome id, second value = simulated bam file, third value = the reference fasta file.
 **/
@@ -20,7 +21,7 @@ workflow read_simulator_art {
 /**
 * This process simulates short reads with ART
 * Input:
-*     Tuple containing key = sample_id, first value = genome_id, second value = path to genome, third value = distribution.
+*     Tuple containing key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = factor.
 * Output:
 *     Tuple containing key = sample_id, first value = genome_id, second value = path to error profile, third value = path to fasta file with the aligned reads, 
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
@@ -31,7 +32,7 @@ process simulate_reads_art {
     conda 'bioconda::art=2016.06.05' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
-    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id)
+    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id), val(factor)
     val(read_length_ch)
     
     output:
@@ -42,9 +43,14 @@ process simulate_reads_art {
     fragment_size_mean = params.fragment_size_mean
     fragment_size_sd = params.fragment_size_sd
     profile = params.base_profile_name
-    fold_coverage = abundance // TODO is the abundance already normalised?
+    factor_float_value = Float.valueOf(factor)
+    fold_coverage = Float.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
     """
-    art_illumina -sam -na -i ${fasta_file} -l ${read_length} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
+    art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    cp *.sam ${projectDir}/nextflow_out/sample_${sample_id}/reads/
+    cp sample${sample_id}_${genome_id}*.fq ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
 }
 
@@ -70,6 +76,8 @@ process sam_to_bam {
     echo ${sam_file} >> debug
     samtools view -bS ${sam_file} -o alignment_to_sort.bam
     samtools sort -o sample${sample_id}_${genome_id}.bam alignment_to_sort.bam
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
+    cp *.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
     """
 
 }
