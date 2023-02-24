@@ -32,19 +32,32 @@ process simulate_reads_art {
     conda 'bioconda::art=2016.06.05' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
-    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id), val(factor)
+    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id), val(seed), val(factor)
     val(read_length_ch)
     
     output:
     tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file) 
    
     script:
-    seed = params.seed
     fragment_size_mean = params.fragment_size_mean
     fragment_size_sd = params.fragment_size_sd
     profile = params.base_profile_name
-    factor_float_value = Float.valueOf(factor)
-    fold_coverage = Float.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
+    factor_float_value = Double.valueOf(factor)
+    fold_coverage = Double.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
+
+    /**
+    String log = "---- sample id: ".concat(sample_id)
+    log = log.concat("  genome id: ").concat(genome_id)
+    log = log.concat("   fasta file: ").concat(fasta_file.baseName)
+    log = log.concat("  fragment_size_mean: ").concat(Integer.toString(fragment_size_mean))
+    log = log.concat("    fragment_size_sd: ").concat(Integer.toString(fragment_size_sd))
+    log = log.concat("    profile: ").concat(profile)
+    log = log.concat("    factor_float_value: ").concat(Double.toString(factor_float_value))
+    log = log.concat("    fold_coverage: ").concat(Double.toString(fold_coverage))
+    log = log.concat("    seed: ").concat(Double.toString(seed))
+    print(log)
+    **/
+
     """
     art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/

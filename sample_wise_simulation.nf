@@ -38,6 +38,12 @@ workflow sample_wise_simulation {
         // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
         genome_location_distribution_ch = genome_location_ch.combine(genome_distribution_ch, by: 0)
 
+        // get the seed for every genome
+        seed_ch = get_seed(genome_location_file_ch).splitCsv(sep:'\t')
+
+        // join the two channels: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
+        genome_location_distribution_seed_ch = genome_location_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
+
         if(params.type.equals("art")) {
             // simulate the reads with art 
 
@@ -47,14 +53,14 @@ workflow sample_wise_simulation {
             // get the multiplication factor to calculate the fold coverage later (key = sample id, value = factor)
             factor_for_sample_id_ch = get_multiplication_factor(genome_distribution_location_ch)
             
-            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = factor
-            genome_location_distribution_factor_ch = genome_location_distribution_ch.map { tuple( it[3], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
+            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed, fifth value = factor
+            genome_location_distribution_factor_ch = genome_location_distribution_seed_ch.map { tuple( it[3], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
 
             bam_files_channel = read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
         }
         if(params.type.equals("nanosim3")) {
             // simulate the reads with nanosim3
-            bam_files_channel = read_simulator_nansoim3(genome_location_distribution_ch, read_length_ch)
+            bam_files_channel = read_simulator_nansoim3(genome_location_distribution_seed_ch, read_length_ch)
         }
 
         // generate gold standard assembly for every genome and copy it into output folder
@@ -73,7 +79,7 @@ workflow sample_wise_simulation {
 
 
     emit: merge_bam_files.out
-    emit: get_fasta_for_sample.out 
+    emit: get_fasta_for_sample.out
 }
 
 /*
@@ -222,4 +228,27 @@ process get_multiplication_factor {
     """
     ${projectDir}/calculate_multiplication_factor.py ${fragment_size_mean} ${fragment_size_standard_deviation} ${total_size} ${genome_locations} ${file_path_distribution}
     """
+}
+
+/*
+* This process returns a random seed for every sample generated from the given seed in the config file.
+* Output:
+*     The file with the given seed per samle in CSV format.
+ */
+process get_seed {
+
+    input:
+    path (genome_locations)
+
+    output:
+    path ('seed.txt')
+
+    script:
+    count_samples = params.sample_size
+    seed = params.seed
+
+    """
+    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations} 
+    """
+
 }
