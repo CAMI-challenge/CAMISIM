@@ -44,14 +44,15 @@ process simulate_reads_nanosim3 {
     number_of_reads = (total_size*1000000000) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     // nanosim seed cannot be > 2**32 -1
-    used_seed = (seed as Long) % 2**32 - 1
+    Long used_seed = (seed as Long) % 2**32 - 1
 
     /**
     String log = "---- sample id: ".concat(sample_id)
     log = log.concat("  genome id: ").concat(genome_id)
     log = log.concat("   fasta file: ").concat(fasta_file.baseName)
     log = log.concat("  abundance: ").concat(abundance)
-    log = log.concat("    used_seed: ").concat(Integer.toString(used_seed))
+    log = log.concat("    seed: ").concat(seed)
+    log = log.concat("    used_seed: ").concat(Long.toString(used_seed))
     log = log.concat("    number_of_reads: ").concat(Integer.toString(number_of_reads))
     log = log.concat("    profile: ").concat(profile)
     print(log)
