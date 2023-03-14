@@ -198,7 +198,7 @@ process get_multiplication_factor {
     factor = 0
     fragment_size_mean = params.fragment_size_mean
     fragment_size_standard_deviation = params.fragment_size_sd
-    total_size = (params.size*1000000000)
+    total_size = (params.size*(10**9))
 
     """
     ${projectDir}/calculate_multiplication_factor.py ${fragment_size_mean} ${fragment_size_standard_deviation} ${total_size} ${genome_locations} ${file_path_distribution}
