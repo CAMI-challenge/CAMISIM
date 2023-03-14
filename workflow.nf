@@ -9,9 +9,6 @@ nextflow.enable.dsl=2
 // include sample wise simulation
 include { sample_wise_simulation } from "${projectDir}/sample_wise_simulation"
 
-// this channel holds the files with the specified distributions for every sample
-genome_distribution_file_ch = Channel.fromPath( "./nextflow_defaults/distribution_*.txt" )
-
 // this channel holds the file with the specified locations of the genomes
 genome_location_file_ch = Channel.fromPath( "./nextflow_defaults/genome_locations.tsv" )
 
@@ -23,8 +20,16 @@ ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz"
  */
 workflow {
 
-    // calculate the genome distributions for each sample for one community
-    //genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
+    if(params.distribution_files.isEmpty()) {
+
+        // calculate the genome distributions for each sample for one community
+        genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
+
+    } else {
+        
+        // this channel holds the files with the specified distributions for every sample
+        genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
+    }
 
     
     // build ncbi taxonomy from given tax dump
@@ -34,8 +39,7 @@ workflow {
     if(params.type.equals("nanosim3")) {
         // read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
         read_length_ch = 4508
-    }
-    else {
+    } else {
         read_length_ch = params.profile_read_length
     }
 
