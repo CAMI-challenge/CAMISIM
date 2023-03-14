@@ -41,7 +41,7 @@ process simulate_reads_nanosim3 {
     script:
     total_size = params.size
     profile = params.base_profile_name
-    number_of_reads = (total_size*1000000000) * abundance.toFloat() / read_length_ch.toFloat()
+    number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     // nanosim seed cannot be > 2**32 -1
     Long used_seed = (seed as Long) % 2**32 - 1
