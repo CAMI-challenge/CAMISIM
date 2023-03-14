@@ -24,13 +24,13 @@ ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz"
 workflow {
 
     // calculate the genome distributions for each sample for one community
-    //genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch)
+    //genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
 
     
     // build ncbi taxonomy from given tax dump
     number_of_samples = genome_distribution_file_ch.count()
-    buildTaxonomy(ncbi_taxdump_file_ch.combine(number_of_samples))
-    
+    buildTaxonomy(number_of_samples.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] })
+
     if(params.type.equals("nanosim3")) {
         // read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
         read_length_ch = 4508
@@ -165,7 +165,7 @@ process generate_pooled_gold_standard_assembly {
 process buildTaxonomy {
 
     input:
-    tuple path(dmp), val(number_of_samples)
+    tuple val(number_of_samples), path(dmp), path(distribution_files)
 
     output:
     path 'taxonomic_profile_*.txt'
@@ -174,7 +174,7 @@ process buildTaxonomy {
     index_number_of_samples = number_of_samples - 1
     """
     tar -xf ${dmp}
-    ${projectDir}/build_ncbi_taxonomy.py **/names.dmp **/merged.dmp **/nodes.dmp ${number_of_samples} ${projectDir}/nextflow_defaults/distribution_{0..${index_number_of_samples}}.txt
+    ${projectDir}/build_ncbi_taxonomy.py **/names.dmp **/merged.dmp **/nodes.dmp ${number_of_samples} ${distribution_files}
     mkdir --parents ${projectDir}/nextflow_out/
     cp taxonomic_profile_*.txt ${projectDir}/nextflow_out/
     """
