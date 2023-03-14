@@ -7,6 +7,7 @@ read_simulator_folder = "./read_simulators/"
 // include read simulator nanosim3
 include { read_simulator_nansoim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+include { normalise_abundance; normalise_abundance as normalise_abundance_b; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
 /** 
 * This workflow simulates reads for every sample.
@@ -38,14 +39,30 @@ workflow sample_wise_simulation {
         // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
         genome_location_distribution_ch = genome_location_ch.combine(genome_distribution_ch, by: 0)
 
+        if(params.type.equals("nanosim3")) {
+
+            // normalise the abundance with the size in number of bases 
+            genome_location_distribution_size_ch = normalise_abundance_to_size(count_bases(genome_location_distribution_ch))
+            
+            // normalise the new abundances to 1
+            normalized_by_size_ch = normalise_abundance_b(genome_location_distribution_size_ch.map { a -> tuple(a[2], tuple (a[0], a[1])) }.groupTuple())
+
+            // create a channel, that holds the genome distribution by genome id and sample id (key = genome_id, first value = distribution, second value = sample id)
+            genome_distribution_normalised_ch = normalized_by_size_ch.map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
+
+            // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
+            genome_location_normalised_distribution_ch = genome_location_ch.combine(genome_distribution_normalised_ch, by: 0)
+        }
+
         // get the seed for every genome
         seed_ch = get_seed(genome_location_file_ch).splitCsv(sep:'\t')
 
-        // join the two channels: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
-        genome_location_distribution_seed_ch = genome_location_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
 
         if(params.type.equals("art")) {
             // simulate the reads with art 
+
+            // join the two channels: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
+            genome_location_distribution_seed_ch = genome_location_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
 
             // create a channel that holds: key = sample_id, first value = distribution file, second value = file with all genome locations
             genome_distribution_location_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.combine(genome_location_file_ch)
@@ -57,8 +74,11 @@ workflow sample_wise_simulation {
             genome_location_distribution_factor_ch = genome_location_distribution_seed_ch.map { tuple( it[3], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
 
             bam_files_channel = read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
-        }
-        if(params.type.equals("nanosim3")) {
+        } else if(params.type.equals("nanosim3")) {
+
+            // join the two channels: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
+            genome_location_distribution_seed_ch = genome_location_normalised_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
+
             // simulate the reads with nanosim3
             bam_files_channel = read_simulator_nansoim3(genome_location_distribution_seed_ch, read_length_ch)
         }
@@ -159,50 +179,6 @@ process merge_bam_files {
 }
 
 /*
-* This process normalises the abundance for the given abundance map for one sample to 1.
-* Takes:
-*     A tuple with key = sample_id, value = a map with key = genome id and value = abundance.
-* Output:
-*     The path to file with the normalised abundances.
- */
-process normalise_abundance {
-
-    input:
-    tuple val(sample_id), val(abundance_map)
-
-    output:
-    path file_name
-
-    script:
-    file_name = 'normalised_distributions_'.concat(sample_id).concat('.txt')
-
-    double abundance_sum = 0.0
-
-    abundance_map.each { 
-
-        double abundance = Double.parseDouble((String) it[1])
-        abundance_sum = abundance_sum + abundance
-    }
-
-    String output = ''
-
-    abundance_map.eachWithIndex { item, index ->
-
-        double abundance = Double.parseDouble((String) item[1])
-        normalised_abundance = abundance / abundance_sum
-
-        if(index!=0){
-            output = output.concat('\n')
-        }
-
-        output = output.concat((String) item[0]).concat('\t').concat(Double.toString(normalised_abundance))
-    }
-    """
-    echo "${output}" > ${file_name}
-    """
-}
-
-/*
 * This process calculates the multiplication factor for every every sample.
 * This factor is needed in some read simulators for the calculation of the fold coverage. The factor has the same value for every genome of one sample.
 * Takes:
@@ -216,7 +192,6 @@ process get_multiplication_factor {
     tuple val(sample_id), path(file_path_distribution), path(genome_locations)
 
     output:
-    //tuple val(sample_id), path('factor.txt')
     tuple val(sample_id), stdout
 
     script:
@@ -252,3 +227,5 @@ process get_seed {
     """
 
 }
+
+
