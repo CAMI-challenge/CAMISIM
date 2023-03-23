@@ -11,7 +11,6 @@ taxid_old_to_taxid_new = {}
 ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
 filename_taxonomic_profile = "taxonomic_profile_{sample_index}.txt"
 default_ordered_legal_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
-metadata_file_path = "/home/jfunk/CAMISIM/code/CAMISIM/defaults/metadata.tsv"
 taxonomic_profile_version = "0.9.1"
 
 # read NCBI names file
@@ -44,7 +43,7 @@ def read_merged_file(file_path_ncbi_merged):
                 old_taxid, new_taxid, sonst = line.strip().split('|')
                 taxid_old_to_taxid_new[old_taxid.strip()] = new_taxid.strip()
 
-def write_taxonomic_profile_from_abundance_files(list_of_file_paths):
+def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_file_path):
     
     """
     Write a taxonomic profile file for each relative abundance file
@@ -58,10 +57,10 @@ def write_taxonomic_profile_from_abundance_files(list_of_file_paths):
         file_path_output = os.path.join("./", filename_taxonomic_profile.format(
             sample_index=index_abundance))
         with open(file_path_output, 'w') as stream_output:
-            write_taxonomic_profile(community_abundance, stream_output, index_abundance)
+            write_taxonomic_profile(community_abundance, stream_output, index_abundance, metadata_file_path)
 
 
-def write_taxonomic_profile(community_abundance, stream_output, sample_id):
+def write_taxonomic_profile(community_abundance, stream_output, sample_id, metadata_file_path):
 
     """
     Stream a taxonomic profile by list of relative abundances
@@ -89,10 +88,10 @@ def write_taxonomic_profile(community_abundance, stream_output, sample_id):
     for key, value in genome_abundance.items():
         genome_abundance[key] = value / total_abundance
 
-    stream_taxonomic_profile(stream_output, genome_abundance, sample_id)
+    stream_taxonomic_profile(stream_output, genome_abundance, sample_id, metadata_file_path)
 
 
-def stream_taxonomic_profile(stream_output, genome_id_to_percent, sample_id):
+def stream_taxonomic_profile(stream_output, genome_id_to_percent, sample_id, metadata_file_path):
 
     """
     Stream a taxonomic profile by list of percentages by genome id
@@ -451,11 +450,13 @@ if __name__ == "__main__":
     file_path_ncbi_merged = sys.argv[2]
     file_path_ncbi_nodes = sys.argv[3]
     sample_size = int(sys.argv[4])
+    metadata_file_path = sys.argv[5]
+
     list_of_file_paths_distribution = list()
     i = 0
 
     for i in range(sample_size):
-        list_of_file_paths_distribution.append(sys.argv[5+i])
+        list_of_file_paths_distribution.append(sys.argv[6+i])
         i = i + 1 
 
 
@@ -463,4 +464,4 @@ if __name__ == "__main__":
     read_names_file(file_path_ncbi_names)
     read_merged_file(file_path_ncbi_merged)
 
-    write_taxonomic_profile_from_abundance_files(list_of_file_paths_distribution)
+    write_taxonomic_profile_from_abundance_files(list_of_file_paths_distribution, metadata_file_path)

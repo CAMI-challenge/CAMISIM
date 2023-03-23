@@ -9,36 +9,54 @@ nextflow.enable.dsl=2
 // include sample wise simulation
 include { sample_wise_simulation } from "${projectDir}/sample_wise_simulation"
 
-// this channel holds the file with the specified locations of the genomes
-genome_location_file_ch = Channel.fromPath( "./nextflow_defaults/genome_locations.tsv" )
-
-// this channel holds the ncbi tax dump
-ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz" )
+// include from profile metagenome simulation
+include { metagenomesimulation_from_profile } from "${projectDir}/from_profile"
 
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
 workflow {
 
-    if(params.distribution_files.isEmpty()) {
+    if(!params.biom_profile.isEmpty()) {
+        metagenomesimulation_from_profile()
 
-        // calculate the genome distributions for each sample for one community
-        genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
+        genome_distribution_file_ch = metagenomesimulation_from_profile.out[0]
+        genome_location_file_ch = metagenomesimulation_from_profile.out[1]
+        ncbi_taxdump_file_ch = metagenomesimulation_from_profile.out[2]
+        metadata_ch = metagenomesimulation_from_profile.out[3]
 
     } else {
+        if(params.distribution_files.isEmpty()) {
+
+            // calculate the genome distributions for each sample for one community
+            genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
+
+        } else {
         
-        // this channel holds the files with the specified distributions for every sample
-        genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
-    }
+            // this channel holds the files with the specified distributions for every sample
+            genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
+        }
+
+        // this channel holds the file with the specified locations of the genomes
+        genome_location_file_ch = Channel.fromPath( "./nextflow_defaults/genome_locations.tsv" )
+
+        // this channel holds the ncbi tax dump
+        ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz" )
+        metadata_ch = "${projectDir}/defaults/metadata.tsv"
+    }    
 
     
     // build ncbi taxonomy from given tax dump
     number_of_samples = genome_distribution_file_ch.count()
-    buildTaxonomy(number_of_samples.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] })
+
+    
+    buildTaxonomy(number_of_samples.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
+    
 
     if(params.type.equals("nanosim3")) {
-        // read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
+        //read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
         read_length_ch = 4508
+        //read_length_ch = 4100
     } else {
         read_length_ch = params.profile_read_length
     }
@@ -55,7 +73,6 @@ workflow {
     reference_fasta_files_ch = genome_location_file_ch.splitCsv(sep:'\t').map { a -> a[1] }
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
-
 }
 
 /*
@@ -170,6 +187,7 @@ process buildTaxonomy {
 
     input:
     tuple val(number_of_samples), path(dmp), path(distribution_files)
+    path(metadata_ch)
 
     output:
     path 'taxonomic_profile_*.txt'
@@ -178,7 +196,10 @@ process buildTaxonomy {
     index_number_of_samples = number_of_samples - 1
     """
     tar -xf ${dmp}
-    ${projectDir}/build_ncbi_taxonomy.py **/names.dmp **/merged.dmp **/nodes.dmp ${number_of_samples} ${distribution_files}
+    [ -f **/names.dmp ] && mv **/names.dmp ./names.dmp
+    [ -f **/merged.dmp ] && mv **/merged.dmp ./merged.dmp
+    [ -f **/nodes.dmp ] && mv **/nodes.dmp ./nodes.dmp
+    ${projectDir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
     mkdir --parents ${projectDir}/nextflow_out/
     cp taxonomic_profile_*.txt ${projectDir}/nextflow_out/
     """
