@@ -1,9 +1,10 @@
 /** 
-* This workflow simulates reads via nanosim3 and converts the resulting sam files into bam files.
-* Takes:
-*     A channel containing tuples with key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed.
+* This workflow designs a community based on the given biom profile. It updates the ncbi dump, downloads the genomes and calculates the abundances.
 * Emits: 
-*     A channel containing tuples with key = sample_id, first value = genome id, second value = simulated bam file, third value = the reference fasta file.
+*     A channel containing the abundance files for every sample.
+*     A channel containing the genome location file channel.
+*     A channel containing the downloaded ncbi dump.
+*     A channel containing the metadata file.
 **/
 workflow metagenomesimulation_from_profile {
 
@@ -12,19 +13,11 @@ workflow metagenomesimulation_from_profile {
         get_genomes(params.biom_profile, params.number_of_samples, params.reference_genomes, params.seed, params.gauss_mu, params.gauss_sigma, 
             params.max_strains_per_otu, params.no_replace, params.fill_up)
 
-        loc_ch = get_genomes.out[0] //.splitCsv(sep:'\t').map { a -> tuple(a[1].split("/")[-1].split(".fa")[0], a[0]) }
-        //fa_ch = get_genomes.out[1].flatten().map { file -> tuple(file.baseName, file) }
-        //abundance_ch = get_genomes.out[2].map { file -> tuple(file.splitCsv(sep:'\t')) }
-        //abundance_ch = get_genomes.out[2].flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[0], tuple(a[1][0], a[1][1])) }.groupTuple()
+        loc_ch = get_genomes.out[0]
         abundance_ch = get_genomes.out[1].flatten()
         dump_ch = get_genomes.out[2]
         meta_data_ch = get_genomes.out[3]
 
-        // combining of the channels results in new map: key = genome_id, value = path to genome
-        //genome_location_ch = fa_ch.combine(loc_ch, by: 0).map { a -> tuple(a[2], a[1]) }
-
-    //emit: abundance_ch
-    //emit: genome_location_ch
     emit: abundance_ch
     emit: loc_ch
     emit: dump_ch
@@ -32,10 +25,12 @@ workflow metagenomesimulation_from_profile {
 }
 
 /*
-* This process calculates the distribution of the genomes for one community.
-* Takes: The file with the location to the drawn genomes.
+* This process designs a community based on the given biom profile.
 *     
-* Output: A file for each sample with the calculcated distributions.
+* Output: A file holding the genome id to path to genome file.
+*         An abundance file for every sample.
+*         The downloaded zipped ncbi dump.
+*         The metadata file.
 *     
  */
 process get_genomes {

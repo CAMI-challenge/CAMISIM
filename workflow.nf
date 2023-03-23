@@ -17,20 +17,26 @@ include { metagenomesimulation_from_profile } from "${projectDir}/from_profile"
  */
 workflow {
 
+    // if this parameter is set, the metagenome simulation hast to be from the given profile
     if(!params.biom_profile.isEmpty()) {
+
+        // start the simulation
         metagenomesimulation_from_profile()
 
+        // get the output channel
         genome_distribution_file_ch = metagenomesimulation_from_profile.out[0]
         genome_location_file_ch = metagenomesimulation_from_profile.out[1]
         ncbi_taxdump_file_ch = metagenomesimulation_from_profile.out[2]
         metadata_ch = metagenomesimulation_from_profile.out[3]
 
-    } else {
+    } else { // not from profile
+        // if there are distribution files given for each sample use those
         if(params.distribution_files.isEmpty()) {
 
             // calculate the genome distributions for each sample for one community
             genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
 
+        // otherwise, create distribution files for each sample
         } else {
         
             // this channel holds the files with the specified distributions for every sample
@@ -47,10 +53,8 @@ workflow {
 
     
     // build ncbi taxonomy from given tax dump
-    number_of_samples = genome_distribution_file_ch.count()
-
-    
-    buildTaxonomy(number_of_samples.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
+    number_of_samples_ch = Channel.from(params.number_of_samples)
+    buildTaxonomy(number_of_samples_ch.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
     
 
     if(params.type.equals("nanosim3")) {
