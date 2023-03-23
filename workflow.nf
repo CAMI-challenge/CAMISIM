@@ -221,7 +221,7 @@ process getCommunityDistribution {
     path 'distribution_*.txt'
 
     script:
-    number_of_samples = params.sample_size
+    number_of_samples = params.number_of_samples
     mode = params.mode
     log_mu = params.log_mu
     log_sigma = params.log_sigma

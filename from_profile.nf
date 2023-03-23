@@ -9,7 +9,7 @@ workflow metagenomesimulation_from_profile {
 
     main:
         
-        get_genomes(params.biom_profile, params.sample_size, params.reference_genomes, params.seed, params.gauss_mu, params.gauss_sigma, 
+        get_genomes(params.biom_profile, params.number_of_samples, params.reference_genomes, params.seed, params.gauss_mu, params.gauss_sigma, 
             params.max_strains_per_otu, params.no_replace, params.fill_up)
 
         loc_ch = get_genomes.out[0] //.splitCsv(sep:'\t').map { a -> tuple(a[1].split("/")[-1].split(".fa")[0], a[0]) }

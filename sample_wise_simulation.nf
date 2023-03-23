@@ -223,7 +223,7 @@ process get_seed {
     path ('seed.txt')
 
     script:
-    count_samples = params.sample_size
+    count_samples = params.number_of_samples
     seed = params.seed
 
     """
