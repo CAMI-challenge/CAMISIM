@@ -58,9 +58,12 @@ workflow {
     
 
     if(params.type.equals("nanosim3")) {
-        //read_length_ch = calculate_Nanosim_read_length(params.base_profile_name)
-        read_length_ch = 4508
-        //read_length_ch = 4100
+
+        if(params.read_length != null) {
+            read_length_ch = params.read_length
+        } else {
+            read_length_ch = calculate_Nanosim_read_length(params.base_profile_name) // this takes very long
+        }
     } else {
         read_length_ch = params.profile_read_length
     }

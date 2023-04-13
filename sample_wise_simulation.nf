@@ -5,7 +5,7 @@
 // include read simulator here:
 read_simulator_folder = "./read_simulators/"
 // include read simulator nanosim3
-include { read_simulator_nansoim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
+include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
 include { normalise_abundance; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
@@ -84,7 +84,7 @@ workflow sample_wise_simulation {
             genome_loc_distr_seed_ch = genome_location_normalised_size_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
 
             // simulate the reads with nanosim3
-            bam_files_channel = read_simulator_nansoim3(genome_loc_distr_seed_ch, read_length_ch)
+            bam_files_channel = read_simulator_nanosim3(genome_loc_distr_seed_ch, read_length_ch)
         }
 
         // generate gold standard assembly for every genome and copy it into output folder

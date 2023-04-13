@@ -5,7 +5,7 @@
 * Emits: 
 *     A channel containing tuples with key = sample_id, first value = genome id, second value = simulated bam file, third value = the reference fasta file.
 **/
-workflow read_simulator_nansoim3 {
+workflow read_simulator_nanosim3 {
 
     take: genome_location_distribution_ch
     take: read_length_ch
