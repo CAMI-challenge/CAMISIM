@@ -17,6 +17,12 @@ include { metagenomesimulation_from_profile } from "${projectDir}/from_profile"
  */
 workflow {
 
+    if(params.seed != null) {
+            seed = params.seed
+        } else {
+            seed = get_random_seed()
+        }
+
     // if this parameter is set, the metagenome simulation hast to be from the given profile
     if(!params.biom_profile.isEmpty()) {
 
@@ -34,7 +40,7 @@ workflow {
         if(params.distribution_files.isEmpty()) {
 
             // calculate the genome distributions for each sample for one community
-            genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch).flatten()
+            genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten()
 
         // otherwise, create distribution files for each sample
         } else {
@@ -69,7 +75,7 @@ workflow {
     }
 
     // simulate reads sample wise
-    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch)
+    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
     merged_bam_per_sample = sample_wise_simulation.out[0].collect()
     gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
@@ -212,6 +218,22 @@ process buildTaxonomy {
     """
 }
 
+process get_random_seed {
+
+    output:
+    stdout
+
+    script:
+    """
+    #!/usr/bin/env python
+    import random
+
+    randomnumber = random.randint(0, ((2**32)-1))
+
+    print(randomnumber, end = "")
+    """
+}
+
 /*
 * This process calculates the distribution of the genomes for one community.
 * Takes: The file with the location to the drawn genomes.
@@ -223,6 +245,7 @@ process getCommunityDistribution {
 
     input:
     path(file_path_of_drawn_genome_location)
+    val(seed)
 
     output:
     path 'distribution_*.txt'
@@ -235,7 +258,6 @@ process getCommunityDistribution {
     gauss_mu = params.gauss_mu
     gauss_sigma = params.gauss_sigma
     verbose = params.verbose
-    seed = params.seed
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
     mkdir --parents ${projectDir}/nextflow_out/distributions/

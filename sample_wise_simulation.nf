@@ -22,13 +22,14 @@ workflow sample_wise_simulation {
     take: genome_location_file_ch
     take: genome_distribution_file_ch
     take: read_length_ch
+    take: seed
     main:
 
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
         genome_location_ch = genome_location_file_ch.splitCsv(sep:'\t')
 
         // get the seed for every genome
-        seed_ch = get_seed(genome_location_file_ch).splitCsv(sep:'\t')
+        seed_ch = get_seed(genome_location_file_ch, seed).splitCsv(sep:'\t', skip:2)
 
 
         if(params.type.equals("art")) {
@@ -218,18 +219,19 @@ process get_seed {
 
     input:
     path (genome_locations)
+    val(seed)
 
     output:
     path ('seed.txt')
 
     script:
     count_samples = params.number_of_samples
-    seed = params.seed
 
     """
-    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations} 
+    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations}
+    mkdir --parents ${projectDir}/nextflow_out/
+    cp seed.txt ${projectDir}/nextflow_out/seed.txt
     """
-
 }
 
 

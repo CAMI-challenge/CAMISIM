@@ -23,7 +23,8 @@ if __name__ == "__main__":
 
     location_file.close()
 
-    text = ""
+    text = "used_initial_seed" + '\t' + str(seed) + '\n'
+    text = text + "genome_id" + '\t' + "sample_id" + '\t' + "seed" + '\n'
 
     random.seed(seed)
     
