@@ -11,12 +11,14 @@ workflow read_simulator_nanosim3 {
     take: read_length_ch
     main:
         // simulate reads via nanosim3
-        simulated_reads_ch = simulate_reads_nanosim3(genome_location_distribution_ch, read_length_ch)
+        simulate_reads_nanosim3(genome_location_distribution_ch, read_length_ch)
+        simulated_reads_ch = simulate_reads_nanosim3.out[0]
 
         sam_file_channel = sam_from_reads(simulated_reads_ch)
         bam_file_channel = sam_to_bam(sam_file_channel)
     emit:
         bam_file_channel
+        simulate_reads_nanosim3.out[1].groupTuple()
 }
 
 /**
@@ -37,6 +39,7 @@ process simulate_reads_nanosim3 {
     
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
+    tuple val(sample_id), path("*_aligned_reads.fasta")
     
     script:
     total_size = params.size

@@ -59,7 +59,9 @@ workflow sample_wise_simulation {
             // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed, fifth value = factor
             genome_location_distribution_factor_ch = genome_location_distribution_seed_ch.map { tuple( it[3], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
 
-            bam_files_channel = read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
+            read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
+            bam_files_channel = read_simulator_art.out[0]
+            reads_ch = read_simulator_art.out[1]
 
         } else if(params.type.equals("nanosim3")) {
 
@@ -85,7 +87,9 @@ workflow sample_wise_simulation {
             genome_loc_distr_seed_ch = genome_location_normalised_size_distribution_ch.map { a -> tuple(a[0], a[3], a[1], a[2]) }.combine(seed_ch, by:[0,1]).map { a -> tuple(a[0], a[2], a[3], a[1], a[4]) }
 
             // simulate the reads with nanosim3
-            bam_files_channel = read_simulator_nanosim3(genome_loc_distr_seed_ch, read_length_ch)
+            read_simulator_nanosim3(genome_loc_distr_seed_ch, read_length_ch)
+            bam_files_channel = read_simulator_nanosim3.out[0]
+            reads_ch = read_simulator_nanosim3.out[1]
         }
 
         // generate gold standard assembly for every genome and copy it into output folder
@@ -105,6 +109,7 @@ workflow sample_wise_simulation {
 
     emit: merge_bam_files.out
     emit: get_fasta_for_sample.out
+    emit: reads_ch
 }
 
 /*

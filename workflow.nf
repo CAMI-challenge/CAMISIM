@@ -12,6 +12,9 @@ include { sample_wise_simulation } from "${projectDir}/sample_wise_simulation"
 // include from profile metagenome simulation
 include { metagenomesimulation_from_profile } from "${projectDir}/from_profile"
 
+// include from profile metagenome simulation
+include { anonymization } from "${projectDir}/anonymization"
+
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
@@ -36,9 +39,18 @@ workflow {
         metadata_ch = metagenomesimulation_from_profile.out[3]
 
     } else { // not from profile
+
+        // this channel holds the ncbi tax dump
+        ncbi_taxdump_file_ch = Channel.fromPath(params.ncbi_taxdump_file)
+
+        // this channel holds the file with the specified locations of the genomes
+        genome_location_file_ch = Channel.fromPath(params.genome_locations_file)
+
+        metadata_ch = Channel.fromPath(params.metadata_file) 
+
         // if there are distribution files given for each sample use those
         if(params.distribution_files.isEmpty()) {
-
+     
             // calculate the genome distributions for each sample for one community
             genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten()
 
@@ -48,13 +60,6 @@ workflow {
             // this channel holds the files with the specified distributions for every sample
             genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
         }
-
-        // this channel holds the file with the specified locations of the genomes
-        genome_location_file_ch = Channel.fromPath( "./nextflow_defaults/genome_locations.tsv" )
-
-        // this channel holds the ncbi tax dump
-        ncbi_taxdump_file_ch = Channel.fromPath( "./tools/ncbi-taxonomy_20170222.tar.gz" )
-        metadata_ch = "${projectDir}/defaults/metadata.tsv"
     }    
 
     
@@ -86,6 +91,8 @@ workflow {
     reference_fasta_files_ch = genome_location_file_ch.splitCsv(sep:'\t').map { a -> a[1] }
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+
+    anonymization(sample_wise_simulation.out[2])
 }
 
 /*
