@@ -79,6 +79,8 @@ process simulate_reads_nanosim3 {
 **/
 process sam_from_reads {
 
+    conda "bioconda::biopython"
+
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
 
