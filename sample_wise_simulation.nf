@@ -7,6 +7,7 @@ read_simulator_folder = "./read_simulators/"
 // include read simulator nanosim3
 include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+include { read_simulator_wgsim } from "${read_simulator_folder}/read_simulator_wgsim"
 include { normalise_abundance; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
 /** 
@@ -38,7 +39,7 @@ workflow sample_wise_simulation {
         // normalize the distributions:
 
         // for read simulator nanosim, the abundance has to be normalised with the size in number of bases
-        if(params.type.equals("nanosim3")) {
+        if(params.type.equals("nanosim3") or params.type.equals("wgsim")) {
             
 
             // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
@@ -81,6 +82,10 @@ workflow sample_wise_simulation {
             read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]
+        } else if(params.type.equals("wgsim")) {
+            read_simulator_wgsim(location_distribution_seed_ch, read_length_ch)
+            bam_files_channel = read_simulator_wgsim.out[0]
+            reads_ch = read_simulator_wgsim.out[1]
         }
 
         // generate gold standard assembly for every genome and copy it into output folder
