@@ -35,7 +35,7 @@ process simulate_reads_art {
     conda 'bioconda::art=2016.06.05' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
-    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id), val(seed), val(factor)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
     val(read_length_ch)
     
     output:
