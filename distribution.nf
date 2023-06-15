@@ -57,7 +57,7 @@ process normalise_abundance_to_size {
     tuple val(genome_id), val(distribution), val(sample_id), val(size)
 
     output:
-    tuple val(genome_id), val(normalised_distribution), val(sample_id)
+    tuple val(genome_id), val(sample_id), val(normalised_distribution)
 
     script:
     normalised_distribution = size.toFloat() * distribution.toFloat()
@@ -75,7 +75,7 @@ process normalise_abundance_to_size {
 process count_bases {
 
     input:
-    tuple val(genome_id), path(genome_location), val(distribution), val(sample_id)
+    tuple val(genome_id), path(genome_location), val(sample_id), val(distribution)
 
     output:
     tuple val(genome_id), val(distribution), val(sample_id), stdout

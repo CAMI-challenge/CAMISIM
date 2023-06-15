@@ -34,7 +34,7 @@ process simulate_reads_nanosim3 {
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
-    tuple val(genome_id), path(fasta_file), val(abundance), val(sample_id), val (seed)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
     val(read_length_ch)
     
     output:
