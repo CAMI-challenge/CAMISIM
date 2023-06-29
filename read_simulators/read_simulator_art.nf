@@ -32,7 +32,7 @@ workflow read_simulator_art {
 
 process simulate_reads_art {
     
-    conda 'bioconda::art=2016.06.05' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
+    conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
@@ -40,7 +40,7 @@ process simulate_reads_art {
     
     output:
     tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file)
-    tuple val(sample_id), path('*.01.fq'), path('*.02.fq')
+    tuple val(sample_id), path('*1.fq'), path('*2.fq')
    
     script:
     fragment_size_mean = params.fragment_size_mean
