@@ -40,7 +40,7 @@ process simulate_reads_art {
     
     output:
     tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file)
-    tuple val(sample_id), path('*.01.fq'), path('*.02.fq')
+    tuple val(sample_id), path('*1.fq'), path('*2.fq')
    
     script:
     fragment_size_mean = params.fragment_size_mean
