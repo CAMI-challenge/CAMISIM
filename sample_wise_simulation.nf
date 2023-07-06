@@ -207,9 +207,34 @@ process get_multiplication_factor {
     fragment_size_mean = params.fragment_size_mean
     fragment_size_standard_deviation = params.fragment_size_sd
     total_size = (params.size*(10**9))
-
     """
-    ${projectDir}/calculate_multiplication_factor.py ${fragment_size_mean} ${fragment_size_standard_deviation} ${total_size} ${genome_locations} ${file_path_distribution}
+    #!/usr/bin/env python
+    from Bio import SeqIO
+    import os
+    abundances = {}
+    # get the abundances from the distribution files
+    with open(os.path.join("${projectDir}","nextflow_defaults","${file_path_distribution}"), 'r') as ab:
+        for line in ab:
+            genome_id, abundance = line.strip().split('\t')
+            abundances[genome_id] = float(abundance)
+    total = sum(abundances.values())
+    # normalise to 1
+    abundances = { x : abundances[x]/total for x in abundances }
+    # match abundances with genomes and normalise by genome size
+    total_relative_size = 0
+    with open(os.path.join("${projectDir}","nextflow_defaults","${genome_locations}"), 'r') as loc:
+        for line in loc:
+            genome_id, location = line.strip().split('\t')
+            relative_size = 0
+            if os.path.isabs(location):
+                for record in SeqIO.parse(location,"fasta"):
+                    relative_size += abundances[genome_id] * len(record.seq)
+            else:
+                path = os.path.join("${projectDir}",location)
+                for record in SeqIO.parse(path,"fasta"):
+                    relative_size += abundances[genome_id] * len(record.seq)
+            total_relative_size += relative_size
+    print(${total_size} / float(total_relative_size))
     """
 }
 
