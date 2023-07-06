@@ -29,6 +29,13 @@ workflow sample_wise_simulation {
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
         genome_location_ch = genome_location_file_ch.splitCsv(sep:'\t')
 
+        // The simulated ART reads (version 016.06.05) doesn't contain the whole header of the reference genome, if there is a space in the header. They then just contain the 
+        // substring before the first occurance of the space. In that case the gold standard assembly doesn't work because there are no matching IDs.
+        // As a workaround we change the headers of the reference genomes by just selecting the part before the first occurance of a space, if there is a space in the header.
+        if(params.type.equals("art")) {
+            genome_location_ch = remove_spaces_from_reference_genome(genome_location_ch)
+        }    
+
         // get the seed for every genome
         seed_ch = get_seed(genome_location_file_ch, seed).splitCsv(sep:'\t', skip:2)
 
@@ -129,6 +136,8 @@ process generate_gold_standard_assembly {
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/gsa
+    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/gsa/${file_name}
     """
 }
 
@@ -262,4 +271,22 @@ process get_seed {
     """
 }
 
+/*
+* This process splits all strings in a fasta header line at space character.\
+* It then changes the header to the first substring.
+*     
+ */
+process remove_spaces_from_reference_genome {
 
+    input:
+    tuple val(genome_id), path(fasta_file)
+
+    output:
+    tuple val(genome_id), path(fasta_file)
+
+    script:
+    """
+    mv ${fasta_file} ${fasta_file}_to_rename
+    awk '{if(\$0 ~ /^>/) {split(\$0,a," "); print a[1]} else {print \$0}}' ${fasta_file}_to_rename > ${fasta_file}
+    """
+}
