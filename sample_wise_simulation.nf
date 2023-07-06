@@ -213,7 +213,7 @@ process get_multiplication_factor {
     import os
     abundances = {}
     # get the abundances from the distribution files
-    with open(os.path.join("${projectDir}","nextflow_defaults","${file_path_distribution}"), 'r') as ab:
+    with open("${file_path_distribution}", 'r') as ab:
         for line in ab:
             genome_id, abundance = line.strip().split('\t')
             abundances[genome_id] = float(abundance)
@@ -222,7 +222,7 @@ process get_multiplication_factor {
     abundances = { x : abundances[x]/total for x in abundances }
     # match abundances with genomes and normalise by genome size
     total_relative_size = 0
-    with open(os.path.join("${projectDir}","nextflow_defaults","${genome_locations}"), 'r') as loc:
+    with open("${genome_locations}", 'r') as loc:
         for line in loc:
             genome_id, location = line.strip().split('\t')
             relative_size = 0
