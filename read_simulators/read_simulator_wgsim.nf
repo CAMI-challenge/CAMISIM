@@ -50,10 +50,12 @@ process simulate_reads_wgsim {
     read_length = read_length_ch
     number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
+    create_cigar = params.create_cigar
     """
     wgsim -d ${fragment_size} -s ${fragment_size_sd} -N ${number_of_reads} -1 ${read_length} -2 ${read_length} -S ${seed} -e ${error_rate} -r 0 -R 0 ${fasta_file} sample${sample_id}_${genome_id}.01.fq sample${sample_id}_${genome_id}.02.fq 
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    ${projectDir}/scripts/wgsim_to_sam.py sample${sample_id}_${genome_id}.01.fq sample${sample_id}_${genome_id}.02.fq sample${sample_id}_${genome_id}.sam ${fasta_file} ${create_cigar}
     cp *.sam ${projectDir}/nextflow_out/sample_${sample_id}/reads/
     cp sample${sample_id}_${genome_id}*.fq ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
