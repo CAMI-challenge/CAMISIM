@@ -286,7 +286,13 @@ process remove_spaces_from_reference_genome {
 
     script:
     """
+    if [ -e ${fasta_file} ]
+    then
     mv ${fasta_file} ${fasta_file}_to_rename
     awk '{if(\$0 ~ /^>/) {split(\$0,a," "); print a[1]} else {print \$0}}' ${fasta_file}_to_rename > ${fasta_file}
+    else
+    echo "File not found: ${fasta_file}"
+    exit 1
+    fi
     """
 }
