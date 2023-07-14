@@ -94,7 +94,7 @@ process sam_to_bam {
     samtools view -bS ${sam_file} -o alignment_to_sort.bam
     samtools sort -o sample${sample_id}_${genome_id}.bam alignment_to_sort.bam
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
-    cp *.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
+    cp sample${sample_id}_${genome_id}.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
     """
 
 }
