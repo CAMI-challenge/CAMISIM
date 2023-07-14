@@ -67,7 +67,8 @@ process simulate_reads_art {
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     cp *.sam ${projectDir}/nextflow_out/sample_${sample_id}/reads/
-    cp sample${sample_id}_${genome_id}*.fq ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
+    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
 }
 

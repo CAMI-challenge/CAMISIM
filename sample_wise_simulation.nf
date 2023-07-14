@@ -137,7 +137,8 @@ process generate_gold_standard_assembly {
     """
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/gsa
-    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/gsa/${file_name}
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${projectDir}/nextflow_out/sample_${sample_id}/gsa/
     """
 }
 

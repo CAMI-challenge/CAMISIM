@@ -193,7 +193,8 @@ process generate_pooled_gold_standard_assembly {
     cat ${reference_fasta_files} > reference.fasta
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/pooled_gsa
-    cp ${file_name} ${projectDir}/nextflow_out/pooled_gsa/${file_name}
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${projectDir}/nextflow_out/pooled_gsa/
     """
 }
 

@@ -64,8 +64,9 @@ process simulate_reads_nanosim3 {
     """
     simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear
 
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp *_aligned_reads.fasta ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fasta/
+    for file in *_aligned_reads.fasta; do gzip -k "\$file"; done
+    cp *_aligned_reads.fasta.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fasta/
     """
 }
 

@@ -57,7 +57,8 @@ process simulate_reads_wgsim {
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     ${projectDir}/scripts/wgsim_to_sam.py sample${sample_id}_${genome_id}.01.fq sample${sample_id}_${genome_id}.02.fq sample${sample_id}_${genome_id}.sam ${fasta_file} ${create_cigar}
     cp *.sam ${projectDir}/nextflow_out/sample_${sample_id}/reads/
-    cp sample${sample_id}_${genome_id}*.fq ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
+    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
     /**
     @TODO: Maybe add the option to add ALL options of wgsim in the profile
