@@ -13,11 +13,8 @@ workflow read_simulator_art {
     take: read_length_ch
     main:
         simulate_reads_art(genome_location_distribution_ch, read_length_ch)
-        sam_file_channel = simulate_reads_art.out[0]
-
-        bam_file_channel = sam_to_bam(sam_file_channel)
     emit:
-        bam_file_channel
+        simulate_reads_art.out[0]
         simulate_reads_art.out[1].groupTuple()
 }
 
@@ -29,7 +26,6 @@ workflow read_simulator_art {
 *     Tuple containing key = sample_id, first value = genome_id, second value = path to error profile, third value = path to fasta file with the aligned reads, 
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
 **/
-
 process simulate_reads_art {
     
     conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
@@ -39,7 +35,7 @@ process simulate_reads_art {
     val(read_length_ch)
     
     output:
-    tuple val(sample_id), val(genome_id), path('*.sam'), path(fasta_file)
+    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.bam"), path(fasta_file)
     tuple val(sample_id), path('*1.fq'), path('*2.fq')
    
     script:
@@ -64,38 +60,11 @@ process simulate_reads_art {
 
     """
     art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp *.sam ${projectDir}/nextflow_out/sample_${sample_id}/reads/
-    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
-    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    """
-}
-
-/* 
-* This process converts a sam to a bam file. 
-* Takes:
-*     A tuple with key = sample_id, first value = genome id, second value = sam file to convert, third value = the reference fasta file.
-* Output:
-*     A tuple with key = sample_id, first value = genome_id, second value = a sorted bam file, third value = the reference genome (fasta).
- */
-process sam_to_bam {
-
-    conda 'bioconda::samtools'
-
-    input:
-    tuple val(sample_id), val(genome_id), path(sam_file), path(fasta_file)
-
-    output:
-    tuple val(sample_id), val(genome_id), path('sample*.bam'), path(fasta_file)
-
-    script:
-    """
-    echo ${sam_file} >> debug
-    samtools view -bS ${sam_file} -o alignment_to_sort.bam
-    samtools sort -o sample${sample_id}_${genome_id}.bam alignment_to_sort.bam
+    samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
     cp sample${sample_id}_${genome_id}.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
+    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
-
 }
