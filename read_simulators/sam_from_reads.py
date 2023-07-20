@@ -4,15 +4,26 @@ import sys
 import os
 import re
 from Bio import SeqIO
+import argparse
 
 class SamFromReads() :
 
     def _sam_from_reads(self):
 
-            error_profile_path = sys.argv[1] 
-            aligned_reads_path = sys.argv[2] 
-            unaligned_reads_path = sys.argv[3]
-            reference_path = sys.argv[4]
+            parser = argparse.ArgumentParser(description='Generate SAM from reads.')
+            parser.add_argument('error_profile_path', help='Path to error profile file')
+            parser.add_argument('aligned_reads_path', help='Path to aligned reads file')
+            parser.add_argument('unaligned_reads_path', help='Path to unaligned reads file')
+            parser.add_argument('reference_path', help='Path to reference file')
+            parser.add_argument('--stdout', action='store_true', help='Write to stdout instead of a file')
+            args = parser.parse_args()
+
+
+            error_profile_path = args.error_profile_path
+            aligned_reads_path = args.aligned_reads_path
+            unaligned_reads_path = args.unaligned_reads_path
+            reference_path = args.reference_path
+
 
             id_to_cigar_map = {}
         
@@ -23,12 +34,12 @@ class SamFromReads() :
 
             prefix = aligned_reads_path.rsplit(".",1)[0].rsplit("_",2)[0] #_aligned ???
             cigars = id_to_cigar_map[prefix]
-            self.write_sam(aligned_reads_path, cigars, reference_path, prefix)
+            self.write_sam(aligned_reads_path, cigars, reference_path, prefix, args.stdout)
             self.convert_fasta(aligned_reads_path, reference_path)
 
             prefix = unaligned_reads_path.rsplit(".",1)[0].rsplit("_",2)[0]
             cigars = id_to_cigar_map[prefix]
-            self.write_sam(unaligned_reads_path, cigars, reference_path, prefix)
+            self.write_sam(unaligned_reads_path, cigars, reference_path, prefix, args.stdout)
             self.convert_fasta(unaligned_reads_path, reference_path)
             #os.remove(os.path.join(directory_output,f)) # do not store read file twice
 
@@ -70,14 +81,14 @@ class SamFromReads() :
             cigars[sequence] = (CIGAR, int(pos) + int(length)) 
         return cigars
 
-    def write_sam(self, read_file, id_to_cigar_map, reference_path, orig_prefix):
+    def write_sam(self, read_file, id_to_cigar_map, reference_path, orig_prefix, stdout=False):
         references = SeqIO.to_dict(SeqIO.parse(reference_path, "fasta"))
         fixed_names = {x.split('.',1)[0].replace("_","-"):x for x in references}
 
         write_sam = os.path.join(orig_prefix) + ".sam"
 
         if (not os.path.exists(write_sam)):
-            self.write_header(write_sam, references)
+            self.write_header(write_sam, references, stdout)
         with open(read_file, 'r') as reads:
             for line in reads:
                 if line.startswith('>'):
@@ -115,16 +126,24 @@ class SamFromReads() :
                     #    ###temporarily disabled###
                     sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
                     clen = self.get_cigar_length(CIGAR)
-                    with open(write_sam, 'a+') as samfile:
-                        samfile.write("\t".join(sam_line) + "\n")
+                    if stdout:
+                        print("\t".join(sam_line))
+                    else:
+                        with open(write_sam, 'a+') as samfile:
+                            samfile.write("\t".join(sam_line) + "\n")
         return references
 
-    def write_header(self, sam_file, sequence_ids):
+    def write_header(self, sam_file, sequence_ids, stdout=False):
 
-        with open(sam_file, "w") as samfile:
-            samfile.write("@HD\tVN:1.4\tSQ:unsorted\n")
+        if stdout:
+            print("@HD\tVN:1.4\tSQ:unsorted")
             for prefix in sequence_ids:
-                samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=prefix, len=len(sequence_ids[prefix])))
+                print("@SQ\tSN:{name}\tLN:{len}".format(name=prefix, len=len(sequence_ids[prefix])))
+        else:
+            with open(sam_file, "w") as samfile:
+                samfile.write("@HD\tVN:1.4\tSQ:unsorted\n")
+                for prefix in sequence_ids:
+                    samfile.write("@SQ\tSN:{name}\tLN:{len}\n".format(name=prefix, len=len(sequence_ids[prefix])))
 
     def get_cigar_length(self, cigar):
         length = 0
