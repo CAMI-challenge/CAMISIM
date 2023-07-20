@@ -27,6 +27,8 @@ workflow read_simulator_art {
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
 **/
 process simulate_reads_art {
+
+    scratch true
     
     conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
