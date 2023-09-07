@@ -88,7 +88,21 @@ workflow {
     // merge the bam files of the required samples
     merged_bam_file = merge_bam_files(merged_bam_per_sample)
 
-    reference_fasta_files_ch = genome_location_file_ch.splitCsv(sep:'\t').map { a -> a[1] }
+    // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
+    genome_location_ch = genome_location_file_ch
+        .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+        .map { genome_id, path ->
+            def abs_path
+            if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                abs_path = path
+            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+            }
+            return [genome_id, abs_path]
+        }    
+
+    // extract file paths from the tuples to create the reference_fasta_files_ch
+    reference_fasta_files_ch = genome_location_ch.map { a -> a[1] }
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 

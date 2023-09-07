@@ -27,7 +27,18 @@ workflow sample_wise_simulation {
     main:
 
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
-        genome_location_ch = genome_location_file_ch.splitCsv(sep:'\t')
+        genome_location_ch = genome_location_file_ch
+            .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+            .map { genome_id, path ->
+                def abs_path
+                if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                    abs_path = path
+                } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                    abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+                }
+                return [genome_id, abs_path]
+            }
+
 
         // The simulated ART reads (version 016.06.05) doesn't contain the whole header of the reference genome, if there is a space in the header. They then just contain the 
         // substring before the first occurance of the space. In that case the gold standard assembly doesn't work because there are no matching IDs.
