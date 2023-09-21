@@ -204,9 +204,7 @@ process generate_pooled_gold_standard_assembly {
     file_name = 'gsa_pooled.fasta'
     """
     cat ${reference_fasta_files} > reference.fasta
-    samtools faidx reference.fasta
-    samtools index ${bam_file}
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta.fai -b ${bam_file}.bai -l 1 -c 1 >> ${file_name}
+    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${projectDir}/nextflow_out/pooled_gsa/

@@ -146,9 +146,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
-    samtools faidx ${reference_fasta_file}
-    samtools index ${bam_file}
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file}.fai -b ${bam_file}.bai -l 1 -c 1 >> ${file_name}
+    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${projectDir}/nextflow_out/sample_${sample_id}/gsa/
