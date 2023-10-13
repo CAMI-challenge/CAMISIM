@@ -39,3 +39,15 @@ if __name__ == "__main__":
     f.write(text)
     f.close()
 
+    text = "used_initial_seed" + '\t' + str(seed) + '\n'
+    text = text + "sample_id" + '\t' + "seed" + '\n'
+
+    f = open("seed_read_anonymisation.txt", "w")
+
+    for i in range(count_samples):
+        sample_seed = random.randint(0, sys.maxsize)
+        text = text + str(i) + '\t' + str(sample_seed) + '\n'
+        
+    f.write(text)
+    f.close()
+

@@ -6,10 +6,9 @@ import io
 import math
 import argparse
 from Bio import SeqIO
-from scripts.Validator.sequencevalidator import SequenceValidator
 
 
-class Anonymizer(SequenceValidator):
+class Anonymizer():
 	"""
 	input are streamed sequences which have identifier that need to be anonymous
 	by default it reads from std.in
@@ -58,9 +57,9 @@ class Anonymizer(SequenceValidator):
 			@return: None
 			@rtype: None
 		"""
-		assert self.is_stream(input_stream)
-		assert self.is_stream(output_stream)
-		assert self.is_stream(mapping)
+		#assert self.is_stream(input_stream)
+		#assert self.is_stream(output_stream)
+		#assert self.is_stream(mapping)
 		assert isinstance(sequence_prefix, str)
 		assert isinstance(file_format, str)
 		file_format = file_format.lower()
@@ -98,9 +97,9 @@ class Anonymizer(SequenceValidator):
 			@return: None
 			@rtype: None
 		"""
-		assert self.is_stream(input_stream)
-		assert self.is_stream(output_stream)
-		assert self.is_stream(mapping)
+		#assert self.is_stream(input_stream)
+		#assert self.is_stream(output_stream)
+		#assert self.is_stream(mapping)
 		assert isinstance(sequence_prefix, str)
 		assert isinstance(file_format, str)
 		file_format = file_format.lower()
@@ -170,7 +169,7 @@ if __name__ == "__main__":
 	output_file_stream = options.out
 	log_file_stream = options.log
 
-	anonymizer = Anonymizer(logfile=log_file_stream)
+	anonymizer = Anonymizer()
 	if options.s:
 		anonymizer.anonymize_sequences(
 			mapping=map_file_stream,

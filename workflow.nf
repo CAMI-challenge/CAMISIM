@@ -79,8 +79,15 @@ workflow {
         read_length_ch = params.profile_read_length
     }
 
+    // random seed generation
+    seed_ch = get_seed(genome_location_file_ch, seed)
+    // get the text file with the seeds needed for the read simulation
+    seed_file_read_simulation_ch = get_seed.out[0]
+    // get the text file with the seeds needed for the anonymization
+    seed_file_anonymisation_ch = get_seed.out[1]
+
     // simulate reads sample wise
-    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed)
+    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
     merged_bam_per_sample = sample_wise_simulation.out[0].collect()
     gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
@@ -106,7 +113,7 @@ workflow {
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 
-    anonymization(sample_wise_simulation.out[2])
+    anonymization(sample_wise_simulation.out[2], genome_location_ch, seed_file_anonymisation_ch)
 }
 
 /*
@@ -285,5 +292,30 @@ process getCommunityDistribution {
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
     mkdir --parents ${projectDir}/nextflow_out/distributions/
     cp distribution_*.txt ${projectDir}/nextflow_out/distributions/
+    """
+}
+
+/*
+* This process returns a random seed for every sample generated from the given seed in the config file.
+* Output:
+*     The file with the given seed per samle in CSV format.
+ */
+process get_seed {
+
+    input:
+    path (genome_locations)
+    val(seed)
+
+    output:
+    path ('seed.txt')
+    path ('seed_read_anonymisation.txt')
+
+    script:
+    count_samples = params.number_of_samples
+
+    """
+    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations}
+    mkdir --parents ${projectDir}/nextflow_out/
+    cp seed.txt ${projectDir}/nextflow_out/seed.txt
     """
 }

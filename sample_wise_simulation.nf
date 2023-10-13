@@ -23,7 +23,7 @@ workflow sample_wise_simulation {
     take: genome_location_file_ch
     take: genome_distribution_file_ch
     take: read_length_ch
-    take: seed
+    take: seed_file_ch
     main:
 
         // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
@@ -48,7 +48,7 @@ workflow sample_wise_simulation {
         }    
 
         // get the seed for every genome
-        seed_ch = get_seed(genome_location_file_ch, seed).splitCsv(sep:'\t', skip:2)
+        seed_ch = seed_file_ch.splitCsv(sep:'\t', skip:2)
 
         // get tuple with key = sample id, first value = genome_id, second value = distribution frim distributions files
         distribution_file_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
@@ -256,30 +256,6 @@ process get_multiplication_factor {
                     relative_size += abundances[genome_id] * len(record.seq)
             total_relative_size += relative_size
     print(${total_size} / float(total_relative_size))
-    """
-}
-
-/*
-* This process returns a random seed for every sample generated from the given seed in the config file.
-* Output:
-*     The file with the given seed per samle in CSV format.
- */
-process get_seed {
-
-    input:
-    path (genome_locations)
-    val(seed)
-
-    output:
-    path ('seed.txt')
-
-    script:
-    count_samples = params.number_of_samples
-
-    """
-    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations}
-    mkdir --parents ${projectDir}/nextflow_out/
-    cp seed.txt ${projectDir}/nextflow_out/seed.txt
     """
 }
 

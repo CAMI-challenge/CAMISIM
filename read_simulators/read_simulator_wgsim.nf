@@ -37,7 +37,7 @@ process simulate_reads_wgsim {
     
     output:
     tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.bam"), path(fasta_file)
-    tuple val(sample_id), path('*.01.fq'), path('*.02.fq')
+    tuple val(sample_id), path("sample${sample_id}_${genome_id}1.fq"), path("sample${sample_id}_${genome_id}2.fq")
     
     script:
     total_size = params.size
@@ -48,14 +48,30 @@ process simulate_reads_wgsim {
     number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     create_cigar = params.create_cigar
+
+    /**
+    String log = "---- sample id: ".concat(sample_id)
+    log = log.concat("  genome id: ").concat(genome_id)
+    log = log.concat("   fasta file: ").concat(fasta_file.baseName)
+    log = log.concat("  fragment_size_mean: ").concat(Integer.toString(fragment_size))
+    log = log.concat("    fragment_size_sd: ").concat(Integer.toString(fragment_size_sd))
+    log = log.concat("    error_rate: ").concat(Integer.toString(error_rate))
+    log = log.concat("    read_length: ").concat(Integer.toString(read_length))
+    log = log.concat("    number_of_reads: ").concat(Double.toString(number_of_reads))
+    log = log.concat("    seed: ").concat(seed)
+    print(log)
+    **/
+
     """
-    wgsim -d ${fragment_size} -s ${fragment_size_sd} -N ${number_of_reads} -1 ${read_length} -2 ${read_length} -S ${seed} -e ${error_rate} -r 0 -R 0 ${fasta_file} sample${sample_id}_${genome_id}.01.fq sample${sample_id}_${genome_id}.02.fq 
-    ${projectDir}/scripts/wgsim_to_sam.py sample${sample_id}_${genome_id}.01.fq sample${sample_id}_${genome_id}.02.fq /dev/stdout ${fasta_file} ${create_cigar} | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
+    wgsim -d ${fragment_size} -s ${fragment_size_sd} -N ${number_of_reads} -1 ${read_length} -2 ${read_length} -S ${seed} -e ${error_rate} -r 0 -R 0 ${fasta_file} sample${sample_id}_${genome_id}1.fq sample${sample_id}_${genome_id}2.fq 
+    ${projectDir}/scripts/wgsim_to_sam.py sample${sample_id}_${genome_id}1.fq sample${sample_id}_${genome_id}2.fq /dev/stdout ${fasta_file} ${create_cigar} | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
     cp sample${sample_id}_${genome_id}.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
-    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
+    gzip -k sample${sample_id}_${genome_id}1.fq
+    gzip -k sample${sample_id}_${genome_id}2.fq
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}1.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}2.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
     /**
     @TODO: Maybe add the option to add ALL options of wgsim in the profile
