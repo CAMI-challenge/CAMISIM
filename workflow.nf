@@ -317,5 +317,6 @@ process get_seed {
     ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations}
     mkdir --parents ${projectDir}/nextflow_out/
     cp seed.txt ${projectDir}/nextflow_out/seed.txt
+    cp seed_read_anonymisation.txt ${projectDir}/nextflow_out/seed_read_anonymisation.txt
     """
 }

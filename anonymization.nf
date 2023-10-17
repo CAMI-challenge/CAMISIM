@@ -23,9 +23,9 @@ workflow anonymization {
         reads_seed_ch = reads_ch.join(seed_ch)
 
         if(params.type=="nanosim3") {
-            out_shuffle = shuffle(reads_ch)
+            out_shuffle = shuffle(reads_seed_ch)
         } else if(params.type=="art" || params.type=="wgsim") {
-            out_shuffle = shuffle_paired_end(reads_ch)
+            out_shuffle = shuffle_paired_end(reads_seed_ch)
         }
 
         gs_read_mapping(out_shuffle[1], params.genome_locations_file, params.metadata_file)
@@ -34,7 +34,7 @@ workflow anonymization {
 /*
 * This process shuffles and anonymizes single-end reads.
 * Takes:
-*    A list with the paths to all read files gruoped by sample id..
+*    A list with the paths to all read files gruoped by sample id and the generated seed.
 * Output:
 *    The anonymous read file for the given sample.
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
@@ -44,7 +44,7 @@ process shuffle {
     conda "bioconda::biopython"
 
     input:
-    tuple val(sample_id), path(read_files)
+    tuple val(sample_id), path(read_files), val(seed)
 
     output:
     tuple val(sample_id), path(anonymous_reads_file)
@@ -57,7 +57,7 @@ process shuffle {
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${params.seed}) | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
+    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/
@@ -67,7 +67,7 @@ process shuffle {
 /*
 * This process shuffles and anonymizes paired-end reads.
 * Takes:
-*    A list with the paths to all read files gruoped by sample id..
+*    A list with the paths to all read files gruoped by sample id and the generated seed.
 * Output:
 *    The anonymous read file for the given sample.
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
@@ -77,7 +77,7 @@ process shuffle_paired_end {
     conda "bioconda::biopython"
 
     input:
-    tuple val(sample_id), path(first_read_files), path(second_read_files)
+    tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
 
     output:
     tuple val(sample_id), path(anonymous_reads_file)
@@ -95,7 +95,7 @@ process shuffle_paired_end {
     paste -d " " - - - - <second_reads.fq > second_reads_clustered.fq
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    shuf --random-source=<(get_seeded_random ${params.seed}) sample${sample_id}_interweaved.fq | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
+    shuf --random-source=<(get_seeded_random ${seed}) sample${sample_id}_interweaved.fq | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/
