@@ -22,9 +22,9 @@ workflow read_simulator_nanosim3 {
 
         } else { // simulate reads in fasta format with nanosim and convert them later
             simulate_reads_fasta_nanosim3(genome_location_distribution_ch, read_length_ch)
-            read_ch = simulate_reads_fasta_nanosim3.out[1].groupTuple()
 
-            bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])
+            bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])[0]
+            read_ch = bam_from_reads_fasta.out[1].groupTuple()
         }
         
     emit:
@@ -52,7 +52,6 @@ process simulate_reads_fasta_nanosim3 {
     
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
-    tuple val(sample_id), path("*_aligned_reads.fasta")
     
     script:
     total_size = params.size
@@ -146,6 +145,7 @@ process bam_from_reads_fasta {
 
     output:
     tuple val(sample_id), val(genome_id), path('sample*.bam'), path(fasta_file)
+    tuple val(sample_id), path("sample${sample_id}_${genome_id}.fq")
 
     script:
     """

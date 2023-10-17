@@ -113,7 +113,7 @@ workflow {
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 
-    anonymization(sample_wise_simulation.out[2], genome_location_ch, seed_file_anonymisation_ch)
+    anonymization(sample_wise_simulation.out[2], seed_file_anonymisation_ch)
 }
 
 /*

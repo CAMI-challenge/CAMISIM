@@ -17,6 +17,7 @@ class GoldStandardFileFormat():
     _separator="\t"
     _column_name_gid = ""
     _column_name_ncbi = ""
+    fixed_name = {}
 
     def __init__(
         self, column_name_gid="genome_ID", column_name_ncbi="NCBI_ID", separator='\t', logfile=None, verbose=True):
@@ -47,7 +48,7 @@ class GoldStandardFileFormat():
     # genome location
     # ###############
 
-    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None):
+    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None, nanosim_real_fastq=False, wgsim=False):
         """
             Get a map, sequence id to genome id from an abundance file.
 
@@ -78,7 +79,15 @@ class GoldStandardFileFormat():
                 file_path_genome = os.path.join(project_dir,file_path_genome)
 
             for seq_record in SeqIO.parse(file_path_genome, "fasta"):
+
+                # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
+                # To still be able to print the version of the sequence record to the read mapping file, we create a dict here, that holds
+                # the sequence id without the version as key and the whole id as value to be accessed later on.
+                if(nanosim_real_fastq):
+                    self.fixed_name[seq_record.id.split('.',1)[0].replace("_","-")] = seq_record.id
+
                 sequence_id_to_genome_id[seq_record.id] = genome_id
+
         return sequence_id_to_genome_id
 
     def get_dict_unique_id_to_genome_file_path(self, file_path_mapping):
@@ -204,7 +213,7 @@ class GoldStandardFileFormat():
     # ###############
 
     def write_gs_read_mapping(
-        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id):
+        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, wgsim):
         """
             Write the gold standard for every read
 
@@ -236,8 +245,14 @@ class GoldStandardFileFormat():
         stream_output.write(line)
         for anonymous_id in sorted(dict_anonymous_to_read_id):
             read_id = dict_anonymous_to_read_id[anonymous_id]
-            if '-' not in read_id:
 
+            if nanosim_real_fastq:
+                # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
+                tmp = read_id.split('_', 1)[0]
+                # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
+                # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
+                sequence_id = self.fixed_name[tmp]
+            elif wgsim:
                 # Change in CAMISIM 2:
                 # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:
                 # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
@@ -245,10 +260,14 @@ class GoldStandardFileFormat():
                 if '_' in read_id:
                     sequence_id = read_id.split('_', 1)[0]
                 else:
-                    msg = "missing '-' reads2anonymous: {}\n".format(read_id)
+                    msg = "missing '_' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
                     raise ValueError(msg)
             else:    
+                if '-' not in read_id:
+                    msg = "missing '-' reads2anonymous: {}\n".format(read_id)
+                    #self._logger.error(msg)
+                    raise ValueError(msg)  
                 sequence_id = read_id.rsplit('-', 1)[0]
             if sequence_id not in dict_sequence_to_genome_id:
                 msg = "sequence_id '{}' not found in mapping\n".format(sequence_id)
@@ -257,6 +276,12 @@ class GoldStandardFileFormat():
             genome_id = dict_sequence_to_genome_id[sequence_id]
             tax_id = dict_genome_id_to_tax_id[genome_id]
             # final_dict[anonymous_id]= (genome_id,meta_tax_id,seq_id)
+
+            # For nanosim only print the sequence id with version number and index of the read.
+            # For fastq files converted from fasta files generated with nanosim, the read id is already formatted in this way.
+            if nanosim_real_fastq:
+                read_id = sequence_id + "-" + read_id.split("_")[2]
+
             line = row_format.format(
                 aid=anonymous_id,
                 gid=genome_id,
@@ -357,7 +382,7 @@ class GoldStandardFileFormat():
             stream_output, dict_sequence_name_to_anonymous, dict_original_seq_pos,
             dict_sequence_to_genome_id, dict_genome_id_to_tax_id)
 
-    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir):
+    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, wgsim):
         """
             Write the gold standard for every read
 
@@ -375,11 +400,11 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
         dict_anonymous_to_read_id = self.get_dict_anonymous_to_original_id(file_path_id_map)
         self.write_gs_read_mapping(
-            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id)
+            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
 
 
     def read(self, file_path, separator=None, column_names=False, comment_line=None):
@@ -570,7 +595,17 @@ if __name__ == "__main__":
 		"-projectDir",
 		help="the path to the project directory",
 		action='store',
-		default="")       
+		default="")
+    parser.add_argument(
+		"-nanosim_real_fastq",
+		help="read files in fastq format generated directly with nanosim 3",
+		action="store_true",
+		default=False)
+    parser.add_argument(
+		"-wgsim",
+		help="read files in fastq format generated directly with wgsim",
+		action="store_true",
+		default=False)     
     options = parser.parse_args()
 
     input_file_stream = options.input
@@ -578,7 +613,9 @@ if __name__ == "__main__":
     file_path_metadata = options.metadata
     stream_output = options.out
     project_dir = options.projectDir
+    nanosim_real_fastq = options.nanosim_real_fastq
+    wgsim = options.wgsim
 
     goldStandardFileFormat = GoldStandardFileFormat()
 
-    goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir)
+    goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim)

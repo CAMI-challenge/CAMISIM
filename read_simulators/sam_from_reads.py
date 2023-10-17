@@ -277,7 +277,14 @@ class SamFromReads() :
                 record.letter_annotations["phred_quality"] = [40] * len(record)
                 record.id = record.id.replace(";","_")
                 record.id = fixed_names[record.id.split("_")[0]] + "-" + record.id.split("_")[3] # this is the index of the read
-                record.description = fixed_names[record.description.split("_")[0]] + "-" + record.description.split("_")[3]
+
+                # NEW in CAMISIM 2:
+                # Skip the description at this point.
+                # In CAMISIM 1 the desctiption would be written into the fastq file and removed later in the anonymization (fastastramer.py).
+
+                #record.description = fixed_names[record.description.split("_")[0]] + "-" + record.description.split("_")[3]
+                record.description = ''
+
                 SeqIO.write(record, fastq, "fastq")
 
 
