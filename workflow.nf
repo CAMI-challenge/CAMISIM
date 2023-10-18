@@ -80,11 +80,9 @@ workflow {
     }
 
     // random seed generation
-    seed_ch = get_seed(genome_location_file_ch, seed)
+    get_seed(genome_location_file_ch, seed)
     // get the text file with the seeds needed for the read simulation
     seed_file_read_simulation_ch = get_seed.out[0]
-    // get the text file with the seeds needed for the anonymization
-    seed_file_anonymisation_ch = get_seed.out[1]
 
     // simulate reads sample wise
     sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
@@ -113,7 +111,11 @@ workflow {
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 
-    anonymization(sample_wise_simulation.out[2], seed_file_anonymisation_ch)
+    if(params.anonymization) {
+        // get the text file with the seeds needed for the anonymization
+        seed_file_anonymisation_ch = get_seed.out[1]
+        anonymization(sample_wise_simulation.out[2], seed_file_anonymisation_ch)
+    }
 }
 
 /*
@@ -296,7 +298,8 @@ process getCommunityDistribution {
 }
 
 /*
-* This process returns a random seed for every sample generated from the given seed in the config file.
+* This process returns a file containing a random seed for every genome generated from the given seed in the config file.
+* In case the simulated reads will be anonymized, it also returns a file containing a random seed for every sample generated from the given seed in the config file.
 * Output:
 *     The file with the given seed per samle in CSV format.
  */
@@ -308,15 +311,18 @@ process get_seed {
 
     output:
     path ('seed.txt')
-    path ('seed_read_anonymisation.txt')
+    path ('seed_read_anonymisation.txt') optional true
 
     script:
     count_samples = params.number_of_samples
-
+    if (params.param_anonym){
+        param_anonym = "-anonym_seed"
+    } else {
+        param_anonym = ""
+    }
     """
-    ${projectDir}/get_seed.py ${seed} ${count_samples} ${genome_locations}
+    ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
     mkdir --parents ${projectDir}/nextflow_out/
-    cp seed.txt ${projectDir}/nextflow_out/seed.txt
-    cp seed_read_anonymisation.txt ${projectDir}/nextflow_out/seed_read_anonymisation.txt
+    cp seed*.txt ${projectDir}/nextflow_out/
     """
 }

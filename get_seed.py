@@ -2,16 +2,37 @@
 
 import random
 import sys
-
+import argparse
     
-
-
-
 if __name__ == "__main__":
 
-    seed = int(sys.argv[1])
-    count_samples = int(sys.argv[2])
-    file_genome_locations = sys.argv[3]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+		"-seed",
+		help="the initial seed",
+		action='store',
+		default="")
+    parser.add_argument(
+		"-count_samples",
+		help="the sample count",
+		action='store',
+		default="")  
+    parser.add_argument(
+		"-file_genome_locations",
+		help="the file containing the genome locations",
+		action='store',
+		default="")      
+    parser.add_argument(
+		"-anonym_seed",
+		help="whether seeds for anonymization should be generated",
+		action="store_true",
+		default=False)
+    options = parser.parse_args()    
+
+    seed = int(options.seed)
+    count_samples = int(options.count_samples)
+    file_genome_locations = options.file_genome_locations
+    anonym_seed = options.anonym_seed
 
     genome_id_list = []
 
@@ -39,15 +60,16 @@ if __name__ == "__main__":
     f.write(text)
     f.close()
 
-    text = "used_initial_seed" + '\t' + str(seed) + '\n'
-    text = text + "sample_id" + '\t' + "seed" + '\n'
+    if(anonym_seed):
+        text = "used_initial_seed" + '\t' + str(seed) + '\n'
+        text = text + "sample_id" + '\t' + "seed" + '\n'
 
-    f = open("seed_read_anonymisation.txt", "w")
+        f = open("seed_read_anonymisation.txt", "w")
 
-    for i in range(count_samples):
-        sample_seed = random.randint(0, sys.maxsize)
-        text = text + str(i) + '\t' + str(sample_seed) + '\n'
+        for i in range(count_samples):
+            sample_seed = random.randint(0, sys.maxsize)
+            text = text + str(i) + '\t' + str(sample_seed) + '\n'
         
-    f.write(text)
-    f.close()
+        f.write(text)
+        f.close()
 
