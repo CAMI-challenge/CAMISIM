@@ -48,7 +48,7 @@ class GoldStandardFileFormat():
     # genome location
     # ###############
 
-    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None, nanosim_real_fastq=False, wgsim=False):
+    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None, nanosim_real_fastq=False):
         """
             Get a map, sequence id to genome id from an abundance file.
 
@@ -178,7 +178,7 @@ class GoldStandardFileFormat():
     # position file
     # ###############
 
-    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files):
+    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files, wgsim=False):
         """
             Get a map, sequence name to list of starting position from a mapping file.
 
@@ -196,13 +196,23 @@ class GoldStandardFileFormat():
 
         for sam_position_file in list_of_sam_position_files:
             table = self.read(sam_position_file, separator=self._separator)
-            column_key = table.get_column(0)
-            column_values = table.get_column(1)
+
+            column_key = list(table[0])
+            column_values = list(table[1])
 
             for index_row in range(len(column_key)):
                 key = column_key[index_row]
                 value = column_values[index_row]
-                seq_without_index = key.split("-")[0]
+
+                if wgsim:
+                    # Change in CAMISIM 2:
+                    # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:
+                    # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
+                    # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
+                    seq_without_index = key.split('_', 1)[0]
+                else:
+                    seq_without_index = key.split("-")[0]
+
                 if seq_without_index not in dict_original_seq_pos:
                     dict_original_seq_pos[seq_without_index] = []
                 dict_original_seq_pos[seq_without_index].append(value)
@@ -312,7 +322,6 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        assert self.is_stream(stream_output)
         assert isinstance(dict_sequence_name_to_anonymous, dict)
         assert isinstance(dict_original_seq_pos, dict)
         assert isinstance(dict_sequence_to_genome_id, dict)
@@ -322,6 +331,7 @@ class GoldStandardFileFormat():
         stream_output.write("#anonymous_contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
 
         for original_contig_id, anonymous_contig_id in dict_sequence_name_to_anonymous.items():
+
             seq_info = original_contig_id.strip().rsplit("_from_", 1)
             # print(seq_info)
             sequence_id = seq_info[0]
@@ -354,7 +364,7 @@ class GoldStandardFileFormat():
 
     def gs_contig_mapping(
         self, file_path_genome_locations, file_path_metadata, file_path_id_map, list_file_paths_read_positions,
-        stream_output):
+        stream_output, project_dir, nanosim_real_fastq=False, wgsim=False):
         """
             Write the gold standard for every read
 
@@ -374,9 +384,9 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
-        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions)
+        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
         dict_sequence_name_to_anonymous = self.get_dict_sequence_name_to_anonymous(file_path_id_map)
         self.write_gsa_contig_mapping(
             stream_output, dict_sequence_name_to_anonymous, dict_original_seq_pos,
@@ -400,7 +410,7 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
         dict_anonymous_to_read_id = self.get_dict_anonymous_to_original_id(file_path_id_map)
         self.write_gs_read_mapping(
@@ -605,7 +615,14 @@ if __name__ == "__main__":
 		"-wgsim",
 		help="read files in fastq format generated directly with wgsim",
 		action="store_true",
-		default=False)     
+		default=False)
+    parser.add_argument(
+		"-read_positions",
+		help="file with 'read' start positions from bam files of this sample, needed for contig mapping",
+        action='store',
+		type=argparse.FileType('r'),
+		default=None,
+        required=False)         
     options = parser.parse_args()
 
     input_file_stream = options.input
@@ -613,9 +630,14 @@ if __name__ == "__main__":
     file_path_metadata = options.metadata
     stream_output = options.out
     project_dir = options.projectDir
+    contig = options.contig
     nanosim_real_fastq = options.nanosim_real_fastq
     wgsim = options.wgsim
 
     goldStandardFileFormat = GoldStandardFileFormat()
 
-    goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim)
+    if(contig):
+        list_file_paths_read_positions = [options.read_positions]
+        goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
+    else:    
+        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim)

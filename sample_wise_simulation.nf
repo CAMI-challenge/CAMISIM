@@ -124,6 +124,7 @@ workflow sample_wise_simulation {
     emit: merge_bam_files.out
     emit: get_fasta_for_sample.out
     emit: reads_ch
+    emit: bam_files_by_sample_ch
 }
 
 /*
@@ -167,14 +168,14 @@ process get_fasta_for_sample {
     tuple val(sample_id), path(fasta_files)
 
     output:
-    path file_name
+    tuple val(sample_id), path(file_name)
         
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
     cat ${fasta_files} > ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/contigs
-    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/contigs/anonymous_gsa.fasta
+    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/contigs/gsa.fasta
     """
 }
 

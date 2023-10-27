@@ -112,9 +112,7 @@ workflow {
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
 
     if(params.anonymization) {
-        // get the text file with the seeds needed for the anonymization
-        seed_file_anonymisation_ch = get_seed.out[1]
-        anonymization(sample_wise_simulation.out[2], seed_file_anonymisation_ch)
+        anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3])
     }
 }
 
@@ -312,10 +310,11 @@ process get_seed {
     output:
     path ('seed.txt')
     path ('seed_read_anonymisation.txt') optional true
+    path ('seed_gsa_anonymisation.txt') optional true
 
     script:
     count_samples = params.number_of_samples
-    if (params.param_anonym){
+    if (params.anonymization){
         param_anonym = "-anonym_seed"
     } else {
         param_anonym = ""

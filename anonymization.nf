@@ -14,6 +14,9 @@ workflow anonymization {
 
     take: reads_ch
     take: seed_file_read_simulation_ch
+    take: seed_file_gsa_ch
+    take: samplewise_gsa_ch // tuple val(sample_id), path(gsa)
+    take: bam_file_list_per_sample_ch
 
     main:
 
@@ -29,6 +32,12 @@ workflow anonymization {
         }
 
         gs_read_mapping(out_shuffle[1], params.genome_locations_file, params.metadata_file)
+
+        // anonymize assembly of every sample
+        seed_gsa_ch = seed_file_gsa_ch.splitCsv(sep:'\t', skip:2)
+        shuffle_gsa(samplewise_gsa_ch.join(seed_gsa_ch))
+        read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
+        gs_contig_mapping(shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out), params.genome_locations_file, params.metadata_file)
 }
 
 /*
@@ -141,9 +150,116 @@ process gs_read_mapping {
     }
     """
     touch ${reads_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -input tmp_reads_mapping.tsv -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
+    python ${projectDir}/scripts/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads
     gzip -k ${reads_mapping_file}
     cp ${reads_mapping_file}.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/
+    """
+}
+
+/*
+* This process shuffles and anonymizes the gsa per sample.
+* Takes:
+*    A list with the paths to all read files gruoped by sample id and the generated seed.
+* Output:
+*    The anonymous read file for the given sample.
+*    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
+ */
+process shuffle_gsa {
+
+    conda "bioconda::biopython"
+
+    input:
+    tuple val(sample_id), path(read_files), val(seed)
+
+    output:
+    tuple val(sample_id), path(anonymous_gsa_file)
+    tuple val(sample_id), path(tmp_reads_mapping_file)
+
+    script:
+    anonymous_gsa_file = 'anonymous_gsa.fasta'
+    tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    """
+    touch ${anonymous_gsa_file}
+    touch ${tmp_reads_mapping_file}
+    get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
+    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/contigs
+    gzip -k ${anonymous_gsa_file}
+    cp ${anonymous_gsa_file}.gz ${projectDir}/nextflow_out/sample_${sample_id}/contigs/
+    """
+}
+
+/*
+* This process parses 'read' start positions from bam files in a directory.
+* Takes:
+*   The list of bam files per sample id.
+* Output:
+*    A file containing the read start posotions for the given sample.
+ */
+process read_start_positions_from_dir_of_bam {
+
+    conda 'bioconda::samtools'
+    
+    input:
+    tuple val(sample_id), path(list_bam_files)
+
+    output:
+    tuple val(sample_id), path(filename)
+
+    script:
+    filename = "read_start_positions"
+    """
+    set -o pipefail
+    for bamfile in ${list_bam_files}; do
+        samtools view "\$bamfile" | awk '{print \$1 "\\t" \$4}' >> ${filename}
+    done
+    """
+}
+
+/*
+* This process created a gold standard read mapping file for one sample.
+* Takes:
+*   The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
+*   A file containing all reference genome locations.
+*   The metadata file.
+* Output:
+*    The reads mapping file for the given sample,.
+ */
+process gs_contig_mapping {
+
+    conda "bioconda::biopython"
+
+    input:
+    tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions)
+    path(genome_locations_file)
+    path(metadata_file)
+
+
+    output:
+    tuple val(sample_id), path(gsa_mapping_file)
+
+    script:
+    gsa_mapping_file = 'gsa_mapping.tsv'
+    reads_mapping_file = 'reads_mapping.tsv'
+    if(!params.type.equals("nanosim3")) {
+        params.simulate_fastq_directly = false
+    }    
+    if(params.simulate_fastq_directly){
+        real_fastq = "-nanosim_real_fastq"
+    } else {
+        real_fastq = ""
+    }
+    if(params.type.equals("wgsim")){
+            wgsim = "-wgsim"
+    } else {
+            wgsim = ""
+    }
+    """
+    touch ${gsa_mapping_file}
+    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads
+    gzip -k ${gsa_mapping_file}
+    cp ${gsa_mapping_file}.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/
     """
 }
