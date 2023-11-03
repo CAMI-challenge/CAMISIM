@@ -87,7 +87,7 @@ workflow {
     // simulate reads sample wise
     sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
-    merged_bam_per_sample = sample_wise_simulation.out[0] //.collect()
+    merged_bam_per_sample = sample_wise_simulation.out[0]
     gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
 
     // merge the bam files required for the pooled gsa

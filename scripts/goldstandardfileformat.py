@@ -209,7 +209,7 @@ class GoldStandardFileFormat():
                     # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:
                     # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
                     # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
-                    seq_without_index = key.split('_', 1)[0]
+                    seq_without_index = key.rsplit('_', 5)[0]
                 else:
                     seq_without_index = key.split("-")[0]
 
@@ -258,7 +258,7 @@ class GoldStandardFileFormat():
 
             if nanosim_real_fastq:
                 # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
-                tmp = read_id.split('_', 1)[0]
+                tmp = read_id.rsplit('_', 6)[0]
                 # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
                 # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
                 sequence_id = self.fixed_name[tmp]
@@ -268,7 +268,7 @@ class GoldStandardFileFormat():
                 # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
                 # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
                 if '_' in read_id:
-                    sequence_id = read_id.split('_', 1)[0]
+                    sequence_id = read_id.rsplit('_', 5)[0]
                 else:
                     msg = "missing '_' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
@@ -290,7 +290,7 @@ class GoldStandardFileFormat():
             # For nanosim only print the sequence id with version number and index of the read.
             # For fastq files converted from fasta files generated with nanosim, the read id is already formatted in this way.
             if nanosim_real_fastq:
-                read_id = sequence_id + "-" + read_id.split("_")[2]
+                read_id = sequence_id + "-" + read_id.rsplit("_", 5)[1].rsplit("_", 4)[0]
 
             line = row_format.format(
                 aid=anonymous_id,
