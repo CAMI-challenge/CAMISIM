@@ -87,11 +87,11 @@ workflow {
     // simulate reads sample wise
     sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
-    merged_bam_per_sample = sample_wise_simulation.out[0].collect()
+    merged_bam_per_sample = sample_wise_simulation.out[0] //.collect()
     gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]   
 
-    // merge the bam files of the required samples
-    merged_bam_file = merge_bam_files(merged_bam_per_sample)
+    // merge the bam files required for the pooled gsa
+    merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
 
     // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
     genome_location_ch = genome_location_file_ch
@@ -109,10 +109,10 @@ workflow {
     // extract file paths from the tuples to create the reference_fasta_files_ch
     reference_fasta_files_ch = genome_location_ch.map { a -> a[1] }
 
-    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
 
     if(params.anonymization) {
-        anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3])
+        anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file)
     }
 }
 
@@ -311,6 +311,7 @@ process get_seed {
     path ('seed.txt')
     path ('seed_read_anonymisation.txt') optional true
     path ('seed_gsa_anonymisation.txt') optional true
+    path ('seed_pooled_gsa_anonymisation.txt') optional true
 
     script:
     count_samples = params.number_of_samples

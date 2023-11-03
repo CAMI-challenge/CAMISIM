@@ -88,3 +88,15 @@ if __name__ == "__main__":
         f.write(text)
         f.close()
 
+        # file with seeds for pooled gsa anonymization
+        text = "used_initial_seed" + '\t' + str(seed) + '\n'
+        text = text + "seed" + '\n'
+
+        f = open("seed_pooled_gsa_anonymisation.txt", "w")
+
+        sample_seed = random.randint(0, sys.maxsize)
+        text = text + str(sample_seed) + '\n'
+        
+        f.write(text)
+        f.close()
+
