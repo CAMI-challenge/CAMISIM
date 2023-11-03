@@ -143,6 +143,8 @@ process generate_gold_standard_assembly {
 
     output:
     tuple val(sample_id), path(file_name)
+
+    when: params.gsa  // Only execute this process when gsa is set to true
     
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')

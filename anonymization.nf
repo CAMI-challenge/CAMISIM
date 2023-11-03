@@ -246,6 +246,8 @@ process read_start_positions_from_dir_of_bam {
     output:
     tuple val(sample_id), path(filename)
 
+    when: params.gsa  // Only execute this process when gsa is set to true
+
     script:
     filename = "read_start_positions"
     """
