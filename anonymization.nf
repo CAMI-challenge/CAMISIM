@@ -270,10 +270,10 @@ process read_start_positions_from_merged_bam {
     conda 'bioconda::samtools'
     
     input:
-    tuple path(merged_bam_files)
+    path(merged_bam_files)
 
     output:
-    tuple path(filename)
+    path(filename)
 
     script:
     filename = "read_start_positions"

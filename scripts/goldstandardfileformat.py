@@ -273,7 +273,7 @@ class GoldStandardFileFormat():
                     msg = "missing '_' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
                     raise ValueError(msg)
-            else:    
+            else:
                 if '-' not in read_id:
                     msg = "missing '-' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
@@ -567,8 +567,59 @@ class GoldStandardFileFormat():
         if column_name in meta_table:
             return True
         else:
-            return False                       
+            return False      
 
+    def binning_per_sample(self, file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, out, gsa, nanosim_real_fastq, wgsim):
+
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
+        dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
+
+        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
+
+        #with open(out, 'w') as stream_output:
+        #row_format = "{aid}\t{gid}\t{tid}\t{sid}\n"
+        #line = '#' + row_format.format(
+        #    aid="anonymous_read_id",
+        #    gid="genome_id",
+        #    tid="tax_id",
+        #    sid="read_id")
+        #out.write(line)
+        #for read in dict_original_seq_pos:
+        #    seq_id = read.strip().split(' ')[0]
+        #    gen_id = read.strip().split('-')[0]
+        #    genome_id = dict_sequence_to_genome_id[gen_id]
+        #    tax_id = dict_genome_id_to_tax_id[genome_id]
+        #    line = row_format.format(
+        #        aid=seq_id,
+        #        gid=genome_id,
+        #        tid=tax_id,
+        #        sid=seq_id,
+        #    )
+        #    out.write(line)
+
+
+        row_format = "{name}\t{genome_id}\t{tax_id}\t{length}\n"
+        out.write("@@SEQUENCEID\tBINID\tTAXID\t_LENGTH\n")
+        for seq_id in gsa:
+            if not seq_id.startswith(">"):
+                continue
+            seq_id = seq_id[1:].strip()
+            seq_info = seq_id.rsplit("_from_", 1)
+            # print(seq_info)
+            sequence_id = seq_info[0]
+            # pos_start, pos_end = re.findall(r'\d+', seq_info[1])[:2]
+            pos_start = int(seq_info[1].split("_", 1)[0])
+            pos_end = int(seq_info[1].split("_to_", 1)[1].split("_", 1)[0])
+
+            genome_id = dict_sequence_to_genome_id[sequence_id]
+            tax_id = dict_genome_id_to_tax_id[genome_id]
+            out.write(row_format.format(
+                name=seq_id,
+                genome_id=genome_id,
+                tax_id=tax_id,
+                length=str(pos_end-pos_start+1)
+                )
+            )            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -578,11 +629,17 @@ if __name__ == "__main__":
 		action="store_true",
 		default=False)
     parser.add_argument(
+		"-binning",
+		help="binning",
+		action="store_true",
+		default=False)    
+    parser.add_argument(
 		"-input",
 		help="input file (e.g. file path to the temporary anonymous mapping), reads from std.in by default",
 		action='store',
 		type=argparse.FileType('r'),
-		default=sys.stdin)
+		default=sys.stdin,
+        required=False)
     parser.add_argument(
 		"-genomes",
 		help="file with genome locations",
@@ -621,8 +678,7 @@ if __name__ == "__main__":
 		help="file with 'read' start positions from bam files of this sample, needed for contig mapping",
         action='store',
 		type=argparse.FileType('r'),
-		default=None,
-        required=False)         
+		default=None)  
     options = parser.parse_args()
 
     input_file_stream = options.input
@@ -631,6 +687,7 @@ if __name__ == "__main__":
     stream_output = options.out
     project_dir = options.projectDir
     contig = options.contig
+    binning = options.binning
     nanosim_real_fastq = options.nanosim_real_fastq
     wgsim = options.wgsim
 
@@ -639,5 +696,8 @@ if __name__ == "__main__":
     if(contig):
         list_file_paths_read_positions = [options.read_positions]
         goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
+    elif(binning):
+        list_file_paths_read_positions = [options.read_positions]
+        goldStandardFileFormat.binning_per_sample(file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, stream_output, input_file_stream, nanosim_real_fastq, wgsim)
     else:    
         goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim)

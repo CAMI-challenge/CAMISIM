@@ -177,7 +177,8 @@ process get_fasta_for_sample {
     """
     cat ${fasta_files} > ${file_name}
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/contigs
-    cp ${file_name} ${projectDir}/nextflow_out/sample_${sample_id}/contigs/gsa.fasta
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${projectDir}/nextflow_out/sample_${sample_id}/contigs/gsa.fasta.gz
     """
 }
 
