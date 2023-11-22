@@ -20,6 +20,8 @@ workflow anonymization {
     take: bam_file_list_per_sample_ch
     take: pooled_gsa_ch
     take: merged_bam_ch
+    take: genome_location_file_ch
+    take: metadata_ch
 
     main:
 
@@ -34,19 +36,19 @@ workflow anonymization {
             out_shuffle = shuffle_paired_end(reads_seed_ch)
         }
 
-        gs_read_mapping(out_shuffle[1], params.genome_locations_file, params.metadata_file)
+        gs_read_mapping(out_shuffle[1], genome_location_file_ch, metadata_ch)
 
         // anonymize assembly of every sample
         seed_gsa_ch = seed_file_gsa_ch.splitCsv(sep:'\t', skip:2)
         shuffle_gsa(samplewise_gsa_ch.join(seed_gsa_ch))
         read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
-        gs_contig_mapping(shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out), params.genome_locations_file, params.metadata_file)
+        gs_contig_mapping(shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out), genome_location_file_ch, metadata_ch)
 
         // anonymize pooled gold standard assembly
         seed_pooled_gsa_ch = seed_file_pooled_gsa_ch.splitCsv(sep:'\t', skip:2)
         shuffle_pooled_gsa(pooled_gsa_ch, seed_pooled_gsa_ch)
         read_start_positions_from_merged_bam(merged_bam_ch)
-        pooled_gs_contig_mapping(shuffle_pooled_gsa.out[1], read_start_positions_from_merged_bam.out, params.genome_locations_file, params.metadata_file)
+        pooled_gs_contig_mapping(shuffle_pooled_gsa.out[1], read_start_positions_from_merged_bam.out, genome_location_file_ch, metadata_ch)
 }
 
 /*

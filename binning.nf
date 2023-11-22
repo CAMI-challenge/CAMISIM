@@ -11,14 +11,16 @@ workflow binning {
     take: bam_file_list_per_sample_ch
     take: pooled_gsa_ch
     take: merged_bam_ch
+    take: genome_location_file_ch
+    take: metadata_ch
 
     main:
 
         read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
-        binning_per_sample(samplewise_gsa_ch.join(read_start_positions_from_dir_of_bam.out), params.genome_locations_file, params.metadata_file)
+        binning_per_sample(samplewise_gsa_ch.join(read_start_positions_from_dir_of_bam.out), genome_location_file_ch, metadata_ch)
 
         read_start_positions_from_merged_bam(merged_bam_ch)
-        binning_pooled_gsa(pooled_gsa_ch, read_start_positions_from_merged_bam.out, params.genome_locations_file, params.metadata_file)
+        binning_pooled_gsa(pooled_gsa_ch, read_start_positions_from_merged_bam.out, genome_location_file_ch, metadata_ch)
 }
 
 /*

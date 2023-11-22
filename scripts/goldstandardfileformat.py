@@ -348,7 +348,7 @@ class GoldStandardFileFormat():
             # write output
             if sequence_id not in dict_sequence_to_genome_id:
                 msg = "Bad sequence_id '{}'\n".format(sequence_id)
-                self._logger.error(msg)
+                #self._logger.error(msg)
                 raise KeyError(msg)
             genome_id = dict_sequence_to_genome_id[sequence_id]
             tax_id = dict_genome_id_to_tax_id[genome_id]
@@ -574,7 +574,7 @@ class GoldStandardFileFormat():
         dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
 
-        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
+        #dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
 
         #with open(out, 'w') as stream_output:
         #row_format = "{aid}\t{gid}\t{tid}\t{sid}\n"
