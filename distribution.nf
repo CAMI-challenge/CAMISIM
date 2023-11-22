@@ -39,8 +39,8 @@ process normalise_abundance {
     }
     """
     echo "${output}" > ${file_name}
-    mkdir --parents ${projectDir}/nextflow_out/distributions/
-    cp ${file_name} ${projectDir}/nextflow_out/distributions/
+    mkdir --parents ${params.outdir}/distributions/
+    cp ${file_name} ${params.outdir}/distributions/
     """
 }
 

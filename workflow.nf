@@ -189,7 +189,6 @@ process merge_bam_files {
     bam_files.each {
 
         bam_file_name = (String) it
-        print(bam_file_name)
         sample_id = bam_file_name.split('_')[1][0].toInteger()
         
         //if(sample_id in params.pooled_gsa){
@@ -223,9 +222,9 @@ process generate_pooled_gold_standard_assembly {
     """
     cat ${reference_fasta_files} > reference.fasta
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
-    mkdir --parents ${projectDir}/nextflow_out/pooled_gsa
+    mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
-    cp ${file_name}.gz ${projectDir}/nextflow_out/pooled_gsa/
+    cp ${file_name}.gz ${params.outdir}/pooled_gsa/
     """
 }
 
@@ -254,8 +253,8 @@ process buildTaxonomy {
     [ -f **/merged.dmp ] && mv **/merged.dmp ./merged.dmp
     [ -f **/nodes.dmp ] && mv **/nodes.dmp ./nodes.dmp
     ${projectDir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
-    mkdir --parents ${projectDir}/nextflow_out/
-    cp taxonomic_profile_*.txt ${projectDir}/nextflow_out/
+    mkdir --parents ${params.outdir}
+    cp taxonomic_profile_*.txt ${params.outdir}
     """
 }
 
@@ -301,8 +300,8 @@ process getCommunityDistribution {
     verbose = params.verbose
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
-    mkdir --parents ${projectDir}/nextflow_out/distributions/
-    cp distribution_*.txt ${projectDir}/nextflow_out/distributions/
+    mkdir --parents ${params.outdir}/distributions/
+    cp distribution_*.txt ${params.outdir}/distributions/
     """
 }
 
@@ -333,7 +332,7 @@ process get_seed {
     }
     """
     ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
-    mkdir --parents ${projectDir}/nextflow_out/
-    cp seed*.txt ${projectDir}/nextflow_out/
+    mkdir --parents ${params.outdir}
+    cp seed*.txt ${params.outdir}
     """
 }
