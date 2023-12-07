@@ -36,13 +36,16 @@ workflow anonymization {
             out_shuffle = shuffle_paired_end(reads_seed_ch)
         }
 
-        gs_read_mapping(out_shuffle[1], genome_location_file_ch, metadata_ch)
+        gs_read_ch = out_shuffle[1].combine(genome_location_file_ch).combine(metadata_ch)
+        gs_read_mapping(gs_read_ch)
 
         // anonymize assembly of every sample
         seed_gsa_ch = seed_file_gsa_ch.splitCsv(sep:'\t', skip:2)
         shuffle_gsa(samplewise_gsa_ch.join(seed_gsa_ch))
         read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
-        gs_contig_mapping(shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out), genome_location_file_ch, metadata_ch)
+
+        gs_contig_ch = shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out).combine(genome_location_file_ch).combine(metadata_ch)
+        gs_contig_mapping(gs_contig_ch)
 
         // anonymize pooled gold standard assembly
         seed_pooled_gsa_ch = seed_file_pooled_gsa_ch.splitCsv(sep:'\t', skip:2)
@@ -136,9 +139,7 @@ process gs_read_mapping {
     conda "bioconda::biopython"
 
     input:
-    tuple val(sample_id), path(tmp_reads_mapping_file)
-    path(genome_locations_file)
-    path(metadata_file)
+    tuple val(sample_id), path(tmp_reads_mapping_file), path(genome_locations_file), path(metadata_file)
 
 
     output:
@@ -299,9 +300,7 @@ process gs_contig_mapping {
     conda "bioconda::biopython"
 
     input:
-    tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions)
-    path(genome_locations_file)
-    path(metadata_file)
+    tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
 
 
     output:
