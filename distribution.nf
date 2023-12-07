@@ -15,6 +15,7 @@ process normalise_abundance {
 
     script:
     file_name = 'normalised_distributions_'.concat(sample_id).concat('.txt')
+    final_file_name = 'distribution_'.concat(sample_id).concat('.txt')
 
     double abundance_sum = 0.0
 
@@ -40,7 +41,7 @@ process normalise_abundance {
     """
     echo "${output}" > ${file_name}
     mkdir --parents ${params.outdir}/distributions/
-    cp ${file_name} ${params.outdir}/distributions/
+    cp ${file_name} ${params.outdir}/distributions/${final_file_name}
     """
 }
 

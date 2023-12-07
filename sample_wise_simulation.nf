@@ -94,16 +94,24 @@ workflow sample_wise_simulation {
             read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
             bam_files_channel = read_simulator_art.out[0]
             reads_ch = read_simulator_art.out[1]
+
+            get_fastq_for_sample_paired_end(reads_ch)
+
         } else if(params.type.equals("nanosim3")) {
 
             // simulate the reads with nanosim3
             read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]
+
+            get_fastq_for_sample_single_end(reads_ch)
+
         } else if(params.type.equals("wgsim")) {
             read_simulator_wgsim(location_distribution_seed_ch, read_length_ch)
             bam_files_channel = read_simulator_wgsim.out[0]
             reads_ch = read_simulator_wgsim.out[1]
+
+            get_fastq_for_sample_paired_end(reads_ch)
         }
 
         // generate gold standard assembly for every genome and copy it into output folder
@@ -286,5 +294,39 @@ process remove_spaces_from_reference_genome {
     echo "File not found: ${fasta_file}"
     exit 1
     fi
+    """
+}
+
+/*
+* This process writes all fastq files into a single one.
+ */
+process get_fastq_for_sample_single_end {
+
+    input:
+    tuple val(sample_id), path(read_files)
+
+    script:
+    """
+    cat ${read_files} > sample_${sample_id}.fq
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
+    cp sample_${sample_id}.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
+    """
+}
+
+/*
+* This process writes all fastq files into a single one.
+ */
+process get_fastq_for_sample_paired_end {
+
+    input:
+    tuple val(sample_id), path(first_read_files), path(second_read_files)
+
+    script:
+    """
+    cat ${first_read_files} > sample_${sample_id}_01.fq
+    cat ${second_read_files} > sample_${sample_id}_02.fq
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
+    cp sample_${sample_id}_01.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample_${sample_id}_02.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }

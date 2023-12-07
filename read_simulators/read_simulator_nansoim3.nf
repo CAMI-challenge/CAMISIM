@@ -153,8 +153,8 @@ process bam_from_reads_fasta {
     mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     for file in sample${sample_id}_${genome_id}.fq; do gzip -k "\$file"; done
     cp sample${sample_id}_${genome_id}.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
-    cp sample*.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/bam/
+    cp sample*.bam ${projectDir}/nextflow_out/sample_${sample_id}/bam/
     """
 }
 
@@ -179,7 +179,7 @@ process bam_from_reads_fastq {
     script:
     """
     ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
-    cp sample*.bam ${projectDir}/nextflow_out/sample_${sample_id}/reads/bam/
+    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/bam/
+    cp sample*.bam ${projectDir}/nextflow_out/sample_${sample_id}/bam/
     """
 }
