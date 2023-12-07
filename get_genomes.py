@@ -2,7 +2,7 @@ import sys
 import biom
 import os
 import gzip
-import urllib
+import urllib.request
 import shutil
 from ete3 import NCBITaxa
 from numpy import random as np_rand
@@ -387,7 +387,7 @@ if __name__ == "__main__":
 
     #run_patch() # ToDo
     ncbi = NCBITaxa()
-    ncbi.update_taxonomy_database()
+    #ncbi.update_taxonomy_database()
 
     tax_profile = read_taxonomic_profile(biom_profile, no_samples)
     genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references)

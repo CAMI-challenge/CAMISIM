@@ -15,12 +15,10 @@ workflow metagenomesimulation_from_profile {
 
         loc_ch = get_genomes.out[0]
         abundance_ch = get_genomes.out[1].flatten()
-        dump_ch = get_genomes.out[2]
-        meta_data_ch = get_genomes.out[3]
+        meta_data_ch = get_genomes.out[2]
 
     emit: abundance_ch
     emit: loc_ch
-    emit: dump_ch
     emit: meta_data_ch
 }
 
@@ -51,7 +49,6 @@ process get_genomes {
     output:
     path "genome_to_id.tsv"
     path "abundance_*.tsv"
-    path "*.tar.gz"
     path "metadata.tsv"
 
     script:
@@ -67,6 +64,5 @@ process get_genomes {
     python3 ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${projectDir}/nextflow_out/internal/ ${additional_references}
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
-    cp abundance*.tsv ${params.outdir}/internal/
     """
 }

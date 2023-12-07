@@ -29,6 +29,14 @@ workflow {
             seed = get_random_seed()
         }
 
+    // If no NCBI taxonomy database is given it will be downloaded.
+    if(params.ncbi_taxdump_file.isEmpty()) {
+        ncbi_taxdump_file_ch = download_NCBI_taxdump()
+    } else {
+        // this channel holds the ncbi tax dump
+        ncbi_taxdump_file_ch = Channel.fromPath(params.ncbi_taxdump_file)
+    }    
+
     // if this parameter is set, the metagenome simulation hast to be from the given profile
     if(!params.biom_profile.isEmpty()) {
 
@@ -38,13 +46,9 @@ workflow {
         // get the output channel
         genome_distribution_file_ch = metagenomesimulation_from_profile.out[0]
         genome_location_file_ch = metagenomesimulation_from_profile.out[1]
-        ncbi_taxdump_file_ch = metagenomesimulation_from_profile.out[2]
-        metadata_ch = metagenomesimulation_from_profile.out[3]
+        metadata_ch = metagenomesimulation_from_profile.out[2]
 
     } else { // not from profile
-
-        // this channel holds the ncbi tax dump
-        ncbi_taxdump_file_ch = Channel.fromPath(params.ncbi_taxdump_file)
 
         // this channel holds the file with the specified locations of the genomes
         genome_location_file_ch = Channel.fromPath(params.genome_locations_file)
@@ -64,8 +68,6 @@ workflow {
             genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
         }
     }    
-
-    
     // build ncbi taxonomy from given tax dump
     number_of_samples_ch = Channel.from(params.number_of_samples)
     buildTaxonomy(number_of_samples_ch.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
@@ -114,7 +116,7 @@ workflow {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.map { it[1] }.collect())
     } else if (params.pooled_gsa instanceof List) {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
-    }   
+    }
 
     generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
 
@@ -125,6 +127,40 @@ workflow {
         binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
     }
 }
+
+/*
+* This process downloads the NCBI taxonomy database.
+*
+*/
+process download_NCBI_taxdump {
+
+    conda 'conda-forge::ete3'
+
+    output:
+    path "taxdump.tar.gz"
+
+    script:
+    """
+    #!/usr/bin/env python
+    import os
+    from ete3 import NCBITaxa
+
+    # Initialize NCBITaxa
+    ncbi = NCBITaxa()
+
+    # Update taxonomy database
+    ncbi.update_taxonomy_database()
+
+    # Create the output directory if it does not exist
+    output_dir = "${params.outdir}/internal/genomes/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Copy the downloaded taxdump to the output directory
+    taxdump_file = "./*.tar.gz"
+    os.system(f"cp {taxdump_file} {output_dir}")
+    """
+}
+
 
 /*
 * This process calculates the average read length of Nanosim reads from the pickle of the predefined profile
@@ -332,7 +368,7 @@ process get_seed {
     }
     """
     ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
-    mkdir --parents ${params.outdir}
-    cp seed*.txt ${params.outdir}
+    mkdir --parents ${params.outdir}/seed/
+    cp seed*.txt ${params.outdir}/seed/
     """
 }
