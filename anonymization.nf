@@ -112,8 +112,8 @@ process shuffle_paired_end {
     """
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
-    cat ${first_read_files} > first_reads.fq
-    cat ${second_read_files} > second_reads.fq
+    cat sample${sample_id}_Genome*1.fq > first_reads.fq
+    cat sample${sample_id}_Genome*2.fq > second_reads.fq
     paste -d " " - - - - <first_reads.fq > first_reads_clustered.fq
     paste -d " " - - - - <second_reads.fq > second_reads_clustered.fq
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
@@ -225,7 +225,7 @@ process shuffle_pooled_gsa {
     touch ${anonymous_gsa_pooled}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
+    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed[0]}) | tr " " "\n" | tr -d '\\000' | python3 ${projectDir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
     mkdir --parents ${params.outdir}
     gzip -k ${anonymous_gsa_pooled}
     cp ${anonymous_gsa_pooled}.gz ${params.outdir}
@@ -348,7 +348,7 @@ process pooled_gs_contig_mapping {
 
 
     output:
-    tuple path(gsa_mapping_file)
+    path(gsa_mapping_file)
 
     script:
     gsa_mapping_file = 'gsa_pooled_mapping.tsv'
