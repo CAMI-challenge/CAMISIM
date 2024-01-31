@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
+  "title": ". pipeline parameters",
+  "description": "",
+  "type": "object",
+  "definitions": {
+    "input_output_options": {
+      "title": "Input/output options",
+      "type": "object",
+      "fa_icon": "fas fa-terminal",
+      "description": "Define where the pipeline should find input data and save output data.",
+      "required": ["outdir"],
+      "properties": {
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+          "fa_icon": "fas fa-folder-open",
+          "default": "/home/afritz/Documents/CAMISIM/nextflow_out"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/input_output_options"
+    }
+  ],
+  "properties": {
+    "size": {
+      "type": "number",
+      "default": 0.05,
+      "description": "Size in Gigabases per sample"
+    },
+    "type": {
+      "type": "string",
+      "default": "art",
+      "description": "Read simulator to be used (Currently art, nanosim3, wgsim)"
+    },
+    "number_of_samples": {
+      "type": "integer",
+      "default": 2,
+      "description": "Number of samples to be simulated"
+    },
+    "gsa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Should a gold standard assembly per sample be created?"
+    },
+    "pooled_gsa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Should a gold standard assembly for the pooled samples be created?"
+    },
+    "anonymization": {
+      "type": "boolean",
+      "default": true,
+      "description": "Should the data set be anonymized (and shuffled)?"
+    },
+    "seed": {
+      "type": "integer",
+      "default": 632741178,
+      "description": "Seed for the random number generators"
+    },
+    "biom_profile": {
+      "type": "string",
+      "description": "BIOM profile for the from_profile mode (optional)"
+    },
+    "genome_locations_file": {
+      "type": "string",
+      "default": "/home/afritz/Documents/CAMISIM/nextflow_defaults/genome_locations.tsv",
+      "description": "Location of the genome_to_id file which stores where the genomes to be simulated are stored"
+    },
+    "ncbi_taxdump_file": {
+      "type": "string",
+      "default": "/home/afritz/Documents/CAMISIM/tools/ncbi-taxonomy_20170222.tar.gz",
+      "description": "NCBI taxdump if a specific date of the taxonomy should be used"
+    },
+    "metadata_file": {
+      "type": "string",
+      "default": "/home/afritz/Documents/CAMISIM/defaults/metadata.tsv",
+      "description": "Location of the metadata file, storing additional information about the genomes such as taxonomy ID"
+    },
+    "profile_read_length": {
+      "type": "integer",
+      "default": 150,
+      "description": "Read length to be used"
+    },
+    "fragment_size_mean": {
+      "type": "integer",
+      "default": 270,
+      "description": "Fragment size to be used - only applicable for paired-end short reads (i.e. art read simulation)"
+    },
+    "fragment_size_sd": {
+      "type": "integer",
+      "default": 27,
+      "description": "Fragment size standard deviation - only applicable for paired-end short reads (i.e. art read simulation)"
+    },
+    "base_profile_name": {
+      "type": "string",
+      "default": "/home/afritz/Documents/CAMISIM/tools/art_illumina-2.3.6/profiles/ART_MBARC-26_HiSeq_R",
+      "description": "Path (folder) of the profile for read simulation, different for each read simulator"
+    },
+    "distribution_files": {
+      "type": "string",
+      "default": "/home/afritz/Documents/CAMISIM/nextflow_defaults/distribution_*.txt",
+      "description": "Path to a file containing genome ID and abundance if de novo mode with fixed abundances should be run (i.e. without using log-normal distribution)"
+    },
+    "mode": {
+      "type": "string",
+      "default": "differential",
+      "description": "One of replicates/timeseries_lognormal/timeseries_normal/differential"
+    },
+    "log_mu": {
+      "type": "integer",
+      "default": 1,
+      "description": "Mean of the log-normal distribution (empirical value is 1)"
+    },
+    "log_sigma": {
+      "type": "integer",
+      "default": 2,
+      "description": "SD of the log-normal distribution (empirical value is 2)"
+    },
+    "gauss_mu": {
+      "type": "integer",
+      "default": 1,
+      "description": "Mean of the normal distribution (if used)"
+    },
+    "gauss_sigma": {
+      "type": "integer",
+      "default": 1,
+      "description": "SD of the normal distribution (if used)"
+    },
+    "verbose": {
+      "type": "boolean",
+      "description": "Show the used distribution before simulating"
+    }
+  }
+}
