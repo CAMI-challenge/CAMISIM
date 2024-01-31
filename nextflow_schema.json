@@ -17,7 +17,7 @@
           "format": "directory-path",
           "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
           "fa_icon": "fas fa-folder-open",
-          "default": "/home/afritz/Documents/CAMISIM/nextflow_out"
+          "default": "nextflow_out"
         }
       }
     }
@@ -69,17 +69,17 @@
     },
     "genome_locations_file": {
       "type": "string",
-      "default": "/home/afritz/Documents/CAMISIM/nextflow_defaults/genome_locations.tsv",
+      "default": "nextflow_defaults/genome_locations.tsv",
       "description": "Location of the genome_to_id file which stores where the genomes to be simulated are stored"
     },
     "ncbi_taxdump_file": {
       "type": "string",
-      "default": "/home/afritz/Documents/CAMISIM/tools/ncbi-taxonomy_20170222.tar.gz",
+      "default": "tools/ncbi-taxonomy_20170222.tar.gz",
       "description": "NCBI taxdump if a specific date of the taxonomy should be used"
     },
     "metadata_file": {
       "type": "string",
-      "default": "/home/afritz/Documents/CAMISIM/defaults/metadata.tsv",
+      "default": "defaults/metadata.tsv",
       "description": "Location of the metadata file, storing additional information about the genomes such as taxonomy ID"
     },
     "profile_read_length": {
@@ -99,12 +99,12 @@
     },
     "base_profile_name": {
       "type": "string",
-      "default": "/home/afritz/Documents/CAMISIM/tools/art_illumina-2.3.6/profiles/ART_MBARC-26_HiSeq_R",
+      "default": "tools/art_illumina-2.3.6/profiles/ART_MBARC-26_HiSeq_R",
       "description": "Path (folder) of the profile for read simulation, different for each read simulator"
     },
     "distribution_files": {
       "type": "string",
-      "default": "/home/afritz/Documents/CAMISIM/nextflow_defaults/distribution_*.txt",
+      "default": "nextflow_defaults/distribution_*.txt",
       "description": "Path to a file containing genome ID and abundance if de novo mode with fixed abundances should be run (i.e. without using log-normal distribution)"
     },
     "mode": {
