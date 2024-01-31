@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 
+## [2.0.0-beta]
+- Moved from object-oriented python to nextflow
+- Input changed accordingly to new config files
+- Added config file transformation script for CAMISIM 1.x config files
+- Output reorganised
+- Temporarily disabled PBSim
+- Currently only Nanosim3 works for simulating long reads
+- Fixed #109 for Nanosim and wgsim
+- Fixed #154
+- Fixed #134
+- #35 and #39 should implicitely be fulfilled by using nextflow
+
 ## [1.1.0]
 
 ### Added
