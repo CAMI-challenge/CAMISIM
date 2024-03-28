@@ -63,7 +63,7 @@ workflow anonymization {
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
  */
 process shuffle {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -96,7 +96,7 @@ process shuffle {
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
  */
 process shuffle_paired_end {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -135,7 +135,7 @@ process shuffle_paired_end {
 *    The reads mapping file for the given sample,.
  */
 process gs_read_mapping {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -174,7 +174,7 @@ process gs_read_mapping {
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
  */
 process shuffle_gsa {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -207,7 +207,7 @@ process shuffle_gsa {
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
  */
 process shuffle_pooled_gsa {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -240,7 +240,7 @@ process shuffle_pooled_gsa {
 *    A file containing the read start posotions for the given sample.
  */
 process read_start_positions_from_dir_of_bam {
-
+    container 'biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
     
     input:
@@ -269,7 +269,7 @@ process read_start_positions_from_dir_of_bam {
 *    A file containing the read start posotions for the given sample.
  */
 process read_start_positions_from_merged_bam {
-
+    container 'biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
     
     input:
@@ -296,7 +296,7 @@ process read_start_positions_from_merged_bam {
 *    The reads mapping file for the given sample,.
  */
 process gs_contig_mapping {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -337,7 +337,7 @@ process gs_contig_mapping {
 *    The reads mapping file for the given sample,.
  */
 process pooled_gs_contig_mapping {
-
+    container 'biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
