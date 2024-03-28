@@ -65,13 +65,13 @@ process simulate_reads_wgsim {
     """
     wgsim -d ${fragment_size} -s ${fragment_size_sd} -N ${number_of_reads} -1 ${read_length} -2 ${read_length} -S ${seed} -e ${error_rate} -r 0 -R 0 ${fasta_file} sample${sample_id}_${genome_id}1.fq sample${sample_id}_${genome_id}2.fq 
     ${projectDir}/scripts/wgsim_to_sam.py sample${sample_id}_${genome_id}1.fq sample${sample_id}_${genome_id}2.fq /dev/stdout ${fasta_file} ${create_cigar} | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${projectDir}/nextflow_out/sample_${sample_id}/bam/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
+    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/
     gzip -k sample${sample_id}_${genome_id}1.fq
     gzip -k sample${sample_id}_${genome_id}2.fq
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}1.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}2.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}2.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
     /**
     @TODO: Maybe add the option to add ALL options of wgsim in the profile
