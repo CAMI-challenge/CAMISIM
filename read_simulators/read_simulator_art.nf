@@ -29,7 +29,8 @@ workflow read_simulator_art {
 process simulate_reads_art {
 
     scratch true
-    
+    container 'biocontainers/samtools:1.19.2--h50ea8bc_1'
+    container 'biocontainers/art:2016.06.05--h589041f_9'
     conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
