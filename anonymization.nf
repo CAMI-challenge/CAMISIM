@@ -112,8 +112,8 @@ process shuffle_paired_end {
     """
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
-    cat sample${sample_id}_Genome*1.fq > first_reads.fq
-    cat sample${sample_id}_Genome*2.fq > second_reads.fq
+    cat sample${sample_id}_*1.fq > first_reads.fq
+    cat sample${sample_id}_*2.fq > second_reads.fq
     paste -d " " - - - - <first_reads.fq > first_reads_clustered.fq
     paste -d " " - - - - <second_reads.fq > second_reads_clustered.fq
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
