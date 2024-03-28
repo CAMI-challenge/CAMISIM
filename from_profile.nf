@@ -32,7 +32,8 @@ workflow metagenomesimulation_from_profile {
 *     
  */
 process get_genomes {
-
+    container 'biocontainers/ete3:3.1.2'
+    container 'biocontainers/biom-format:2.1.15'
     conda 'bioconda::biom-format conda-forge::ete3'
 
     input:
