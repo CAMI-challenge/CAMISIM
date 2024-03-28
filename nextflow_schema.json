@@ -69,16 +69,19 @@
     },
     "genome_locations_file": {
       "type": "string",
+      "format": "file-path",
       "default": "nextflow_defaults/genome_locations.tsv",
       "description": "Location of the genome_to_id file which stores where the genomes to be simulated are stored"
     },
     "ncbi_taxdump_file": {
       "type": "string",
+      "format": "file-path",
       "default": "tools/ncbi-taxonomy_20170222.tar.gz",
       "description": "NCBI taxdump if a specific date of the taxonomy should be used"
     },
     "metadata_file": {
       "type": "string",
+      "format": "file-path",
       "default": "defaults/metadata.tsv",
       "description": "Location of the metadata file, storing additional information about the genomes such as taxonomy ID"
     },
@@ -99,11 +102,13 @@
     },
     "base_profile_name": {
       "type": "string",
+      "format": "file-path",
       "default": "tools/art_illumina-2.3.6/profiles/ART_MBARC-26_HiSeq_R",
       "description": "Path (folder) of the profile for read simulation, different for each read simulator"
     },
     "distribution_files": {
       "type": "string",
+      "format": "file-path",
       "default": "nextflow_defaults/distribution_*.txt",
       "description": "Path to a file containing genome ID and abundance if de novo mode with fixed abundances should be run (i.e. without using log-normal distribution)"
     },
