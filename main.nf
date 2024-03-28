@@ -133,7 +133,7 @@ workflow {
 *
 */
 process download_NCBI_taxdump {
-
+    container 'biocontainers/ete3:3.1.2'
     conda 'conda-forge::ete3'
 
     output:
@@ -168,6 +168,8 @@ process download_NCBI_taxdump {
 */
 process calculate_Nanosim_read_length {
     // TODO: Packages which are needed multiple times should be loaded only once
+    container 'biocontainers/scikit-learn:0.20.2'
+    container 'biocontainers/joblib:0.9.3--py36_0'
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 conda-forge::joblib=1.2.0'
 
     input:
@@ -206,7 +208,7 @@ process calculate_Nanosim_read_length {
 *     The path to the merged bam file.
  */
 process merge_bam_files {
-
+    container 'biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
 
     input:
@@ -244,7 +246,7 @@ process merge_bam_files {
 *     The path to fasta file with the pooled gold standard assembly.
  */
 process generate_pooled_gold_standard_assembly {
-
+    container 'biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
 
     input:
