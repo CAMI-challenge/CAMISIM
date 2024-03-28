@@ -43,7 +43,8 @@ workflow read_simulator_nanosim3 {
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
 **/
 process simulate_reads_fasta_nanosim3 {
-
+    container 'quay.io/biocontainers/nanosim:3.1.0--hdfd78af_0'
+    container 'quay.io/biocontainers/scikit-learn:0.20.2'
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
@@ -87,7 +88,8 @@ process simulate_reads_fasta_nanosim3 {
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
 **/
 process simulate_reads_fastq_nanosim3 {
-
+    container 'quay.io/biocontainers/nanosim:3.1.0--hdfd78af_0'
+    container 'quay.io/biocontainers/scikit-learn:0.20.2'
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
 	
     input:
@@ -167,7 +169,8 @@ process bam_from_reads_fasta {
 *    Tuple containing key = sample_id, first value = genome_id, second value = path to bam file, third value = path to reference genome.
 **/
 process bam_from_reads_fastq {
-
+    container 'quay.io/biocontainers/biopython:1.81'
+    container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda "bioconda::biopython bioconda::samtools"
 
     input:
