@@ -11,10 +11,8 @@ workflow read_simulator_art {
 
     take: genome_location_distribution_ch
     take: read_length_ch
-    take: profile1_ch
-    take: profile2_ch
     main:
-        sam_ch = simulate_reads_art(genome_location_distribution_ch, read_length_ch, profile1_ch, profile2_ch)
+        sam_ch = simulate_reads_art(genome_location_distribution_ch, read_length_ch)
         create_bam(sam_ch)
     emit:
         create_bam.out[0]
@@ -36,10 +34,8 @@ process simulate_reads_art {
     conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor), path(profile1), path(profile2)
     val(read_length_ch)
-    path(profile1)
-    path(profile2)
     
     output:
     tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.sam"), path(fasta_file)

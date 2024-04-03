@@ -87,13 +87,14 @@ workflow sample_wise_simulation {
             // get the multiplication factor to calculate the fold coverage later (key = sample id, value = factor)
             factor_for_sample_id_ch = get_multiplication_factor(genome_distribution_location_ch)
 
-            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed, fifth value = factor
-            genome_location_distribution_factor_ch = location_distribution_seed_ch.map { tuple( it[1], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
-
-            // read simulation with art
+            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed, fifth value = factor, sixth/seventh = ART error profile
             profile1_ch = Channel.fromPath(params.base_profile_name_1)
             profile2_ch = Channel.fromPath(params.base_profile_name_2)
-            read_simulator_art(genome_location_distribution_factor_ch, read_length_ch, profile1_ch, profile2_ch)
+            profile_ch = profile1_ch.combine(profile2_ch)
+            genome_location_distribution_factor_ch = location_distribution_seed_ch.map { tuple( it[1], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }.combine(profile_ch)
+
+            // read simulation with art
+            read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
             bam_files_channel = read_simulator_art.out[0]
             reads_ch = read_simulator_art.out[1]
 
