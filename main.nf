@@ -118,8 +118,7 @@ workflow {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
     }
 
-    bam_to_gold_ch = Channel.fromPath(params.bam_to_gold)
-    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple(), bam_to_gold_ch)    
+    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
 
     // if requested, anonymize reads, gsa and pooled gsa
     if(params.anonymization) {
@@ -247,12 +246,11 @@ process merge_bam_files {
 *     The path to fasta file with the pooled gold standard assembly.
  */
 process generate_pooled_gold_standard_assembly {
-    container 'quay.io/biocontainers/perl-bio-samtools:1.43--pl5321he4a0461_4'
+    container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
     input:
     tuple path(bam_file), path(reference_fasta_files)
-    path(bam_to_gold_ch)
 
     output:
     path file_name
@@ -261,7 +259,7 @@ process generate_pooled_gold_standard_assembly {
     file_name = 'gsa_pooled.fasta'
     """
     cat ${reference_fasta_files} > reference.fasta
-    perl -- ${bam_to_gold_ch} -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- /usr/local/bin/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/

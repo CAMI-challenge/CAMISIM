@@ -117,9 +117,8 @@ workflow sample_wise_simulation {
             get_fastq_for_sample_paired_end(reads_ch)
         }
 
-        bam_to_gold_ch = Channel.fromPath(params.bam_to_gold)
         // generate gold standard assembly for every genome and copy it into output folder
-        gsa_for_every_genome_ch = generate_gold_standard_assembly(bam_files_channel, bam_to_gold_ch)
+        gsa_for_every_genome_ch = generate_gold_standard_assembly(bam_files_channel)
 
         // grouping the gold standard assemblies by sample id results in new tuple: key = sample_id, values = path to all gsa of this samples reads
         grouped_gsa_for_every_genome_ch = gsa_for_every_genome_ch.groupTuple()
@@ -147,13 +146,11 @@ workflow sample_wise_simulation {
 *     A Tuple with key = sample_id, value = path to fasta file with the gold standard assembly of the given genome.
  */
 process generate_gold_standard_assembly {
-	container 'quay.io/biocontainers/perl-bio-samtools:1.43--pl5321he4a0461_4'
+	container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
     input:
     tuple val(sample_id),val(genome_id), path(bam_file), path(reference_fasta_file)
-    path(bam_to_gold)
-
     output:
     tuple val(sample_id), path(file_name)
 
@@ -162,7 +159,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
-    perl -- ${bam_to_gold} -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- /usr/local/bin/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/
