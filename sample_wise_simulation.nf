@@ -32,9 +32,9 @@ workflow sample_wise_simulation {
             .map { genome_id, path ->
                 def abs_path
                 if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
-                    abs_path = path
+                    abs_path = file(path)
                 } else { // else expand relative paths to absolute paths and send to genome_location_ch
-                    abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+                    abs_path = file("${projectDir}/${path}")
                 }
                 return [genome_id, abs_path]
             }
@@ -91,7 +91,9 @@ workflow sample_wise_simulation {
             genome_location_distribution_factor_ch = location_distribution_seed_ch.map { tuple( it[1], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
 
             // read simulation with art
-            read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
+            profile1_ch = Channel.fromPath(params.base_profile_name_1)
+            profile2_ch = Channel.fromPath(params.base_profile_name_2)
+            read_simulator_art(genome_location_distribution_factor_ch, read_length_ch, profile1_ch, profile2_ch)
             bam_files_channel = read_simulator_art.out[0]
             reads_ch = read_simulator_art.out[1]
 
@@ -114,8 +116,9 @@ workflow sample_wise_simulation {
             get_fastq_for_sample_paired_end(reads_ch)
         }
 
+        bam_to_gold_ch = Channel.fromPath(params.bam_to_gold)
         // generate gold standard assembly for every genome and copy it into output folder
-        gsa_for_every_genome_ch = generate_gold_standard_assembly(bam_files_channel)
+        gsa_for_every_genome_ch = generate_gold_standard_assembly(bam_files_channel, bam_to_gold_ch)
 
         // grouping the gold standard assemblies by sample id results in new tuple: key = sample_id, values = path to all gsa of this samples reads
         grouped_gsa_for_every_genome_ch = gsa_for_every_genome_ch.groupTuple()
@@ -143,11 +146,12 @@ workflow sample_wise_simulation {
 *     A Tuple with key = sample_id, value = path to fasta file with the gold standard assembly of the given genome.
  */
 process generate_gold_standard_assembly {
-	container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
+	container 'quay.io/biocontainers/perl-bio-samtools:1.43--pl5321he4a0461_4'
     conda 'bioconda::samtools'
 
     input:
     tuple val(sample_id),val(genome_id), path(bam_file), path(reference_fasta_file)
+    path(bam_to_gold)
 
     output:
     tuple val(sample_id), path(file_name)
@@ -157,7 +161,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- ${bam_to_gold} -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/
@@ -173,6 +177,7 @@ process generate_gold_standard_assembly {
 *     One fasta file holding the content of all given fasta files.
  */
 process get_fasta_for_sample {
+    container 'ubuntu:20.04'
 
     input:
     tuple val(sample_id), path(fasta_files)
@@ -277,6 +282,7 @@ process get_multiplication_factor {
 *     
  */
 process remove_spaces_from_reference_genome {
+    container 'ubuntu:20.04'
 
     input:
     tuple val(genome_id), path(fasta_file)
@@ -301,6 +307,7 @@ process remove_spaces_from_reference_genome {
 * This process writes all fastq files into a single one.
  */
 process get_fastq_for_sample_single_end {
+    container 'ubuntu:20.04'
 
     input:
     tuple val(sample_id), path(read_files)
@@ -317,10 +324,11 @@ process get_fastq_for_sample_single_end {
 * This process writes all fastq files into a single one.
  */
 process get_fastq_for_sample_paired_end {
+    container 'ubuntu:20.04'
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files)
-
+    
     script:
     """
     cat ${first_read_files} > sample_${sample_id}_01.fq
