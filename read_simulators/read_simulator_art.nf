@@ -76,7 +76,7 @@ process create_bam {
     tuple val(sample_id), path(read1_path), path(read2_path)
     
     output:
-    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.sam"), path(fasta_file)
+    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.bam"), path(fasta_file)
 
     script:
     """
