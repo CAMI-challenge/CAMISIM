@@ -69,7 +69,7 @@ workflow sample_wise_simulation {
 
         // normalize the distributions and read the results from the generated file
         normalised_distribution_ch = normalise_abundance(distribution_file_ch.map { a -> tuple(a[1], tuple (a[0], a[2])) }.groupTuple())
-            .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
+            .map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
 
         // combine channels genome location with the normalised distributions and the seed channel
         // results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
