@@ -36,6 +36,8 @@ process get_genomes {
     container 'quay.io/biocontainers/biom-format:2.1.15'
     conda 'bioconda::biom-format conda-forge::ete3'
 
+    publishDir "${params.outdir}/internal/", mode : 'copy'
+
     input:
     path(biom_profile)
     val(number_of_samples)
@@ -61,9 +63,6 @@ process get_genomes {
     }
 
     """
-    mkdir --parents ${params.outdir}/internal/genomes/
     python3 ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${projectDir}/nextflow_out/internal/ ${additional_references}
-    cp metadata.tsv ${params.outdir}/internal/metadata.tsv
-    cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """
 }

@@ -28,8 +28,8 @@ workflow read_simulator_art {
 *         fourth value = path to fasta file with the aligned reads, fifth value = path to reference genome.
 **/
 process simulate_reads_art {
+    publishDir "${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/", mode : 'copy'
 
-    scratch true
     container 'quay.io/biocontainers/art:2016.06.05--h589041f_9'
     conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
@@ -64,13 +64,15 @@ process simulate_reads_art {
     """
     art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} -m ${fragment_size_mean} -s ${fragment_size_sd} -f ${fold_coverage} -o sample${sample_id}_${genome_id} -1 ${profile2} -2 ${profile2} -rs ${seed}
     for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*.fq.gz ${projectDir}/nextflow_out/sample_${sample_id}/reads/fastq/
     """
 }
 
 process create_bam {
+    publishDir "${projectDir}/nextflow_out/sample_${sample_id}/bam/", mode : 'copy'
+
     container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
+    conda 'bioconda::samtools'
+
     input:
     tuple val(sample_id), val(genome_id), path(sam_path), path(fasta_file)
     tuple val(sample_id), path(read1_path), path(read2_path)
@@ -81,7 +83,5 @@ process create_bam {
     script:
     """
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${projectDir}/nextflow_out/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${projectDir}/nextflow_out/sample_${sample_id}/bam/
     """
 }

@@ -6,15 +6,15 @@
 *     The path to file with the normalised abundances.
  */
 process normalise_abundance {
+    publishDir "${params.outdir}/distributions/", mode : 'copy'
 
     input:
     tuple val(sample_id), val(abundance_map)
 
     output:
-    path file_name
+    path final_file_name
 
     script:
-    file_name = 'normalised_distributions_'.concat(sample_id).concat('.txt')
     final_file_name = 'distribution_'.concat(sample_id).concat('.txt')
 
     double abundance_sum = 0.0
@@ -39,9 +39,7 @@ process normalise_abundance {
         output = output.concat((String) item[0]).concat('\t').concat(Double.toString(normalised_abundance))
     }
     """
-    echo "${output}" > ${file_name}
-    mkdir --parents ${params.outdir}/distributions/
-    cp ${file_name} ${params.outdir}/distributions/${final_file_name}
+    echo "${output}" > ${final_file_name}
     """
 }
 

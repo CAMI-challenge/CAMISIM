@@ -89,6 +89,8 @@ process binning_per_sample {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
+    publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode : 'copy'
+
     input:
     tuple val(sample_id), path(gsa), path(read_positions)
     path(genome_locations_file)
@@ -110,9 +112,7 @@ process binning_per_sample {
     """
     touch ${gsa_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
     """
 }
 
@@ -126,6 +126,8 @@ process binning_per_sample {
 process binning_pooled_gsa {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
+
+    publishDir "${params.outdir}/pooled_gsa/", mode : 'copy'
 
     input:
     path(gsa)
@@ -147,8 +149,6 @@ process binning_pooled_gsa {
     """
     touch ${gsa_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
-    mkdir --parents ${params.outdir}/pooled_gsa/
     gzip -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}/pooled_gsa/
     """
 }

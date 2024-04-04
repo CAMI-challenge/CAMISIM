@@ -149,6 +149,9 @@ process generate_gold_standard_assembly {
 	container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
+    publishDir "${params.outdir}/sample_${sample_id}/gsa/", mode: 'copy'
+
+
     input:
     tuple val(sample_id),val(genome_id), path(bam_file), path(reference_fasta_file)
     output:
@@ -160,9 +163,7 @@ process generate_gold_standard_assembly {
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
     perl -- /usr/local/bin/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
-    cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/
     """
 }
 
@@ -177,6 +178,8 @@ process generate_gold_standard_assembly {
 process get_fasta_for_sample {
     container 'ubuntu:20.04'
 
+    publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode: 'copy'
+
     input:
     tuple val(sample_id), path(fasta_files)
 
@@ -187,9 +190,7 @@ process get_fasta_for_sample {
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
     cat ${fasta_files} > ${file_name}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${file_name}
-    cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/contigs/gsa.fasta.gz
     """
 }
 
@@ -305,7 +306,7 @@ process remove_spaces_from_reference_genome {
 * This process writes all fastq files into a single one.
  */
 process get_fastq_for_sample_single_end {
-    container 'ubuntu:20.04'
+    publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", mode: 'copy'
 
     input:
     tuple val(sample_id), path(read_files)
@@ -313,8 +314,6 @@ process get_fastq_for_sample_single_end {
     script:
     """
     cat ${read_files} > sample_${sample_id}.fq
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
-    cp sample_${sample_id}.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }
 
@@ -322,7 +321,7 @@ process get_fastq_for_sample_single_end {
 * This process writes all fastq files into a single one.
  */
 process get_fastq_for_sample_paired_end {
-    container 'ubuntu:20.04'
+    publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", mode: 'copy'
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files)
@@ -331,8 +330,5 @@ process get_fastq_for_sample_paired_end {
     """
     cat ${first_read_files} > sample_${sample_id}_01.fq
     cat ${second_read_files} > sample_${sample_id}_02.fq
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
-    cp sample_${sample_id}_01.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample_${sample_id}_02.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }

@@ -133,11 +133,13 @@ workflow {
 *
 */
 process download_NCBI_taxdump {
+    publishDir "${params.outdir}/internal/genomes", mode : 'copy'
+    
     container 'quay.io/biocontainers/ete3:3.1.2'
     conda 'conda-forge::ete3'
 
     output:
-    path "taxdump.tar.gz"
+    path("taxdump.tar.gz")
 
     script:
     """
@@ -150,14 +152,6 @@ process download_NCBI_taxdump {
 
     # Update taxonomy database
     ncbi.update_taxonomy_database()
-
-    # Create the output directory if it does not exist
-    output_dir = "${params.outdir}/internal/genomes/"
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Copy the downloaded taxdump to the output directory
-    taxdump_file = "./*.tar.gz"
-    os.system(f"cp {taxdump_file} {output_dir}")
     """
 }
 
@@ -246,6 +240,8 @@ process merge_bam_files {
 *     The path to fasta file with the pooled gold standard assembly.
  */
 process generate_pooled_gold_standard_assembly {
+    publishDir "${params.outdir}/pooled_gsa/", mode : 'copy'
+    
     container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
@@ -260,9 +256,7 @@ process generate_pooled_gold_standard_assembly {
     """
     cat ${reference_fasta_files} > reference.fasta
     perl -- /usr/local/bin/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
-    mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
-    cp ${file_name}.gz ${params.outdir}/pooled_gsa/
     """
 }
 
@@ -275,6 +269,7 @@ process generate_pooled_gold_standard_assembly {
 *     The paths to all taxonomic profiles.
  */
 process buildTaxonomy {
+    publishDir "${params.outdir}", mode : 'copy'
 
     input:
     tuple val(number_of_samples), path(dmp), path(distribution_files)
@@ -291,8 +286,6 @@ process buildTaxonomy {
     [ -f **/merged.dmp ] && mv **/merged.dmp ./merged.dmp
     [ -f **/nodes.dmp ] && mv **/nodes.dmp ./nodes.dmp
     ${projectDir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
-    mkdir --parents ${params.outdir}
-    cp taxonomic_profile_*.txt ${params.outdir}
     """
 }
 
@@ -320,6 +313,7 @@ process get_random_seed {
 *     
  */
 process getCommunityDistribution {
+    publishDir "${params.outdir}/distributions/", mode : 'copy'
 
     input:
     path(file_path_of_drawn_genome_location)
@@ -338,8 +332,6 @@ process getCommunityDistribution {
     verbose = params.verbose
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
-    mkdir --parents ${params.outdir}/distributions/
-    cp distribution_*.txt ${params.outdir}/distributions/
     """
 }
 
@@ -350,6 +342,7 @@ process getCommunityDistribution {
 *     The file with the given seed per samle in CSV format.
  */
 process get_seed {
+    publishDir "${params.outdir}/seed/", mode : 'copy'
 
     input:
     path (genome_locations)
@@ -370,7 +363,5 @@ process get_seed {
     }
     """
     ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
-    mkdir --parents ${params.outdir}/seed/
-    cp seed*.txt ${params.outdir}/seed/
     """
 }

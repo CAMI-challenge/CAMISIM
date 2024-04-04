@@ -67,6 +67,8 @@ process shuffle {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
+    publishDir "${params.outdir}/sample_${sample_id}/reads/", mode : 'copy'
+
     input:
     tuple val(sample_id), path(read_files), val(seed)
     path(anonymizer_ch)
@@ -83,9 +85,7 @@ process shuffle {
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${anonymizer_ch}  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
-    cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
 
@@ -100,6 +100,8 @@ process shuffle {
 process shuffle_paired_end {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
+    
+    publishDir "${params.outdir}/sample_${sample_id}/reads/", mode : 'copy'
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
@@ -122,9 +124,7 @@ process shuffle_paired_end {
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     shuf --random-source=<(get_seeded_random ${seed}) sample${sample_id}_interweaved.fq | tr " " "\n" | tr -d '\\000' | python3 ${anonymizer_ch} -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
-    cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
 
@@ -140,6 +140,8 @@ process shuffle_paired_end {
 process gs_read_mapping {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
+    
+    publishDir "${params.outdir}/sample_${sample_id}/reads/", mode : 'copy'
 
     input:
     tuple val(sample_id), path(tmp_reads_mapping_file), path(genome_locations_file), path(metadata_file)
@@ -161,9 +163,7 @@ process gs_read_mapping {
     """
     touch ${reads_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${reads_mapping_file}
-    cp ${reads_mapping_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
 
@@ -178,6 +178,8 @@ process gs_read_mapping {
 process shuffle_gsa {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
+
+    publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode : 'copy'
 
     input:
     tuple val(sample_id), path(read_files), val(seed)
@@ -195,9 +197,7 @@ process shuffle_gsa {
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${anonymizer_ch}  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
-    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${anonymous_gsa_file}
-    cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
     """
 }
 
@@ -212,6 +212,8 @@ process shuffle_gsa {
 process shuffle_pooled_gsa {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
+
+    publishDir "${params.outdir}", mode : 'copy'
 
     input:
     path(read_files)
@@ -230,9 +232,7 @@ process shuffle_pooled_gsa {
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed[0]}) | tr " " "\n" | tr -d '\\000' | python3 ${anonymizer_ch} -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
-    mkdir --parents ${params.outdir}
     gzip -k ${anonymous_gsa_pooled}
-    cp ${anonymous_gsa_pooled}.gz ${params.outdir}
     """
 }
 
@@ -303,9 +303,10 @@ process gs_contig_mapping {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
+    publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode : 'copy'
+
     input:
     tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
-
 
     output:
     tuple val(sample_id), path(gsa_mapping_file)
@@ -325,9 +326,7 @@ process gs_contig_mapping {
     """
     touch ${gsa_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
     """
 }
 
@@ -344,12 +343,13 @@ process pooled_gs_contig_mapping {
     container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
+    publishDir "${params.outdir}", mode : 'copy'
+
     input:
     path(tmp_contig_mapping_file)
     path(read_start_positions)
     path(genome_locations_file)
     path(metadata_file)
-
 
     output:
     path(gsa_mapping_file)
@@ -370,8 +370,6 @@ process pooled_gs_contig_mapping {
     """
     touch ${gsa_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
-    mkdir --parents ${params.outdir}
     gzip -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}
     """
 }
