@@ -9,6 +9,7 @@ import sys
 import os
 import io
 from Bio import SeqIO
+import bisect
 
 
 class GoldStandardFileFormat():
@@ -202,7 +203,10 @@ class GoldStandardFileFormat():
 
             for index_row in range(len(column_key)):
                 key = column_key[index_row]
-                value = column_values[index_row]
+
+                # we need to sort the values later
+                value = int(column_values[index_row])
+                #value = column_values[index_row]
 
                 if wgsim:
                     # Change in CAMISIM 2:
@@ -328,6 +332,10 @@ class GoldStandardFileFormat():
         assert isinstance(dict_genome_id_to_tax_id, dict)
         row_format = "{name}\t{genome_id}\t{tax_id}\t{seq_id}\t{count}\t{position_0}\t{position_1}\n"
 
+        # Before looping through contigs, ensure that the positions are sorted for each sequence ID
+        for seq_id in dict_original_seq_pos:
+            dict_original_seq_pos[seq_id].sort()
+
         stream_output.write("#anonymous_contig_id\tgenome_id\ttax_id\tcontig_id\tnumber_reads\tstart_position\tend_position\n")
 
         for original_contig_id, anonymous_contig_id in dict_sequence_name_to_anonymous.items():
@@ -335,15 +343,32 @@ class GoldStandardFileFormat():
             seq_info = original_contig_id.strip().rsplit("_from_", 1)
             # print(seq_info)
             sequence_id = seq_info[0]
+
+            positions = dict_original_seq_pos[sequence_id]
+
             # pos_start, pos_end = re.findall(r'\d+', seq_info[1])[:2]
             pos_start = int(seq_info[1].split("_", 1)[0])
             pos_end = int(seq_info[1].split("_to_", 1)[1].split("_", 1)[0])
 
+             # Use binary search to find the start and end index within the range
+
             # check if read is in contig
-            count = 0
-            for number in dict_original_seq_pos[sequence_id]:
-                if pos_start <= int(number) <= pos_end:
-                    count += 1
+            #count = 0
+            #for number in dict_original_seq_pos[sequence_id]:
+            #    if pos_start <= int(number) <= pos_end:
+            #        count += 1
+
+            # bisect_left finds the insertion point for pos_start to maintain sorted order
+            # "Locate the insertion point for x in a to maintain sorted order. 
+            # If x is already present in a, the insertion point will be before (to the left of) any existing entries." (See documentation: https://docs.python.org/3/library/bisect.html )
+            start_idx = bisect.bisect_left(positions, pos_start)
+
+            # bisect_right finds the insertion point for pos_end and considers positions equal to pos_end as inside the range, ensuring the range is inclusive
+            # "Similar to bisect_left(), but returns an insertion point which comes after (to the right of) any existing entries of x in a." (See documentation: https://docs.python.org/3/library/bisect.html )
+            end_idx = bisect.bisect_right(positions, pos_end)
+
+            # The count of positions within the range
+            count = end_idx - start_idx
 
             # write output
             if sequence_id not in dict_sequence_to_genome_id:
