@@ -21,7 +21,7 @@ include { binning } from "${projectDir}/binning"
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
-workflow {
+workflow metagenomic {
 
     if(params.seed != null) {
             seed = params.seed
