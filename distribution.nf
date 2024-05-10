@@ -46,6 +46,51 @@ process normalise_abundance {
 }
 
 /*
+* This process normalises the abundance for the given abundance map for one sample to 1.
+* Takes:
+*     A tuple with key = sample_id, value = a map with key = genome id and value = abundance.
+* Output:
+*     The path to file with the normalised abundances.
+ */
+process normalise_abundance_meta_t {
+
+    input:
+    tuple val(sample_id), val(abundance_map)
+
+    output:
+    path file_name
+
+    script:
+    file_name = 'normalised_distributions_'.concat(sample_id).concat('.txt')
+    final_file_name = 'distribution_'.concat(sample_id).concat('.txt')
+
+    double abundance_sum = 0.0
+
+    abundance_map.each { 
+
+        double abundance = Double.parseDouble((String) it[1])
+        abundance_sum = abundance_sum + abundance
+    }
+
+    String output = ''
+
+    abundance_map.eachWithIndex { item, index ->
+
+        double abundance = Double.parseDouble((String) item[1])
+        normalised_abundance = abundance / abundance_sum
+
+        if(index!=0){
+            output = output.concat('\n')
+        }
+
+        output = output.concat((String) item[0]).concat('\t').concat(Double.toString(normalised_abundance))
+    }
+    """
+    echo "${output}" > ${file_name}
+    """
+}
+
+/*
 * This process normalises the given abundance with the size of the genome in number of bases.
 * Takes:
 *     A tuple with key = genome_id, first value = distribution, second value = sample_id, third value = size.

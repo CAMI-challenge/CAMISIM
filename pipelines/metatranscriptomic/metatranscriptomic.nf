@@ -7,7 +7,7 @@ nextflow.enable.dsl=2
  */
 
 // include sample wise simulation
-include { sample_wise_simulation } from "${projectDir}/sample_wise_simulation"
+include { sample_wise_simulation } from "${projectDir}/pipelines/metatranscriptomic/sample_wise_simulation"
 
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
@@ -59,7 +59,10 @@ workflow metatranscriptomic {
 
     distribution_file_ch = genome_distribution_file_ch.combine(distribute_gene_abundance.out[1], by: 0).map{ item -> tuple( item[0], item[1], Float.valueOf(item[2])*Float.valueOf(item[3]))}
 
-    //read_length_ch = params.read_length
+    read_length_ch = params.read_length
+
+    // simulate reads sample wise
+    sample_wise_simulation(genome_location_file_ch, distribution_file_ch, gene_distribution_file_ch, read_length_ch, get_seed.out[0], annotation_file_ch)
 }
 
 /*
