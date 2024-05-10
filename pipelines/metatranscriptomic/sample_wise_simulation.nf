@@ -3,6 +3,9 @@
  */
 
 // include read simulator here:
+read_simulator_folder = "${projectDir}/pipelines/metatranscriptomic/read_simulators/"
+include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+
 include { normalise_abundance_meta_t; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
 /** 
@@ -57,6 +60,18 @@ workflow sample_wise_simulation {
         // get_read_count(final_gene_distr_ch)
 
         location_distribution_seed_ch = final_gene_distr_ch.combine(genome_location_ch, by: 0).combine(annotation_file_ch, by: 0).combine(seed_ch, by: [0,1])
+
+        // read simulation
+        if(params.type.equals("art")) {
+
+            read_simulator_art(location_distribution_seed_ch, read_length_ch)
+
+            bam_files_channel = read_simulator_art.out[0]
+            reads_ch = read_simulator_art.out[1]
+
+            get_fastq_for_sample_paired_end(reads_ch)
+
+        }
 }
 
 process get_final_gene_distr {
@@ -116,5 +131,22 @@ process remove_spaces_from_reference_genome {
     echo "File not found: ${fasta_file}"
     exit 1
     fi
+    """
+}
+
+/*
+* This process writes all fastq files into a single one.
+ */
+process get_fastq_for_sample_paired_end {
+
+    publishDir "${params.outdir}/sample_${sample_id}/reads/fastq", mode: 'copy'
+
+    input:
+    tuple val(sample_id), path(first_read_files), path(second_read_files)
+
+    script:
+    """
+    cat ${first_read_files} > sample_${sample_id}_01.fq
+    cat ${second_read_files} > sample_${sample_id}_02.fq
     """
 }
