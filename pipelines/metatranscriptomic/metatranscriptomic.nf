@@ -54,6 +54,11 @@ workflow metatranscriptomic {
         }
     }
 
+    // calculate the genome distributions for each sample for one community
+    genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
+
+    distribution_file_ch = genome_distribution_file_ch.combine(distribute_gene_abundance.out[1], by: 0).map{ item -> tuple( item[0], item[1], Float.valueOf(item[2])*Float.valueOf(item[3]))}
+
     //read_length_ch = params.read_length
 }
 
@@ -120,6 +125,8 @@ process get_random_seed {
  */
 process get_seed {
 
+    publishDir "${params.outdir}/seed/", mode : 'copy'
+
     input:
     path (genome_locations)
     val(seed)
@@ -139,7 +146,35 @@ process get_seed {
     }
     """
     ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
-    mkdir --parents ${params.outdir}/seed/
-    cp seed*.txt ${params.outdir}/seed/
+    """
+}
+
+/*
+* This process calculates the distribution of the genomes for one community.
+* Takes: The file with the location to the drawn genomes.
+*     
+* Output: A file for each sample with the calculcated distributions.
+*     
+ */
+process getCommunityDistribution {
+
+    //publishDir "${params.outdir}/distributions/genome_distributions/", mode : 'copy'
+
+    input:
+    path(file_path_of_drawn_genome_location)
+    val(seed)
+
+    output:
+    path 'distribution_*.txt'
+
+    script:
+    number_of_samples = params.number_of_samples
+    mode = params.genome_mode
+    log_mu = params.genome_log_mu
+    log_sigma = params.genome_log_sigma
+    gauss_mu = params.genome_gauss_mu
+    gauss_sigma = params.genome_gauss_sigma
+    """
+    python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} False ${seed}
     """
 }
