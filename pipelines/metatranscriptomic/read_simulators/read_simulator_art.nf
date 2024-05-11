@@ -19,12 +19,15 @@ workflow read_simulator_art {
 }
 
 process simulate_reads_art {
-    conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools anaconda::python=3.6 bioconda::gffutils bioconda::bedtools  bioconda::samtools bioconda::pyfaidx'
 
-    publishDir "${params.outdir}/distributions/final_distributions/", pattern: "${sample_id}_${genome_id}_read_counts.tsv", mode: 'copy'
-    publishDir "${projectDir}/out/sample_${sample_id}/bam/", pattern: "sample${sample_id}_${genome_id}.bam", mode: 'copy'
-    publishDir "${projectDir}/out/sample_${sample_id}/reads/fastq/", pattern: "sample${sample_id}_${genome_id}_1.fq", mode: 'copy'
-    publishDir "${projectDir}/out/sample_${sample_id}/reads/fastq/", pattern: "sample${sample_id}_${genome_id}_2.fq", mode: 'copy'
+    conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools=1.13 anaconda::python=3.6.13 bioconda::gffutils=0.9 bioconda::bedtools=2.31.1 bioconda::pyfaidx=0.5.3'
+
+    //publishDir "${params.outdir}/distributions/final_distributions/", pattern: "${sample_id}_${genome_id}_read_counts.tsv", mode: 'copy'
+
+    publishDir "${params.outdir}/sample_${sample_id}/bam/", pattern: "sample${sample_id}_${genome_id}.bam", mode: 'copy'
+    // For some reason this does not work.
+    //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "sample${sample_id}_${genome_id}_1.fq.gz", mode: 'copy'
+    //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "sample${sample_id}_${genome_id}_2.fq.gz", mode: 'copy'
 
     input:
     tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed)
@@ -59,6 +62,13 @@ process simulate_reads_art {
 
     cat sample${sample_id}_${genome_id}_*1.fq > sample${sample_id}_${genome_id}_1.fq
     cat sample${sample_id}_${genome_id}_*2.fq > sample${sample_id}_${genome_id}_2.fq
+
+    gzip -k sample${sample_id}_${genome_id}_1.fq
+    gzip -k sample${sample_id}_${genome_id}_2.fq
+
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}_1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}_2.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
 
     samtools merge sample${sample_id}_${genome_id}.sam sample${sample_id}_${genome_id}_*.sam
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam

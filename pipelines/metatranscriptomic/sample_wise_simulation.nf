@@ -5,6 +5,7 @@
 // include read simulator here:
 read_simulator_folder = "${projectDir}/pipelines/metatranscriptomic/read_simulators/"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 
 include { normalise_abundance_meta_t; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
@@ -71,10 +72,24 @@ workflow sample_wise_simulation {
 
             get_fastq_for_sample_paired_end(reads_ch)
 
+        } else if(params.type.equals("nanosim3")) {
+
+            // simulate the reads with nanosim3
+            read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
+
+            bam_files_channel = read_simulator_nanosim3.out[0]
+            reads_ch = read_simulator_nanosim3.out[1]
+
+            get_fastq_for_sample_single_end(reads_ch)
+
         }
 }
 
 process get_final_gene_distr {
+
+    conda 'anaconda::python=3.6'
+
+    publishDir "${params.outdir}/distributions/final_distributions/", pattern: "${genome_id}_${sample_id}_final_distribution.tsv", mode: 'copy'
 
     input:
     tuple val(genome_id), val(sample_id), path(gene_distribution_file), val(genome_distribution)
@@ -102,9 +117,6 @@ process get_final_gene_distr {
             writer.writerow([gene_id, f'{adjusted_abundance:.10f}'])
 
     CODE
-
-    mkdir --parents ${params.outdir}/distributions/final_distributions/
-    cp ${genome_id}_${sample_id}_final_distribution.tsv ${params.outdir}/distributions/final_distributions/
     """
 }
 
@@ -139,14 +151,54 @@ process remove_spaces_from_reference_genome {
  */
 process get_fastq_for_sample_paired_end {
 
-    publishDir "${params.outdir}/sample_${sample_id}/reads/fastq", mode: 'copy'
+    // For some reason this does not work.
+    //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq", pattern: "sample_${sample_id}_01.fq.gz", mode: 'copy'
+    //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq", pattern: "sample_${sample_id}_02.fq.gz", mode: 'copy'
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files)
 
     script:
     """
-    cat ${first_read_files} > sample_${sample_id}_01.fq
-    cat ${second_read_files} > sample_${sample_id}_02.fq
+    # cat ${first_read_files} > sample_${sample_id}_01.fq
+    # cat ${second_read_files} > sample_${sample_id}_02.fq
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${first_read_files} | sort | xargs cat > sample_${sample_id}_01.fq
+    ls -1 ${second_read_files} | sort | xargs cat > sample_${sample_id}_02.fq
+
+    # Compress the concatenated files
+    gzip sample_${sample_id}_01.fq
+    gzip sample_${sample_id}_02.fq
+
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
+    cp sample_${sample_id}_01.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample_${sample_id}_02.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    """
+}
+
+/*
+* This process writes all fastq files into a single one.
+ */
+process get_fastq_for_sample_single_end {
+
+    // For some reason this does not work.
+    // publishDir "${params.outdir}/sample_${sample_id}/reads/fastq", pattern: "*.gz", mode: 'copy'
+
+    input:
+    tuple val(sample_id), path(read_files)
+
+    script:
+    """
+    # cat ${read_files} > sample_${sample_id}.fq
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${read_files} | sort | xargs cat > sample_${sample_id}.fq
+
+    # Compress the concatenated files
+    gzip sample_${sample_id}.fq
+
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
+    cp sample_${sample_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }

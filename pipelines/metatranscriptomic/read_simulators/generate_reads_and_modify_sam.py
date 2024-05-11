@@ -28,8 +28,8 @@ db = gffutils.create_db(args.gff_file, dbfn=db_file)
 
 fasta = pyfaidx.Fasta(args.fasta_file)
 
-with open(f"{args.sample_id}_{args.genome_id}_read_counts.tsv", 'w') as expression_file, \
-     open(f"{args.sample_id}_{args.genome_id}_commands.sh", 'w') as bash_script:
+# with open(f"{args.sample_id}_{args.genome_id}_read_counts.tsv", 'w') as expression_file, \
+with open(f"{args.sample_id}_{args.genome_id}_commands.sh", 'w') as bash_script:
 
     with open(args.fasta_distribution_file, 'r') as file:
         reader = csv.reader(file, delimiter='\t')
@@ -43,7 +43,7 @@ with open(f"{args.sample_id}_{args.genome_id}_read_counts.tsv", 'w') as expressi
 
             read_count = round(read_count)
 
-            expression_file.write(f"{gene_identifier}\t{read_count}\n")
+            # expression_file.write(f"{gene_identifier}\t{read_count}\n")
 
             if read_count >= 1:
                 gene = db[gene_identifier]
