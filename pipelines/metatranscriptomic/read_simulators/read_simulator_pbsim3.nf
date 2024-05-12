@@ -14,7 +14,7 @@ workflow read_simulator_pbsim3 {
 
 process simulate_reads_pbsim3 {
 
-    conda 'bioconda::pbsim3=3.0.0 bioconda::gffread=0.12.7 bioconda::gffutils conda-forge::python==3.7 bioconda::pyfaidx bioconda::samtools'
+    conda 'bioconda::pbsim3=3.0.0 bioconda::gffread=0.12.7 bioconda::gffutils conda-forge::python==3.7 bioconda::pyfaidx bioconda::samtools=1.9'
 
     input:
     tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed)

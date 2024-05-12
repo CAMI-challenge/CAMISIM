@@ -103,6 +103,16 @@ workflow sample_wise_simulation {
 
         // create fasta files holding all gsa of one samples reads
         get_fasta_for_sample(grouped_gsa_for_every_genome_ch)
+
+        // group bam files by sample id
+        bam_files_by_sample_ch = bam_files_channel.groupTuple().map { a -> tuple(a[0], a[2]) }
+        // create bam files holding all bam files of one samples reads 
+        merge_bam_files(bam_files_by_sample_ch)
+
+    emit: merge_bam_files.out
+    emit: get_fasta_for_sample.out
+    emit: reads_ch
+    emit: bam_files_by_sample_ch
 }
 
 process get_final_gene_distr {
@@ -279,5 +289,32 @@ process get_fasta_for_sample {
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/contigs/gsa.fasta.gz
+    """
+}
+
+/*
+* This process merges all given bam files with samtools.
+* Takes:
+*     A tuple with key = sample_id, value = the paths to all bam files, that need to be combined.
+* Output:
+*     The path to the merged bam file.
+ */
+process merge_bam_files {
+
+    conda 'bioconda::samtools=1.13'
+
+    input:
+    tuple val(sample_id), path(bam_files)
+
+    output:
+    tuple val(sample_id), path(file_name)
+
+    script:
+    file_name = 'sample_'.concat(sample_id.toString()).concat('.bam')
+    compression = 5
+    memory = 1
+    """
+    samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools index ${file_name}
     """
 }

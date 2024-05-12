@@ -63,6 +63,35 @@ workflow metatranscriptomic {
 
     // simulate reads sample wise
     sample_wise_simulation(genome_location_file_ch, distribution_file_ch, gene_distribution_file_ch, read_length_ch, get_seed.out[0], annotation_file_ch)
+
+    // this workflow has two output channels: one bam file per sample and one fasta file per sample
+    merged_bam_per_sample = sample_wise_simulation.out[0]
+    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]    
+
+    // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
+    genome_location_ch = genome_location_file_ch
+        .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+        .map { genome_id, path ->
+            def abs_path
+            if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                abs_path = path
+            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+            }
+            return [genome_id, abs_path]
+        }
+
+    // extract file paths from the tuples to create the reference_fasta_files_ch
+    reference_fasta_files_ch = genome_location_ch.map { a -> a[1] }
+
+    // merge the bam files required for the pooled gsa
+    if (params.pooled_gsa instanceof Boolean && params.pooled_gsa) {
+        merged_bam_file = merge_bam_files(merged_bam_per_sample.map { it[1] }.collect())
+    } else if (params.pooled_gsa instanceof List) {
+        merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
+    }
+
+    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
 }
 
 /*
@@ -179,5 +208,71 @@ process getCommunityDistribution {
     gauss_sigma = params.genome_gauss_sigma
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} False ${seed}
+    """
+}
+
+/*
+* This process merges all given bam files specified in the pooled_gsa parameter.
+* Takes:
+*     A list with the paths to all bam files, that should be merged, if the condition is fullfilled.
+* Output:
+*     The path to the merged bam file.
+ */
+process merge_bam_files {
+
+    conda 'bioconda::samtools=1.13'
+
+    input:
+    path bam_files
+
+    output:
+    path file_name
+
+    script:
+    file_name = 'merged.bam'
+    compression = 5
+    memory = 1
+
+    bam_to_merge = ''
+
+    bam_files.each {
+
+        bam_file_name = (String) it
+        sample_id = bam_file_name.split('_')[1][0].toInteger()
+        
+        //if(sample_id in params.pooled_gsa){
+        bam_to_merge = bam_to_merge.concat(' ').concat(bam_file_name)
+        //}
+    }
+    """
+    samtools merge -u - ${bam_to_merge} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    """
+}
+
+/*
+* This process generates the pooled gold standard assembly for serveral samples.
+* Takes:
+*     A tuple with first_value = a sorted bam file and second value = the reference genome (fasta).
+* Output:
+*     The path to fasta file with the pooled gold standard assembly.
+ */
+process generate_pooled_gold_standard_assembly {
+
+    conda 'bioconda::samtools=1.20 conda-forge::perl=5.32.1'
+
+    input:
+    tuple path(bam_file), path(reference_fasta_files)
+
+    output:
+    path file_name
+    
+    script:
+    file_name = 'gsa_pooled.fasta'
+    """
+    cat ${reference_fasta_files} > reference.fasta
+    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    mkdir --parents ${params.outdir}/pooled_gsa
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${params.outdir}/pooled_gsa/
     """
 }
