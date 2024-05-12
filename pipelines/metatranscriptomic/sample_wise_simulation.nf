@@ -6,6 +6,7 @@
 read_simulator_folder = "${projectDir}/pipelines/metatranscriptomic/read_simulators/"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
 include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
+include { read_simulator_pbsim3 } from "${read_simulator_folder}/read_simulator_pbsim3"
 
 include { normalise_abundance_meta_t; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
 
@@ -79,6 +80,16 @@ workflow sample_wise_simulation {
 
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]
+
+            get_fastq_for_sample_single_end(reads_ch)
+
+        } else if (params.type.equals("pbsim3")) {
+
+            // simulate the reads with pbsim3
+            read_simulator_pbsim3(location_distribution_seed_ch, read_length_ch)
+
+            bam_files_channel = read_simulator_pbsim3.out[0]
+            reads_ch = read_simulator_pbsim3.out[1]
 
             get_fastq_for_sample_single_end(reads_ch)
 
