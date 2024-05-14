@@ -12,6 +12,9 @@ include { sample_wise_simulation } from "${projectDir}/pipelines/metatranscripto
 // include anonymization
 include { anonymization } from "${projectDir}/anonymization"
 
+// include binning
+include { binning } from "${projectDir}/binning"
+
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
@@ -101,6 +104,8 @@ workflow metatranscriptomic {
     // if requested, anonymize reads, gsa and pooled gsa
     if(params.anonymization) {
         anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+    } else { // if no anonymization is requested, create binning gold standard
+        binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
     }
 }
 
