@@ -49,7 +49,7 @@ class GoldStandardFileFormat():
     # genome location
     # ###############
 
-    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None, nanosim_real_fastq=False):
+    def get_dict_sequence_to_genome_id(self, file_path_genome_locations, project_dir, set_of_genome_id=None, nanosim_real_fastq=False, metatranscriptomic=False):
         """
             Get a map, sequence id to genome id from an abundance file.
 
@@ -179,7 +179,7 @@ class GoldStandardFileFormat():
     # position file
     # ###############
 
-    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files, wgsim=False):
+    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files, wgsim=False, metatranscriptomic=False):
         """
             Get a map, sequence name to list of starting position from a mapping file.
 
@@ -215,7 +215,10 @@ class GoldStandardFileFormat():
                     # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
                     seq_without_index = key.rsplit('_', 5)[0]
                 else:
-                    seq_without_index = key.split("-")[0]
+                    if(metatranscriptomic):
+                        seq_without_index = key.rsplit("-", 1)[0]
+                    else:
+                        seq_without_index = key.split("-")[0]
 
                 if seq_without_index not in dict_original_seq_pos:
                     dict_original_seq_pos[seq_without_index] = []
@@ -227,7 +230,7 @@ class GoldStandardFileFormat():
     # ###############
 
     def write_gs_read_mapping(
-        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, wgsim):
+        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, wgsim, metatranscriptomic=False):
         """
             Write the gold standard for every read
 
@@ -263,6 +266,10 @@ class GoldStandardFileFormat():
             if nanosim_real_fastq:
                 # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
                 tmp = read_id.rsplit('_', 6)[0]
+
+                #if(metatranscriptomic):
+                #    tmp = tmp.rsplit('_', 1)[0]
+
                 # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
                 # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
                 sequence_id = self.fixed_name[tmp]
@@ -283,11 +290,23 @@ class GoldStandardFileFormat():
                     #self._logger.error(msg)
                     raise ValueError(msg)  
                 sequence_id = read_id.rsplit('-', 1)[0]
-            if sequence_id not in dict_sequence_to_genome_id:
-                msg = "sequence_id '{}' not found in mapping\n".format(sequence_id)
-                #self._logger.error(msg)
-                raise KeyError(msg)
-            genome_id = dict_sequence_to_genome_id[sequence_id]
+
+                if(metatranscriptomic):
+                    sequence_id_short = sequence_id.split(":")[0]
+
+            if(metatranscriptomic):
+                if sequence_id_short not in dict_sequence_to_genome_id:
+                    msg = "sequence_id '{}' not found in mapping\n".format(sequence_id)
+                    #self._logger.error(msg)
+                    raise KeyError(msg)
+                genome_id = dict_sequence_to_genome_id[sequence_id_short]
+            else:    
+                if sequence_id not in dict_sequence_to_genome_id:
+                    msg = "sequence_id '{}' not found in mapping\n".format(sequence_id)
+                    #self._logger.error(msg)
+                    raise KeyError(msg)
+                genome_id = dict_sequence_to_genome_id[sequence_id]
+
             tax_id = dict_genome_id_to_tax_id[genome_id]
             # final_dict[anonymous_id]= (genome_id,meta_tax_id,seq_id)
 
@@ -306,7 +325,7 @@ class GoldStandardFileFormat():
 
     def write_gsa_contig_mapping(
         self, stream_output,
-        dict_sequence_name_to_anonymous, dict_original_seq_pos, dict_sequence_to_genome_id, dict_genome_id_to_tax_id):
+        dict_sequence_name_to_anonymous, dict_original_seq_pos, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, metatranscriptomic=False):
         """
             Write the gold standard for every read
 
@@ -370,26 +389,47 @@ class GoldStandardFileFormat():
             # The count of positions within the range
             count = end_idx - start_idx
 
-            # write output
-            if sequence_id not in dict_sequence_to_genome_id:
-                msg = "Bad sequence_id '{}'\n".format(sequence_id)
-                #self._logger.error(msg)
-                raise KeyError(msg)
-            genome_id = dict_sequence_to_genome_id[sequence_id]
-            tax_id = dict_genome_id_to_tax_id[genome_id]
-            stream_output.write(row_format.format(
-                name=anonymous_contig_id,
-                genome_id=genome_id,
-                tax_id=tax_id,
-                seq_id=sequence_id,
-                count=count,
-                position_0=pos_start,
-                position_1=pos_end)
-                )
+            if(metatranscriptomic):
+                sequence_id_short = sequence_id.split(":")[0]
+
+                # write output
+                if sequence_id_short not in dict_sequence_to_genome_id:
+                    msg = "Bad sequence_id '{}'\n".format(sequence_id_short)
+                    #self._logger.error(msg)
+                    raise KeyError(msg)
+                genome_id = dict_sequence_to_genome_id[sequence_id_short]
+                tax_id = dict_genome_id_to_tax_id[genome_id]
+                stream_output.write(row_format.format(
+                    name=anonymous_contig_id,
+                    genome_id=genome_id,
+                    tax_id=tax_id,
+                    seq_id=sequence_id,
+                    count=count,
+                    position_0=pos_start,
+                    position_1=pos_end)
+                    )
+                
+            else:    
+                # write output
+                if sequence_id not in dict_sequence_to_genome_id:
+                    msg = "Bad sequence_id '{}'\n".format(sequence_id)
+                    #self._logger.error(msg)
+                    raise KeyError(msg)
+                genome_id = dict_sequence_to_genome_id[sequence_id]
+                tax_id = dict_genome_id_to_tax_id[genome_id]
+                stream_output.write(row_format.format(
+                    name=anonymous_contig_id,
+                    genome_id=genome_id,
+                    tax_id=tax_id,
+                    seq_id=sequence_id,
+                    count=count,
+                    position_0=pos_start,
+                    position_1=pos_end)
+                    )
 
     def gs_contig_mapping(
         self, file_path_genome_locations, file_path_metadata, file_path_id_map, list_file_paths_read_positions,
-        stream_output, project_dir, nanosim_real_fastq=False, wgsim=False):
+        stream_output, project_dir, nanosim_real_fastq=False, wgsim=False, metatranscriptomic=False):
         """
             Write the gold standard for every read
 
@@ -409,15 +449,15 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, metatranscriptomic=metatranscriptomic)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
-        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
+        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
         dict_sequence_name_to_anonymous = self.get_dict_sequence_name_to_anonymous(file_path_id_map)
         self.write_gsa_contig_mapping(
             stream_output, dict_sequence_name_to_anonymous, dict_original_seq_pos,
-            dict_sequence_to_genome_id, dict_genome_id_to_tax_id)
+            dict_sequence_to_genome_id, dict_genome_id_to_tax_id, metatranscriptomic=metatranscriptomic)
 
-    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, wgsim):
+    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, wgsim, metatranscriptomic):
         """
             Write the gold standard for every read
 
@@ -435,11 +475,11 @@ class GoldStandardFileFormat():
             @return: Nothing
             @rtype: None
         """
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, metatranscriptomic=metatranscriptomic)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
         dict_anonymous_to_read_id = self.get_dict_anonymous_to_original_id(file_path_id_map)
         self.write_gs_read_mapping(
-            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
+            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
 
 
     def read(self, file_path, separator=None, column_names=False, comment_line=None):
@@ -596,7 +636,7 @@ class GoldStandardFileFormat():
 
     def binning_per_sample(self, file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, out, gsa, nanosim_real_fastq, wgsim):
 
-        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq)
+        dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, metatranscriptomic=metatranscriptomic)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
 
         #dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim)
@@ -699,6 +739,11 @@ if __name__ == "__main__":
 		action="store_true",
 		default=False)
     parser.add_argument(
+		"-metatranscriptomic",
+		help="simulation in metatranscriptomic mode",
+		action="store_true",
+		default=False)
+    parser.add_argument(
 		"-read_positions",
 		help="file with 'read' start positions from bam files of this sample, needed for contig mapping",
         action='store',
@@ -715,14 +760,15 @@ if __name__ == "__main__":
     binning = options.binning
     nanosim_real_fastq = options.nanosim_real_fastq
     wgsim = options.wgsim
+    metatranscriptomic = options.metatranscriptomic
 
     goldStandardFileFormat = GoldStandardFileFormat()
 
     if(contig):
         list_file_paths_read_positions = [options.read_positions]
-        goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim)
+        goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
     elif(binning):
         list_file_paths_read_positions = [options.read_positions]
         goldStandardFileFormat.binning_per_sample(file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, stream_output, input_file_stream, nanosim_real_fastq, wgsim)
     else:    
-        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim)
+        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim, metatranscriptomic)

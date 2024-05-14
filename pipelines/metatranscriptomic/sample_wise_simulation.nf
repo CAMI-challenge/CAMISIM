@@ -314,7 +314,7 @@ process merge_bam_files {
     compression = 5
     memory = 1
     """
-    samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools merge -u - *.bam | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
     samtools index ${file_name}
     """
 }

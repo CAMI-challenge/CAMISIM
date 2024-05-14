@@ -30,7 +30,7 @@ workflow anonymization {
 
         reads_seed_ch = reads_ch.join(seed_ch)
 
-        if(params.type=="nanosim3") {
+        if(params.type=="nanosim3" || params.type=="pbsim3") {
             out_shuffle = shuffle(reads_seed_ch)
         } else if(params.type=="art" || params.type=="wgsim") {
             out_shuffle = shuffle_paired_end(reads_seed_ch)
@@ -64,7 +64,7 @@ workflow anonymization {
  */
 process shuffle {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83"
 
     input:
     tuple val(sample_id), path(read_files), val(seed)
@@ -97,7 +97,7 @@ process shuffle {
  */
 process shuffle_paired_end {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83"
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
@@ -151,15 +151,24 @@ process gs_read_mapping {
     wgsim = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+        if(params.pipeline.equals("metatranscriptomic")){
+            real_fastq = "-nanosim_real_fastq"
+
+        } else if(params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
+
+    if(params.pipeline.equals("metatranscriptomic")){
+        metatranscriptomic = "-metatranscriptomic"
+    } else {
+        metatranscriptomic = ""
+    }
     """
     touch ${reads_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
+    python ${projectDir}/scripts/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${reads_mapping_file}
     cp ${reads_mapping_file}.gz ${params.outdir}/sample_${sample_id}/reads/
@@ -176,7 +185,7 @@ process gs_read_mapping {
  */
 process shuffle_gsa {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83"
 
     input:
     tuple val(sample_id), path(read_files), val(seed)
@@ -209,15 +218,15 @@ process shuffle_gsa {
  */
 process shuffle_pooled_gsa {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83"
 
     input:
-    path(read_files)
-    val(seed)
+    path read_files
+    val seed
 
     output:
-    tuple path(anonymous_gsa_pooled)
-    tuple path(tmp_reads_mapping_file)
+    path anonymous_gsa_pooled
+    path tmp_reads_mapping_file
 
     script:
     anonymous_gsa_pooled = 'anonymous_gsa_pooled.fasta'
@@ -242,7 +251,7 @@ process shuffle_pooled_gsa {
  */
 process read_start_positions_from_dir_of_bam {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools=1.13'
     
     input:
     tuple val(sample_id), path(list_bam_files)
@@ -271,7 +280,7 @@ process read_start_positions_from_dir_of_bam {
  */
 process read_start_positions_from_merged_bam {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools=1.13'
     
     input:
     path(merged_bam_files)
@@ -320,9 +329,15 @@ process gs_contig_mapping {
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
+
+    if(params.pipeline.equals("metatranscriptomic")){
+        metatranscriptomic = "-metatranscriptomic"
+    } else {
+        metatranscriptomic = ""
+    }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
+    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
@@ -366,9 +381,16 @@ process pooled_gs_contig_mapping {
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
+
+    if(params.pipeline.equals("metatranscriptomic")){
+        metatranscriptomic = "-metatranscriptomic"
+    } else {
+        metatranscriptomic = ""
+    }
+
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
+    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}

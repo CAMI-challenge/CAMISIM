@@ -9,6 +9,9 @@ nextflow.enable.dsl=2
 // include sample wise simulation
 include { sample_wise_simulation } from "${projectDir}/pipelines/metatranscriptomic/sample_wise_simulation"
 
+// include anonymization
+include { anonymization } from "${projectDir}/anonymization"
+
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
@@ -91,7 +94,14 @@ workflow metatranscriptomic {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
     }
 
-    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
+    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+
+    metadata_ch = Channel.fromPath(params.metadata_file) 
+
+    // if requested, anonymize reads, gsa and pooled gsa
+    if(params.anonymization) {
+        anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+    }
 }
 
 /*
@@ -233,6 +243,7 @@ process merge_bam_files {
     compression = 5
     memory = 1
 
+    /**
     bam_to_merge = ''
 
     bam_files.each {
@@ -244,8 +255,9 @@ process merge_bam_files {
         bam_to_merge = bam_to_merge.concat(' ').concat(bam_file_name)
         //}
     }
+    **/
     """
-    samtools merge -u - ${bam_to_merge} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools merge -u - *.bam | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
     """
 }
 
@@ -269,7 +281,11 @@ process generate_pooled_gold_standard_assembly {
     script:
     file_name = 'gsa_pooled.fasta'
     """
-    cat ${reference_fasta_files} > reference.fasta
+    # cat ${reference_fasta_files} > reference.fasta
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${reference_fasta_files} | sort | xargs cat > reference.fasta
+
     perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
