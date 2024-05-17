@@ -48,6 +48,21 @@ workflow metatranscriptomic {
     // random seed generation
     get_seed(genome_location_file_ch, seed)
 
+    // if there are distribution files given for each sample use those
+    if(params.genome_distribution_files.isEmpty()) {
+     
+        // calculate the genome distributions for each sample for one community
+        genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
+
+    // otherwise, create distribution files for each sample
+    } else {
+        
+        // this channel holds the files with the specified distributions for every sample
+        genome_distribution_file_ch = Channel.fromPath(params.genome_distribution_files).flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
+    }
+    
+
+
     distribute_gene_abundance(annotation_file_ch, params.feature_type)
     gene_distribution_file_ch = distribute_gene_abundance.out[0].flatMap { item ->
         def genomeName = item[0]
@@ -59,10 +74,6 @@ workflow metatranscriptomic {
             return [genomeName, file, index] // Creates the new channel item
         }
     }
-
-    // calculate the genome distributions for each sample for one community
-    genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
-
     distribution_file_ch = genome_distribution_file_ch.combine(distribute_gene_abundance.out[1], by: 0).map{ item -> tuple( item[0], item[1], Float.valueOf(item[2])*Float.valueOf(item[3]))}
 
     read_length_ch = params.read_length
@@ -224,6 +235,8 @@ process getCommunityDistribution {
     gauss_sigma = params.genome_gauss_sigma
     """
     python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} False ${seed}
+    mkdir --parents ${params.outdir}/distributions/genome_distributions/
+    cp distribution_*.txt ${params.outdir}/distributions/genome_distributions/
     """
 }
 
