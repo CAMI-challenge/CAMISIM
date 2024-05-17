@@ -31,7 +31,6 @@ workflow binning {
 *    A file containing the read start posotions for the given sample.
  */
 process read_start_positions_from_dir_of_bam {
-    container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
     
     input:
@@ -61,7 +60,6 @@ process read_start_positions_from_dir_of_bam {
 *    A file containing the read start posotions.
  */
 process read_start_positions_from_merged_bam {
-    container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
     
     input:
@@ -86,7 +84,6 @@ process read_start_positions_from_merged_bam {
 *   The metadata file.
  */
 process binning_per_sample {
-    container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode : 'copy'
@@ -124,7 +121,6 @@ process binning_per_sample {
 *   The metadata file.
  */
 process binning_pooled_gsa {
-    container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     publishDir "${params.outdir}/pooled_gsa/", mode : 'copy'

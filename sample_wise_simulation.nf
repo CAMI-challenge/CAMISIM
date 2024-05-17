@@ -146,7 +146,6 @@ workflow sample_wise_simulation {
 *     A Tuple with key = sample_id, value = path to fasta file with the gold standard assembly of the given genome.
  */
 process generate_gold_standard_assembly {
-	container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
     publishDir "${params.outdir}/sample_${sample_id}/gsa/", mode: 'copy'
@@ -176,7 +175,6 @@ process generate_gold_standard_assembly {
 *     One fasta file holding the content of all given fasta files.
  */
 process get_fasta_for_sample {
-    container 'ubuntu:20.04'
 
     publishDir "${params.outdir}/sample_${sample_id}/contigs/", mode: 'copy'
 
@@ -202,7 +200,6 @@ process get_fasta_for_sample {
 *     The path to the merged bam file.
  */
 process merge_bam_files {
-	container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
 
     input:
@@ -230,7 +227,6 @@ process merge_bam_files {
 *     A tuple with key = sample_id, value = the calculated multiplication factor.
  */
 process get_multiplication_factor {
-	container 'quay.io/biocontainers/biopython:1.81'
     conda "bioconda::biopython"
 
     input:
@@ -281,7 +277,6 @@ process get_multiplication_factor {
 *     
  */
 process remove_spaces_from_reference_genome {
-    container 'ubuntu:20.04'
 
     input:
     tuple val(genome_id), path(fasta_file)

@@ -135,7 +135,6 @@ workflow {
 process download_NCBI_taxdump {
     publishDir "${params.outdir}/internal/genomes", mode : 'copy'
     
-    container 'quay.io/biocontainers/ete3:3.1.2'
     conda 'conda-forge::ete3'
 
     output:
@@ -162,8 +161,6 @@ process download_NCBI_taxdump {
 */
 process calculate_Nanosim_read_length {
     // TODO: Packages which are needed multiple times should be loaded only once
-    container 'quay.io/biocontainers/scikit-learn:0.20.2'
-    container 'quay.io/biocontainers/joblib:0.9.3--py36_0'
     conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 conda-forge::joblib=1.2.0'
 
     input:
@@ -202,7 +199,6 @@ process calculate_Nanosim_read_length {
 *     The path to the merged bam file.
  */
 process merge_bam_files {
-    container 'quay.io/biocontainers/samtools:1.19.2--h50ea8bc_1'
     conda 'bioconda::samtools'
 
     input:
@@ -242,7 +238,6 @@ process merge_bam_files {
 process generate_pooled_gold_standard_assembly {
     publishDir "${params.outdir}/pooled_gsa/", mode : 'copy'
     
-    container 'adfritz/bamtogold'
     conda 'bioconda::samtools'
 
     input:

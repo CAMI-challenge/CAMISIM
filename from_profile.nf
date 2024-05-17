@@ -32,8 +32,6 @@ workflow metagenomesimulation_from_profile {
 *     
  */
 process get_genomes {
-    container 'quay.io/biocontainers/ete3:3.1.2'
-    container 'quay.io/biocontainers/biom-format:2.1.15'
     conda 'bioconda::biom-format conda-forge::ete3'
 
     publishDir "${params.outdir}/internal/", mode : 'copy'
