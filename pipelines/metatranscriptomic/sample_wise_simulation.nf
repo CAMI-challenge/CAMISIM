@@ -54,7 +54,9 @@ workflow sample_wise_simulation {
 
         // normalize the distributions and read the results from the generated file
         normalised_distribution_ch = normalise_abundance_meta_t(distribution_file_ch.map { a -> tuple(a[1], tuple (a[0], a[2])) }.groupTuple())
-            .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
+            .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }.filter { it[1] != '0.0' }
+
+        normalised_distribution_ch.view()
 
         // calculate gene expression
         final_gene_distr_ch = get_final_gene_distr(gene_distribution_file_ch.join(normalised_distribution_ch, by: [0,2]))
