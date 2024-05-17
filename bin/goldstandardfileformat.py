@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 __original_author__ = 'majda'
 __author__ = 'hofmann'
 __version__ = '0.0.2'
