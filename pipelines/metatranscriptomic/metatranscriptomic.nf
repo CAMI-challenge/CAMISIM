@@ -48,7 +48,7 @@ workflow metatranscriptomic {
     // random seed generation
     get_seed(genome_location_file_ch, seed)
 
-    distribute_gene_abundance(annotation_file_ch)
+    distribute_gene_abundance(annotation_file_ch, params.feature_type)
     gene_distribution_file_ch = distribute_gene_abundance.out[0].flatMap { item ->
         def genomeName = item[0]
         def files = item[1]
@@ -121,6 +121,7 @@ process distribute_gene_abundance {
 
     input:
     tuple val(genome_id), path(gene_annotations_file)
+    val(feature_type)
 
     output:
     tuple val(genome_id), path("distribution_*.tsv")
@@ -144,7 +145,7 @@ process distribute_gene_abundance {
         gene_sigma = "-gene_sigma " + params.gene_sigma
     }
     """
-    python ${projectDir}/pipelines/metatranscriptomic/scripts/get_gene_abundance.py -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma}
+    python ${projectDir}/pipelines/metatranscriptomic/scripts/get_gene_abundance.py -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma} -feature_type ${feature_type}
     """
 }
 

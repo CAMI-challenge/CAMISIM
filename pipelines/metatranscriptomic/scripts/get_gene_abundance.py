@@ -9,7 +9,7 @@ class GeneAbundace() :
 
     total_gene_size = 0
 
-    def parse_annotationfile(self, db, number_of_samples):
+    def parse_annotationfile(self, db, number_of_samples, feature_type):
         """
             Get initial list with zero initialized
 
@@ -26,8 +26,7 @@ class GeneAbundace() :
 
         gene_id_to_abundances = dict()
 
-        # Query features from the database
-        for gene in db.features_of_type('mRNA'):
+        for gene in db.features_of_type(feature_type):
             # print(gene)
             gene_id = gene.id
             gene_id_to_abundances[gene_id] = [0.0] * number_of_samples
@@ -255,7 +254,12 @@ class GeneAbundace() :
             "-gene_sigma",
             help="The standard deviation to use for the gaussian noise",
             type=float,
-            required=False)                  
+            required=False)
+        parser.add_argument(
+            '-feature_type',
+            action='store',
+            help='A feature type',
+            required=True)       
         options = parser.parse_args()
 
         annotation_file = options.annotation_file
@@ -264,13 +268,14 @@ class GeneAbundace() :
         seed = options.seed
         log_mu = options.log_mu
         log_sigma = options.log_sigma
+        feature_type = options.feature_type
 
         if seed is not None:
                 random.seed(seed)
 
         db = self.create_db(annotation_file)
 
-        gene_id_to_abundances = self.parse_annotationfile(db, number_of_samples)
+        gene_id_to_abundances = self.parse_annotationfile(db, number_of_samples, feature_type)
 
         gene_id_to_abundances = self.add_initial_log_distribution(gene_id_to_abundances, log_mu, log_sigma, sample=0)
 

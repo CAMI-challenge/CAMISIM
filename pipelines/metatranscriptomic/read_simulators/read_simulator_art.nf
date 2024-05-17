@@ -43,11 +43,13 @@ process simulate_reads_art {
     profile = params.base_profile_name
     size = params.size
     read_length = read_length_ch.toFloat()
+    child_feature_type = params.child_feature_type
     """
     python ${projectDir}/pipelines/metatranscriptomic/read_simulators/generate_reads_and_modify_sam.py \
         --seed ${seed} \
         --fasta_distribution_file ${fasta_distribution_file} \
         --gff_file ${gff_file} \
+        --child_feature_type ${child_feature_type} \
         --fasta_file ${fasta_file} \
         --sample_id ${sample_id} \
         --genome_id ${genome_id} \
