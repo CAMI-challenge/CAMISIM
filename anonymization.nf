@@ -159,7 +159,7 @@ process gs_read_mapping {
     }
     """
     touch ${reads_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
+    goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim}
     gzip -k ${reads_mapping_file}
     """
 }
@@ -317,7 +317,7 @@ process gs_contig_mapping {
     }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
+    goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
     gzip -k ${gsa_mapping_file}
     """
 }
@@ -360,7 +360,7 @@ process pooled_gs_contig_mapping {
     }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
+    goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} -read_positions ${read_start_positions}
     gzip -k ${gsa_mapping_file}
     """
 }

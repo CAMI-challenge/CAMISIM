@@ -161,7 +161,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
-    perl -- /usr/local/bin/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     gzip -k ${file_name}
     """
 }

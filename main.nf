@@ -250,7 +250,7 @@ process generate_pooled_gold_standard_assembly {
     file_name = 'gsa_pooled.fasta'
     """
     cat ${reference_fasta_files} > reference.fasta
-    perl -- /usr/local/bin/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     gzip -k ${file_name}
     """
 }

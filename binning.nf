@@ -108,7 +108,7 @@ process binning_per_sample {
 
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
+    goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     gzip -k ${gsa_mapping_file}
     """
 }
@@ -144,7 +144,7 @@ process binning_pooled_gsa {
     }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
+    goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     gzip -k ${gsa_mapping_file}
     """
 }

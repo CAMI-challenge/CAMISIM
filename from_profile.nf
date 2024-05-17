@@ -61,6 +61,6 @@ process get_genomes {
     }
 
     """
-    python3 ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${projectDir}/nextflow_out/internal/ ${additional_references}
+    get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${projectDir}/nextflow_out/internal/ ${additional_references}
     """
 }
