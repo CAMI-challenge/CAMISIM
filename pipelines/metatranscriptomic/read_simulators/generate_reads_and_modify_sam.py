@@ -20,15 +20,16 @@ parser.add_argument("--read_length", type=float, required=True, help="Read lengt
 parser.add_argument("--fragment_size_mean", type=float, required=True, help="Mean fragment size.")
 parser.add_argument("--fragment_size_sd", type=float, required=True, help="Fragment size standard deviation.")
 parser.add_argument("--profile", type=str, required=True, help="Base profile name.")
+parser.add_argument("--db", type=str, required=True, help="Path to the db file.")
 
 args = parser.parse_args()
 
 random.seed(args.seed)
 
-db_file_name = 'db_file.db'
-db_file = gffutils.create_db(args.gff_file, dbfn=db_file_name)
+#db_file_name = 'db_file.db'
+#db_file = gffutils.create_db(args.gff_file, dbfn=db_file_name, merge_strategy="create_unique", keep_order=True)
 # Open the GFF database
-#db_file = gffutils.FeatureDB(db_file_name)
+db_file = gffutils.FeatureDB(args.db)
 
 fasta = pyfaidx.Fasta(args.fasta_file)
 

@@ -30,7 +30,7 @@ process simulate_reads_art {
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "sample${sample_id}_${genome_id}_2.fq.gz", mode: 'copy'
 
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed)
+    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed), path(db)
     val(read_length_ch)
 
     output:
@@ -57,7 +57,8 @@ process simulate_reads_art {
         --read_length ${read_length} \
         --fragment_size_mean ${fragment_size_mean} \
         --fragment_size_sd ${fragment_size_sd} \
-        --profile ${profile}
+        --profile ${profile} \
+        --db ${db}
 
     chmod +x ${sample_id}_${genome_id}_commands.sh
     ./${sample_id}_${genome_id}_commands.sh

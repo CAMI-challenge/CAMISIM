@@ -39,7 +39,7 @@ process simulate_reads_nanosim3 {
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "*_aligned_reads.fastq.gz", mode: 'copy'
 
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed)
+    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed), path(db)
     val(read_length_ch)
 
     

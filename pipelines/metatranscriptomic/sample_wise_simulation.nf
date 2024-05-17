@@ -26,6 +26,7 @@ workflow sample_wise_simulation {
     take: read_length_ch
     take: seed_file_ch
     take: annotation_file_ch
+    take: db_file_ch
     
     main:
 
@@ -61,7 +62,7 @@ workflow sample_wise_simulation {
 
         // get_read_count(final_gene_distr_ch)
 
-        location_distribution_seed_ch = final_gene_distr_ch.combine(genome_location_ch, by: 0).combine(annotation_file_ch, by: 0).combine(seed_ch, by: [0,1])
+        location_distribution_seed_ch = final_gene_distr_ch.combine(genome_location_ch, by: 0).combine(annotation_file_ch, by: 0).combine(seed_ch, by: [0,1]).combine(db_file_ch, by: 0)
 
         // read simulation
         if(params.type.equals("art")) {

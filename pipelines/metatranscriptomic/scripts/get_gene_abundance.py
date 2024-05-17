@@ -205,7 +205,7 @@ class GeneAbundace() :
 
     def create_db(self, annotation_file):
 
-        return gffutils.create_db(annotation_file, dbfn=(annotation_file+".db"))
+        return gffutils.create_db(annotation_file, dbfn=(annotation_file+".db"), merge_strategy="create_unique", keep_order=True)
 
     def _get_gene_abundance(self):
 

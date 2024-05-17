@@ -79,7 +79,7 @@ workflow metatranscriptomic {
     read_length_ch = params.read_length
 
     // simulate reads sample wise
-    sample_wise_simulation(genome_location_file_ch, distribution_file_ch, gene_distribution_file_ch, read_length_ch, get_seed.out[0], annotation_file_ch)
+    sample_wise_simulation(genome_location_file_ch, distribution_file_ch, gene_distribution_file_ch, read_length_ch, get_seed.out[0], annotation_file_ch, distribute_gene_abundance.out[2])
 
     // this workflow has two output channels: one bam file per sample and one fasta file per sample
     merged_bam_per_sample = sample_wise_simulation.out[0]
@@ -137,6 +137,7 @@ process distribute_gene_abundance {
     output:
     tuple val(genome_id), path("distribution_*.tsv")
     tuple val(genome_id), stdout
+    tuple val(genome_id), path("*.db")
 
     script:
     number_of_samples = params.number_of_samples
