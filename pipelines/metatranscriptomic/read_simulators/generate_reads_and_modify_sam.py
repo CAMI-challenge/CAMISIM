@@ -54,12 +54,17 @@ with open(f"{args.sample_id}_{args.genome_id}_commands.sh", 'w') as bash_script:
                 # Extract the sequence for the gene
                 seqid, start, combined_sequence = extract_sequence(db_file, fasta, gene_identifier, args.child_feature_type)
 
-                output_file = f"sample{args.sample_id}_{args.genome_id}_{gene_identifier}.fa"
+                # Sanitize the gene_identifier to be a valid filename.
+                # Some gene IDs in the gff3 may contain "/". Python then interprets the string of the output file as a subdirectory.
+                # Replace "/" with "_".
+                sanitized_gene_identifier = gene_identifier.replace("/", "_")
+
+                output_file = f"sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.fa"
                 with open(output_file, 'w') as out_f:
                         out_f.write(">"+str(seqid)+"\n")
                         out_f.write(combined_sequence)
 
                 seed_for_art = random.randint(0, sys.maxsize)
 
-                bash_script.write(f"art_illumina --paired -sam -na -i {output_file} -l {args.read_length} -c {read_count} -m {args.fragment_size_mean} -s {args.fragment_size_sd} -o sample{args.sample_id}_{args.genome_id}_{gene_identifier} -1 {args.profile}1.txt -2 {args.profile}2.txt -rs {seed_for_art}\n")
-                bash_script.write(f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}} !/^@/{{ $4=$4+{start}; $8=$8+{start} }}1' sample{args.sample_id}_{args.genome_id}_{gene_identifier}.sam > tmp.sam && mv tmp.sam sample{args.sample_id}_{args.genome_id}_{gene_identifier}.sam\n")
+                bash_script.write(f"art_illumina --paired -sam -na -i {output_file} -l {args.read_length} -c {read_count} -m {args.fragment_size_mean} -s {args.fragment_size_sd} -o sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier} -1 {args.profile}1.txt -2 {args.profile}2.txt -rs {seed_for_art}\n")
+                bash_script.write(f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}} !/^@/{{ $4=$4+{start}; $8=$8+{start} }}1' sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.sam > tmp.sam && mv tmp.sam sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.sam\n")
