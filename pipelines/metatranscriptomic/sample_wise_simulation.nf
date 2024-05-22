@@ -46,9 +46,9 @@ workflow sample_wise_simulation {
         // The simulated ART reads (version 016.06.05) doesn't contain the whole header of the reference genome, if there is a space in the header. They then just contain the 
         // substring before the first occurance of the space. In that case the gold standard assembly doesn't work because there are no matching IDs.
         // As a workaround we change the headers of the reference genomes by just selecting the part before the first occurance of a space, if there is a space in the header.
-        if(params.type.equals("art")) {
-            genome_location_ch = remove_spaces_from_reference_genome(genome_location_ch)
-        }    
+        //if(params.type.equals("art")) {
+        //    genome_location_ch = remove_spaces_from_reference_genome(genome_location_ch)
+        //}    
 
         // get the seed for every genome
         seed_ch = seed_file_ch.splitCsv(sep:'\t', skip:2)
