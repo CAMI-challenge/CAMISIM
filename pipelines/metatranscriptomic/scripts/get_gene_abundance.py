@@ -170,11 +170,11 @@ class GeneAbundace() :
 
         return gene_id_to_abundances
 
-    def write_dict_to_tsv(self, data, file_basename, number_of_samples, precision=10):
+    def write_dict_to_tsv(self, data, number_of_samples, genome_id, precision=10):
 
         for i in range(number_of_samples):
 
-            filename = file_basename + "_sample_" + str(i) + ".tsv"
+            filename = "distribution_" + genome_id + "_sample_" + str(i) + ".tsv"
 
             # Open the file in write mode
             with open(filename, 'w', newline='') as file:
@@ -210,6 +210,11 @@ class GeneAbundace() :
     def _get_gene_abundance(self):
 
         parser = argparse.ArgumentParser()
+        parser.add_argument(
+		    "-genome_id",
+		    help="the genome id",
+		    action='store',
+		    required=True)
         parser.add_argument(
 		    "-annotation_file",
 		    help="the annotation file in gff3 format",
@@ -262,6 +267,7 @@ class GeneAbundace() :
             required=True)       
         options = parser.parse_args()
 
+        genome_id = options.genome_id
         annotation_file = options.annotation_file
         mode = options.mode
         number_of_samples = options.number_of_samples
@@ -302,9 +308,7 @@ class GeneAbundace() :
 
         gene_id_to_abundances = self.normalize_abundances(db, gene_id_to_abundances, number_of_samples)
 
-        base_file_name = "distribution_" + os.path.basename(annotation_file)
-
-        self.write_dict_to_tsv(gene_id_to_abundances, base_file_name, number_of_samples)
+        self.write_dict_to_tsv(gene_id_to_abundances, number_of_samples, genome_id)
 
         print(str(self.total_gene_size))
 

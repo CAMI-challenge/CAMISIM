@@ -60,8 +60,6 @@ workflow metatranscriptomic {
         // this channel holds the files with the specified distributions for every sample
         genome_distribution_file_ch = Channel.fromPath(params.genome_distribution_files).flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
     }
-    
-
 
     distribute_gene_abundance(annotation_file_ch, params.feature_type)
     gene_distribution_file_ch = distribute_gene_abundance.out[0].flatMap { item ->
@@ -126,7 +124,7 @@ workflow metatranscriptomic {
 */
 process distribute_gene_abundance {
 
-    //publishDir "${params.outdir}/distributions/gene_distributions/", mode : 'copy'
+    publishDir "${params.outdir}/distributions/gene_distributions/", pattern: "distribution_*.tsv", mode : 'copy'
 
     conda 'bioconda::gffutils=0.12 anaconda::python=3.6'
 
@@ -157,7 +155,7 @@ process distribute_gene_abundance {
         gene_sigma = "-gene_sigma " + params.gene_sigma
     }
     """
-    python ${projectDir}/pipelines/metatranscriptomic/scripts/get_gene_abundance.py -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma} -feature_type ${feature_type}
+    python ${projectDir}/pipelines/metatranscriptomic/scripts/get_gene_abundance.py -genome_id ${genome_id} -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma} -feature_type ${feature_type}
     """
 }
 
@@ -218,7 +216,7 @@ process get_seed {
  */
 process getCommunityDistribution {
 
-    //publishDir "${params.outdir}/distributions/genome_distributions/", mode : 'copy'
+    publishDir "${params.outdir}/distributions/genome_distributions/", mode : 'copy'
 
     input:
     path(file_path_of_drawn_genome_location)
