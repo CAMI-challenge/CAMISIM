@@ -13,8 +13,8 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install biopython==1.81
-RUN pip install ete3==3.1.2
+RUN pip3 install biopython==1.81
+RUN pip3 install ete3==3.1.2
 
 RUN apt-get update \
     && apt-get install -y samtools
