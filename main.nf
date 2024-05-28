@@ -142,7 +142,7 @@ process download_NCBI_taxdump {
 
     script:
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     import os
     from ete3 import NCBITaxa
 
@@ -171,7 +171,7 @@ process calculate_Nanosim_read_length {
 
     script:
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     import joblib
     import sys
     import numpy as np
@@ -291,7 +291,7 @@ process get_random_seed {
 
     script:
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     import random
 
     randomnumber = random.randint(0, ((2**32)-1))

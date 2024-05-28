@@ -241,7 +241,7 @@ process get_multiplication_factor {
     fragment_size_standard_deviation = params.fragment_size_sd
     total_size = (params.size*(10**9))
     """
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     from Bio import SeqIO
     import os
     abundances = {}
