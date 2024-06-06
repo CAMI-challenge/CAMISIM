@@ -40,6 +40,8 @@ process simulate_reads_pbsim3 {
     // when the  seed gets to big, the simulation fails
     Long used_seed = (seed as Long) % 2**32 - 1
 
+    child_feature_type = params.child_feature_type
+
     /**
     String log = "---- sample id: ".concat(sample_id)
     log = log.concat("  read length: ").concat(Integer.toString(read_length_ch))
@@ -53,59 +55,19 @@ process simulate_reads_pbsim3 {
     print(log)
     **/
     """
-    python <<CODE
-    import csv
-    import random
-    import gffutils
-    import pyfaidx
-
-    random.seed(${seed})
-
-    db_file = 'db_file.db'
-    db = gffutils.create_db('${gff_file}', dbfn=db_file)
-    fasta = pyfaidx.Fasta('${fasta_file}')
-
-    total_read_count = 0
-
-    # Specify the path for your output file
-    with open("${sample_id}_${genome_id}_expression_profile.tsv", 'w') as exp_f:
-
-        with open("transcript_id_to_seq_id.tsv", 'w') as transcript_id_to_seq_id_file:
-            # Iterate through each file
-            with open('${fasta_distribution_file}', 'r') as file:
-                reader = csv.reader(file, delimiter='\\t')
-                # Iterate through each row in the TSV file
-                for row in reader:
-                    gene_identifier, abundance = row
-
-                    read_count = (${size}*(10**9)) * float(abundance) / ${read_length}
-
-                    if read_count < 1:
-                        read_count = 1 if random.random() < read_count else 0
-
-                    # gene_identifier_modified = gene_identifier.split("transcript:")[1]
-
-                    read_count = round(read_count)
-
-                    total_read_count = total_read_count + read_count
-
-                    gene = db[gene_identifier]
-
-                    if read_count > 0:
-                        # exp_f.write(gene_identifier_modified+"\\t0\\t"+str(read_count)+"\\n")
-                        exp_f.write(gene_identifier+"\\t"+str(read_count)+"\\t0\\t"+str(gene.sequence(fasta))+"\\n")
-
-                        # transcript_id_to_seq_id_file.write(gene_identifier_modified+"\\t"+str(gene.seqid)+"\\n")
-                        # transcript_id_to_seq_id_file.write(gene_identifier+"\\t"+str(gene.seqid)+"\\n")
-                        transcript_id_to_seq_id_file.write(gene_identifier+"\\t"+str(gene.seqid)+"\\t"+str(gene.start)+"\\n")
-
-    with open('total_read_count.txt', 'w') as count_file:
-        count_file.write(str(total_read_count))
-
-    CODE
+    python ${projectDir}/pipelines/metatranscriptomic/read_simulators/create_expression_profile_pbsim3.py \
+        --seed ${seed} \
+        --db ${db} \
+        --fasta_file ${fasta_file} \
+        --sample_id ${sample_id} \
+        --genome_id ${genome_id} \
+        --size ${size} \
+        --read_length ${read_length} \
+        --child_feature_type ${child_feature_type} \
+        --fasta_distribution_file ${fasta_distribution_file}
 
     #pbsim --strategy trans --method ${method} --${method} ${model} --accuracy-mean 0.85 --difference-ratio ${difference_ratio} --transcript ${sample_id}_${genome_id}_expression_profile.tsv --seed ${seed} --prefix sample${sample_id}_${genome_id}_pbsim3 --length-mean ${length_mean} --length-sd ${length_sd}
-    pbsim --strategy trans --method ${method} --${method} ${model} --accuracy-mean 0.85 --difference-ratio ${difference_ratio} --transcript ${sample_id}_${genome_id}_expression_profile.tsv --seed ${used_seed} --prefix sample${sample_id}_${genome_id}_pbsim3 --length-mean ${length_mean} --length-sd ${length_sd}
+    pbsim --strategy trans --method ${method} --${method} ${model} --accuracy-mean 0.85 --difference-ratio ${difference_ratio} --transcript sample_${sample_id}_${genome_id}_expression_profile.tsv --seed ${used_seed} --prefix sample${sample_id}_${genome_id}_pbsim3 --length-mean ${length_mean} --length-sd ${length_sd}
 
     python ${projectDir}/pipelines/metatranscriptomic/read_simulators/maf_converter.py --transcriptome 
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
