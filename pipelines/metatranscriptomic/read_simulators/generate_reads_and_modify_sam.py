@@ -58,6 +58,8 @@ with open(f"{args.sample_id}_{args.genome_id}_commands.sh", 'w') as bash_script:
                 # Some gene IDs in the gff3 may contain "/". Python then interprets the string of the output file as a subdirectory.
                 # Replace "/" with "_".
                 sanitized_gene_identifier = gene_identifier.replace("/", "_")
+                sanitized_gene_identifier = sanitized_gene_identifier.replace("(", "_")
+                sanitized_gene_identifier = sanitized_gene_identifier.replace(")", "_")
 
                 output_file = f"sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.fa"
                 with open(output_file, 'w') as out_f:
