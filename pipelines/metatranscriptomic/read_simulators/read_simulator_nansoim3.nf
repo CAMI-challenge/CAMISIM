@@ -32,7 +32,7 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_nanosim3 {
 
-    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.1.0 bioconda::gffread=0.12.7 bioconda::gffutils=0.9 conda-forge::python==3.7'
+    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.1.0 bioconda::gffutils=0.9 conda-forge::python==3.7'
 
     // ToDo For some reason this does not work
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "*.gz", mode: 'copy'
@@ -89,9 +89,9 @@ process simulate_reads_nanosim3 {
 
     total_read_count=\$(cat total_read_count.txt)
 
-    gffread -F -w transcriptome.fa -g ${fasta_file} sample${sample_id}_${genome_id}.gff3
+    # gffread -F -w transcriptome.fa -g ${fasta_file} sample${sample_id}_${genome_id}.gff3
 
-    simulator.py transcriptome -rt transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -n \$total_read_count --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o sample${sample_id}_${genome_id}
+    simulator.py transcriptome -rt sample_${sample_id}_${genome_id}_transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -n \$total_read_count --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o sample${sample_id}_${genome_id}
 
     # gzip -k sample${sample_id}_${genome_id}_aligned_reads.fastq
     gzip -k *_aligned_reads.fastq

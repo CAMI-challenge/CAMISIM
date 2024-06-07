@@ -2,6 +2,8 @@ import argparse
 import csv
 import random
 import gffutils
+import pyfaidx
+from sequence_extractor import extract_sequence
 
 # Set up argument parsing
 parser = argparse.ArgumentParser(description="Generate reads and modify SAM files.")
@@ -25,8 +27,11 @@ db_file = gffutils.FeatureDB(args.db)
 
 total_read_count = 0
 
+fasta = pyfaidx.Fasta(args.fasta_file)
+
 # Specify the path for your output file
-output_file = f"sample{args.sample_id}_{args.genome_id}.gff3"
+#output_file = f"sample{args.sample_id}_{args.genome_id}.gff3"
+output_file = f"sample_{args.sample_id}_{args.genome_id}_transcriptome.fa"
 with open(f"{args.sample_id}_{args.genome_id}_expression_profile.tsv", 'w') as exp_f:
 
     exp_f.write("target_id\test_counts\ttpm\n")
@@ -49,18 +54,19 @@ with open(f"{args.sample_id}_{args.genome_id}_expression_profile.tsv", 'w') as e
 
                     read_count = round(read_count)
 
+                    seqid, start, combined_sequence = extract_sequence(db_file, fasta, gene_identifier, args.child_feature_type)
+
+                    out_f.write(">"+str(gene_identifier)+"\n")
+                    out_f.write(combined_sequence+"\n")
+
                     # exp_f.write(gene_identifier_modified+"\\t0\\t"+str(read_count)+"\\n")
                     exp_f.write(gene_identifier+"\t0\t"+str(read_count)+"\n")
 
                     total_read_count = total_read_count + read_count
 
-                    gene = db_file[gene_identifier]
-
-                    out_f.write(str(gene)+"\n")
-
                     # transcript_id_to_seq_id_file.write(gene_identifier_modified+"\\t"+str(gene.seqid)+"\\n")
                     # transcript_id_to_seq_id_file.write(gene_identifier+"\\t"+str(gene.seqid)+"\\n")
-                    transcript_id_to_seq_id_file.write(gene_identifier+"\t"+str(gene.seqid)+"\t"+str(gene.start)+"\n")
+                    transcript_id_to_seq_id_file.write(gene_identifier+"\t"+str(seqid)+"\t"+str(start)+"\n")
 
 with open('total_read_count.txt', 'w') as count_file:
     count_file.write(str(total_read_count))
