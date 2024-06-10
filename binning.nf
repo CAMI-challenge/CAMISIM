@@ -17,7 +17,8 @@ workflow binning {
     main:
 
         read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
-        binning_per_sample(samplewise_gsa_ch.join(read_start_positions_from_dir_of_bam.out), genome_location_file_ch, metadata_ch)
+        in = samplewise_gsa_ch.join(read_start_positions_from_dir_of_bam.out).combine(genome_location_file_ch).combine(metadata_ch)
+        binning_per_sample(in)
 
         read_start_positions_from_merged_bam(merged_bam_ch)
         binning_pooled_gsa(pooled_gsa_ch, read_start_positions_from_merged_bam.out, genome_location_file_ch, metadata_ch)
@@ -87,12 +88,10 @@ process read_start_positions_from_merged_bam {
  */
 process binning_per_sample {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
 
     input:
-    tuple val(sample_id), path(gsa), path(read_positions)
-    path(genome_locations_file)
-    path(metadata_file)
+    tuple val(sample_id), path(gsa), path(read_positions), path(genome_locations_file), path(metadata_file)
 
     script:
     gsa_mapping_file = 'gsa_mapping.tsv'
@@ -105,8 +104,6 @@ process binning_per_sample {
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
-
-
     """
     touch ${gsa_mapping_file}
     python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
@@ -125,7 +122,7 @@ process binning_per_sample {
  */
 process binning_pooled_gsa {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
 
     input:
     path(gsa)
