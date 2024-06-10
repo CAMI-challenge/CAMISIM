@@ -13,9 +13,12 @@ workflow read_simulator_nanosim3 {
         // simulate reads via nanosim3
         out = simulate_reads_nanosim3(genome_location_distribution_ch, read_length_ch)
 
-        read_ch = out[1].groupTuple()
+        //read_ch = out[1].groupTuple()
 
-        bam_ch = bam_from_reads(out[0])
+        bam_from_reads(out[0])
+
+        bam_ch = bam_from_reads.out[0]
+        read_ch = bam_from_reads.out[1].groupTuple()
 
     emit:
         bam_ch
@@ -91,12 +94,12 @@ process simulate_reads_nanosim3 {
 
     # gffread -F -w transcriptome.fa -g ${fasta_file} sample${sample_id}_${genome_id}.gff3
 
-    simulator.py transcriptome -rt sample_${sample_id}_${genome_id}_transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -n \$total_read_count --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o sample${sample_id}_${genome_id}
+    simulator.py transcriptome -rt sample_${sample_id}_${genome_id}_transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -n \$total_read_count --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o tmp_sample${sample_id}_${genome_id}
 
     # gzip -k sample${sample_id}_${genome_id}_aligned_reads.fastq
-    gzip -k *_aligned_reads.fastq
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    # gzip -k *_aligned_reads.fastq
+    # mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    # cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }
 
@@ -119,10 +122,15 @@ process bam_from_reads {
 
     output:
     tuple val(sample_id), val(genome_id), path('sample*.bam'), path(fasta_file)
+    tuple val(sample_id), path("sample${sample_id}_${genome_id}_aligned_reads.fastq")
 
     script:
     """
     ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --transcript_seq_id_map ${map_transcript_seq_file} --transcriptome
     samtools view -bS *.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
+
+    gzip -k sample${sample_id}_${genome_id}_aligned_reads.fastq
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }

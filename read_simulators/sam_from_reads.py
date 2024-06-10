@@ -11,6 +11,30 @@ class SamFromReads() :
     wrote_header = False
     count_dict = dict()
 
+    def edit_fastq_transcriptome(self, read_id_to_seq_id_dict, aligned_reads_path, unaligned_reads_path):
+
+        file_path = os.path.basename(aligned_reads_path).split("_",1)[1]
+        with open(file_path, 'a+') as write_handler:
+
+            for record in SeqIO.parse(aligned_reads_path, "fastq-sanger"):
+
+                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+
+                record.id = read_id_to_seq_id_dict[name][0] + "-" + index 
+                record.description = ""
+                write_handler.write(record.format("fastq-sanger"))
+
+        file_path = os.path.basename(unaligned_reads_path).split("_",1)[1]
+        with open(file_path, 'a+') as write_handler:
+
+            for record in SeqIO.parse(unaligned_reads_path, "fastq-sanger"):
+
+                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+
+                record.id = read_id_to_seq_id_dict[name][0] + "-" + index 
+                record.description = ""
+                write_handler.write(record.format("fastq-sanger"))
+
     def _sam_from_reads(self):
 
             parser = argparse.ArgumentParser(description='Generate SAM from reads.')
@@ -65,6 +89,13 @@ class SamFromReads() :
                     self.write_sam_from_fasta(unaligned_reads_path, cigars, reference_path, prefix, args.stdout)
                     self.convert_fasta(unaligned_reads_path, reference_path)
             #os.remove(os.path.join(directory_output,f)) # do not store read file twice
+                    
+            if(args.transcriptome):       
+                # Read the TSV file into a dictionary
+                transcript_seq_id_map_file = args.transcript_seq_id_map
+                read_id_to_seq_id_dict = self.read_tsv_to_dict(transcript_seq_id_map_file)
+
+                self.edit_fastq_transcriptome(read_id_to_seq_id_dict, aligned_reads_path, unaligned_reads_path)        
 
     def get_cigars_nanosim(self, error_profile):
 

@@ -263,13 +263,11 @@ class GoldStandardFileFormat():
         for anonymous_id in sorted(dict_anonymous_to_read_id):
             read_id = dict_anonymous_to_read_id[anonymous_id]
 
-            if nanosim_real_fastq:
+            if nanosim_real_fastq and not metatranscriptomic:
+
                 # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
                 tmp = read_id.rsplit('_', 6)[0]
-
-                #if(metatranscriptomic):
-                #    tmp = tmp.rsplit('_', 1)[0]
-
+                
                 # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
                 # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
                 sequence_id = self.fixed_name[tmp]
@@ -291,10 +289,10 @@ class GoldStandardFileFormat():
                     raise ValueError(msg)  
                 sequence_id = read_id.rsplit('-', 1)[0]
 
-                if(metatranscriptomic):
+                if(metatranscriptomic and not nanosim_real_fastq):
                     sequence_id_short = sequence_id.split(":")[0]
 
-            if(metatranscriptomic):
+            if(metatranscriptomic and not nanosim_real_fastq):
                 if sequence_id_short not in dict_sequence_to_genome_id:
                     msg = "sequence_id '{}' not found in mapping\n".format(sequence_id)
                     #self._logger.error(msg)
@@ -312,7 +310,7 @@ class GoldStandardFileFormat():
 
             # For nanosim only print the sequence id with version number and index of the read.
             # For fastq files converted from fasta files generated with nanosim, the read id is already formatted in this way.
-            if nanosim_real_fastq:
+            if nanosim_real_fastq and not metatranscriptomic:
                 read_id = sequence_id + "-" + read_id.rsplit("_", 5)[1].rsplit("_", 4)[0]
 
             line = row_format.format(
