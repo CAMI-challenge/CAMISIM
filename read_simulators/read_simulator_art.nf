@@ -30,7 +30,7 @@ process simulate_reads_art {
 
     scratch true
     
-    conda 'bioconda::art=2016.06.05 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
+    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
