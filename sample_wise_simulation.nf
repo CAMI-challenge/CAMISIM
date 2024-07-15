@@ -69,7 +69,7 @@ workflow sample_wise_simulation {
 
         // normalize the distributions and read the results from the generated file
         normalised_distribution_ch = normalise_abundance(distribution_file_ch.map { a -> tuple(a[1], tuple (a[0], a[2])) }.groupTuple())
-            .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }
+            .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }.filter { it[1] != '0.0' } // Only do the read simulation for abundant genomes
 
         // combine channels genome location with the normalised distributions and the seed channel
         // results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed
@@ -183,7 +183,11 @@ process get_fasta_for_sample {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
-    cat ${fasta_files} > ${file_name}
+    # cat ${fasta_files} > ${file_name}
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${fasta_files} | sort | xargs cat > ${file_name}
+
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/contigs/gsa.fasta.gz
@@ -307,9 +311,16 @@ process get_fastq_for_sample_single_end {
 
     script:
     """
-    cat ${read_files} > sample_${sample_id}.fq
+    # cat ${read_files} > sample_${sample_id}.fq
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${read_files} | sort | xargs cat > sample_${sample_id}.fq
+
+    # Compress the concatenated files
+    gzip sample_${sample_id}.fq
+
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
-    cp sample_${sample_id}.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample_${sample_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }
 
@@ -323,10 +334,19 @@ process get_fastq_for_sample_paired_end {
 
     script:
     """
-    cat ${first_read_files} > sample_${sample_id}_01.fq
-    cat ${second_read_files} > sample_${sample_id}_02.fq
+    # cat ${first_read_files} > sample_${sample_id}_01.fq
+    # cat ${second_read_files} > sample_${sample_id}_02.fq
+
+    # Sort files before concatenation to ensure reproducibility
+    ls -1 ${first_read_files} | sort | xargs cat > sample_${sample_id}_01.fq
+    ls -1 ${second_read_files} | sort | xargs cat > sample_${sample_id}_02.fq
+
+    # Compress the concatenated files
+    gzip sample_${sample_id}_01.fq
+    gzip sample_${sample_id}_02.fq
+
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
-    cp sample_${sample_id}_01.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample_${sample_id}_02.fq ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample_${sample_id}_01.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample_${sample_id}_02.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }
