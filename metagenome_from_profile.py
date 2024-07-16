@@ -12,9 +12,10 @@ import argparse
 
 def parse_options():
     parser = argparse.ArgumentParser()
-    
+
+    default = "defaults/mini.biom"
     helptext="16S profile to create metagenome from. Can either be CAMI-format or biom-format."
-    parser.add_argument("-p","--profile", default=None, type=str, help=helptext)
+    parser.add_argument("-p","--profile", default=default, type=str, help=helptext)
 
     helptext="Number of samples to be generated. If nothing is given, this defaults to 1 (CAMI format) or the number of samples present in the biom file. If a specific number is given, the samples are simulated using the first sample of the biom file"
     parser.add_argument("-s","--samples", default=None, type=int, help=helptext)
