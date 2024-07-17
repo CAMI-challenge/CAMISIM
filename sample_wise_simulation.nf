@@ -243,7 +243,7 @@ process get_multiplication_factor {
     factor = 0
     fragment_size_mean = params.fragment_size_mean
     fragment_size_standard_deviation = params.fragment_size_sd
-    total_size = (params.size*(10**9))
+    total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
     """
     #!/usr/bin/env python
     from Bio import SeqIO
