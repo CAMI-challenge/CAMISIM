@@ -97,7 +97,7 @@ process shuffle {
  */
 process shuffle_paired_end {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
