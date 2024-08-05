@@ -127,6 +127,12 @@ workflow metagenomic {
             // calculate the genome distributions for each sample for one community
             genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten()
 
+            // Stop the pipeline if just community design steps are needed
+            if(params.just_community_design){
+                println "Simulation stopping after community design steps."
+                return
+            }
+
         // otherwise, create distribution files for each sample
         } else {
         
@@ -515,6 +521,10 @@ process merge_metadata_files {
 
     # Append the content of each genome_id_to_file_path to the new file
     cat ${meta_tables} >> merged_meta_data.tsv
+
+    mkdir --parents ${params.outdir}/source_genomes/
+    cp merged_genome_location.tsv ${params.outdir}/source_genomes/${genome_location_file}
+    cp merged_meta_data.tsv ${params.outdir}/source_genomes/${metadata_table}
     """
 }
 
@@ -538,6 +548,7 @@ process cleanup_and_filter_sequences {
     python ${projectDir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
 
     cp ./out_genomes/* ${params.outdir}/source_genomes/
+    cp internal_${genome_id_to_file_path} ${params.outdir}/source_genomes/${genome_id_to_file_path}
     """
 }
 
