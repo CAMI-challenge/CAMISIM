@@ -57,7 +57,73 @@ workflow metagenomic {
 
         // if there are distribution files given for each sample use those
         if(params.distribution_files.isEmpty()) {
-     
+
+            // if there are more genomes requested than inputted, simulate strains
+            if (! (params.genomes_total==params.genomes_real)){
+
+                prepare_strain_simulation(params.genomes_total, params.genomes_real, seed, metadata_ch, params.max_strains_per_otu, genome_location_file_ch)
+
+                // strain simulation is either with gff files or without possible
+                if(params.id_to_gff_file.isEmpty()) {
+
+                    // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
+                    strain_simulation_ch = prepare_strain_simulation.out
+                        .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+                        .map { genome_id, path, amount, seed ->
+                            def abs_path
+                            if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                                abs_path = path
+                            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                                abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+                            }
+                            return [genome_id, abs_path, amount, seed]
+                            }.filter { genome_id, abs_path, amount, seed -> amount.toInteger() > 1 }
+                            .combine(metadata_ch.splitCsv(sep:'\t', header: false), by:0)
+
+                    strain_simulation_without_gff(strain_simulation_ch)
+
+                    added_genome_location_ch = strain_simulation_without_gff.out[0]
+                    added_metadata_ch = strain_simulation_without_gff.out[1]
+
+                } else {
+                    // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
+                    strain_simulation_ch = prepare_strain_simulation.out
+                        .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+                        .map { genome_id, path, amount, seed, gff ->
+                            def abs_path
+                            def abs_path_2
+                            if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                                abs_path = path
+                            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                                abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+                            }
+
+                            if (new File(gff).isAbsolute()) { // if the path is an absolute path return it as is
+                                abs_path_2 = gff
+                            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                                abs_path_2 = file("${projectDir}/${gff}").toAbsolutePath().toString()
+                            }
+
+                        
+                            return [genome_id, abs_path, amount, seed, abs_path_2]
+                            }.filter { genome_id, abs_path, amount, seed, abs_path_2 -> amount.toInteger() > 1 }
+                            .combine(metadata_ch.splitCsv(sep:'\t', header: false), by:0)
+
+                    strain_simulation_with_gff(strain_simulation_ch)
+
+                    added_genome_location_ch = strain_simulation_with_gff.out[0]
+                    added_metadata_ch = strain_simulation_with_gff.out[1]
+                }
+                
+                // merge the metadata files together
+                merge_metadata_files(added_genome_location_ch.collect(), added_metadata_ch.collect(), genome_location_file_ch, metadata_ch)
+
+                // this channel holds the file with the specified locations of the genomes
+                genome_location_file_ch = merge_metadata_files.out[0]
+
+                metadata_ch = merge_metadata_files.out[1]
+            }
+
             // calculate the genome distributions for each sample for one community
             genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten()
 
@@ -67,6 +133,7 @@ workflow metagenomic {
             // this channel holds the files with the specified distributions for every sample
             genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
         }
+
     }    
     // build ncbi taxonomy from given tax dump
     number_of_samples_ch = Channel.from(params.number_of_samples)
@@ -84,17 +151,6 @@ workflow metagenomic {
         read_length_ch = params.profile_read_length
     }
 
-    // random seed generation
-    get_seed(genome_location_file_ch, seed)
-    // get the text file with the seeds needed for the read simulation
-    seed_file_read_simulation_ch = get_seed.out[0]
-
-    // simulate reads sample wise
-    sample_wise_simulation(genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
-    // this workflow has two output channels: one bam file per sample and one fasta file per sample
-    merged_bam_per_sample = sample_wise_simulation.out[0]
-    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]    
-
     // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
     genome_location_ch = genome_location_file_ch
         .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
@@ -106,7 +162,34 @@ workflow metagenomic {
                 abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
             }
             return [genome_id, abs_path]
-        }    
+        }
+
+    // make all sequences from input genomes (also strain simulated ones) unique and move them to an output location
+    genome_location_file_ch = cleanup_and_filter_sequences(genome_location_file_ch, genome_location_ch.map { it[1] }.collect())
+    
+    // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
+    genome_location_ch = genome_location_file_ch
+        .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
+        .map { genome_id, path ->
+            def abs_path
+            if (new File(path).isAbsolute()) { // if the path is an absolute path return it as is
+                abs_path = path
+            } else { // else expand relative paths to absolute paths and send to genome_location_ch
+                abs_path = file("${projectDir}/${path}").toAbsolutePath().toString()
+            }
+            return [genome_id, abs_path]
+        }
+
+    // random seed generation
+    get_seed(genome_location_file_ch, seed)
+    // get the text file with the seeds needed for the read simulation
+    seed_file_read_simulation_ch = get_seed.out[0]
+
+    // simulate reads sample wise
+    sample_wise_simulation(genome_location_ch, genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
+    // this workflow has two output channels: one bam file per sample and one fasta file per sample
+    merged_bam_per_sample = sample_wise_simulation.out[0]
+    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]    
 
     // extract file paths from the tuples to create the reference_fasta_files_ch
     reference_fasta_files_ch = genome_location_ch.map { a -> a[1] }
@@ -307,6 +390,154 @@ process get_random_seed {
     randomnumber = random.randint(0, ((2**32)-1))
 
     print(randomnumber, end = "")
+    """
+}
+
+/*
+* This process prepares the strain simulation by calculating the genome amounts.
+*/
+process prepare_strain_simulation {
+
+    conda "anaconda::python=3.11.5 anaconda::numpy"
+
+    input:
+    val genomes_total
+    val genomes_real
+    val seed
+    path metadata
+    val max_strains_per_otu
+    path id_to_genome_file
+
+    output:
+    path "genome_id_to_file_amount_gff.tsv"
+
+    script:
+    if(params.id_to_gff_file.isEmpty()){
+        gff = ""
+    } else {
+        gff += "--id_to_gff_file ${id_to_gff_file}"
+    }
+    """
+    python ${projectDir}/prepare_strain_simulation.py -genomes_total ${genomes_total} -genomes_real ${genomes_real} -seed ${seed} -metadata ${metadata} -max_strains_per_otu ${max_strains_per_otu} -id_to_genome_file ${id_to_genome_file} ${gff}
+    """
+}
+
+/*
+* This process simulates strains using sgEvolver by using an empty gff file.
+*/
+process strain_simulation_without_gff {
+
+    conda "bioconda::perl-bioperl conda-forge::biopython=1.83 anaconda::python=3.11.5"
+
+    input:
+    tuple val(genome_id), path(fasta), val(amount), val(seed), val(OTU), val(NCBI_ID), val(novelty_category)
+
+    output:
+    path "genome_id_to_file_path_${genome_id}.tsv"
+    path "meta_table_${genome_id}.tsv"
+
+    script:
+    strain_simulation_template = params.strain_simulation_template
+    """
+    # Run the Perl script
+    touch empty_gff.gff
+    ${projectDir}/scripts/sgEvolver/simujobrun.pl ${fasta} empty_gff.gff ${seed} ${strain_simulation_template}
+
+    # Run the Python script
+    python ${projectDir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
+
+    mkdir --parents ${params.outdir}/source_genomes/
+
+    # Read the TSV file and copy each file to its destination
+    while IFS=\$'\t' read -r genome_id dest_path; do
+        base_name=\$(basename "\$dest_path")
+        cp "\$base_name" "\$dest_path"
+    done < "genome_id_to_file_path_${genome_id}.tsv"
+    """
+}
+
+/*
+* This process simulates strains using sgEvolver by using the specified gff files.
+*/
+process strain_simulation_with_gff {
+
+    input:
+    tuple val(genome_id), path(fasta), val(amount), val(seed), path(gff)
+    val seed
+
+    output:
+    tuple val(genome_id), path("genome_id_to_file_path_${genome_id}.tsv")
+    tuple val(genome_id), path("meta_table_${genome_id}.tsv")
+    tuple val(genome_id), path("sequence_id_map_genome_${genome_id}.txt")
+
+    script:
+    strain_simulation_template = params.strain_simulation_template
+    """
+    # Run the Perl script
+    ${projectDir}/scripts/sgEvolver/simujobrun.pl ${fasta} ${gff} ${seed} ${strain_simulation_template}
+
+    # Run the Python script
+    python ${projectDir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
+
+    # Read the TSV file and copy each file to its destination
+    while IFS=\$'\t' read -r genome_id dest_path; do
+        base_name=\$(basename "\$dest_path")
+        cp "\$base_name" "\$dest_path"
+    done < "genome_id_to_file_path_${genome_id}.tsv"
+    """
+}
+
+/*
+* This process merges the metadata files created during the strain simulation with the user specified ones.
+*/
+process merge_metadata_files {
+
+    input:
+    path genome_id_to_file_paths
+    path meta_tables
+    path genome_location_file
+    path metadata_table
+
+    output:
+    path 'merged_genome_location.tsv'
+    path 'merged_meta_data.tsv'
+
+    script:
+    """
+    # Write the content of genome_location to a new file
+    cp ${genome_location_file} merged_genome_location.tsv
+
+    # Append the content of each genome_id_to_file_path to the new file
+    cat ${genome_id_to_file_paths} >> merged_genome_location.tsv
+
+    # Write the content of genome_location to a new file
+    cp ${metadata_table} merged_meta_data.tsv
+
+    # Append the content of each genome_id_to_file_path to the new file
+    cat ${meta_tables} >> merged_meta_data.tsv
+    """
+}
+
+process cleanup_and_filter_sequences {
+
+    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+
+    input:
+    path genome_id_to_file_path
+    path genomes
+
+    output:
+    path genome_id_to_file_path
+
+    script:
+    """
+    mkdir --parents ${params.outdir}/source_genomes/
+
+    touch internal_${genome_id_to_file_path}
+
+    python ${projectDir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
+
+    cp ./out_genomes/* ${params.outdir}/source_genomes/
     """
 }
 

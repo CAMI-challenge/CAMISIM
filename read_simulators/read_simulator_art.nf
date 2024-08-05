@@ -56,7 +56,7 @@ process simulate_reads_art {
     log = log.concat("    profile: ").concat(profile)
     log = log.concat("    factor_float_value: ").concat(Double.toString(factor_float_value))
     log = log.concat("    fold_coverage: ").concat(Double.toString(fold_coverage))
-    log = log.concat("    seed: ").concat(Double.toString(seed))
+    log = log.concat("    seed: ").concat(seed)
     print(log)
     **/
 
