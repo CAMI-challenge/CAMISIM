@@ -48,6 +48,12 @@ workflow metagenomic {
         genome_location_file_ch = metagenomesimulation_from_profile.out[1]
         metadata_ch = metagenomesimulation_from_profile.out[2]
 
+        // Stop the pipeline if just community design steps are needed
+        if(params.just_community_design){
+            println "Simulation stopping after community design steps."
+            return
+        }
+
     } else { // not from profile
 
         // this channel holds the file with the specified locations of the genomes
@@ -522,9 +528,9 @@ process merge_metadata_files {
     # Append the content of each genome_id_to_file_path to the new file
     cat ${meta_tables} >> merged_meta_data.tsv
 
-    mkdir --parents ${params.outdir}/source_genomes/
-    cp merged_genome_location.tsv ${params.outdir}/source_genomes/${genome_location_file}
-    cp merged_meta_data.tsv ${params.outdir}/source_genomes/${metadata_table}
+    mkdir --parents ${params.outdir}/internal/
+    cp merged_genome_location.tsv ${params.outdir}/internal/genome_locations.tsv
+    cp merged_meta_data.tsv ${params.outdir}/internal/meta_data.tsv
     """
 }
 
@@ -542,13 +548,14 @@ process cleanup_and_filter_sequences {
     script:
     """
     mkdir --parents ${params.outdir}/source_genomes/
+    mkdir --parents ${params.outdir}/internal/
 
     touch internal_${genome_id_to_file_path}
 
     python ${projectDir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
 
     cp ./out_genomes/* ${params.outdir}/source_genomes/
-    cp internal_${genome_id_to_file_path} ${params.outdir}/source_genomes/${genome_id_to_file_path}
+    cp internal_${genome_id_to_file_path} ${params.outdir}/internal/genome_locations.tsv
     """
 }
 

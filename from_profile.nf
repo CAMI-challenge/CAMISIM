@@ -33,7 +33,7 @@ workflow metagenomesimulation_from_profile {
  */
 process get_genomes {
 
-    conda 'bioconda::biom-format conda-forge::ete3'
+    conda 'bioconda::biom-format==2.1.6 conda-forge::ete3==3.1.2 anaconda::python==3.6.2'
 
     input:
     path(biom_profile)
@@ -60,8 +60,10 @@ process get_genomes {
     }
 
     """
-    mkdir --parents ${params.outdir}/internal/genomes/
-    python3 ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${params.outdir}/internal/ ${additional_references}
+    mkdir --parents ${params.outdir}/source_genomes/
+    mkdir --parents ${params.outdir}/internal/
+
+    python ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references}
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """

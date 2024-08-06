@@ -284,7 +284,10 @@ def split_by_N(fasta_path, out_path, script):
 Downloads the given genome and returns the out path
 """
 def download_genome(genome, out_path, script):
-    genome_path = os.path.join(out_path,"genomes")
+    # genome_path = os.path.join(out_path,"genomes")
+    genome_path = out_path
+
+
     out_name = genome.rstrip().split('/')[-1]
     http_address = os.path.join(genome, out_name + "_genomic.fna.gz")
     opened = urllib.request.urlopen(http_address)
@@ -317,7 +320,9 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
     abundances = [os.path.join(out_path,"abundance_%s.tsv" % i) for i in range(no_samples)]
     #log.info("Downloading %s genomes" % len(otu_genome_map))
     
-    create_path = os.path.join(out_path_genomes,"genomes")
+    #create_path = os.path.join(out_path_genomes,"genomes")
+    create_path = out_path_genomes
+
     if not os.path.exists(create_path):
         os.makedirs(create_path)
     for otu in otu_genome_map:
