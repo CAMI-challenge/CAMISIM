@@ -1,3 +1,6 @@
+scripts_dir = "${projectDir}/pipelines/metagenomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /** 
 * This workflow simulates reads via nanosim3 and converts the resulting sam files into bam files.
 * Takes:
@@ -149,7 +152,7 @@ process bam_from_reads_fasta {
 
     script:
     """
-    ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
     for file in sample${sample_id}_${genome_id}.fq; do gzip -k "\$file"; done
     cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
@@ -178,7 +181,7 @@ process bam_from_reads_fastq {
 
     script:
     """
-    ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
     cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
     """

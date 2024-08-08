@@ -1,3 +1,6 @@
+scripts_dir = "${projectDir}/pipelines/metagenomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /** 
 * This workflow designs a community based on the given biom profile. It updates the ncbi dump, downloads the genomes and calculates the abundances.
 * Emits: 
@@ -63,7 +66,7 @@ process get_genomes {
     mkdir --parents ${params.outdir}/source_genomes/
     mkdir --parents ${params.outdir}/internal/
 
-    python ${projectDir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${projectDir}/scripts/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references}
+    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references}
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """

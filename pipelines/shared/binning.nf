@@ -2,6 +2,8 @@
 
 nextflow.enable.dsl=2
 
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /** 
 * This workflow does the binning of the gold standard assembly.
 **/
@@ -106,7 +108,7 @@ process binning_per_sample {
     }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
@@ -143,7 +145,7 @@ process binning_pooled_gsa {
     }
     """
     touch ${gsa_mapping_file}
-    python ${projectDir}/scripts/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     mkdir --parents ${params.outdir}/pooled_gsa/
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/pooled_gsa/

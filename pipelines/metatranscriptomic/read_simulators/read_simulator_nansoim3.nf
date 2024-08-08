@@ -1,3 +1,6 @@
+scripts_dir = "${projectDir}/pipelines/metatranscriptomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /** 
 * This workflow simulates reads via nanosim3 and converts the resulting sam files into bam files.
 * Takes:
@@ -79,7 +82,7 @@ process simulate_reads_nanosim3 {
     print(log)
     **/
     """
-    python ${projectDir}/pipelines/metatranscriptomic/read_simulators/create_transcriptome_nanosim.py \
+    python ${scripts_dir}/create_transcriptome_nanosim.py \
         --seed ${seed} \
         --db ${db} \
         --fasta_file ${fasta_file} \
@@ -126,7 +129,7 @@ process bam_from_reads {
 
     script:
     """
-    ${projectDir}/read_simulators/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --transcript_seq_id_map ${map_transcript_seq_file} --transcriptome
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --transcript_seq_id_map ${map_transcript_seq_file} --transcriptome
     samtools view -bS *.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
 
     gzip -k sample${sample_id}_${genome_id}_aligned_reads.fastq

@@ -2,21 +2,24 @@
 
 nextflow.enable.dsl=2
 
+scripts_dir = "${projectDir}/pipelines/metagenomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /*
  * Defining the module / subworkflow path, and include the elements
  */
 
 // include sample wise simulation
-include { sample_wise_simulation } from "${projectDir}/sample_wise_simulation"
+include { sample_wise_simulation } from "${projectDir}/pipelines/metagenomic/sample_wise_simulation"
 
 // include from profile metagenome simulation
-include { metagenomesimulation_from_profile } from "${projectDir}/from_profile"
+include { metagenomesimulation_from_profile } from "${projectDir}/pipelines/metagenomic/from_profile"
 
 // include anonymization
-include { anonymization } from "${projectDir}/anonymization"
+include { anonymization } from "${projectDir}/pipelines/shared/anonymization"
 
 // include binning
-include { binning } from "${projectDir}/binning"
+include { binning } from "${projectDir}/pipelines/shared/binning"
 
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
@@ -352,7 +355,7 @@ process generate_pooled_gold_standard_assembly {
     file_name = 'gsa_pooled.fasta'
     """
     cat ${reference_fasta_files} > reference.fasta
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/
@@ -383,7 +386,7 @@ process buildTaxonomy {
     [ -f **/names.dmp ] && mv **/names.dmp ./names.dmp
     [ -f **/merged.dmp ] && mv **/merged.dmp ./merged.dmp
     [ -f **/nodes.dmp ] && mv **/nodes.dmp ./nodes.dmp
-    ${projectDir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
+    ${scripts_dir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
     mkdir --parents ${params.outdir}
     cp taxonomic_profile_*.txt ${params.outdir}
     """
@@ -430,7 +433,7 @@ process prepare_strain_simulation {
         gff += "--id_to_gff_file ${id_to_gff_file}"
     }
     """
-    python ${projectDir}/prepare_strain_simulation.py -genomes_total ${genomes_total} -genomes_real ${genomes_real} -seed ${seed} -metadata ${metadata} -max_strains_per_otu ${max_strains_per_otu} -id_to_genome_file ${id_to_genome_file} ${gff}
+    python ${scripts_dir}/prepare_strain_simulation.py -genomes_total ${genomes_total} -genomes_real ${genomes_real} -seed ${seed} -metadata ${metadata} -max_strains_per_otu ${max_strains_per_otu} -id_to_genome_file ${id_to_genome_file} ${gff}
     """
 }
 
@@ -456,7 +459,7 @@ process strain_simulation_without_gff {
     ${projectDir}/scripts/sgEvolver/simujobrun.pl ${fasta} empty_gff.gff ${seed} ${strain_simulation_template}
 
     # Run the Python script
-    python ${projectDir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
+    python ${scripts_dir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
 
     mkdir --parents ${params.outdir}/source_genomes/
 
@@ -489,7 +492,7 @@ process strain_simulation_with_gff {
     ${projectDir}/scripts/sgEvolver/simujobrun.pl ${fasta} ${gff} ${seed} ${strain_simulation_template}
 
     # Run the Python script
-    python ${projectDir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
+    python ${scripts_dir}/pick_random_strains.py ${amount} ${genome_id} ${NCBI_ID} ${novelty_category} ${OTU} ${strain_simulation_template} ${params.outdir}
 
     # Read the TSV file and copy each file to its destination
     while IFS=\$'\t' read -r genome_id dest_path; do
@@ -552,7 +555,7 @@ process cleanup_and_filter_sequences {
 
     touch internal_${genome_id_to_file_path}
 
-    python ${projectDir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
+    python ${scripts_dir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
 
     cp ./out_genomes/* ${params.outdir}/source_genomes/
     cp internal_${genome_id_to_file_path} ${params.outdir}/internal/genome_locations.tsv
@@ -584,7 +587,7 @@ process getCommunityDistribution {
     gauss_sigma = params.gauss_sigma
     verbose = params.verbose
     """
-    python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
+    python ${shared_scripts_dir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} ${verbose} ${seed}
     mkdir --parents ${params.outdir}/distributions/
     cp distribution_*.txt ${params.outdir}/distributions/
     """
@@ -616,7 +619,7 @@ process get_seed {
         param_anonym = ""
     }
     """
-    ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
+    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
     mkdir --parents ${params.outdir}/seed/
     cp seed*.txt ${params.outdir}/seed/
     """

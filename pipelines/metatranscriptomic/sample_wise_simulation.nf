@@ -2,13 +2,16 @@
  * Defining the module / subworkflow path, and include the elements
  */
 
+scripts_dir = "${projectDir}/pipelines/metatransciptomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 // include read simulator here:
 read_simulator_folder = "${projectDir}/pipelines/metatranscriptomic/read_simulators/"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
 include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_pbsim3 } from "${read_simulator_folder}/read_simulator_pbsim3"
 
-include { normalise_abundance_meta_t; normalise_abundance_to_size; count_bases} from "${projectDir}/distribution"
+include { normalise_abundance_meta_t; normalise_abundance_to_size; count_bases} from "${projectDir}/pipelines/shared/distribution"
 
 /** 
 * This workflow simulates reads for every sample.
@@ -256,7 +259,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/

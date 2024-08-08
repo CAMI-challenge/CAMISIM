@@ -1,3 +1,6 @@
+scripts_dir = "${projectDir}/pipelines/metatranscriptomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 workflow read_simulator_pbsim3 {
 
     take: genome_location_distribution_ch
@@ -55,7 +58,7 @@ process simulate_reads_pbsim3 {
     print(log)
     **/
     """
-    python ${projectDir}/pipelines/metatranscriptomic/read_simulators/create_expression_profile_pbsim3.py \
+    python ${scripts_dir}/create_expression_profile_pbsim3.py \
         --seed ${seed} \
         --db ${db} \
         --fasta_file ${fasta_file} \
@@ -69,14 +72,14 @@ process simulate_reads_pbsim3 {
     #pbsim --strategy trans --method ${method} --${method} ${model} --accuracy-mean 0.85 --difference-ratio ${difference_ratio} --transcript ${sample_id}_${genome_id}_expression_profile.tsv --seed ${seed} --prefix sample${sample_id}_${genome_id}_pbsim3 --length-mean ${length_mean} --length-sd ${length_sd}
     pbsim --strategy trans --method ${method} --${method} ${model} --accuracy-mean 0.85 --difference-ratio ${difference_ratio} --transcript sample_${sample_id}_${genome_id}_expression_profile.tsv --seed ${used_seed} --prefix sample${sample_id}_${genome_id}_pbsim3 --length-mean ${length_mean} --length-sd ${length_sd}
 
-    python ${projectDir}/pipelines/metatranscriptomic/read_simulators/maf_converter.py --transcriptome 
+    python ${scripts_dir}/maf_converter.py --transcriptome 
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
 
     gzip -k sample${sample_id}_${genome_id}.fq
 
-    mkdir --parents ${projectDir}/out/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${projectDir}/out/sample_${sample_id}/bam/
-    mkdir --parents ${projectDir}/out/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}.fq.gz ${projectDir}/out/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
+    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
     """
 }

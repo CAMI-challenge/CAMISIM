@@ -2,6 +2,9 @@
 
 nextflow.enable.dsl=2
 
+scripts_dir = "${projectDir}/pipelines/metatranscriptomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /*
  * Defining the module / subworkflow path, and include the elements
  */
@@ -10,10 +13,10 @@ nextflow.enable.dsl=2
 include { sample_wise_simulation } from "${projectDir}/pipelines/metatranscriptomic/sample_wise_simulation"
 
 // include anonymization
-include { anonymization } from "${projectDir}/anonymization"
+include { anonymization } from "${projectDir}/pipelines/shared/anonymization"
 
 // include binning
-include { binning } from "${projectDir}/binning"
+include { binning } from "${projectDir}/pipelines/shared/binning"
 
 /*
  * This is the main workflow and starting point of this nextflow pipeline.
@@ -155,7 +158,7 @@ process distribute_gene_abundance {
         gene_sigma = "-gene_sigma " + params.gene_sigma
     }
     """
-    python ${projectDir}/pipelines/metatranscriptomic/scripts/get_gene_abundance.py -genome_id ${genome_id} -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma} -feature_type ${feature_type}
+    python ${scripts_dir}/get_gene_abundance.py -genome_id ${genome_id} -annotation_file ${gene_annotations_file} -mode ${mode} -number_of_samples ${number_of_samples} -seed ${seed} -log_mu ${mu} -log_sigma ${sigma} ${gauss_mu} ${gauss_sigma} ${gene_sigma} -feature_type ${feature_type}
     """
 }
 
@@ -203,7 +206,7 @@ process get_seed {
         param_anonym = ""
     }
     """
-    ${projectDir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
+    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
     """
 }
 
@@ -233,7 +236,7 @@ process getCommunityDistribution {
     gauss_mu = params.genome_gauss_mu
     gauss_sigma = params.genome_gauss_sigma
     """
-    python ${projectDir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} False ${seed}
+    python ${shared_scripts_dir}/get_community_distribution.py ${number_of_samples} ${file_path_of_drawn_genome_location} ${mode} ${log_mu} ${log_sigma} ${gauss_mu} ${gauss_sigma} False ${seed}
     mkdir --parents ${params.outdir}/distributions/genome_distributions/
     cp distribution_*.txt ${params.outdir}/distributions/genome_distributions/
     """
@@ -304,7 +307,7 @@ process generate_pooled_gold_standard_assembly {
     # Sort files before concatenation to ensure reproducibility
     ls -1 ${reference_fasta_files} | sort | xargs cat > reference.fasta
 
-    perl -- ${projectDir}/scripts/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/

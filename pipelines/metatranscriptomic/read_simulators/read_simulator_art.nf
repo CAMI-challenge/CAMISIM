@@ -1,3 +1,6 @@
+scripts_dir = "${projectDir}/pipelines/metatranscriptomic/scripts"
+shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
+
 /**
 * This workflow simulates reads using the ART read simuator
 * Takes:
@@ -45,7 +48,7 @@ process simulate_reads_art {
     read_length = read_length_ch.toFloat()
     child_feature_type = params.child_feature_type
     """
-    python ${projectDir}/pipelines/metatranscriptomic/read_simulators/generate_reads_and_modify_sam.py \
+    python ${scripts_dir}/generate_reads_and_modify_sam.py \
         --seed ${seed} \
         --fasta_distribution_file ${fasta_distribution_file} \
         --gff_file ${gff_file} \
