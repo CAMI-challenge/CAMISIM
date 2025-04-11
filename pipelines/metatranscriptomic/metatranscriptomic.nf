@@ -129,7 +129,7 @@ process distribute_gene_abundance {
 
     publishDir "${params.outdir}/distributions/gene_distributions/", pattern: "distribution_*.tsv", mode : 'copy'
 
-    conda 'bioconda::gffutils=0.12 anaconda::python=3.6'
+    conda 'bioconda::gffutils=0.12 conda-forge::python=3.6'
 
     input:
     tuple val(genome_id), path(gene_annotations_file)

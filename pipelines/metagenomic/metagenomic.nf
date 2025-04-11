@@ -266,7 +266,7 @@ process download_NCBI_taxdump {
 */
 process calculate_Nanosim_read_length {
     // TODO: Packages which are needed multiple times should be loaded only once
-    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 conda-forge::joblib=1.2.0'
+    conda 'conda-forge::scikit-learn=0.21.3=py37* conda-forge::joblib=1.2.0'
 
     input:
     val profile
@@ -413,7 +413,7 @@ process get_random_seed {
 */
 process prepare_strain_simulation {
 
-    conda "anaconda::python=3.11.5 anaconda::numpy"
+    conda "conda-forge::python=3.11.5 conda-forge::numpy"
 
     input:
     val genomes_total
@@ -442,7 +442,7 @@ process prepare_strain_simulation {
 */
 process strain_simulation_without_gff {
 
-    conda "bioconda::perl-bioperl conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    conda "bioconda::perl-bioperl conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     tuple val(genome_id), path(fasta), val(amount), val(seed), val(OTU), val(NCBI_ID), val(novelty_category)
@@ -539,7 +539,7 @@ process merge_metadata_files {
 
 process cleanup_and_filter_sequences {
 
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     path genome_id_to_file_path

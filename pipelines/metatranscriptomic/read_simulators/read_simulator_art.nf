@@ -23,7 +23,7 @@ workflow read_simulator_art {
 
 process simulate_reads_art {
 
-    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools=1.13 anaconda::python=3.6.13 bioconda::gffutils=0.9 bioconda::bedtools=2.31.1 bioconda::pyfaidx=0.5.3'
+    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools=1.13 conda-forge::python=3.6.13 bioconda::gffutils=0.9 bioconda::bedtools=2.31.1 bioconda::pyfaidx=0.5.3'
 
     //publishDir "${params.outdir}/distributions/final_distributions/", pattern: "${sample_id}_${genome_id}_read_counts.tsv", mode: 'copy'
 

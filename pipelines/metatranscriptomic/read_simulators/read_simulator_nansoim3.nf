@@ -38,7 +38,7 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_nanosim3 {
 
-    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.1.0 bioconda::gffutils=0.9 conda-forge::python==3.7'
+    conda 'conda-forge::scikit-learn=0.21.3=py37* bioconda::nanosim=3.1.0 bioconda::gffutils=0.9 conda-forge::python==3.7'
 
     // ToDo For some reason this does not work
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "*.gz", mode: 'copy'
@@ -116,7 +116,7 @@ process simulate_reads_nanosim3 {
 **/
 process bam_from_reads {
 
-    conda "bioconda::biopython=1.70 anaconda::python=3.5.6 bioconda::samtools=1.13 bioconda::gffutils=0.9"
+    conda "conda-forge::biopython=1.70 conda-forge::python=3.5.6 bioconda::samtools=1.13 bioconda::gffutils=0.9"
 
     publishDir "${params.outdir}/sample_${sample_id}/bam/", pattern: "sample*.bam", mode: 'copy'
 
