@@ -47,7 +47,7 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_fasta_nanosim3 {
 
-    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
+    conda 'conda-forge::scikit-learn=0.21.3=py37* bioconda::nanosim=3.0'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -91,7 +91,7 @@ process simulate_reads_fasta_nanosim3 {
 **/
 process simulate_reads_fastq_nanosim3 {
 
-    conda 'anaconda::scikit-learn=0.21.3=py37hd81dba3_0 bioconda::nanosim=3.0'
+    conda 'conda-forge::scikit-learn=0.21.3=py37* bioconda::nanosim=3.0'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -141,7 +141,7 @@ process simulate_reads_fastq_nanosim3 {
 **/
 process bam_from_reads_fasta {
 
-    conda "bioconda::biopython bioconda::samtools"
+    conda "conda-forge::biopython bioconda::samtools"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
@@ -171,7 +171,7 @@ process bam_from_reads_fasta {
 **/
 process bam_from_reads_fastq {
 
-    conda "bioconda::biopython bioconda::samtools"
+    conda "conda-forge::biopython bioconda::samtools"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)

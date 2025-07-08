@@ -32,7 +32,7 @@ workflow read_simulator_wgsim {
 
 process simulate_reads_wgsim {
 
-    conda 'bioconda::wgsim bioconda::samtools'
+    conda 'conda-forge::biopython bioconda::wgsim bioconda::samtools'
 
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)

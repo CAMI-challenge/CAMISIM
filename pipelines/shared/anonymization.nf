@@ -99,7 +99,7 @@ process shuffle {
  */
 process shuffle_paired_end {
 
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
@@ -138,8 +138,8 @@ process shuffle_paired_end {
  */
 process gs_read_mapping {
 
-    //conda "bioconda::biopython"
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    //conda "conda-forge::biopython"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     tuple val(sample_id), path(tmp_reads_mapping_file), path(genome_locations_file), path(metadata_file)
@@ -309,8 +309,8 @@ process read_start_positions_from_merged_bam {
  */
 process gs_contig_mapping {
 
-    //conda "bioconda::biopython"
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    //conda "conda-forge::biopython"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
@@ -357,8 +357,8 @@ process gs_contig_mapping {
  */
 process pooled_gs_contig_mapping {
 
-    //conda "bioconda::biopython"
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    //conda "conda-forge::biopython"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     path(tmp_contig_mapping_file)

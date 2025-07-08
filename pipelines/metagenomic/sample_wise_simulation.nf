@@ -221,7 +221,7 @@ process merge_bam_files {
  */
 process get_multiplication_factor {
 
-    conda "bioconda::biopython"
+    conda "conda-forge::biopython"
 
     input:
     tuple val(sample_id), path(file_path_distribution), path(genome_locations)

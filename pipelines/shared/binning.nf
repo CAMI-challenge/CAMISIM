@@ -90,7 +90,7 @@ process read_start_positions_from_merged_bam {
  */
 process binning_per_sample {
 
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     tuple val(sample_id), path(gsa), path(read_positions), path(genome_locations_file), path(metadata_file)
@@ -124,7 +124,7 @@ process binning_per_sample {
  */
 process binning_pooled_gsa {
 
-    conda "conda-forge::biopython=1.83 anaconda::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
     path(gsa)

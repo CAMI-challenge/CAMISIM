@@ -36,7 +36,7 @@ workflow metagenomesimulation_from_profile {
  */
 process get_genomes {
 
-    conda 'bioconda::biom-format==2.1.6 conda-forge::ete3==3.1.2 anaconda::python==3.6.2'
+    conda 'bioconda::biom-format==2.1.6 conda-forge::ete3==3.1.2 conda-forge::python==3.6.2'
 
     input:
     path(biom_profile)

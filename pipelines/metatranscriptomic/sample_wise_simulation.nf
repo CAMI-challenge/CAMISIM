@@ -121,7 +121,7 @@ workflow sample_wise_simulation {
 
 process get_final_gene_distr {
 
-    conda 'anaconda::python=3.6'
+    conda 'conda-forge::python=3.6'
 
     publishDir "${params.outdir}/distributions/final_distributions/", pattern: "${genome_id}_${sample_id}_final_distribution.tsv", mode: 'copy'
 
