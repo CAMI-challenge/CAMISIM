@@ -1,7 +1,12 @@
 # CAMISIM
 
-CAMISIM is a software to model abundance distributions of microbial communities and to simulate corresponding shotgun metagenome datasets.
+CAMISIM is a software to model abundance distributions of microbial communities and to simulate corresponding shotgun metagenome datasets.\
 It was mainly developed for the [Critical Assessment of Metagenome Annotation (CAMI)](http://microbiome-cosi.org/cami) challenge, but should be suitable for general use. Please don't hesitate to [open a new issue](https://github.com/CAMI-challenge/CAMISIM/issues) if you run into problems or need help.
+
+### CAMISIM 2.0
+CAMISIM received a major update to version 2.0, using nextflow. You can still use the old python standalone using the tag 1.31-final, it will not receive updates however.\
+You can use the script "convert_config.py" to convert your CAMISIM1 config file to CAMISIM2 (no guarantees for correctness, please check yourself).\
+This version has been tested, but if you encounter any unforeseen difficulties or differences from what you expect your simulation to look like, please raise an Issue.
 
 ### Documentation 
 * [User manual](https://github.com/CAMI-challenge/CAMISIM/wiki/User-manual)

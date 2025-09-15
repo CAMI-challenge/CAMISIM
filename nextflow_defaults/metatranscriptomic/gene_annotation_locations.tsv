@@ -1,0 +1,3 @@
+Genome1	nextflow_defaults/metatranscriptomic/data/e_coli/Escherichia_coli_w_gca_000184185.ASM18418v1.58.gff3
+Genome2	nextflow_defaults/metatranscriptomic/data/lactococcus_lactis/Lactococcus_lactis_gca_002563475.ASM256347v1.58.gff3
+Genome3	nextflow_defaults/metatranscriptomic/data/Streptococcus_parasanguinis/Streptococcus_parasanguinis_gca_002860845.ASM286084v1.58.gff3
