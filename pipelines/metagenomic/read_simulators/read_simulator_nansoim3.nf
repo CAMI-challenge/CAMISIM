@@ -104,7 +104,6 @@ process simulate_reads_fastq_nanosim3 {
     script:
     total_size = params.size
     profile = params.base_profile_name
-    basecaller = params.basecaller
     number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     // nanosim seed cannot be > 2**32 -1
@@ -123,7 +122,7 @@ process simulate_reads_fastq_nanosim3 {
     **/
 
     """
-    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear -b ${basecaller} --fastq
+    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
     for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
