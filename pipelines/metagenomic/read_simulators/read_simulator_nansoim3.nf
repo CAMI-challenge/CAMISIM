@@ -47,7 +47,7 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_fasta_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.21.3=py37* bioconda::nanosim=3.0'
+    conda 'conda-forge::scikit-learn=0.22.1 conda-forge::numpy=1.21.5 bioconda::nanosim=3.2'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -91,7 +91,7 @@ process simulate_reads_fasta_nanosim3 {
 **/
 process simulate_reads_fastq_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.21.3=py37* bioconda::nanosim=3.0'
+    conda 'conda-forge::scikit-learn=0.22.1 conda-forge::numpy=1.21.5 bioconda::nanosim=3.2'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
