@@ -266,11 +266,14 @@ class GoldStandardFileFormat():
             if nanosim_real_fastq and not metatranscriptomic:
 
                 # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
-                tmp = read_id.rsplit('_', 6)[0]
+                tmp = read_id.rsplit('_', 7)[0]
                 
                 # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
                 # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
-                sequence_id = self.fixed_name[tmp]
+                try:
+                    sequence_id = self.fixed_name[tmp]
+                except KeyError:
+                    raise KeyError("Genome name mapping not succesful, Nanosim interface might have changed")
             elif wgsim:
                 # Change in CAMISIM 2:
                 # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:

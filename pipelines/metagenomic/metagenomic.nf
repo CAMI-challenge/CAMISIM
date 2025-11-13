@@ -156,12 +156,7 @@ workflow metagenomic {
     
 
     if(params.type.equals("nanosim3")) {
-
-        if(params.read_length != null) {
-            read_length_ch = params.read_length
-        } else {
-            read_length_ch = calculate_Nanosim_read_length(params.base_profile_name) // this takes very long
-        }
+        read_length_ch = calculate_Nanosim_read_length(params.base_profile_name) // this takes very long
     } else {
         read_length_ch = params.profile_read_length
     }
@@ -266,7 +261,7 @@ process download_NCBI_taxdump {
 */
 process calculate_Nanosim_read_length {
     // TODO: Packages which are needed multiple times should be loaded only once
-    conda 'conda-forge::scikit-learn=0.21.3=py37* conda-forge::joblib=1.2.0'
+    conda 'conda-forge::scikit-learn=0.23 conda-forge::numpy=1.23 conda-forge::joblib=1.2.0'
 
     input:
     val profile
