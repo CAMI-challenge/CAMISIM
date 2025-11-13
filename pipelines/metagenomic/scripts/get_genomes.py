@@ -182,10 +182,26 @@ def transform_lineage(lineage, ranks, max_rank):
                     new_lineage.append(taxid) # retry if space in name destroys ID
     return new_lineage[::-1] # invert list, so lowest rank appears first (last in BIOM)
 
+
+def truncated_geometric(p, l, u, max_tries=100000):
+    if not (0 < p < 1) or l > u:
+        raise ValueError("Invalid parameters: p must be in (0,1) and l <= u.")
+
+    for _ in range(max_tries):
+        k = np_rand.geometric(p)
+        if l <= k <= u:
+            return k
+
+    raise RuntimeError(
+        f"Failed to draw a sample in the range [{l}, {u}] within {max_tries} tries. "
+        f"The probability of a draw falling in this range may be too low for p={p}."
+    )
+
+
 """
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_strains, debug, no_replace, max_genomes):
+def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, min_strains, max_strains, debug, no_replace, max_genomes):
     unmatched_otus = []
     otu_genome_map = {}
     warnings = []
@@ -212,12 +228,12 @@ def map_otus_to_genomes(profile, per_rank_map, ranks, max_rank, mu, sigma, max_s
                 warnings.append("For OTU %s no genomes have been found on rank %s with ID %s" % (otu, rank, tax_id))
                 continue # warning will appear later if rank is too high
             available_genomes = genomes[tax_id]
-            strains_to_draw = max((np_rand.geometric(2./max_strains) % max_strains),1)
+            strains_to_draw = truncated_geometric(2. / max_strains, min_strains, max_strains)
             if len(available_genomes) >= strains_to_draw:
                 used_indices = np_rand.choice(len(available_genomes),strains_to_draw,replace=False)
-                used_genomes = set([available_genomes[i] for i in used_indices])
+                used_genomes = [available_genomes[i] for i in used_indices]
             else:
-                used_genomes = set(available_genomes) # if not enough genomes: use all
+                used_genomes = available_genomes[:] # if not enough genomes: use all
             genome_set_size += len(used_genomes) # how many genomes are used
             log_normal_vals = np_rand.lognormal(mu,sigma, len(used_genomes))
             sum_log_normal = sum(log_normal_vals)
@@ -377,13 +393,14 @@ if __name__ == "__main__":
     seed = int(sys.argv[4])
     mu = int(sys.argv[5])
     sigma = int(sys.argv[6])
-    max_strains = int(sys.argv[7])
-    debug = bool(sys.argv[8])
-    no_replace = bool(sys.argv[9])
-    fill_up = bool(sys.argv[10])
-    script = sys.argv[11]
-    genomes_out_dir = sys.argv[12]
-    additional_references = sys.argv[13]
+    min_strains = int(sys.argv[7])
+    max_strains = int(sys.argv[8])
+    debug = bool(sys.argv[9])
+    no_replace = bool(sys.argv[10])
+    fill_up = bool(sys.argv[11])
+    script = sys.argv[12]
+    genomes_out_dir = sys.argv[13]
+    additional_references = sys.argv[14]
 
     if(additional_references=="None"):
         additional_references = None
@@ -397,7 +414,7 @@ if __name__ == "__main__":
     tax_profile = read_taxonomic_profile(biom_profile, no_samples)
     genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references)
     per_rank_map = get_genomes_per_rank(genomes_map, RANKS, MAX_RANK)
-    otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, max_strains, debug, no_replace, total_genomes)
+    otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, RANKS, MAX_RANK, mu, sigma, min_strains, max_strains, debug, no_replace, total_genomes)
 
     if (fill_up and len(unmatched_otus) > 0):
         otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug)
