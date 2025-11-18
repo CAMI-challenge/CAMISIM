@@ -211,13 +211,14 @@ workflow metagenomic {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
     }
 
-    generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())    
-
-    // if requested, anonymize reads, gsa and pooled gsa
-    if(params.anonymization) {
-        anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
-    } else { // if no anonymization is requested, create binning gold standard
-        binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+    if (params.pooled_gsa) {
+        generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+        // if requested, anonymize reads, gsa and pooled gsa
+        if(params.anonymization) {
+            anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+        } else { // if no anonymization is requested, create binning gold standard
+            binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+        }
     }
 }
 
@@ -294,7 +295,7 @@ process calculate_Nanosim_read_length {
 /*
 * This process merges all given bam files specified in the pooled_gsa parameter.
 * Takes:
-*     A list with the paths to all bam files, that should be merged, if the condition is fullfilled.
+*     A list with the paths to all bam files that should be merged if the condition is fulfilled.
 * Output:
 *     The path to the merged bam file.
  */
@@ -312,6 +313,7 @@ process merge_bam_files {
     file_name = 'merged.bam'
     compression = 5
     memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
 
     bam_to_merge = ''
 
@@ -319,13 +321,13 @@ process merge_bam_files {
 
         bam_file_name = (String) it
         sample_id = bam_file_name.split('_')[1][0].toInteger()
-        
+
         //if(sample_id in params.pooled_gsa){
         bam_to_merge = bam_to_merge.concat(' ').concat(bam_file_name)
         //}
     }
     """
-    samtools merge -u - ${bam_to_merge} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools merge -u - ${bam_to_merge} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
     """
 }
 
@@ -350,6 +352,7 @@ process generate_pooled_gold_standard_assembly {
     file_name = 'gsa_pooled.fasta'
     """
     cat ${reference_fasta_files} > reference.fasta
+    samtools faidx reference.fasta
     perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
