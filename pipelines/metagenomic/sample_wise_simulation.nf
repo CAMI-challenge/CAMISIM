@@ -147,6 +147,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
+    samtools faidx ${reference_fasta_file}
     perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
@@ -173,10 +174,10 @@ process get_fasta_for_sample {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
-    # cat ${fasta_files} > ${file_name}
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${fasta_files} | sort | xargs cat > ${file_name}
+    printf '%s\\n' ${fasta_files} | sort | xargs -r cat -- > ${file_name}
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${file_name}
@@ -205,8 +206,9 @@ process merge_bam_files {
     file_name = 'sample_'.concat(sample_id.toString()).concat('.bam')
     compression = 5
     memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
     """
-    samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools merge -u - ${bam_files} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
     samtools index ${file_name}
     """
 }
@@ -301,13 +303,10 @@ process get_fastq_for_sample_single_end {
 
     script:
     """
-    # cat ${read_files} > sample_${sample_id}.fq
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${read_files} | sort | xargs cat > sample_${sample_id}.fq
-
-    # Compress the concatenated files
-    gzip sample_${sample_id}.fq
+    printf '%s\\n' ${read_files} | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}.fq.gz
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
     cp sample_${sample_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
@@ -324,16 +323,11 @@ process get_fastq_for_sample_paired_end {
 
     script:
     """
-    # cat ${first_read_files} > sample_${sample_id}_01.fq
-    # cat ${second_read_files} > sample_${sample_id}_02.fq
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${first_read_files} | sort | xargs cat > sample_${sample_id}_01.fq
-    ls -1 ${second_read_files} | sort | xargs cat > sample_${sample_id}_02.fq
-
-    # Compress the concatenated files
-    gzip sample_${sample_id}_01.fq
-    gzip sample_${sample_id}_02.fq
+    printf '%s\\n' ${first_read_files}  | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}_01.fq.gz
+    printf '%s\\n' ${second_read_files} | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}_02.fq.gz
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
     cp sample_${sample_id}_01.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
