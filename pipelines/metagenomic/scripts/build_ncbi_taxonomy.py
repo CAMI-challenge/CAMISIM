@@ -12,6 +12,7 @@ LEGACY_RANKS = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', '
 FILENAME_TAXONOMIC_PROFILE = "taxonomic_profile_{sample_index}.txt"
 TAXONOMIC_PROFILE_VERSION = "0.9.2"
 
+IS_LEGACY = False
 ROOTS = ["acellular root", "cellular root", "other entries"]
 TOP   = ["realm", "domain"]
 TAIL  = ["kingdom", "phylum", "class", "order", "family", "genus", "species", "strain"]
@@ -43,11 +44,14 @@ def read_names_file(file_path_ncbi_names):
 
 
 def build_ncbi_taxonomy(file_path_ncbi_nodes):
+    global IS_LEGACY
     with open(file_path_ncbi_nodes) as f:
         for line in f:
             taxid, parent_taxid, rank, *_ = [el.strip() for el in line.split('|')]
             TAXID_TO_PARENT_TAXID[taxid] = parent_taxid
             TAXID_TO_RANK[taxid] = rank.lower()
+    if "acellular root" not in set(TAXID_TO_RANK.values()):
+        IS_LEGACY = True
 
 
 # read NCBI merged file
@@ -68,9 +72,9 @@ def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_fi
     """
 
     for file_path in list_of_file_paths:
-        m = re.search(r'_([0-9]+)\.tsv$', os.path.basename(file_path))
+        m = re.search(r'_([0-9]+)\.(?:tsv|txt)$', os.path.basename(file_path))
         if not m:
-            raise ValueError("Abundance file path does not end with _<number>.tsv: {}".format(file_path))
+            raise ValueError("Abundance file path does not end with  _<number>.txt or _<number>.tsv: {}".format(file_path))
         index_abundance = int(m.group(1))
         community_abundance = parse_file(file_path)
         file_path_output = os.path.join("./", FILENAME_TAXONOMIC_PROFILE.format(sample_index=index_abundance))
@@ -197,7 +201,7 @@ def stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_
     # Final output ordering
     master_rank_order = ROOTS + TOP + TAIL
 
-    if "acellular root" not in set(TAXID_TO_RANK.values()):
+    if IS_LEGACY:
         ranks_map = {
             "legacy": LEGACY_RANKS,
         }
@@ -304,7 +308,7 @@ def stream_tp_header(output_stream, sample_id):
     """
     output_stream.write("@SampleID:{}\n".format(sample_id))
     output_stream.write("@Version:{}\n".format(TAXONOMIC_PROFILE_VERSION))
-    if "acellular root" not in set(TAXID_TO_RANK.values()):
+    if IS_LEGACY:
         output_stream.write("@Ranks:{ranks}\n\n".format(ranks="|".join(LEGACY_RANKS)))
     else:
         output_stream.write("@Ranks:" + ",".join(ROOTS) + "|" + ",".join(TOP) + "|" + "|".join(TAIL) + "\n")
@@ -319,7 +323,7 @@ def get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent, gen
     }
 
     is_legacy = False
-    if "acellular root" not in set(TAXID_TO_RANK.values()):
+    if IS_LEGACY:
         is_legacy = True
         percent_by_rank_by_taxid = {
             "legacy": {rank: {} for rank in LEGACY_RANKS}
@@ -444,8 +448,11 @@ def get_lineage_of_legal_ranks(taxid, default_value=None):
     """
 
     taxid = get_updated_taxid(taxid)
-    is_virus = is_descendant_of(taxid, "10239")
-    ranks = VIRUS_RANKS if is_virus else CELLULAR_RANKS
+    if IS_LEGACY:
+        ranks = LEGACY_RANKS
+    else:
+        is_virus = is_descendant_of(taxid, "10239")
+        ranks = VIRUS_RANKS if is_virus else CELLULAR_RANKS
     lineage_dict = {rank: default_value for rank in ranks}
     while taxid != "1":
         if taxid not in TAXID_TO_RANK or taxid not in TAXID_TO_PARENT_TAXID:
