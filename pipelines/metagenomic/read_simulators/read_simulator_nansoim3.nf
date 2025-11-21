@@ -47,7 +47,7 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_fasta_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.22.1 conda-forge::numpy=1.21.5 bioconda::nanosim=3.2'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -57,10 +57,10 @@ process simulate_reads_fasta_nanosim3 {
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
     
     script:
-    total_size = params.size
+    total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
     profile = params.base_profile_name
-    number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
-    number_of_reads = number_of_reads.round(0).toInteger()
+    number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
+    number_of_reads = number_of_reads.round(0).toLong()
     // nanosim seed cannot be > 2**32 -1
     Long used_seed = (seed as Long) % 2**32 - 1
 
@@ -91,7 +91,7 @@ process simulate_reads_fasta_nanosim3 {
 **/
 process simulate_reads_fastq_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.22.1 conda-forge::numpy=1.21.5 bioconda::nanosim=3.2'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -102,23 +102,24 @@ process simulate_reads_fastq_nanosim3 {
     tuple val(sample_id), path("*_aligned_reads.fastq")
     
     script:
-    total_size = params.size
+    total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
     profile = params.base_profile_name
-    number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
-    number_of_reads = number_of_reads.round(0).toInteger()
+    number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
+    number_of_reads = number_of_reads.round(0).toLong()
     // nanosim seed cannot be > 2**32 -1
     Long used_seed = (seed as Long) % 2**32 - 1
 
     /**
-    String log = "---- sample id: ".concat(sample_id)
-    log = log.concat("  genome id: ").concat(genome_id)
-    log = log.concat("   fasta file: ").concat(fasta_file.baseName)
-    log = log.concat("  abundance: ").concat(abundance)
-    log = log.concat("    seed: ").concat(seed)
-    log = log.concat("    used_seed: ").concat(Long.toString(used_seed))
-    log = log.concat("    number_of_reads: ").concat(Integer.toString(number_of_reads))
-    log = log.concat("    profile: ").concat(profile)
-    print(log)
+    echo "sample_id: ${sample_id}" > debug_inputs.txt
+    echo "genome_id: ${genome_id}" >> debug_inputs.txt
+    echo "fasta_file: ${fasta_file}" >> debug_inputs.txt
+    echo "abundance: ${abundance}" >> debug_inputs.txt
+    echo "read_length_ch: ${read_length_ch}" >> debug_inputs.txt
+    echo "seed: ${seed}" >> debug_inputs.txt
+    echo "used_seed: ${used_seed}" >> debug_inputs.txt
+    echo "total_size: ${total_size}" >> debug_inputs.txt
+    echo "number_of_reads: ${number_of_reads}" >> debug_inputs.txt
+    echo "profile: ${profile}" >> debug_inputs.txt
     **/
 
     """
