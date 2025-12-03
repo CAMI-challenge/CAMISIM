@@ -48,12 +48,14 @@ workflow sample_wise_simulation {
 
         // for read simulator nanosim, the abundance has to be normalised with the size in number of bases
         if(params.type.equals("nanosim3") or params.type.equals("wgsim")) {
-            
+
 
             // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
             genome_location_distribution_ch = genome_location_ch.combine(distribution_file_ch, by: 0)
 
-            distribution_file_ch = normalise_abundance_to_size(count_bases(genome_location_distribution_ch))
+            counted_bases_ch = count_bases(genome_location_distribution_ch)
+            distribution_file_ch = normalise_abundance_to_size(counted_bases_ch)
+            genome_size_ch = counted_bases_ch.map { tuple(it[0], it[2], it[3].toString().trim()) }
 
         }
 
@@ -90,7 +92,8 @@ workflow sample_wise_simulation {
         } else if(params.type.equals("nanosim3")) {
 
             // simulate the reads with nanosim3
-            read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
+            location_distribution_seed_size_ch = location_distribution_seed_ch.combine(genome_size_ch, by:[0,1])
+            read_simulator_nanosim3(location_distribution_seed_size_ch, read_length_ch)
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]
 
