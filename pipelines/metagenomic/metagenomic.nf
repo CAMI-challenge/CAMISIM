@@ -605,9 +605,9 @@ process get_seed {
 
     output:
     path ('seed.txt')
-    path ('seed_read_anonymisation.txt') optional true
-    path ('seed_gsa_anonymisation.txt') optional true
-    path ('seed_pooled_gsa_anonymisation.txt') optional true
+    path ('seed_read_anonymisation.txt'), optional: true
+    path ('seed_gsa_anonymisation.txt'), optional: true
+    path ('seed_pooled_gsa_anonymisation.txt'), optional: true
 
     script:
     count_samples = params.number_of_samples
