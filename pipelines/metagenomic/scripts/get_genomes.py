@@ -184,7 +184,7 @@ def transform_lineage(lineage, ranks, max_rank):
 
 
 def truncated_geometric(p, l, u, max_tries=100000):
-    if not (0 < p < 1) or l > u:
+    if not (0 < p <= 1) or l > u:
         raise ValueError("Invalid parameters: p must be in (0,1) and l <= u.")
 
     for _ in range(max_tries):
@@ -385,6 +385,11 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
     #    config.write(cfg)
     #return cfg_path
 
+
+def str2bool(x):
+    return str(x).lower() in ("1", "true", "yes", "y")
+
+
 if __name__ == "__main__":
 
     biom_profile = sys.argv[1]
@@ -395,9 +400,9 @@ if __name__ == "__main__":
     sigma = int(sys.argv[6])
     min_strains = int(sys.argv[7])
     max_strains = int(sys.argv[8])
-    debug = bool(sys.argv[9])
-    no_replace = bool(sys.argv[10])
-    fill_up = bool(sys.argv[11])
+    debug = str2bool(sys.argv[9])
+    no_replace = str2bool(sys.argv[10])
+    fill_up = str2bool(sys.argv[11])
     script = sys.argv[12]
     genomes_out_dir = sys.argv[13]
     additional_references = sys.argv[14]
