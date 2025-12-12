@@ -98,13 +98,10 @@ def get_genomes_per_rank(genomes_map):
                     continue
                 if check_rank in per_rank_map: # if we are a legal rank
                     rank_map = per_rank_map[ranks_lin[tax_id]]
-                    if tax_id in rank_map: # tax id already has a genome
-                        for strain in genomes_map[genome][1]:
-                            rank_map[tax_id].append((strain,genome)) # add http address
-                    else:
+                    if tax_id not in rank_map: # tax id doesn't have a genome yet
                         rank_map[tax_id] = []
-                        for strain in genomes_map[genome][1]:
-                            rank_map[tax_id].append((strain,genome)) # add http address
+                    for strain in genomes_map[genome][1]:
+                        rank_map[tax_id].append((strain,genome)) # add http address
         except ValueError as e:
 #           log.warning(e)
            print(e) # ToDo
@@ -192,13 +189,10 @@ def map_otus_to_genomes(profile, per_rank_map, mu, sigma, min_strains, max_strai
             if RANKS.index(rank) > RANKS.index(max_rank):
                 warnings.append("Rank %s of OTU %s too high, no matching genomes found" % (rank, otu))
                 warnings.append("Full lineage was %s, mapped from BIOM lineage %s" % (lineage, lin))
-                unmatched_otus.append(otu)
                 break
-            genomes = per_rank_map[rank]
-            if tax_id not in genomes:
-                warnings.append("For OTU %s no genomes have been found on rank %s with ID %s" % (otu, rank, tax_id))
-                continue # warning will appear later if rank is too high
-            available_genomes = genomes[tax_id]
+            available_genomes = per_rank_map[rank].get(tax_id)
+            if not available_genomes:
+                continue
             strains_to_draw = truncated_geometric(2. / max_strains, min_strains, max_strains)
             if len(available_genomes) >= strains_to_draw:
                 used_indices = np_rand.choice(len(available_genomes),strains_to_draw,replace=False)
@@ -223,6 +217,8 @@ def map_otus_to_genomes(profile, per_rank_map, mu, sigma, min_strains, max_strai
                             if (path, genome_id) in per_rank_map[new_rank][taxid]:
                                 per_rank_map[new_rank][taxid].remove((path,genome_id))
             break # genome(s) found: we can break
+        if otu not in otu_genome_map:
+            unmatched_otus.append(otu)
     #if len(warnings) > 0:
     #    _log.warning("Some OTUs could not be mapped")
     #    if debug:
