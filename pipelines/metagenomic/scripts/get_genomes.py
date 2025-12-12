@@ -183,7 +183,9 @@ def map_otus_to_genomes(profile, per_rank_map, mu, sigma, min_strains, max_strai
         if len(lineage) == 0:
             warnings.append("No matching NCBI ID for otu %s, scientific name %s" % (otu, lin[-1].split("__")[-1]))
             unmatched_otus.append(otu)
+            continue
         lineage_ranks = ncbi.get_rank(lineage)
+        found_genome = False
         for tax_id in lineage: # lineage sorted ascending
             rank = lineage_ranks[tax_id]
             if RANKS.index(rank) > RANKS.index(max_rank):
@@ -216,8 +218,9 @@ def map_otus_to_genomes(profile, per_rank_map, mu, sigma, min_strains, max_strai
                         for taxid in per_rank_map[new_rank]:
                             if (path, genome_id) in per_rank_map[new_rank][taxid]:
                                 per_rank_map[new_rank][taxid].remove((path,genome_id))
+            found_genome = True
             break # genome(s) found: we can break
-        if otu not in otu_genome_map:
+        if not found_genome:
             unmatched_otus.append(otu)
     #if len(warnings) > 0:
     #    _log.warning("Some OTUs could not be mapped")
@@ -350,20 +353,6 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
     #with open(cfg_path, 'w+') as cfg:
     #    config.write(cfg)
     #return cfg_path
-
-
-def get_db_info(ncbi):
-    """Get information about the current database"""
-    try:
-        conn = sqlite3.connect(ncbi.dbfile)
-        cursor = conn.cursor()
-        # Check if there's any data in the database
-        cursor.execute("SELECT COUNT(*) FROM species")
-        count = cursor.fetchone()[0]
-        conn.close()
-        return count > 0
-    except:
-        return False
 
 
 def str2bool(x):
