@@ -62,7 +62,7 @@ process simulate_reads_fasta_nanosim3 {
     number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toLong()
     // nanosim seed cannot be > 2**32 -1
-    Long used_seed = (seed as Long) % 2**32 - 1
+    Long used_seed = ((seed as Long) % (2**32 - 1))
 
     /**
     String log = "---- sample id: ".concat(sample_id)
@@ -107,7 +107,8 @@ process simulate_reads_fastq_nanosim3 {
     number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toLong()
     // nanosim seed cannot be > 2**32 -1
-    Long used_seed = (seed as Long) % 2**32 - 1
+    Long used_seed = ((seed as Long) % (2**32 - 1))
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     /**
     echo "sample_id: ${sample_id}" > debug_inputs.txt
@@ -123,7 +124,7 @@ process simulate_reads_fastq_nanosim3 {
     **/
 
     """
-    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq
+    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
     for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
