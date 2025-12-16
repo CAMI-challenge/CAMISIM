@@ -50,7 +50,7 @@ process simulate_reads_fasta_nanosim3 {
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size)
     val(read_length_ch)
     
     output:
@@ -59,8 +59,8 @@ process simulate_reads_fasta_nanosim3 {
     script:
     total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
     profile = params.base_profile_name
-    number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
-    number_of_reads = number_of_reads.round(0).toLong()
+    coverage = total_size.multiply(new BigDecimal(abundance.toString())).divide(new BigDecimal(genome_size.toString()), java.math.MathContext.DECIMAL64)
+    coverage = coverage.stripTrailingZeros()
     // nanosim seed cannot be > 2**32 -1
     Long used_seed = (seed as Long) % 2**32 - 1
 
@@ -71,13 +71,13 @@ process simulate_reads_fasta_nanosim3 {
     log = log.concat("  abundance: ").concat(abundance)
     log = log.concat("    seed: ").concat(seed)
     log = log.concat("    used_seed: ").concat(Long.toString(used_seed))
-    log = log.concat("    number_of_reads: ").concat(Integer.toString(number_of_reads))
+    log = log.concat("    coverage: ").concat(coverage.toPlainString())
     log = log.concat("    profile: ").concat(profile)
     print(log)
     **/
 
     """
-    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear
     """
 }
 
@@ -94,7 +94,7 @@ process simulate_reads_fastq_nanosim3 {
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size)
     val(read_length_ch)
     
     output:
@@ -104,8 +104,8 @@ process simulate_reads_fastq_nanosim3 {
     script:
     total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
     profile = params.base_profile_name
-    number_of_reads = total_size * abundance.toFloat() / read_length_ch.toFloat()
-    number_of_reads = number_of_reads.round(0).toLong()
+    coverage = total_size.multiply(new BigDecimal(abundance.toString())).divide(new BigDecimal(genome_size.toString()), java.math.MathContext.DECIMAL64)
+    coverage = coverage.stripTrailingZeros()
     // nanosim seed cannot be > 2**32 -1
     Long used_seed = (seed as Long) % 2**32 - 1
 
@@ -118,12 +118,12 @@ process simulate_reads_fastq_nanosim3 {
     echo "seed: ${seed}" >> debug_inputs.txt
     echo "used_seed: ${used_seed}" >> debug_inputs.txt
     echo "total_size: ${total_size}" >> debug_inputs.txt
-    echo "number_of_reads: ${number_of_reads}" >> debug_inputs.txt
+    echo "coverage: ${coverage}" >> debug_inputs.txt
     echo "profile: ${profile}" >> debug_inputs.txt
     **/
 
     """
-    simulator.py genome -n ${number_of_reads} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
     for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
