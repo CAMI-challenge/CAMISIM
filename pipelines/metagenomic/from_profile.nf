@@ -36,6 +36,8 @@ workflow metagenomesimulation_from_profile {
  */
 process get_genomes {
 
+    cpus 1
+
     conda "biom-format=2.1.17 ete4=4.3.0 python=3.11 h5py"
 
     input:
@@ -69,7 +71,7 @@ process get_genomes {
     mkdir --parents ${params.outdir}/source_genomes/
     mkdir --parents ${params.outdir}/internal/
 
-    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references} ${ncbi_taxdump_file} ${max_rank}
+    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references} ${ncbi_taxdump_file} "${max_rank}"
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """

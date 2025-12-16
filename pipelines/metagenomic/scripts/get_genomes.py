@@ -33,8 +33,6 @@ def read_taxonomic_profile(biom_profile, no_samples = None):
             no_samples = len(samples)
         #_log.warning("Using the first %s samples" % no_samples)
 
-    number_of_samples = str(no_samples)
-    
     profile = {}
     for otu in ids:
         lineage = table.metadata(otu,axis="observation")["taxonomy"]
@@ -83,7 +81,7 @@ def read_genomes_list(genomes_path, additional_file = None):
 """
 Given all available genomes, creates a map sorted by ranks of available genomes on that particular rank, ordered by their ncbi ids
 """
-def get_genomes_per_rank(genomes_map):
+def get_genomes_per_rank(genomes_map, ncbi):
     per_rank_map = {}
     for rank in RANKS:
         per_rank_map[rank] = {}
@@ -104,7 +102,7 @@ def get_genomes_per_rank(genomes_map):
                         rank_map[tax_id].append((strain,genome)) # add http address
         except ValueError as e:
 #           log.warning(e)
-           print(e) # ToDo
+            print(e) # ToDo
     return per_rank_map
 
 """
@@ -119,19 +117,11 @@ def sort_by_abundance(profile):
     sorted_keys = sorted(sorted_keys, reverse=True)
     return [key for ab,key in sorted_keys]
 
-def all_genomes(per_rank_map):
-    added_genomes = set()
-    for rank in per_rank_map:
-        for taxid in per_rank_map[rank]:
-            for path, genome_id in per_rank_map[rank][taxid]:
-                if path not in added_genomes:
-                    added_genomes.add(path)
-#log.info(len(added_genomes))
 
 """
 Given a BIOM lineage, create a NCBI tax id lineage
 """
-def transform_lineage(lineage):
+def transform_lineage(lineage, ncbi):
     new_lineage = []
     for member in lineage:
         name = member.split("__")[-1] # name is on the right hand side
@@ -166,68 +156,90 @@ def truncated_geometric(p, l, u, max_tries=100000):
     )
 
 
+def set_abundances(otu_genome_map, abundances, used_genomes, otu, tax_id, mu, sigma):
+    log_normal_vals = np_rand.lognormal(mu, sigma, len(used_genomes))
+    sum_log_normal = sum(log_normal_vals)
+    for i, (path, genome_id) in enumerate(used_genomes):
+        otu_id = otu + "." + str(i)
+        otu_genome_map[otu_id] = (tax_id, genome_id, path, [])  # taxid, genomeid, http path, abundances per sample
+        relative_abundance = log_normal_vals[i] / sum_log_normal
+        for abundance in abundances:  # calculate abundance per sample
+            current_abundance = relative_abundance * abundance
+            otu_genome_map[otu_id][-1].append(current_abundance)
+
+
+def pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace):
+    rank = ncbi.get_rank([tax_id])[tax_id]
+    if RANKS.index(rank) > RANKS.index(max_rank):
+        return []
+    available_genomes = per_rank_map[rank].get(tax_id)
+    if not available_genomes:
+        return []
+    strains_to_draw = truncated_geometric(2. / max_strains, min_strains, max_strains)
+    if len(available_genomes) >= strains_to_draw:
+        used_indices = np_rand.choice(len(available_genomes), strains_to_draw, replace=False)
+        used_genomes = [available_genomes[i] for i in used_indices]
+    else:
+        used_genomes = available_genomes[:]  # if not enough genomes: use all
+
+    if no_replace: # sampling without replacement:
+        for path, genome_id in used_genomes:
+            for new_rank in per_rank_map:
+                for taxid in per_rank_map[new_rank]:
+                    if (path, genome_id) in per_rank_map[new_rank][taxid]:
+                        per_rank_map[new_rank][taxid].remove((path, genome_id))
+
+    return used_genomes
+
+
 """
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(profile, per_rank_map, mu, sigma, min_strains, max_strains, debug, no_replace, max_genomes, max_rank):
+def map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_strains, no_replace, max_genomes, max_rank, ncbi):
     unmatched_otus = []
+    matched_otus = set()
     otu_genome_map = {}
-    warnings = []
-    sorted_otus = sort_by_abundance(profile)
+    sorted_otus = sort_by_abundance(tax_profile)
     genome_set_size = 0
+
+    otu_to_lineage = {}
+    otus_list = []
+    max_lineage_len = 0
     for otu in sorted_otus:
-        if genome_set_size >= max_genomes and no_replace: #cancel if no genomes are available anymore
-            break
-        lin, abundances = profile[otu]
-        lineage = transform_lineage(lin)
-        if len(lineage) == 0:
-            warnings.append("No matching NCBI ID for otu %s, scientific name %s" % (otu, lin[-1].split("__")[-1]))
+        lin, _ = tax_profile[otu]
+        otu_to_lineage[otu] = transform_lineage(lin, ncbi)
+        if len(otu_to_lineage[otu]) == 0:
             unmatched_otus.append(otu)
             continue
-        lineage_ranks = ncbi.get_rank(lineage)
-        found_genome = False
-        for tax_id in lineage: # lineage sorted ascending
-            rank = lineage_ranks[tax_id]
-            if RANKS.index(rank) > RANKS.index(max_rank):
-                warnings.append("Rank %s of OTU %s too high, no matching genomes found" % (rank, otu))
-                warnings.append("Full lineage was %s, mapped from BIOM lineage %s" % (lineage, lin))
+        otus_list.append(otu)
+        max_lineage_len = max(max_lineage_len, len(otu_to_lineage[otu]))
+
+    for idx_lineage in range(max_lineage_len + 1):
+        for otu in otus_list:
+            if genome_set_size >= max_genomes and no_replace:  # cancel if no genomes are available anymore
                 break
-            available_genomes = per_rank_map[rank].get(tax_id)
-            if not available_genomes:
+            if otu in matched_otus:
                 continue
-            strains_to_draw = truncated_geometric(2. / max_strains, min_strains, max_strains)
-            if len(available_genomes) >= strains_to_draw:
-                used_indices = np_rand.choice(len(available_genomes),strains_to_draw,replace=False)
-                used_genomes = [available_genomes[i] for i in used_indices]
-            else:
-                used_genomes = available_genomes[:] # if not enough genomes: use all
-            genome_set_size += len(used_genomes) # how many genomes are used
-            log_normal_vals = np_rand.lognormal(mu,sigma, len(used_genomes))
-            sum_log_normal = sum(log_normal_vals)
-            i = 0
-            for path, genome_id in used_genomes:
-                otu_id = otu + "." + str(i)
-                otu_genome_map[otu_id] = (tax_id, genome_id, path, []) # taxid, genomeid, http path, abundances per sample
-                relative_abundance = log_normal_vals[i]/sum_log_normal
-                i += 1
-                for abundance in abundances: # calculate abundance per sample
-                    current_abundance = relative_abundance * abundance
-                    otu_genome_map[otu_id][-1].append(current_abundance)
-                if (no_replace): # sampling without replacement:
-                    for new_rank in per_rank_map:
-                        for taxid in per_rank_map[new_rank]:
-                            if (path, genome_id) in per_rank_map[new_rank][taxid]:
-                                per_rank_map[new_rank][taxid].remove((path,genome_id))
-            found_genome = True
-            break # genome(s) found: we can break
-        if not found_genome:
+
+            try:
+                tax_id = otu_to_lineage[otu][idx_lineage]
+            except IndexError:
+                continue
+
+            used_genomes = pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace)
+            if not used_genomes:
+                continue
+
+            genome_set_size += len(used_genomes)  # how many genomes are used
+
+            matched_otus.add(otu)
+            set_abundances(otu_genome_map, tax_profile[otu][1], used_genomes, otu, tax_id, mu, sigma)
+
+    for otu in otus_list:
+        if otu not in matched_otus:
             unmatched_otus.append(otu)
-    #if len(warnings) > 0:
-    #    _log.warning("Some OTUs could not be mapped")
-    #    if debug:
-    #        for warning in warnings:
-    #            _log.warning(warning)
-    return otu_genome_map, unmatched_otus, per_rank_map
+
+    return otu_genome_map, unmatched_otus
 
 def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug):
     genomes = {}
@@ -323,10 +335,10 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
                     shutil.copy2(path, genome_path)
                 break
             except Exception as e:
-                error = e
                 counter += 1
                 #log.error("Caught exception %s while moving/downloading genomes" % repr(e))
-                raise ValueError("Caught exception %s while moving/downloading genomes" % repr(e))
+                if counter >= 10:
+                    raise ValueError("Caught exception %s while moving/downloading genomes" % repr(e))
         if counter == 10:
 #            log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
             raise ValueError("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
@@ -340,19 +352,6 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
             with open(abundance, 'a+') as ab:
                 ab.write("%s\t%s\n" % (otu,curr_abundances[i]))
             i += 1
-    abundance_files = ""
-    for abundance in abundances[:-1]:
-        abundance_files += abundance
-        abundance_files += ","
-    abundance_files += abundances[-1] # write csv of abundance files
-    #config.set("Main", 'distribution_file_paths', abundance_files)
-    #config.set("community0", "num_real_genomes", str(len(otu_genome_map)))
-    #config.set("community0", "genomes_total", str(len(otu_genome_map)))
-
-    #cfg_path = os.path.join(out_path, "config.ini")
-    #with open(cfg_path, 'w+') as cfg:
-    #    config.write(cfg)
-    #return cfg_path
 
 
 def str2bool(x):
@@ -375,26 +374,11 @@ def set_ranks(ncbi):
         RANKS = LEGACY_RANKS
 
 
-if __name__ == "__main__":
+def main(biom_profile, no_samples, reference_genomes, seed, mu, sigma,
+         min_strains,  max_strains, debug, no_replace, fill_up, script,
+         genomes_out_dir, additional_references, ncbi_taxdump_file, max_rank):
 
-    biom_profile = sys.argv[1]
-    no_samples = int(sys.argv[2])
-    reference_genomes = sys.argv[3]
-    seed = int(sys.argv[4])
-    mu = int(sys.argv[5])
-    sigma = int(sys.argv[6])
-    min_strains = int(sys.argv[7])
-    max_strains = int(sys.argv[8])
-    debug = str2bool(sys.argv[9])
-    no_replace = str2bool(sys.argv[10])
-    fill_up = str2bool(sys.argv[11])
-    script = sys.argv[12]
-    genomes_out_dir = sys.argv[13]
-    additional_references = sys.argv[14]
-    ncbi_taxdump_file = sys.argv[15]
-    max_rank = sys.argv[16]
-
-    if(additional_references=="None"):
+    if additional_references == "None":
         additional_references = None
 
     np_rand.seed(seed)
@@ -404,10 +388,31 @@ if __name__ == "__main__":
 
     tax_profile = read_taxonomic_profile(biom_profile, no_samples)
     genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references)
-    per_rank_map = get_genomes_per_rank(genomes_map)
-    otu_genome_map, unmatched_otus, per_rank_map = map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_strains, debug, no_replace, total_genomes, max_rank)
+    per_rank_map = get_genomes_per_rank(genomes_map, ncbi)
+    otu_genome_map, unmatched_otus = map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma,
+                                                         min_strains, max_strains, no_replace,
+                                                         total_genomes, max_rank, ncbi)
 
     if fill_up and len(unmatched_otus) > 0:
         otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug)
 
     write_config(otu_genome_map, genomes_map, no_samples, script, genomes_out_dir)
+
+
+if __name__ == "__main__":
+    main(biom_profile = sys.argv[1],
+        no_samples = int(sys.argv[2]),
+        reference_genomes = sys.argv[3],
+        seed = int(sys.argv[4]),
+        mu = int(sys.argv[5]),
+        sigma = int(sys.argv[6]),
+        min_strains = int(sys.argv[7]),
+        max_strains = int(sys.argv[8]),
+        debug = str2bool(sys.argv[9]),
+        no_replace = str2bool(sys.argv[10]),
+        fill_up = str2bool(sys.argv[11]),
+        script = sys.argv[12],
+        genomes_out_dir = sys.argv[13],
+        additional_references = sys.argv[14],
+        ncbi_taxdump_file = sys.argv[15],
+        max_rank = sys.argv[16])
