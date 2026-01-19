@@ -369,6 +369,8 @@ process generate_pooled_gold_standard_assembly {
 *     The paths to all taxonomic profiles.
  */
 process buildTaxonomy {
+    
+    conda 'python'
 
     input:
     tuple val(number_of_samples), path(dmp), path(distribution_files)
@@ -391,6 +393,8 @@ process buildTaxonomy {
 }
 
 process get_random_seed {
+
+    conda 'python'
 
     output:
     stdout
@@ -473,6 +477,8 @@ process strain_simulation_without_gff {
 * This process simulates strains using sgEvolver by using the specified gff files.
 */
 process strain_simulation_with_gff {
+
+    conda 'perl python'
 
     input:
     tuple val(genome_id), path(fasta), val(amount), val(seed), path(gff)
@@ -569,6 +575,8 @@ process cleanup_and_filter_sequences {
  */
 process getCommunityDistribution {
 
+    conda 'python'
+
     input:
     path(file_path_of_drawn_genome_location)
     val(seed)
@@ -598,6 +606,8 @@ process getCommunityDistribution {
 *     The file with the given seed per samle in CSV format.
  */
 process get_seed {
+
+    conda 'python'
 
     input:
     path (genome_locations)
