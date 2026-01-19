@@ -34,7 +34,7 @@ workflow anonymization {
 
         if(params.type=="nanosim3" || params.type=="pbsim3") {
             out_shuffle = shuffle(reads_seed_ch)
-        } else if(params.type=="art" || params.type=="wgsim") {
+        } else if(params.type=="art" || params.type=="art_modern" || params.type=="wgsim") {
             out_shuffle = shuffle_paired_end(reads_seed_ch)
         }
 
@@ -173,13 +173,12 @@ process gs_read_mapping {
     input:
     tuple val(sample_id), path(tmp_reads_mapping_file), path(genome_locations_file), path(metadata_file)
 
-
     output:
     tuple val(sample_id), path(reads_mapping_file)
 
     script:
     reads_mapping_file = 'reads_mapping.tsv'
-    wgsim = ""
+    simulator = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
         if(params.pipeline.equals("metatranscriptomic")){
@@ -189,8 +188,11 @@ process gs_read_mapping {
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
-            wgsim = "-wgsim"
+            simulator = "-simulator wgsim"
+    } else if(params.type.equals("art_modern")){
+            simulator = "-simulator art_modern"
     }
+        
 
     if(params.pipeline.equals("metatranscriptomic")){
         metatranscriptomic = "-metatranscriptomic"
@@ -199,7 +201,7 @@ process gs_read_mapping {
     }
     """
     touch ${reads_mapping_file}
-    python ${shared_scripts_dir}/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${reads_mapping_file}
     cp ${reads_mapping_file}.gz ${params.outdir}/sample_${sample_id}/reads/
@@ -351,14 +353,16 @@ process gs_contig_mapping {
     script:
     gsa_mapping_file = 'gsa_mapping.tsv'
     reads_mapping_file = 'reads_mapping.tsv'
-    wgsim = ""
+    simulator = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
         if(params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
-            wgsim = "-wgsim"
+            simulator = "-simulator wgsim"
+    } else if(params.type.equals("art_modern")){
+            simulator = "-simulator art_modern"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -368,7 +372,7 @@ process gs_contig_mapping {
     }
     """
     touch ${gsa_mapping_file}
-    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic} -read_positions ${read_start_positions}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
@@ -403,14 +407,16 @@ process pooled_gs_contig_mapping {
     gsa_mapping_file = 'gsa_pooled_mapping.tsv'
     reads_mapping_file = 'reads_mapping.tsv'
     params.simulate_fastq_directly = false
-    wgsim = ""
+    simulator = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
         if(params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
-            wgsim = "-wgsim"
+            simulator = "-simulator wgsim"
+    } else if(params.type.equals("art_modern")){
+            simulator = "-simulator art_modern"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -421,7 +427,7 @@ process pooled_gs_contig_mapping {
 
     """
     touch ${gsa_mapping_file}
-    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${wgsim} ${metatranscriptomic} -read_positions ${read_start_positions}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}
     gzip -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}

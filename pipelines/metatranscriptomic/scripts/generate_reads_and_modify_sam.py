@@ -21,6 +21,7 @@ parser.add_argument("--fragment_size_mean", type=float, required=True, help="Mea
 parser.add_argument("--fragment_size_sd", type=float, required=True, help="Fragment size standard deviation.")
 parser.add_argument("--profile", type=str, required=True, help="Base profile name.")
 parser.add_argument("--db", type=str, required=True, help="Path to the db file.")
+parser.add_argument("--simulator", type=str, required=True, help="Simulator used (\"art\"/\"art_modern\").")
 
 args = parser.parse_args()
 
@@ -67,6 +68,12 @@ with open(f"{args.sample_id}_{args.genome_id}_commands.sh", 'w') as bash_script:
                         out_f.write(combined_sequence)
 
                 seed_for_art = random.randint(0, sys.maxsize)
-
-                bash_script.write(f"art_illumina --paired -sam -na -i {output_file} -l {args.read_length} -c {read_count} -m {args.fragment_size_mean} -s {args.fragment_size_sd} -o sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier} -1 {args.profile}1.txt -2 {args.profile}2.txt -rs {seed_for_art}\n")
+                
+                # we need to write sam here because the start positions of the gene need to be edited (TODO?)
+                if args.simulator == "art_modern":
+                    bash_script.write(f"art_modern --mode trans --i-file {output_file} --read-len {args.read_length} --i-fcov {read_count} --pe_frag_dist_mean {args.fragment_size_mean} --pe_frag_dist_std_dev {args.fragment_size_sd} --o-fastq sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.fq --qual_file_1 {args.profile}1.txt --qual_file_2 {args.profile}2.txt --o-sam sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.sam --seed {seed_for_art}\n")
+                elif args.simulator == "art":
+                    bash_script.write(f"art_illumina --paired -sam -na -i {output_file} -l {args.read_length} -c {read_count} -m {args.fragment_size_mean} -s {args.fragment_size_sd} -o sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier} -1 {args.profile}1.txt -2 {args.profile}2.txt -rs {seed_for_art}\n")
+                else:
+                    raise ValueError("Illegal simulator, choose from \"art\" and \"art_modern\"")
                 bash_script.write(f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}} !/^@/{{ $4=$4+{start}; $8=$8+{start} }}1' sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.sam > tmp.sam && mv tmp.sam sample{args.sample_id}_{args.genome_id}_{sanitized_gene_identifier}.sam\n")

@@ -10,6 +10,7 @@ read_simulator_folder = "${projectDir}/pipelines/metagenomic/read_simulators/"
 // include read simulator nanosim3
 include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+include { read_simulator_art_modern } from "${read_simulator_folder}/read_simulator_art_modern"
 include { read_simulator_wgsim } from "${read_simulator_folder}/read_simulator_wgsim"
 include { normalise_abundance; normalise_abundance_to_size; count_bases} from "${projectDir}/pipelines/shared/distribution"
 
@@ -33,6 +34,7 @@ workflow sample_wise_simulation {
         // The simulated ART reads (version 016.06.05) doesn't contain the whole header of the reference genome, if there is a space in the header. They then just contain the 
         // substring before the first occurance of the space. In that case the gold standard assembly doesn't work because there are no matching IDs.
         // As a workaround we change the headers of the reference genomes by just selecting the part before the first occurance of a space, if there is a space in the header.
+        // TODO does this happen for ART_modern?
         if(params.type.equals("art")) {
             genome_location_ch = remove_spaces_from_reference_genome(genome_location_ch)
         }    
@@ -86,6 +88,24 @@ workflow sample_wise_simulation {
             read_simulator_art(genome_location_distribution_factor_ch, read_length_ch)
             bam_files_channel = read_simulator_art.out[0]
             reads_ch = read_simulator_art.out[1]
+
+            get_fastq_for_sample_paired_end(reads_ch)
+
+        } else if(params.type.equals("art_modern")) {
+
+            // create a channel that holds: key = sample_id, first value = distribution file, second value = file with all genome locations
+            genome_distribution_location_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.combine(genome_location_file_ch)
+
+            // get the multiplication factor to calculate the fold coverage later (key = sample id, value = factor)
+            factor_for_sample_id_ch = get_multiplication_factor(genome_distribution_location_ch)
+
+            // join the two channel: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id, fourth value = seed, fifth value = factor
+            genome_location_distribution_factor_ch = location_distribution_seed_ch.map { tuple( it[1], *it ) }.combine(factor_for_sample_id_ch, by: 0 ).map { it[1..-1] }
+
+            // read simulation with art
+            read_simulator_art_modern(genome_location_distribution_factor_ch, read_length_ch)
+            bam_files_channel = read_simulator_art_modern.out[0]
+            reads_ch = read_simulator_art_modern.out[1]
 
             get_fastq_for_sample_paired_end(reads_ch)
 
