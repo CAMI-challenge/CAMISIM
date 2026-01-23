@@ -15,16 +15,23 @@ workflow read_simulator_nanosim3 {
     main:
         // simulate reads via nanosim3
 
+        // Precompute safe_max and join it back to the original channel by IDs
+        precompute_limit(genome_location_distribution_ch)
+
+        // This joins [genome_id, sample_id, path, abundance, seed, size]
+        // with [genome_id, sample_id, safe_max]
+        ch_with_limit = genome_location_distribution_ch.join(precompute_limit.out, by: [0, 1])
+
         // simulate reads in fastq format with nanosim directly
         if(params.simulate_fastq_directly) {
 
-            simulate_reads_fastq_nanosim3(genome_location_distribution_ch, read_length_ch)
+            simulate_reads_fastq_nanosim3(ch_with_limit, read_length_ch)
             read_ch = simulate_reads_fastq_nanosim3.out[1].groupTuple()
 
             bam_ch = bam_from_reads_fastq(simulate_reads_fastq_nanosim3.out[0])
 
         } else { // simulate reads in fasta format with nanosim and convert them later
-            simulate_reads_fasta_nanosim3(genome_location_distribution_ch, read_length_ch)
+            simulate_reads_fasta_nanosim3(ch_with_limit, read_length_ch)
 
             bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])[0]
             read_ch = bam_from_reads_fasta.out[1].groupTuple()
@@ -35,7 +42,52 @@ workflow read_simulator_nanosim3 {
         read_ch
 }
 
+/**
+* This process calculates the safe -max parameter for NanoSim.
+**/
+process precompute_limit {
 
+    conda "conda-forge::python=3.10"
+
+    input:
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size)
+
+    output:
+    tuple val(genome_id), val(sample_id), stdout
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    def read_fasta_max_len(fasta_path):
+        max_len = 0
+        current_len = 0
+        try:
+            with open(fasta_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line: continue
+                    if line.startswith('>'):
+                        if current_len > max_len:
+                            max_len = current_len
+                        current_len = 0
+                    else:
+                        current_len += len(line)
+                if current_len > max_len:
+                    max_len = current_len
+        except FileNotFoundError:
+            sys.exit(1)
+        return max_len
+
+    max_contig = read_fasta_max_len("${fasta_file}")
+    safe_max = max_contig - 200
+    if safe_max < 50:
+        safe_max = max(50, max_contig - 10)
+
+    print(safe_max, end='')
+    """
+}
 
 /**
 * This process simulates reads in fasta format with nanosim3.
@@ -50,7 +102,7 @@ process simulate_reads_fasta_nanosim3 {
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
     val(read_length_ch)
     
     output:
@@ -77,7 +129,7 @@ process simulate_reads_fasta_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear -max ${safe_max}
     """
 }
 
@@ -94,7 +146,7 @@ process simulate_reads_fastq_nanosim3 {
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
 	
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size)
+    tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
     val(read_length_ch)
     
     output:
@@ -115,6 +167,7 @@ process simulate_reads_fastq_nanosim3 {
     echo "genome_id: ${genome_id}" >> debug_inputs.txt
     echo "fasta_file: ${fasta_file}" >> debug_inputs.txt
     echo "abundance: ${abundance}" >> debug_inputs.txt
+    echo "genome_size: ${genome_size}" >> debug_inputs.txt
     echo "read_length_ch: ${read_length_ch}" >> debug_inputs.txt
     echo "seed: ${seed}" >> debug_inputs.txt
     echo "used_seed: ${used_seed}" >> debug_inputs.txt
@@ -124,7 +177,7 @@ process simulate_reads_fastq_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads}
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
     for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
