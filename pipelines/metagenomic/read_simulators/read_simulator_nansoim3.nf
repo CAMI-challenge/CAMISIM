@@ -235,7 +235,7 @@ process bam_from_reads_fastq {
 
     script:
     """
-    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS -F 4 | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
     cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
     """
