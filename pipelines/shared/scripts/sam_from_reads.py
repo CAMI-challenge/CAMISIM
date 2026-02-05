@@ -108,18 +108,24 @@ class SamFromReads() :
                 if error_type == "mis":
                     continue # this version ignores mismatches
 
-                seqname = name.rsplit("_", 1)
-                seqname = seqname[0] + "-" + seqname[-1] # later on used as sequence name
+                # Parse NanoSim identifier safely from the right:
+                # <ref>_<start>_<aligned/unaligned>_<index>_<strand>_<soffset>_<align_length>_<eoffset>
+                parts = name.rsplit("_", 7)
+                ref_name = parts[0]
+                start = parts[1]
+                index = parts[3]
+
+                # Use a collision-free key: ref-start-index
+                seqname = f"{ref_name}-{start}-{index}"
 
                 # It is not sufficient to use "<seqname>-<start_position>" as key (like used above).
                 # This is because there are multiple entries in the generated read file with the same combination of sequence name and
                 # start position. For more information see https://github.com/bcgsc/NanoSim/issues/151 .
-                # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not matches
+                # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not match
                 # the sequence length. With using the whole sequence identifier as key and the nanosim version 3.1.0 this can be fixed.
-                #seqname = name.replace("_", "-")
+                # seqname = name.replace("_", "-")
                 # This fix still triggered the error message:
                 # [E::sam_parse1] CIGAR and query sequence are of different length
-
 
                 if seqname in errors:
                     errors[seqname].append((int(pos),error_type,int(length)))
@@ -164,7 +170,8 @@ class SamFromReads() :
                     ref_name = name[1:] # first sign of name is ">"
                     ref_name_fixed = fixed_names[ref_name]
 
-                    query = ref_name + "-" + start
+                    # Must match get_cigars_nanosim() key
+                    query = f"{ref_name}-{start}-{index}"
 
                     # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
                     # This is because there are multiple entries in the generated read file with the same combination of sequence name and
@@ -186,7 +193,8 @@ class SamFromReads() :
                         RNAME = "*" # treated as unmapped
                         FLAG = str(4)
                     else:
-                        POS = start
+                        # Convert 0-based NanoSim start to 1-based SAM POS
+                        POS = str(int(start) + 1)
                         try:
                             CIGAR, pos = id_to_cigar_map[query]
                         except KeyError: #sequence did not have any errors
@@ -230,7 +238,8 @@ class SamFromReads() :
             ref_name = name
             ref_name_fixed = fixed_names[ref_name]
 
-            query = ref_name + "-" + start
+            # Must match get_cigars_nanosim() key
+            query = f"{ref_name}-{start}-{index}"
 
             # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
             # This is because there are multiple entries in the generated read file with the same combination of sequence name and
@@ -252,7 +261,8 @@ class SamFromReads() :
                 RNAME = "*"
                 FLAG = str(4)
             else:
-                POS = start
+                # Convert 0-based NanoSim start to 1-based SAM POS
+                POS = str(int(start) + 1)
                 try:
                     CIGAR, pos = id_to_cigar_map[query]
                 except KeyError:
@@ -352,7 +362,8 @@ class SamFromReads() :
             ref_name_fixed, start_gene = read_id_to_seq_id_dict[ref_name]
             # ref_name_fixed = read_id_to_seq_id_dict[ref_name]
 
-            query = ref_name + "-" + start
+            # Must match get_cigars_nanosim() key
+            query = f"{ref_name}-{start}-{index}"
 
             # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
             # This is because there are multiple entries in the generated read file with the same combination of sequence name and
