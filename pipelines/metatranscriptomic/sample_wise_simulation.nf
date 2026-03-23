@@ -8,6 +8,7 @@ shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
 // include read simulator here:
 read_simulator_folder = "${projectDir}/pipelines/metatranscriptomic/read_simulators/"
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
+include { read_simulator_art_modern } from "${read_simulator_folder}/read_simulator_art_modern"
 include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulator_nansoim3"
 include { read_simulator_pbsim3 } from "${read_simulator_folder}/read_simulator_pbsim3"
 
@@ -76,6 +77,15 @@ workflow sample_wise_simulation {
 
             bam_files_channel = read_simulator_art.out[0]
             reads_ch = read_simulator_art.out[1]
+
+            get_fastq_for_sample_paired_end(reads_ch)
+
+        } else if(params.type.equals("art_modern")) {
+
+            read_simulator_art_modern(location_distribution_seed_ch, read_length_ch)
+
+            bam_files_channel = read_simulator_art_modern.out[0]
+            reads_ch = read_simulator_art_modern.out[1]
 
             get_fastq_for_sample_paired_end(reads_ch)
 

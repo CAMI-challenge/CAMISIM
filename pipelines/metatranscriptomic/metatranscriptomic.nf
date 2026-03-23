@@ -164,6 +164,8 @@ process distribute_gene_abundance {
 
 process get_random_seed {
 
+    conda 'python'
+
     output:
     stdout
 
@@ -185,6 +187,8 @@ process get_random_seed {
 *     The file with the given seed per samle in CSV format.
  */
 process get_seed {
+
+    conda 'python'
 
     publishDir "${params.outdir}/seed/", mode : 'copy'
 
@@ -219,6 +223,8 @@ process get_seed {
  */
 process getCommunityDistribution {
 
+    conda 'python'
+    
     publishDir "${params.outdir}/distributions/genome_distributions/", mode : 'copy'
 
     input:

@@ -179,7 +179,7 @@ class GoldStandardFileFormat():
     # position file
     # ###############
 
-    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files, wgsim=False, metatranscriptomic=False):
+    def get_dict_sequence_name_to_positions(self, list_of_sam_position_files, simulator="", metatranscriptomic=False):
         """
             Get a map, sequence name to list of starting position from a mapping file.
 
@@ -208,12 +208,14 @@ class GoldStandardFileFormat():
                 value = int(column_values[index_row])
                 #value = column_values[index_row]
 
-                if wgsim:
+                if simulator == "wgsim":
                     # Change in CAMISIM 2:
                     # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:
                     # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
                     # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
                     seq_without_index = key.rsplit('_', 5)[0]
+                elif simulator == "art_modern":
+                    seq_without_index = key.split(':', 1)[0]
                 else:
                     if(metatranscriptomic):
                         seq_without_index = key.rsplit("-", 1)[0]
@@ -230,7 +232,7 @@ class GoldStandardFileFormat():
     # ###############
 
     def write_gs_read_mapping(
-        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, wgsim, metatranscriptomic=False):
+        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, simulator, metatranscriptomic=False):
         """
             Write the gold standard for every read
 
@@ -274,7 +276,7 @@ class GoldStandardFileFormat():
                     sequence_id = self.fixed_name[tmp]
                 except KeyError:
                     raise KeyError("Genome name mapping not succesful, Nanosim interface might have changed")
-            elif wgsim:
+            elif simulator == "wgsim":
                 # Change in CAMISIM 2:
                 # When using wgsim 1.0 installed via conda instead of wgsim 0.3.0 delivered with CAMISIM 1, this error occured:
                 # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
@@ -285,6 +287,8 @@ class GoldStandardFileFormat():
                     msg = "missing '_' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
                     raise ValueError(msg)
+            elif simulator == "art_modern":
+                sequence_id = read_id.split(':',1)[0]
             else:
                 if '-' not in read_id:
                     msg = "missing '-' reads2anonymous: {}\n".format(read_id)
@@ -430,7 +434,7 @@ class GoldStandardFileFormat():
 
     def gs_contig_mapping(
         self, file_path_genome_locations, file_path_metadata, file_path_id_map, list_file_paths_read_positions,
-        stream_output, project_dir, nanosim_real_fastq=False, wgsim=False, metatranscriptomic=False):
+        stream_output, project_dir, nanosim_real_fastq=False, simulator="", metatranscriptomic=False):
         """
             Write the gold standard for every read
 
@@ -452,13 +456,13 @@ class GoldStandardFileFormat():
         """
         dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, metatranscriptomic=metatranscriptomic)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
-        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
+        dict_original_seq_pos = self.get_dict_sequence_name_to_positions(list_file_paths_read_positions, simulator=simulator, metatranscriptomic=metatranscriptomic)
         dict_sequence_name_to_anonymous = self.get_dict_sequence_name_to_anonymous(file_path_id_map)
         self.write_gsa_contig_mapping(
             stream_output, dict_sequence_name_to_anonymous, dict_original_seq_pos,
             dict_sequence_to_genome_id, dict_genome_id_to_tax_id, metatranscriptomic=metatranscriptomic)
 
-    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, wgsim, metatranscriptomic):
+    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic):
         """
             Write the gold standard for every read
 
@@ -480,7 +484,7 @@ class GoldStandardFileFormat():
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
         dict_anonymous_to_read_id = self.get_dict_anonymous_to_original_id(file_path_id_map)
         self.write_gs_read_mapping(
-            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
+            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, simulator=simulator, metatranscriptomic=metatranscriptomic)
 
 
     def read(self, file_path, separator=None, column_names=False, comment_line=None):
@@ -635,7 +639,7 @@ class GoldStandardFileFormat():
         else:
             return False      
 
-    def binning_per_sample(self, file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, out, gsa, nanosim_real_fastq, wgsim):
+    def binning_per_sample(self, file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, out, gsa, nanosim_real_fastq, simulator):
 
         dict_sequence_to_genome_id = self.get_dict_sequence_to_genome_id(file_path_genome_locations, project_dir, nanosim_real_fastq=nanosim_real_fastq, metatranscriptomic=metatranscriptomic)
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
@@ -735,10 +739,10 @@ if __name__ == "__main__":
 		action="store_true",
 		default=False)
     parser.add_argument(
-		"-wgsim",
-		help="read files in fastq format generated directly with wgsim",
-		action="store_true",
-		default=False)
+		"-simulator",
+		help="which simulator was used. Not needed for nanosim/art (old)",
+		action="store",
+		default="")
     parser.add_argument(
 		"-metatranscriptomic",
 		help="simulation in metatranscriptomic mode",
@@ -760,16 +764,16 @@ if __name__ == "__main__":
     contig = options.contig
     binning = options.binning
     nanosim_real_fastq = options.nanosim_real_fastq
-    wgsim = options.wgsim
+    simulator = options.simulator
     metatranscriptomic = options.metatranscriptomic
 
     goldStandardFileFormat = GoldStandardFileFormat()
 
     if(contig):
         list_file_paths_read_positions = [options.read_positions]
-        goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, wgsim=wgsim, metatranscriptomic=metatranscriptomic)
+        goldStandardFileFormat.gs_contig_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, list_file_paths_read_positions, stream_output, project_dir, nanosim_real_fastq=nanosim_real_fastq, simulator=simulator, metatranscriptomic=metatranscriptomic)
     elif(binning):
         list_file_paths_read_positions = [options.read_positions]
-        goldStandardFileFormat.binning_per_sample(file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, stream_output, input_file_stream, nanosim_real_fastq, wgsim)
+        goldStandardFileFormat.binning_per_sample(file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, stream_output, input_file_stream, nanosim_real_fastq, simulator)
     else:    
-        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, wgsim, metatranscriptomic)
+        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic)
