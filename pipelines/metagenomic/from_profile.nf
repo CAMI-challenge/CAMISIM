@@ -14,7 +14,7 @@ workflow metagenomesimulation_from_profile {
     main:
         
         get_genomes(params.biom_profile, params.number_of_samples, params.reference_genomes, params.seed, params.gauss_mu, params.gauss_sigma, 
-            params.min_strains_per_otu, params.max_strains_per_otu, params.no_replace, params.fill_up)
+            params.min_strains_per_otu, params.max_strains_per_otu, params.no_replace, params.fill_up, params.ncbi_taxdump_file, params.max_rank)
 
         loc_ch = get_genomes.out[0]
         abundance_ch = get_genomes.out[1].flatten()
@@ -36,7 +36,9 @@ workflow metagenomesimulation_from_profile {
  */
 process get_genomes {
 
-    conda "biom-format=2.1.7 ete3 python=3.8 h5py"
+    cpus 1
+
+    conda "biom-format=2.1.17 ete4=4.3.0 python=3.11 h5py"
 
     input:
     path(biom_profile)
@@ -49,6 +51,8 @@ process get_genomes {
     val(max_strains)
     val(no_replace)
     val(fill_up)
+    val(ncbi_taxdump_file)
+    val(max_rank)
 
     output:
     path "genome_to_id.tsv"
@@ -67,7 +71,7 @@ process get_genomes {
     mkdir --parents ${params.outdir}/source_genomes/
     mkdir --parents ${params.outdir}/internal/
 
-    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references}
+    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references} ${ncbi_taxdump_file} "${max_rank}"
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """

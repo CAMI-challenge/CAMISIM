@@ -59,6 +59,8 @@ workflow sample_wise_simulation {
         // normalize the distributions and read the results from the generated file
         normalised_distribution_ch = normalise_abundance_meta_t(distribution_file_ch.map { a -> tuple(a[1], tuple (a[0], a[2])) }.groupTuple())
             .map { file -> tuple(file.baseName.split('_')[2], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[1][1],a[0]) }.filter { it[1] != '0.0' }
+        counted_bases_ch = count_bases(genome_location_ch.combine(normalised_distribution_ch, by: 0).map { a -> tuple(a[0], a[1], a[3], a[2]) })
+        genome_size_ch = counted_bases_ch.map { tuple(it[0], it[2], it[3].toString().trim()) }
 
         // calculate gene expression
         final_gene_distr_ch = get_final_gene_distr(gene_distribution_file_ch.join(normalised_distribution_ch, by: [0,2]))
@@ -80,7 +82,8 @@ workflow sample_wise_simulation {
         } else if(params.type.equals("nanosim3")) {
 
             // simulate the reads with nanosim3
-            read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
+            location_distribution_seed_size_ch = location_distribution_seed_ch.combine(genome_size_ch, by:[0,1])
+            read_simulator_nanosim3(location_distribution_seed_size_ch, read_length_ch)
 
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]

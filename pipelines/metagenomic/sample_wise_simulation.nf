@@ -48,12 +48,14 @@ workflow sample_wise_simulation {
 
         // for read simulator nanosim, the abundance has to be normalised with the size in number of bases
         if(params.type.equals("nanosim3") or params.type.equals("wgsim")) {
-            
+
 
             // combining of the channels results in new map: key = genome_id, first value = path to genome, second value = distribution, third value = sample_id
             genome_location_distribution_ch = genome_location_ch.combine(distribution_file_ch, by: 0)
 
-            distribution_file_ch = normalise_abundance_to_size(count_bases(genome_location_distribution_ch))
+            counted_bases_ch = count_bases(genome_location_distribution_ch)
+            distribution_file_ch = normalise_abundance_to_size(counted_bases_ch)
+            genome_size_ch = counted_bases_ch.map { tuple(it[0], it[2], it[3].toString().trim()) }
 
         }
 
@@ -90,7 +92,8 @@ workflow sample_wise_simulation {
         } else if(params.type.equals("nanosim3")) {
 
             // simulate the reads with nanosim3
-            read_simulator_nanosim3(location_distribution_seed_ch, read_length_ch)
+            location_distribution_seed_size_ch = location_distribution_seed_ch.combine(genome_size_ch, by:[0,1])
+            read_simulator_nanosim3(location_distribution_seed_size_ch, read_length_ch)
             bam_files_channel = read_simulator_nanosim3.out[0]
             reads_ch = read_simulator_nanosim3.out[1]
 
@@ -147,6 +150,7 @@ process generate_gold_standard_assembly {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
+    samtools faidx ${reference_fasta_file}
     perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
@@ -173,10 +177,10 @@ process get_fasta_for_sample {
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
     """
-    # cat ${fasta_files} > ${file_name}
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${fasta_files} | sort | xargs cat > ${file_name}
+    printf '%s\\n' ${fasta_files} | sort | xargs -r cat -- > ${file_name}
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${file_name}
@@ -205,8 +209,9 @@ process merge_bam_files {
     file_name = 'sample_'.concat(sample_id.toString()).concat('.bam')
     compression = 5
     memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
     """
-    samtools merge -u - ${bam_files} | samtools sort -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    samtools merge -u - ${bam_files} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
     samtools index ${file_name}
     """
 }
@@ -301,13 +306,10 @@ process get_fastq_for_sample_single_end {
 
     script:
     """
-    # cat ${read_files} > sample_${sample_id}.fq
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${read_files} | sort | xargs cat > sample_${sample_id}.fq
-
-    # Compress the concatenated files
-    gzip sample_${sample_id}.fq
+    printf '%s\\n' ${read_files} | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}.fq.gz
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
     cp sample_${sample_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
@@ -324,16 +326,11 @@ process get_fastq_for_sample_paired_end {
 
     script:
     """
-    # cat ${first_read_files} > sample_${sample_id}_01.fq
-    # cat ${second_read_files} > sample_${sample_id}_02.fq
+    set -euo pipefail
 
     # Sort files before concatenation to ensure reproducibility
-    ls -1 ${first_read_files} | sort | xargs cat > sample_${sample_id}_01.fq
-    ls -1 ${second_read_files} | sort | xargs cat > sample_${sample_id}_02.fq
-
-    # Compress the concatenated files
-    gzip sample_${sample_id}_01.fq
-    gzip sample_${sample_id}_02.fq
+    printf '%s\\n' ${first_read_files}  | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}_01.fq.gz
+    printf '%s\\n' ${second_read_files} | sort | xargs -r cat -- | pigz -p ${task.cpus} -c > sample_${sample_id}_02.fq.gz
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq
     cp sample_${sample_id}_01.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/

@@ -1,67 +1,88 @@
 #!/usr/bin/env python
 
-import sys 
+import sys
 import os
-import shutil
+import re
 
-taxid_to_name = {}
-taxid_to_parent_taxid = {}
-taxid_to_rank = {}
-taxid_old_to_taxid_new = {}
-ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
-filename_taxonomic_profile = "taxonomic_profile_{sample_index}.txt"
-default_ordered_legal_ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
-taxonomic_profile_version = "0.9.1"
+TAXID_TO_NAME = {}
+TAXID_TO_PARENT_TAXID = {}
+TAXID_TO_RANK = {}
+TAXID_OLD_TO_TAXID_NEW = {}
+LEGACY_RANKS = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+FILENAME_TAXONOMIC_PROFILE = "taxonomic_profile_{sample_index}.txt"
+TAXONOMIC_PROFILE_VERSION = "0.9.2"
+
+IS_LEGACY = False
+ROOTS = ["acellular root", "cellular root", "other entries"]
+TOP   = ["realm", "domain"]
+TAIL  = ["kingdom", "phylum", "class", "order", "family", "genus", "species", "strain"]
+
+VIRUS_RANKS    = ['acellular root', 'realm',  'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+CELLULAR_RANKS = ['cellular root',  'domain', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+OTHER_RANKS    = ['other entries',  'domain', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+
+
+# -----------------------------
+# Constants for plasmids / other-entries
+# -----------------------------
+OTHER_ENTRIES_TAXID = "2787854"            # “other entries” synthetic root (if not in NCBI taxdump)
+OTHER_ENTRIES_NAME  = "other entries"
+PLASMID_SPECIES_TAXID = "45202"            # “unidentified plasmid” species
+PLASMID_SPECIES_NAME  = "unidentified plasmid"
 
 # read NCBI names file
 def read_names_file(file_path_ncbi_names):
-
     with open(file_path_ncbi_names) as fin:
-            for line in fin:
-                # 65      |       Herpetosiphon aurantiacus       |               |       scientific name |
-                taxid, name, disambiguation, nametype, more = line.strip().split('|')
-                if nametype.strip() == 'scientific name':
-                    taxid_to_name[taxid.strip()] = name.strip()
+        for line in fin:
+            # 65      |       Herpetosiphon aurantiacus       |               |       scientific name |
+            taxid, name, _, nametype, *_ = line.strip().split('|')
+            if nametype.strip() == 'scientific name':
+                TAXID_TO_NAME[taxid.strip()] = name.strip()
+    # inject names for our synthetic / special nodes if missing
+    TAXID_TO_NAME.setdefault(OTHER_ENTRIES_TAXID, OTHER_ENTRIES_NAME)
+    TAXID_TO_NAME.setdefault(PLASMID_SPECIES_TAXID, PLASMID_SPECIES_NAME)
 
 
 def build_ncbi_taxonomy(file_path_ncbi_nodes):
+    global IS_LEGACY
+    with open(file_path_ncbi_nodes) as f:
+        for line in f:
+            taxid, parent_taxid, rank, *_ = [el.strip() for el in line.split('|')]
+            TAXID_TO_PARENT_TAXID[taxid] = parent_taxid
+            TAXID_TO_RANK[taxid] = rank.lower()
+    if "acellular root" not in set(TAXID_TO_RANK.values()):
+        IS_LEGACY = True
 
-    with open(file_path_ncbi_nodes) as file_handler:
-            for line in file_handler:
-                elements = [el.strip() for el in line.split('|')]
-                taxid, parent_taxid, rank = elements[0:3]
-                rank = rank.lower()  # should be lower-case in file, but can't be bad to doublecheck
-                taxid_to_parent_taxid[taxid] = parent_taxid
-                taxid_to_rank[taxid] = rank
 
 # read NCBI merged file
 def read_merged_file(file_path_ncbi_merged):
-
     with open(file_path_ncbi_merged) as fin:
-            for line in fin:
-                # 5085       |       746128  |
-                old_taxid, new_taxid, sonst = line.strip().split('|')
-                taxid_old_to_taxid_new[old_taxid.strip()] = new_taxid.strip()
+        for line in fin:
+            # 5085       |       746128  |
+            old_taxid, new_taxid, *_ = line.strip().split('|')
+            TAXID_OLD_TO_TAXID_NEW[old_taxid.strip()] = new_taxid.strip()
+
 
 def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_file_path):
-    
     """
     Write a taxonomic profile file for each relative abundance file
 
     @param list_of_file_paths: List of abundance file paths
     @type list_of_file_paths: list[str | unicode]
     """
-    
-    for index_abundance, file_path in enumerate(list_of_file_paths):
+
+    for file_path in list_of_file_paths:
+        m = re.search(r'_([0-9]+)\.(?:tsv|txt)$', os.path.basename(file_path))
+        if not m:
+            raise ValueError("Abundance file path does not end with  _<number>.txt or _<number>.tsv: {}".format(file_path))
+        index_abundance = int(m.group(1))
         community_abundance = parse_file(file_path)
-        file_path_output = os.path.join("./", filename_taxonomic_profile.format(
-            sample_index=index_abundance))
+        file_path_output = os.path.join("./", FILENAME_TAXONOMIC_PROFILE.format(sample_index=index_abundance))
         with open(file_path_output, 'w') as stream_output:
             write_taxonomic_profile(community_abundance, stream_output, index_abundance, metadata_file_path)
 
 
 def write_taxonomic_profile(community_abundance, stream_output, sample_id, metadata_file_path):
-
     """
     Stream a taxonomic profile by list of relative abundances
 
@@ -75,24 +96,19 @@ def write_taxonomic_profile(community_abundance, stream_output, sample_id, metad
 
     genome_abundance = {}
     total_abundance = 0.0
-
-    # for community in community_abundance:
-    #   all_communities += community
-
     for genome_id, abundance in community_abundance:
         if genome_id in genome_abundance:
             raise IOError("genome id '{}' is not unique!".format(genome_id))
-        genome_abundance[genome_id] = float(abundance)  # *float(total_length)
+        genome_abundance[genome_id] = float(abundance)
         total_abundance += genome_abundance[genome_id]
 
     for key, value in genome_abundance.items():
-        genome_abundance[key] = value / total_abundance
+        genome_abundance[key] = (value / total_abundance) if total_abundance > 0 else 0.0
 
     stream_taxonomic_profile(stream_output, genome_abundance, sample_id, metadata_file_path)
 
 
 def stream_taxonomic_profile(stream_output, genome_id_to_percent, sample_id, metadata_file_path):
-
     """
     Stream a taxonomic profile by list of percentages by genome id
 
@@ -108,38 +124,58 @@ def stream_taxonomic_profile(stream_output, genome_id_to_percent, sample_id, met
     genome_id_to_strain_id = {}
     genome_id_to_ncbi_id = {}
     genome_id_to_otu = {}
+    genome_id_is_plasmid = {}
+    genome_id_host = {}
 
-    counter = 0
-    strain_id_in_metadata = False
-
+    # metadata: genome_ID \t OTU \t NCBI_ID \t novelty_category [\t strain_id (optional)]
     with open(metadata_file_path) as metadata:
+        header = metadata.readline().rstrip('\n').split('\t')
+        col = {h: i for i, h in enumerate(header)}
+
+        # required columns
+        required_cols = ["genome_ID", "OTU", "NCBI_ID", "novelty_category"]
+        missing = [c for c in required_cols if c not in col]
+        if missing:
+            raise ValueError(
+                "Metadata file is missing required columns: {}".format(", ".join(missing))
+            )
+
+        idx_genome = col["genome_ID"]
+        idx_otu = col["OTU"]
+        idx_ncbi = col["NCBI_ID"]
+        idx_novelty = col["novelty_category"]
+        idx_strain = col.get("strain_id", None)
+        idx_host = col.get("host", None)
+        max_idx = max(idx_genome, idx_otu, idx_ncbi, idx_novelty)
+
         for line in metadata:
-            if(counter == 0):
-                column_names = line.strip().split('\t')
-                if("strain_id" in column_names):
-                    strain_id_in_metadata = True
-            else:
-                if(strain_id_in_metadata):
-                    genome_id, otu, ncbi_id, novelty_category, strain_id = line.strip().split('\t')
-                    strain_id_to_genome_id[strain_id] = genome_id
-                    genome_id_to_strain_id[genome_id] = strain_id
-                else:
-                    genome_id, otu, ncbi_id, novelty_category = line.strip().split('\t')
-                genome_id_to_ncbi_id[genome_id] = ncbi_id
-                genome_id_to_otu[genome_id] = otu
-            counter = counter + 1
+            parts = line.rstrip('\n').split('\t')
+            if not parts or len(parts) <= max_idx:
+                continue
 
-    genome_id_to_lineage = get_genome_id_to_lineage(genome_id_to_percent.keys(), genome_id_to_ncbi_id, strain_id_to_genome_id, genome_id_to_strain_id)
+            genome_id = parts[idx_genome]
+            strain_id = parts[idx_strain] if idx_strain is not None else None
 
-    percent_by_rank_by_taxid = get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent)
+            genome_id_to_ncbi_id[genome_id] = parts[idx_ncbi]
+            genome_id_to_otu[genome_id] = parts[idx_otu]
+            genome_id_is_plasmid[genome_id] = parts[idx_novelty].lower() == "plasmid"
+            genome_id_host[genome_id] = parts[idx_host] if idx_host is not None else ''
+
+            if strain_id:
+                strain_id_to_genome_id[strain_id] = genome_id
+                genome_id_to_strain_id[genome_id] = strain_id
+
+    genome_id_to_lineage = get_genome_id_to_lineage(genome_id_to_percent.keys(), genome_id_to_ncbi_id,
+                                                    strain_id_to_genome_id, genome_id_to_strain_id, genome_id_is_plasmid)
+
+    percent_by_rank_by_taxid = get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent, genome_id_is_plasmid)
 
     # stream taxonomic profile
     stream_tp_header(stream_output, sample_id)
-    stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_id, genome_id_to_otu)
+    stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_id, genome_id_to_otu, genome_id_host)
 
 
-def stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_id, genome_id_to_otu):
-
+def stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_id, genome_id_to_otu, genome_id_host):
     """
     Stream the rows of the taxonomic profile.
 
@@ -153,40 +189,96 @@ def stream_tp_rows(stream_output, percent_by_rank_by_taxid, strain_id_to_genome_
     @type genome_id_to_otu: dict[str|unicode, str|unicode]
     """
 
-    row_format = "{taxid}\t{rank}\t{taxpath}\t{taxpath_sn}\t{abp:.4f}\t{gid}\t{otu}\n"
-    for rank_index, rank in enumerate(ranks):
-        for tax_id in percent_by_rank_by_taxid[rank]:
-            if tax_id == '':
-                continue
-            if '.' in tax_id:
-                genome_id = strain_id_to_genome_id[tax_id]
-                otu = genome_id_to_otu[genome_id]
-                lineage = get_lineage_of_legal_ranks(tax_id.split('.')[0], ranks=ranks, default_value="")
-                lineage[-1] = tax_id
-            else:
-                genome_id = ""
-                otu = ""
-                lineage = get_lineage_of_legal_ranks(tax_id, ranks=ranks, default_value="")
+    row_format = "{taxid}\t{rank}\t{taxpath}\t{taxpath_sn}\t{abp:.4f}\t{gid}\t{otu}\t{host}\n"
+    all_rows = []
 
-            lineage = lineage[:rank_index+1]
-            lineage_sn = [get_scientific_name(tid) if tid != "" and '.' not in tid else "" for tid in lineage]
-            if '.' in tax_id:
-                lineage_sn[-1] = get_scientific_name(tax_id.split('.')[0]) + " strain"  # ""
-                
-            if percent_by_rank_by_taxid[rank][tax_id] != 0:
-                stream_output.write(row_format.format(
-                    taxid=tax_id,
-                    rank=rank,
-                    taxpath="|".join(lineage),
-                    taxpath_sn="|".join(lineage_sn),
-                    abp=percent_by_rank_by_taxid[rank][tax_id]*100,
-                    gid=genome_id,
-                    otu=otu
-                ))
+    ranks_map = {
+        "acellular": VIRUS_RANKS,
+        "cellular": CELLULAR_RANKS,
+        "other": OTHER_RANKS
+    }
+
+    # Final output ordering
+    master_rank_order = ROOTS + TOP + TAIL
+
+    if IS_LEGACY:
+        ranks_map = {
+            "legacy": LEGACY_RANKS,
+        }
+        master_rank_order = LEGACY_RANKS
+
+    # Collect rows
+    for rank_type in ranks_map.keys():
+        rank_list = ranks_map[rank_type]
+        for rank in rank_list:
+            taxid_to_percent = percent_by_rank_by_taxid.get(rank_type, {}).get(rank, {})
+            for taxid, percent in taxid_to_percent.items():
+                if not taxid:
+                    continue
+
+                is_strain = '.' in taxid
+                if is_strain:
+                    base_taxid = taxid.split('.')[0]
+                    genome_id = strain_id_to_genome_id.get(taxid, "")
+                    otu = genome_id_to_otu.get(genome_id, "")
+                else:
+                    base_taxid = taxid
+                    genome_id = ""
+                    otu = ""
+
+                # Build lineage strings
+                if rank_type == "other":  # plasmid track
+                    lineage = get_other_entries_lineage(base_taxid, taxid_if_strain=taxid if is_strain else None)
+                    lineage_sn = get_other_entries_lineage_names(base_taxid, taxid_if_strain=taxid if is_strain else None)
+                else:
+                    lineage = get_lineage_of_legal_ranks(base_taxid, default_value="")
+                    lineage_sn = [
+                        get_scientific_name(tid) if tid != "" and '.' not in tid else ""
+                        for tid in lineage
+                    ]
+                    if is_strain:
+                        lineage_sn[-1] = get_scientific_name(base_taxid) + " strain"
+                        lineage[-1] = taxid
+
+                host_str = genome_id_host.get(genome_id, "") if (rank_type == "other" and rank == "strain" and genome_id) else ""
+
+                all_rows.append({
+                    "taxid": taxid,
+                    "rank": rank,
+                    "rank_type": rank_type,
+                    "percent": percent,
+                    "rank_index": ranks_map[rank_type].index(rank),
+                    "taxpath": lineage,
+                    "taxpath_sn": lineage_sn,
+                    "genome_id": genome_id,
+                    "otu": otu,
+                    "host": host_str
+                })
+
+    grouped_rows = {rank: [] for rank in master_rank_order}
+    for row in all_rows:
+        grouped_rows[row["rank"]].append(row)
+
+    # Sort each group by abundance descending
+    for rank in grouped_rows:
+        grouped_rows[rank].sort(key=lambda r: -r["percent"])
+
+    # Emit
+    for rank in master_rank_order:
+        for row in grouped_rows[rank]:
+            stream_output.write(row_format.format(
+                taxid=row["taxid"],
+                rank=row["rank"],
+                taxpath="|".join(row["taxpath"][:row["rank_index"] + 1]),
+                taxpath_sn="|".join(row["taxpath_sn"][:row["rank_index"] + 1]),
+                abp=row["percent"] * 100.0,
+                gid=row["genome_id"],
+                otu=row["otu"],
+                host=row["host"]
+            ))
 
 
 def get_scientific_name(taxid):
-
     """
     Return scientific name of ncbi taxonomic identifier
 
@@ -200,47 +292,79 @@ def get_scientific_name(taxid):
     """
 
     taxid = get_updated_taxid(taxid)
-    if taxid in taxid_to_name:
-        return taxid_to_name[taxid]
+    if taxid in TAXID_TO_NAME:
+        return TAXID_TO_NAME[taxid]
     raise ValueError("Invalid taxid")
 
 
 def stream_tp_header(output_stream, sample_id):
-        """
-        Stream the header of the taxonomic profile.
+    """
+    Stream the header of the taxonomic profile.
 
-        @param output_stream: Output of taxonomic profile
-        @type output_stream: file | FileIO | StringIO
-        @param sample_id: The sample ID of this taxonomy profile.
-        @type output_stream: str
-        """
-        output_stream.write("@SampleID:{}\n".format(sample_id))
-        output_stream.write("@Version:{}\n".format(taxonomic_profile_version))
-        output_stream.write("@Ranks:{ranks}\n\n".format(ranks="|".join(ranks)))
-        output_stream.write("@@TAXID\tRANK\tTAXPATH\tTAXPATHSN\tPERCENTAGE\t_CAMI_genomeID\t_CAMI_OTU\n")
+    @param output_stream: Output of taxonomic profile
+    @type output_stream: file | FileIO | StringIO
+    @param sample_id: The sample ID of this taxonomy profile.
+    @type output_stream: str
+    """
+    output_stream.write("@SampleID:{}\n".format(sample_id))
+    output_stream.write("@Version:{}\n".format(TAXONOMIC_PROFILE_VERSION))
+    if IS_LEGACY:
+        output_stream.write("@Ranks:{ranks}\n\n".format(ranks="|".join(LEGACY_RANKS)))
+    else:
+        output_stream.write("@Ranks:" + ",".join(ROOTS) + "|" + ",".join(TOP) + "|" + "|".join(TAIL) + "\n")
+    output_stream.write("@@TAXID\tRANK\tTAXPATH\tTAXPATHSN\tPERCENTAGE\t_CAMI_genomeID\t_CAMI_OTU\tHOST\n")
 
 
-def get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent):
+def get_percent_by_rank_by_taxid(genome_id_to_lineage, genome_id_to_percent, genome_id_is_plasmid):
+    percent_by_rank_by_taxid = {
+        "cellular":  {rank: {} for rank in CELLULAR_RANKS},
+        "acellular": {rank: {} for rank in VIRUS_RANKS},
+        "other":     {rank: {} for rank in OTHER_RANKS}
+    }
 
-    percent_by_rank_by_taxid = {}
-    for rank in ranks:
-        percent_by_rank_by_taxid[rank] = dict()
+    is_legacy = False
+    if IS_LEGACY:
+        is_legacy = True
+        percent_by_rank_by_taxid = {
+            "legacy": {rank: {} for rank in LEGACY_RANKS}
+        }
 
-    for rank_index, rank in enumerate(ranks):
-        # rank = ranks[rank_index]
-        for genome_id in genome_id_to_lineage:
-            tax_id = genome_id_to_lineage[genome_id][rank_index]
-            if tax_id is None:
+    for genome_id, lineage in genome_id_to_lineage.items():
+        if not lineage:
+            continue
+        base_taxid = lineage[0]  # first filled element of its rank list (root for that track)
+        if base_taxid is None or base_taxid == "":
+            continue
+
+        # Decide the track
+        if is_legacy:
+            rank_type = "legacy"
+            rank_list = LEGACY_RANKS
+        elif genome_id_is_plasmid.get(genome_id, False):
+            rank_type = "other"
+            rank_list = OTHER_RANKS
+        elif is_descendant_of(base_taxid, "10239"):  # viruses
+            rank_type = "acellular"
+            rank_list = VIRUS_RANKS
+        else:
+            rank_type = "cellular"
+            rank_list = CELLULAR_RANKS
+
+        percent = genome_id_to_percent[genome_id]
+
+        for i, taxid_i in enumerate(lineage):
+            if taxid_i is None or taxid_i == "":
                 continue
-            percent = genome_id_to_percent[genome_id]
-            if tax_id not in percent_by_rank_by_taxid[rank]:
-                percent_by_rank_by_taxid[rank][tax_id] = 0
-            percent_by_rank_by_taxid[rank][tax_id] += percent
+            rank = rank_list[i]
+            if taxid_i not in percent_by_rank_by_taxid[rank_type][rank]:
+                percent_by_rank_by_taxid[rank_type][rank][taxid_i] = 0.0
+            percent_by_rank_by_taxid[rank_type][rank][taxid_i] += percent
+
     return percent_by_rank_by_taxid
 
 
-def get_genome_id_to_lineage(list_of_genome_id, genome_id_to_taxid, strain_id_to_genome_id, genome_id_to_strain_id):
-
+def get_genome_id_to_lineage(list_of_genome_id, genome_id_to_taxid, strain_id_to_genome_id,
+                             genome_id_to_strain_id, genome_id_is_plasmid):
     """
     Returnes the lineage for each genome id, assigning new strain id if not available
 
@@ -256,38 +380,53 @@ def get_genome_id_to_lineage(list_of_genome_id, genome_id_to_taxid, strain_id_to
     @return: lineage for each genome id using genome id as key
     @rtype: dict[str|unicode, list[None|str|unicode]]
     """
-
     strains_by_taxid = {}
     genome_id_to_lineage = {}
     for genome_id in list_of_genome_id:
+        if genome_id_is_plasmid.get(genome_id, False):
+            # Build OTHER-ENTRIES lineage
+            lineage = ["" for _ in OTHER_RANKS]
+            lineage[0] = OTHER_ENTRIES_TAXID
+            lineage[8] = PLASMID_SPECIES_TAXID  # species slot
+            # assign strain
+            if genome_id in genome_id_to_strain_id:
+                lineage[9] = genome_id_to_strain_id[genome_id]
+            else:
+                # synthesize a unique 45202.N strain id
+                n = strains_by_taxid.get(PLASMID_SPECIES_TAXID, 0) + 1
+                strains_by_taxid[PLASMID_SPECIES_TAXID] = n
+                sid = f"{PLASMID_SPECIES_TAXID}.{n}"
+                genome_id_to_strain_id[genome_id] = sid
+                strain_id_to_genome_id[sid] = genome_id
+                lineage[9] = sid
+            genome_id_to_lineage[genome_id] = lineage
+            continue
+
+        # regular (cellular or viral) genomes
         tax_id = genome_id_to_taxid[genome_id]
         if tax_id == "":
             raise KeyError("genome_ID '{}' has no taxid!".format(genome_id))
         tax_id = get_updated_taxid(tax_id)
-        genome_id_to_lineage[genome_id] = get_lineage_of_legal_ranks(tax_id, default_ordered_legal_ranks)
-        if genome_id_to_lineage[genome_id][-1] is not None:
-            continue
 
-        if tax_id not in strains_by_taxid:
-            strains_by_taxid[tax_id] = 0
-        strains_by_taxid[tax_id] += 1
-
-        if genome_id in genome_id_to_strain_id and genome_id_to_strain_id[genome_id]:
-            strain_id = genome_id_to_strain_id[genome_id]
-        else:
-            strain_id = "{}.{}".format(tax_id, strains_by_taxid[tax_id])
-            # make sure assigned strain ids are unique, in case of previous assigned ids
-            while strain_id in genome_id_to_strain_id.values():
+        lineage = get_lineage_of_legal_ranks(tax_id)
+        # Ensure a strain id exists
+        if lineage[-1] is None:
+            if tax_id not in strains_by_taxid:
+                strains_by_taxid[tax_id] = 0
+            strains_by_taxid[tax_id] += 1
+            strain_id = genome_id_to_strain_id.get(genome_id, "{}.{}".format(tax_id, strains_by_taxid[tax_id]))
+            while strain_id in strain_id_to_genome_id:
                 strains_by_taxid[tax_id] += 1
                 strain_id = "{}.{}".format(tax_id, strains_by_taxid[tax_id])
             genome_id_to_strain_id[genome_id] = strain_id
-        genome_id_to_lineage[genome_id][-1] = strain_id
-        strain_id_to_genome_id[strain_id] = genome_id
+            strain_id_to_genome_id[strain_id] = genome_id
+            lineage[-1] = strain_id
+
+        genome_id_to_lineage[genome_id] = lineage
     return genome_id_to_lineage
 
 
-def get_lineage_of_legal_ranks(taxid, ranks, default_value=None, as_name=False, inherit_rank=False):
-
+def get_lineage_of_legal_ranks(taxid, default_value=None):
     """
     Return lineage of a specific taxonomic identifier, filtered by a list of legal ranks
 
@@ -308,68 +447,24 @@ def get_lineage_of_legal_ranks(taxid, ranks, default_value=None, as_name=False, 
     @rtype: list[str|unicode|None]
     """
 
-    assert isinstance(taxid, str)
     taxid = get_updated_taxid(taxid)
-
-    lineage = [default_value] * len(ranks)
-    original_rank = get_rank_of_taxid(taxid)
-    if original_rank is not None and original_rank in ranks:
-        if as_name:
-            lineage[ranks.index(original_rank)] = taxid_to_name[taxid]
-        else:
-            lineage[ranks.index(original_rank)] = taxid
-    try:
-        rank_counter = ranks.index(taxid_to_rank[taxid]) # starting at rank of original tax id
-    except ValueError: # rank is not in ranks
-        rank_counter = ranks.index(ranks[-1]) # choose lowest rank then
+    if IS_LEGACY:
+        ranks = LEGACY_RANKS
+    else:
+        is_virus = is_descendant_of(taxid, "10239")
+        ranks = VIRUS_RANKS if is_virus else CELLULAR_RANKS
+    lineage_dict = {rank: default_value for rank in ranks}
     while taxid != "1":
-        taxid = taxid_to_parent_taxid[taxid]
-        rank = taxid_to_rank[taxid]
-        if rank in ranks:
-            current_rank_counter = ranks.index(taxid_to_rank[taxid])
-            rank_difference = rank_counter - current_rank_counter
-            if rank_difference > 1:
-                for i in range(current_rank_counter, rank_counter - 1):
-                    lineage[i] = "" # add empty name to list if name is missing in the taxonomy
-            rank_counter = current_rank_counter
-            if as_name:
-                lineage[ranks.index(rank)] = taxid_to_name[taxid]
-            else:
-                lineage[ranks.index(rank)] = taxid
+        if taxid not in TAXID_TO_RANK or taxid not in TAXID_TO_PARENT_TAXID:
+            break
+        rank = TAXID_TO_RANK[taxid]
+        if rank in lineage_dict:
+            lineage_dict[rank] = taxid
+        taxid = TAXID_TO_PARENT_TAXID[taxid]
+    return [lineage_dict[rank] for rank in ranks]
 
-        # todo: sort ranks
-        if inherit_rank:
-            rank_previous = default_value
-            tmp_list = enumerate(lineage)
-            if default_ordered_legal_ranks.index(ranks[0]) < default_ordered_legal_ranks.index(ranks[-1]):
-                tmp_list = reversed(list(enumerate(lineage)))
-            for index, value in tmp_list:
-                if value == default_value:
-                    lineage[index] = rank_previous
-                else:
-                    rank_previous = value
-    return lineage
-
-def get_rank_of_taxid(taxid):
-
-    """
-    Return rank of ncbi taxonomic identifier
-
-    @param taxid: ncbi taxonomic identifier
-    @type taxid: str
-
-    @return: ncbi rank of taxonomic identifiers
-    @rtype: str | unicode
-    """
-
-    assert isinstance(taxid, str)
-    taxid = get_updated_taxid(taxid)
-    if taxid in taxid_to_rank:
-        return taxid_to_rank[taxid]
-    raise ValueError("Invalid taxid")
 
 def get_updated_taxid(taxid):
-
     """
     Return current taxid, in case it was merged
 
@@ -382,17 +477,17 @@ def get_updated_taxid(taxid):
     @rtype: str | unicode
     """
 
-    if taxid in taxid_to_rank:
+    if taxid in TAXID_TO_RANK:
         return taxid
-    if taxid not in taxid_old_to_taxid_new:
-        raise ValueError("Invalid taxid")
-
-    taxid_new = taxid_old_to_taxid_new[taxid]
-    return taxid_new
+    if taxid in TAXID_OLD_TO_TAXID_NEW:
+        return TAXID_OLD_TO_TAXID_NEW[taxid]
+    # allow our injected nodes
+    if taxid in (OTHER_ENTRIES_TAXID, PLASMID_SPECIES_TAXID):
+        return taxid
+    raise ValueError(f"Invalid taxid: {taxid}")
 
 
 def parse_file(file_path):
-
     """
 	Reading comma or tab separated values from a file
 
@@ -403,14 +498,12 @@ def parse_file(file_path):
 	@rtype: generator[ dict[int|long|str|unicode, str|unicode] ]
 	"""
 
-    print (file_path)
     with open(file_path) as file_handler:
         for row in parse_stream(file_handler):
             yield row
 
 
 def parse_stream(stream_input):
-
     """
 	Reading comma or tab separated values from a stream
 
@@ -418,30 +511,46 @@ def parse_stream(stream_input):
 	@type stream_input: file | io.FileIO | StringIO.StringIO
     """
 
-    comment_line = ['#']
-    separator="\t"
-
-    # read column names
-    number_of_columns = 0
-    list_of_column_names = []
-	
-    # read rows
-    line_count = 0
+    separator = "\t"
     for line in stream_input:
-        line_count += 1
         row = line.rstrip('\n').rstrip('\r')
-        if line[0] in comment_line or len(row) == 0:
+        if not row or line[0] == '#':
             continue
-
         row_cells = row.split(separator)
-        if number_of_columns == 0:
-            number_of_columns = len(row_cells)
-
-        if number_of_columns != len(row_cells):
-            msg = "Format error. Bad number of values in line {}".format(line_count)
-            raise ValueError(msg)
-
         yield row_cells
+
+
+def get_other_entries_lineage(species_taxid, taxid_if_strain=None):
+    """Build lineage aligned to other_ranks, with OTHER_ENTRIES_TAXID at root and
+    species_taxid at 'species'. Optionally set 'strain' to taxid_if_strain."""
+    lineage = [""] * len(OTHER_RANKS)
+    lineage[0] = OTHER_ENTRIES_TAXID
+    lineage[8] = species_taxid
+    if taxid_if_strain:
+        lineage[9] = taxid_if_strain
+    return lineage
+
+
+def get_other_entries_lineage_names(species_taxid, taxid_if_strain=None):
+    names = ["" for _ in OTHER_RANKS]
+    names[0] = OTHER_ENTRIES_NAME
+    names[8] = PLASMID_SPECIES_NAME if species_taxid == PLASMID_SPECIES_TAXID else TAXID_TO_NAME.get(species_taxid, "")
+    if taxid_if_strain:
+        names[9] = (PLASMID_SPECIES_NAME + " strain")
+    return names
+
+
+def is_descendant_of(taxid, ancestor_taxid):
+    seen = set()
+    while taxid != "1" and taxid not in seen:
+        seen.add(taxid)
+        if taxid == ancestor_taxid:
+            return True
+        if taxid not in TAXID_TO_PARENT_TAXID:
+            break
+        taxid = TAXID_TO_PARENT_TAXID[taxid]
+    return False
+
 
 # main method and entry point of this script
 # this script builds the taxonomy for a given ncbi dump and given distributions
@@ -451,14 +560,7 @@ if __name__ == "__main__":
     file_path_ncbi_nodes = sys.argv[3]
     sample_size = int(sys.argv[4])
     metadata_file_path = sys.argv[5]
-
-    list_of_file_paths_distribution = list()
-    i = 0
-
-    for i in range(sample_size):
-        list_of_file_paths_distribution.append(sys.argv[6+i])
-        i = i + 1 
-
+    list_of_file_paths_distribution = [sys.argv[6 + i] for i in range(sample_size)]
 
     build_ncbi_taxonomy(file_path_ncbi_nodes)
     read_names_file(file_path_ncbi_names)

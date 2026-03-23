@@ -18,9 +18,9 @@ class SamFromReads() :
 
             for record in SeqIO.parse(aligned_reads_path, "fastq-sanger"):
 
-                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').rsplit('_', 7)
 
-                record.id = read_id_to_seq_id_dict[name][0] + "-" + index 
+                record.id = read_id_to_seq_id_dict[name][0] + "-" + index
                 record.description = ""
                 write_handler.write(record.format("fastq-sanger"))
 
@@ -29,9 +29,9 @@ class SamFromReads() :
 
             for record in SeqIO.parse(unaligned_reads_path, "fastq-sanger"):
 
-                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+                name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').rsplit('_', 7)
 
-                record.id = read_id_to_seq_id_dict[name][0] + "-" + index 
+                record.id = read_id_to_seq_id_dict[name][0] + "-" + index
                 record.description = ""
                 write_handler.write(record.format("fastq-sanger"))
 
@@ -54,7 +54,7 @@ class SamFromReads() :
             reference_path = args.reference_path
 
             id_to_cigar_map = {}
-        
+
             prefix = error_profile_path.rsplit("/",3)[-1].rsplit("_",3)[0] # get basename (changed in NanoSim3)
 
             id_to_cigar_map[prefix] = self.get_cigars_nanosim(error_profile_path)
@@ -71,10 +71,10 @@ class SamFromReads() :
             else:
                 if(args.fastq):
                     self.write_sam(aligned_reads_path, cigars, reference_path, prefix, args.stdout)
-                else:    
+                else:
                     self.write_sam_from_fasta(aligned_reads_path, cigars, reference_path, prefix, args.stdout)
                     self.convert_fasta(aligned_reads_path, reference_path)
-                
+
             prefix = unaligned_reads_path.rsplit(".",1)[0].rsplit("_",2)[0]
             cigars = id_to_cigar_map[prefix]
 
@@ -82,25 +82,24 @@ class SamFromReads() :
                 transcript_seq_id_map_file = args.transcript_seq_id_map
                 self.write_sam_from_transcriptome(unaligned_reads_path, cigars, reference_path, prefix, transcript_seq_id_map_file, args.stdout)
                 # self.write_sam_from_fasta_transcriptome(unaligned_reads_path, cigars, reference_path, prefix, transcript_seq_id_map_file, args.stdout)
-            else:    
+            else:
                 if(args.fastq):
                     self.write_sam(unaligned_reads_path, cigars, reference_path, prefix, args.stdout)
                 else:
                     self.write_sam_from_fasta(unaligned_reads_path, cigars, reference_path, prefix, args.stdout)
                     self.convert_fasta(unaligned_reads_path, reference_path)
             #os.remove(os.path.join(directory_output,f)) # do not store read file twice
-                    
-            if(args.transcriptome):       
+
+            if(args.transcriptome):
                 # Read the TSV file into a dictionary
                 transcript_seq_id_map_file = args.transcript_seq_id_map
                 read_id_to_seq_id_dict = self.read_tsv_to_dict(transcript_seq_id_map_file)
 
-                self.edit_fastq_transcriptome(read_id_to_seq_id_dict, aligned_reads_path, unaligned_reads_path)        
+                self.edit_fastq_transcriptome(read_id_to_seq_id_dict, aligned_reads_path, unaligned_reads_path)
 
     def get_cigars_nanosim(self, error_profile):
 
         errors = {}
-        slen = {}
         with open(error_profile, 'r') as ep:
             for line in ep:
                 if line.startswith("Seq"):
@@ -109,19 +108,25 @@ class SamFromReads() :
                 if error_type == "mis":
                     continue # this version ignores mismatches
 
-                seqname = name.split("_")
-                seqname = seqname[0] + "-" + seqname[-1] # later on used as sequence name
+                # Parse NanoSim identifier safely from the right:
+                # <ref>_<start>_<aligned/unaligned>_<index>_<strand>_<soffset>_<align_length>_<eoffset>
+                parts = name.rsplit("_", 7)
+                ref_name = parts[0]
+                start = parts[1]
+                index = parts[3]
+
+                # Use a collision-free key: ref-start-index
+                seqname = f"{ref_name}-{start}-{index}"
 
                 # It is not sufficient to use "<seqname>-<start_position>" as key (like used above).
-                # This is because there are multiple entries in the generated read file with the same combination of sequence name and 
+                # This is because there are multiple entries in the generated read file with the same combination of sequence name and
                 # start position. For more information see https://github.com/bcgsc/NanoSim/issues/151 .
-                # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not matches
+                # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not match
                 # the sequence length. With using the whole sequence identifier as key and the nanosim version 3.1.0 this can be fixed.
-                #seqname = name.replace("_", "-")
+                # seqname = name.replace("_", "-")
                 # This fix still triggered the error message:
                 # [E::sam_parse1] CIGAR and query sequence are of different length
 
-            
                 if seqname in errors:
                     errors[seqname].append((int(pos),error_type,int(length)))
                 else:
@@ -161,14 +166,15 @@ class SamFromReads() :
         with open(read_file, 'r') as reads:
             for line in reads:
                 if line.startswith('>'):
-                    name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().replace(';','_').split('_')
+                    name, start, align_status, index, strand, soffset, align_length, eoffset = line.strip().replace(';','_').rsplit('_', 7)
                     ref_name = name[1:] # first sign of name is ">"
                     ref_name_fixed = fixed_names[ref_name]
 
-                    query = ref_name + "-" + start
+                    # Must match get_cigars_nanosim() key
+                    query = f"{ref_name}-{start}-{index}"
 
                     # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
-                    # This is because there are multiple entries in the generated read file with the same combination of sequence name and 
+                    # This is because there are multiple entries in the generated read file with the same combination of sequence name and
                     # start position. For more information see https://github.com/bcgsc/NanoSim/issues/151 .
                     # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not matches
                     # the sequence length. With using the whole sequence identifier as query and the nanosim version 3.1.0 this can be fixed.
@@ -176,7 +182,7 @@ class SamFromReads() :
                     # This fix still triggered the error message:
                     # [E::sam_parse1] CIGAR and query sequence are of different length
 
-                    QNAME = ref_name_fixed + "-" + index 
+                    QNAME = ref_name_fixed + "-" + index
                     if strand == 'R':
                         FLAG = str(16)
                     else:
@@ -187,7 +193,8 @@ class SamFromReads() :
                         RNAME = "*" # treated as unmapped
                         FLAG = str(4)
                     else:
-                        POS = start
+                        # Convert 0-based NanoSim start to 1-based SAM POS
+                        POS = str(int(start) + 1)
                         try:
                             CIGAR, pos = id_to_cigar_map[query]
                         except KeyError: #sequence did not have any errors
@@ -199,13 +206,13 @@ class SamFromReads() :
                     QUAL = '*'  # no quality for nanosim
                 else:
                     SEQ = line.strip()
-                    TLEN = str(len(SEQ)) 
+                    TLEN = str(len(SEQ))
                     if CIGAR != '*': # unmapped bases counted as insertions in read
 
-                        CIGAR = str(len(SEQ)) + "M"
+                        # CIGAR = str(len(SEQ)) + "M"
 
                         # use real CIGAR for sam file
-                        #CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+                        CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
                         ### temporarily disabled ###
 
                     sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
@@ -226,15 +233,16 @@ class SamFromReads() :
         if (not self.wrote_header):
             self.write_header(write_sam, references, stdout)
         for record in SeqIO.parse(read_file, 'fastq'):
-            name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+            name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').rsplit('_', 7)
 
             ref_name = name
             ref_name_fixed = fixed_names[ref_name]
 
-            query = ref_name + "-" + start
+            # Must match get_cigars_nanosim() key
+            query = f"{ref_name}-{start}-{index}"
 
             # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
-            # This is because there are multiple entries in the generated read file with the same combination of sequence name and 
+            # This is because there are multiple entries in the generated read file with the same combination of sequence name and
             # start position. For more information see https://github.com/bcgsc/NanoSim/issues/151 .
             # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not matches
             # the sequence length. With using the whole sequence identifier as query and the nanosim version 3.1.0 this can be fixed.
@@ -242,7 +250,7 @@ class SamFromReads() :
             # This fix still triggered the error message:
             # [E::sam_parse1] CIGAR and query sequence are of different length
 
-            QNAME = ref_name_fixed + "-" + index 
+            QNAME = ref_name_fixed + "-" + index
             if strand == 'R':
                 FLAG = str(16)
             else:
@@ -253,7 +261,8 @@ class SamFromReads() :
                 RNAME = "*"
                 FLAG = str(4)
             else:
-                POS = start
+                # Convert 0-based NanoSim start to 1-based SAM POS
+                POS = str(int(start) + 1)
                 try:
                     CIGAR, pos = id_to_cigar_map[query]
                 except KeyError:
@@ -268,11 +277,11 @@ class SamFromReads() :
 
 
             if CIGAR != '*': # unmapped bases counted as insertions in read
-                
-                CIGAR = str(len(SEQ)) + "M"
+
+                # CIGAR = str(len(SEQ)) + "M"
 
                 # use real CIGAR for sam file
-                # CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+                CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
                 ### temporarily disabled ###
 
             sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
@@ -346,17 +355,18 @@ class SamFromReads() :
         if (not self.wrote_header):
             self.write_header(write_sam, references, stdout)
         for record in SeqIO.parse(read_file, 'fastq'):
-            name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').split('_')
+            name, start, align_status, index, strand, soffset, align_length, eoffset = record.id.strip().replace(';','_').rsplit('_', 7)
 
             ref_name = name
 
             ref_name_fixed, start_gene = read_id_to_seq_id_dict[ref_name]
             # ref_name_fixed = read_id_to_seq_id_dict[ref_name]
 
-            query = ref_name + "-" + start
+            # Must match get_cigars_nanosim() key
+            query = f"{ref_name}-{start}-{index}"
 
             # It is not sufficient to use "<seqname>-<start_position>" as query (like used above).
-            # This is because there are multiple entries in the generated read file with the same combination of sequence name and 
+            # This is because there are multiple entries in the generated read file with the same combination of sequence name and
             # start position. For more information see https://github.com/bcgsc/NanoSim/issues/151 .
             # This results in a problem with the CIGAR creation and a truncated sam file, because the CIGAR length does not matches
             # the sequence length. With using the whole sequence identifier as query and the nanosim version 3.1.0 this can be fixed.
@@ -364,7 +374,7 @@ class SamFromReads() :
             # This fix still triggered the error message:
             # [E::sam_parse1] CIGAR and query sequence are of different length
 
-            QNAME = ref_name_fixed + "-" + index 
+            QNAME = ref_name_fixed + "-" + index
 
             if strand == 'R':
                 FLAG = str(16)
@@ -393,11 +403,11 @@ class SamFromReads() :
 
 
             if CIGAR != '*': # unmapped bases counted as insertions in read
-                
-                CIGAR = str(len(SEQ)) + "M"
+
+                # CIGAR = str(len(SEQ)) + "M"
 
                 # use real CIGAR for sam file
-                # CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
+                CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
                 ### temporarily disabled ###
 
             sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]

@@ -79,10 +79,22 @@ process shuffle {
     anonymous_reads_file = 'anonymous_reads.fq'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
     """
+    set -euo pipefail
+
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
+    {
+      for f in ${read_files}; do
+        case "\$f" in
+          *.gz) zcat "\$f" ;;
+          *)    cat  "\$f" ;;
+        esac
+      done
+    } | paste -d "\\t" - - - - \
+      | shuf --random-source=<(get_seeded_random ${seed}) \
+      | tr "\\t" "\\n" \
+      | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
@@ -112,15 +124,32 @@ process shuffle_paired_end {
     anonymous_reads_file = 'anonymous_reads.fq'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
     """
+    set -euo pipefail
+
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
-    cat sample${sample_id}_*1.fq > first_reads.fq
-    cat sample${sample_id}_*2.fq > second_reads.fq
+    # Build first/second reads from the provided input paths, supporting both .fq and .fq.gz
+    {
+      for f in ${first_read_files}; do
+        case "\$f" in
+          *.gz) zcat "\$f" ;;
+          *)    cat  "\$f" ;;
+        esac
+      done
+    } > first_reads.fq
+    {
+      for f in ${second_read_files}; do
+        case "\$f" in
+          *.gz) zcat "\$f" ;;
+          *)    cat  "\$f" ;;
+        esac
+      done
+    } > second_reads.fq
     paste -d " " - - - - <first_reads.fq > first_reads_clustered.fq
     paste -d " " - - - - <second_reads.fq > second_reads_clustered.fq
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    shuf --random-source=<(get_seeded_random ${seed}) sample${sample_id}_interweaved.fq | tr " " "\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
+    shuf --random-source=<(get_seeded_random ${seed}) sample${sample_id}_interweaved.fq | tr " " "\\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
     gzip -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
@@ -190,7 +219,7 @@ process shuffle_gsa {
     conda "conda-forge::biopython=1.83"
 
     input:
-    tuple val(sample_id), path(read_files), val(seed)
+    tuple val(sample_id), path(gsa_file), val(seed)
 
     output:
     tuple val(sample_id), path(anonymous_gsa_file)
@@ -203,7 +232,12 @@ process shuffle_gsa {
     touch ${anonymous_gsa_file}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed}) | tr " " "\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
+    cat ${gsa_file} \\
+      | paste -d "\\t" - - \\
+      | shuf --random-source=<(get_seeded_random ${seed}) \\
+      | tr "\\t" "\\n" \\
+      | tr -d '\\000' \\
+      | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${anonymous_gsa_file}
     cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
@@ -213,9 +247,9 @@ process shuffle_gsa {
 /*
 * This process shuffles and anonymizes the pooled gsa.
 * Takes:
-*    A list with the paths to all read files grouped by sample id and the generated seed.
+*    The path to the pooled gsa file and the generated seed.
 * Output:
-*    The anonymous read file for the given sample.
+*    The anonymous gsa file.
 *    The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
  */
 process shuffle_pooled_gsa {
@@ -223,7 +257,7 @@ process shuffle_pooled_gsa {
     conda "conda-forge::biopython=1.83"
 
     input:
-    path read_files
+    path gsa_file
     val seed
 
     output:
@@ -237,7 +271,12 @@ process shuffle_pooled_gsa {
     touch ${anonymous_gsa_pooled}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    cat ${read_files} |  sed 'N;N;N;s/\\n/ /g'  | shuf --random-source=<(get_seeded_random ${seed[0]}) | tr " " "\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
+    cat ${gsa_file} \\
+      | paste -d "\\t" - - \\
+      | shuf --random-source=<(get_seeded_random ${seed[0]}) \\
+      | tr "\\t" "\\n" \\
+      | tr -d '\\000' \\
+      | python3 ${shared_scripts_dir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
     mkdir --parents ${params.outdir}
     gzip -k ${anonymous_gsa_pooled}
     cp ${anonymous_gsa_pooled}.gz ${params.outdir}
@@ -268,7 +307,7 @@ process read_start_positions_from_dir_of_bam {
     """
     set -o pipefail
     for bamfile in ${list_bam_files}; do
-        samtools view "\$bamfile" | awk '{print \$1 "\\t" \$4}' >> ${filename}
+        samtools view "\$bamfile" | awk '{print \$3 "\\t" \$4}' >> ${filename}
     done
     """
 }
@@ -294,7 +333,7 @@ process read_start_positions_from_merged_bam {
     filename = "read_start_positions"
     """
     set -o pipefail
-    samtools view ${merged_bam_files} | awk '{print \$1 "\\t" \$4}' >> ${filename}
+    samtools view ${merged_bam_files} | awk '{print \$3 "\\t" \$4}' >> ${filename}
     """
 }
 

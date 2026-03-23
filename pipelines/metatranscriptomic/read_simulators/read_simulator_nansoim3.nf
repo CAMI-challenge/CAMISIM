@@ -38,14 +38,14 @@ workflow read_simulator_nanosim3 {
 **/
 process simulate_reads_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.22.1 conda-forge::numpy=1.21.5 bioconda::nanosim=3.2 bioconda::gffutils=0.9'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2 bioconda::gffutils=0.9'
 
     // ToDo For some reason this does not work
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "*.gz", mode: 'copy'
     //publishDir "${params.outdir}/sample_${sample_id}/reads/fastq/", pattern: "*_aligned_reads.fastq.gz", mode: 'copy'
 
     input:
-    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed), path(db)
+    tuple val(genome_id), val(sample_id), path(fasta_distribution_file), val(abundance), path(fasta_file), path(gff_file), val(seed), path(db), val(genome_size)
     val(read_length_ch)
 
     
@@ -60,8 +60,8 @@ process simulate_reads_nanosim3 {
     size = params.size
     read_length = read_length_ch
     basecaller = params.basecaller
-    number_of_reads = (size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
-    number_of_reads = number_of_reads.round(0).toInteger()
+    coverage = new BigDecimal(size.toString()).multiply(new BigDecimal(10**9)).multiply(new BigDecimal(abundance.toString())).divide(new BigDecimal(genome_size.toString()), java.math.MathContext.DECIMAL64)
+    coverage = coverage.stripTrailingZeros()
     // nanosim seed cannot be > 2**32 -1
     //Long seed = 632741178
     //Long used_seed = seed % 2**32 - 1
@@ -77,7 +77,7 @@ process simulate_reads_nanosim3 {
     log = log.concat("  abundance: ").concat(abundance)
     log = log.concat("    seed: ").concat(Long.toString(seed))
     log = log.concat("    used_seed: ").concat(Long.toString(used_seed))
-    log = log.concat("    number_of_reads: ").concat(Integer.toString(number_of_reads))
+    log = log.concat("    coverage: ").concat(coverage.toPlainString())
     log = log.concat("    profile: ").concat(profile)
     print(log)
     **/
@@ -93,11 +93,9 @@ process simulate_reads_nanosim3 {
         --child_feature_type ${child_feature_type} \
         --fasta_distribution_file ${fasta_distribution_file}
 
-    total_read_count=\$(cat total_read_count.txt)
-
     # gffread -F -w transcriptome.fa -g ${fasta_file} sample${sample_id}_${genome_id}.gff3
 
-    simulator.py transcriptome -rt sample_${sample_id}_${genome_id}_transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -n \$total_read_count --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o tmp_sample${sample_id}_${genome_id}
+    simulator.py transcriptome -rt sample_${sample_id}_${genome_id}_transcriptome.fa -c ${profile} -e ${sample_id}_${genome_id}_expression_profile.tsv -x ${coverage} --no_model_ir -b ${basecaller} --fastq -r cDNA_1D --seed ${used_seed} -o tmp_sample${sample_id}_${genome_id}
 
     # gzip -k sample${sample_id}_${genome_id}_aligned_reads.fastq
     # gzip -k *_aligned_reads.fastq
