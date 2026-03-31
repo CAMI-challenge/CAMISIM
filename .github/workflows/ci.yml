@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install biopython numpy gffutils pyfaidx
+
+      - name: Verify Python scripts parse without errors
+        run: |
+          find pipelines -name '*.py' | while read f; do
+            echo "Checking $f ..."
+            python -c "import py_compile; py_compile.compile('$f', doraise=True)"
+          done
+
+      - name: Verify Nextflow config is valid
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: "latest-stable"
+
+      - name: Nextflow smoke test
+        run: nextflow run main.nf -help

@@ -1,3 +1,5 @@
+[![CI](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml/badge.svg)](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml)
+
 # CAMISIM
 
 CAMISIM is a software to model abundance distributions of microbial communities and to simulate corresponding shotgun metagenome datasets.\
