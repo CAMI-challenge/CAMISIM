@@ -32,8 +32,8 @@ class TestGetCigar:
         assert get_cigar("A", "A") == "1M"
 
     def test_complex_alignment(self):
-        # 2M + 1D + 1M + 1I + 2M
-        assert get_cigar("ACG-TT", "AC-ATT") == "2M1D1M1I2M"
+        # 2M + 1D + 1I + 2M (zip pairs: AC match, G/- is D, -/A is I, TT match)
+        assert get_cigar("ACG-TT", "AC-ATT") == "2M1D1I2M"
 
     def test_all_deletions(self):
         assert get_cigar("AAAA", "----") == "4D"

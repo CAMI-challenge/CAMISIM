@@ -230,7 +230,8 @@ class TestGetMap:
         assert result == {}
 
     def test_same_column_for_key_and_value(self):
-        table = {"col": ["x", "y", "z"]}
+        # get_map requires len(metadata_table) >= 2 columns to produce results
+        table = {"col": ["x", "y", "z"], "other": ["a", "b", "c"]}
         result = cd.get_map(table, "col", "col")
         assert result == {"x": "x", "y": "y", "z": "z"}
 
