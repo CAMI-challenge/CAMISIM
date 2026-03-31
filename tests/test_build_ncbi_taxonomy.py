@@ -1,5 +1,6 @@
 """Tests for pipelines/metagenomic/scripts/build_ncbi_taxonomy.py — taxonomy utilities."""
 
+import io
 import sys
 import os
 import pytest
@@ -165,3 +166,79 @@ class TestParseStream:
         lines = ["a\tb\n"]
         rows = list(tax.parse_stream(lines))
         assert rows[0] == ["a", "b"]
+
+
+class TestStreamTpHeader:
+    def test_header_format(self):
+        out = io.StringIO()
+        tax.stream_tp_header(out, "sample_0")
+        content = out.getvalue()
+        assert "@SampleID:sample_0" in content
+        assert f"@Version:{tax.TAXONOMIC_PROFILE_VERSION}" in content
+
+
+class TestGetOtherEntriesLineageNames:
+    def test_plasmid_species(self):
+        tax.TAXID_TO_NAME[tax.PLASMID_SPECIES_TAXID] = tax.PLASMID_SPECIES_NAME
+        names = tax.get_other_entries_lineage_names(tax.PLASMID_SPECIES_TAXID)
+        assert names[0] == tax.OTHER_ENTRIES_NAME
+        assert names[8] == tax.PLASMID_SPECIES_NAME
+
+    def test_with_strain(self):
+        tax.TAXID_TO_NAME["12345"] = "Some species"
+        names = tax.get_other_entries_lineage_names("12345", taxid_if_strain="99999")
+        assert "strain" in names[9]
+
+
+class TestReadNamesFile:
+    def test_parses_scientific_names(self, tmp_path):
+        names_file = tmp_path / "names.dmp"
+        names_file.write_text(
+            "65\t|\tHerpetosiphon aurantiacus\t|\t\t|\tscientific name\t|\n"
+            "65\t|\tH. aurantiacus\t|\t\t|\tsynonym\t|\n"
+            "100\t|\tEscherichia\t|\t\t|\tscientific name\t|\n"
+        )
+        tax.read_names_file(str(names_file))
+        assert tax.TAXID_TO_NAME["65"] == "Herpetosiphon aurantiacus"
+        assert tax.TAXID_TO_NAME["100"] == "Escherichia"
+        # synonym should not overwrite
+        assert tax.TAXID_TO_NAME["65"] != "H. aurantiacus"
+
+    def test_injects_special_nodes(self, tmp_path):
+        names_file = tmp_path / "names.dmp"
+        names_file.write_text("")
+        tax.read_names_file(str(names_file))
+        assert tax.TAXID_TO_NAME[tax.OTHER_ENTRIES_TAXID] == tax.OTHER_ENTRIES_NAME
+        assert tax.TAXID_TO_NAME[tax.PLASMID_SPECIES_TAXID] == tax.PLASMID_SPECIES_NAME
+
+
+class TestBuildNcbiTaxonomy:
+    def test_parses_nodes(self, tmp_path):
+        nodes_file = tmp_path / "nodes.dmp"
+        nodes_file.write_text(
+            "1\t|\t1\t|\tno rank\t|\n"
+            "2\t|\t1\t|\tsuperkingdom\t|\n"
+            "100\t|\t2\t|\tgenus\t|\n"
+        )
+        tax.build_ncbi_taxonomy(str(nodes_file))
+        assert tax.TAXID_TO_PARENT_TAXID["2"] == "1"
+        assert tax.TAXID_TO_RANK["100"] == "genus"
+        assert tax.IS_LEGACY is True  # no "acellular root"
+
+    def test_detects_new_taxonomy(self, tmp_path):
+        nodes_file = tmp_path / "nodes.dmp"
+        nodes_file.write_text(
+            "1\t|\t1\t|\tno rank\t|\n"
+            "999\t|\t1\t|\tacellular root\t|\n"
+        )
+        tax.build_ncbi_taxonomy(str(nodes_file))
+        assert tax.IS_LEGACY is False
+
+
+class TestReadMergedFile:
+    def test_parses_merges(self, tmp_path):
+        merged_file = tmp_path / "merged.dmp"
+        merged_file.write_text("111\t|\t999\t|\n222\t|\t888\t|\n")
+        tax.read_merged_file(str(merged_file))
+        assert tax.TAXID_OLD_TO_TAXID_NEW["111"] == "999"
+        assert tax.TAXID_OLD_TO_TAXID_NEW["222"] == "888"

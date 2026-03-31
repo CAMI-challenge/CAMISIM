@@ -86,3 +86,35 @@ class TestAnonymizeSequencePairs:
         mapping.seek(0)
         new_ids = [line.split("\t")[1] for line in mapping.read().strip().split("\n")]
         assert new_ids == ["X0/1", "X0/2"]
+
+    def test_six_sequences_three_pairs(self, anon):
+        inp = _make_fasta(
+            ("r1f", "AAAA"), ("r1r", "TTTT"),
+            ("r2f", "GGGG"), ("r2r", "CCCC"),
+            ("r3f", "ACGT"), ("r3r", "TGCA"),
+        )
+        out = io.StringIO()
+        mapping = io.StringIO()
+        anon.anonymize_sequence_pairs(mapping, input_stream=inp, output_stream=out, file_format="fasta")
+
+        mapping.seek(0)
+        new_ids = [line.split("\t")[1] for line in mapping.read().strip().split("\n")]
+        assert new_ids == ["0/1", "0/2", "1/1", "1/2", "2/1", "2/2"]
+
+
+class TestAnonymizerEdgeCases:
+    def test_empty_input(self, anon):
+        inp = io.StringIO("")
+        out = io.StringIO()
+        mapping = io.StringIO()
+        anon.anonymize_sequences(mapping, input_stream=inp, output_stream=out, file_format="fasta")
+        assert out.getvalue() == ""
+        assert mapping.getvalue() == ""
+
+    def test_original_ids_in_mapping(self, anon):
+        inp = _make_fasta(("my_original_id", "ACGT"))
+        out = io.StringIO()
+        mapping = io.StringIO()
+        anon.anonymize_sequences(mapping, input_stream=inp, output_stream=out, file_format="fasta")
+        mapping.seek(0)
+        assert "my_original_id" in mapping.read()

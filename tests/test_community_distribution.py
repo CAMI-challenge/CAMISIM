@@ -1,5 +1,6 @@
 """Tests for pipelines/shared/scripts/get_community_distribution.py"""
 
+import io
 import random
 import pytest
 import get_community_distribution as cd
@@ -365,3 +366,82 @@ class TestGetListsOfDistributions:
         random.seed(123)
         r2 = cd.get_lists_of_distributions(3, 2, "replicates", 1.0, 1.0, 0.0, 0.5)
         assert r1 == r2
+
+
+# ---------------------------------------------------------------------------
+# write_distribution_file
+# ---------------------------------------------------------------------------
+class TestWriteDistributionFile:
+    def test_basic_output(self):
+        out = io.StringIO()
+        abundances = {"genome_A": [0.3, 0.7], "genome_B": [0.6, 0.4]}
+        cd.write_distribution_file(out, abundances, 1)
+        content = out.getvalue()
+        assert "genome_A\t0.3\n" in content
+        assert "genome_B\t0.6\n" in content
+
+    def test_second_sample(self):
+        out = io.StringIO()
+        abundances = {"g1": [0.1, 0.9]}
+        cd.write_distribution_file(out, abundances, 2)
+        assert "g1\t0.9\n" in out.getvalue()
+
+    def test_all_genomes_written(self):
+        out = io.StringIO()
+        abundances = {f"g{i}": [float(i)] for i in range(10)}
+        cd.write_distribution_file(out, abundances, 1)
+        lines = [l for l in out.getvalue().strip().split("\n") if l]
+        assert len(lines) == 10
+
+
+# ---------------------------------------------------------------------------
+# read (file-based TSV reader)
+# ---------------------------------------------------------------------------
+class TestRead:
+    def test_basic_tsv(self, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("a\t1\nb\t2\nc\t3\n")
+        result = cd.read(str(f))
+        assert result[0] == ["a", "b", "c"]
+        assert result[1] == ["1", "2", "3"]
+
+    def test_skips_comments(self, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("# header\na\t1\nb\t2\n")
+        result = cd.read(str(f))
+        assert result[0] == ["a", "b"]
+
+    def test_skips_empty_lines(self, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("a\t1\n\nb\t2\n")
+        result = cd.read(str(f))
+        assert result[0] == ["a", "b"]
+
+    def test_custom_separator(self, tmp_path):
+        f = tmp_path / "data.csv"
+        f.write_text("a,1\nb,2\n")
+        result = cd.read(str(f), separator=",")
+        assert result[0] == ["a", "b"]
+        assert result[1] == ["1", "2"]
+
+    def test_custom_comment_char(self, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("% comment\na\t1\n")
+        result = cd.read(str(f), comment_line="%")
+        assert result[0] == ["a"]
+
+
+# ---------------------------------------------------------------------------
+# openy (file opener with compression support)
+# ---------------------------------------------------------------------------
+class TestOpeny:
+    def test_open_plain_text(self, tmp_path):
+        f = tmp_path / "test.txt"
+        f.write_text("hello")
+        fh = cd.openy(str(f))
+        assert fh.read() == "hello"
+        fh.close()
+
+    def test_invalid_mode_raises(self):
+        with pytest.raises(AssertionError):
+            cd.openy("test.txt", mode="x")

@@ -89,3 +89,78 @@ class TestGetMap:
     def test_missing_column_raises(self, gsf):
         with pytest.raises(AssertionError):
             gsf.get_map({"k": []}, "k", "missing")
+
+
+class TestWriteGsReadMapping:
+    def test_basic_mapping(self, gsf):
+        out = io.StringIO()
+        anon_to_read = {"A0": "seq1.1-0", "A1": "seq1.1-1"}
+        seq_to_genome = {"seq1.1": "genome1"}
+        genome_to_tax = {"genome1": "12345"}
+        gsf.write_gs_read_mapping(
+            out, anon_to_read, seq_to_genome, genome_to_tax,
+            nanosim_real_fastq=False, wgsim=False,
+        )
+        content = out.getvalue()
+        assert "#anonymous_read_id" in content
+        assert "A0\tgenome1\t12345\tseq1.1-0" in content
+
+    def test_wgsim_mode(self, gsf):
+        out = io.StringIO()
+        anon_to_read = {"A0": "seq1_100_200_0:0:0_0:0:0_1/1"}
+        seq_to_genome = {"seq1": "g1"}
+        genome_to_tax = {"g1": "999"}
+        gsf.write_gs_read_mapping(
+            out, anon_to_read, seq_to_genome, genome_to_tax,
+            nanosim_real_fastq=False, wgsim=True,
+        )
+        content = out.getvalue()
+        assert "g1\t999" in content
+
+    def test_missing_dash_raises(self, gsf):
+        out = io.StringIO()
+        anon_to_read = {"A0": "readwithoutdash"}
+        seq_to_genome = {}
+        genome_to_tax = {}
+        with pytest.raises(ValueError, match="missing '-'"):
+            gsf.write_gs_read_mapping(
+                out, anon_to_read, seq_to_genome, genome_to_tax,
+                nanosim_real_fastq=False, wgsim=False,
+            )
+
+    def test_missing_underscore_wgsim_raises(self, gsf):
+        out = io.StringIO()
+        anon_to_read = {"A0": "readwithoutunderscore"}
+        seq_to_genome = {}
+        genome_to_tax = {}
+        with pytest.raises(ValueError, match="missing '_'"):
+            gsf.write_gs_read_mapping(
+                out, anon_to_read, seq_to_genome, genome_to_tax,
+                nanosim_real_fastq=False, wgsim=True,
+            )
+
+
+class TestWriteGsaContigMapping:
+    def test_basic_contig_mapping(self, gsf):
+        out = io.StringIO()
+        seq_to_anon = {"seq1_from_100_to_200_stuff": "contig_0"}
+        seq_positions = {"seq1": [50, 100, 150, 200, 250]}
+        seq_to_genome = {"seq1": "g1"}
+        genome_to_tax = {"g1": "555"}
+        gsf.write_gsa_contig_mapping(
+            out, seq_to_anon, seq_positions, seq_to_genome, genome_to_tax,
+        )
+        content = out.getvalue()
+        assert "#anonymous_contig_id" in content
+        assert "contig_0\tg1\t555\tseq1" in content
+
+    def test_bad_sequence_id_raises(self, gsf):
+        out = io.StringIO()
+        seq_to_anon = {"unknown_from_0_to_100_x": "c0"}
+        seq_positions = {"unknown": [50]}
+        seq_to_genome = {}  # missing
+        genome_to_tax = {}
+        with pytest.raises(KeyError):
+            gsf.write_gsa_contig_mapping(
+                out, seq_to_anon, seq_positions, seq_to_genome, genome_to_tax,
+            )
