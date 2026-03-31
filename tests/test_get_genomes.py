@@ -5,6 +5,8 @@ import os
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pipelines", "metagenomic", "scripts"))
+
+pytest.importorskip("biom", reason="biom not installed")
 from get_genomes import sort_by_abundance, read_genomes_list, str2bool, truncated_geometric
 
 
