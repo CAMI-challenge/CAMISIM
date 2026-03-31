@@ -445,3 +445,35 @@ class TestOpeny:
     def test_invalid_mode_raises(self):
         with pytest.raises(AssertionError):
             cd.openy("test.txt", mode="x")
+
+    def test_write_and_read_gz(self, tmp_path):
+        f = str(tmp_path / "test.gz")
+        fh = cd.openy(f, mode="w", compression_type="gz")
+        fh.write(b"compressed data")
+        fh.close()
+        fh = cd.openy(f, mode="r")
+        assert b"compressed data" in fh.read()
+        fh.close()
+
+
+# ---------------------------------------------------------------------------
+# get_genome_id_to_path_map
+# ---------------------------------------------------------------------------
+class TestGetGenomeIdToPathMap:
+    def test_basic_mapping(self, tmp_path):
+        f = tmp_path / "genome_locations.tsv"
+        f.write_text("genome1\t/path/to/g1.fa\ngenome2\t/path/to/g2.fa\n")
+        result = cd.get_genome_id_to_path_map(str(f))
+        assert result == {"genome1": "/path/to/g1.fa", "genome2": "/path/to/g2.fa"}
+
+    def test_empty_file(self, tmp_path):
+        f = tmp_path / "empty.tsv"
+        f.write_text("")
+        result = cd.get_genome_id_to_path_map(str(f))
+        assert result == {}
+
+    def test_single_genome(self, tmp_path):
+        f = tmp_path / "single.tsv"
+        f.write_text("gA\t/genomes/a.fasta\n")
+        result = cd.get_genome_id_to_path_map(str(f))
+        assert result == {"gA": "/genomes/a.fasta"}

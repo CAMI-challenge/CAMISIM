@@ -104,3 +104,27 @@ class TestGetCigarsNanosim:
         cigar_str, _ = cigars["refA-100-0"]
         assert "I" in cigar_str
         assert "D" in cigar_str
+
+
+# ---------------------------------------------------------------------------
+# read_tsv_to_dict
+# ---------------------------------------------------------------------------
+class TestReadTsvToDict:
+    def test_basic_parsing(self, sam, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("key1\tval_a\tval_b\nkey2\tval_c\tval_d\n")
+        result = sam.read_tsv_to_dict(str(f))
+        assert result["key1"] == ["val_a", "val_b"]
+        assert result["key2"] == ["val_c", "val_d"]
+
+    def test_underscore_replaced_with_dash(self, sam, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("my_key_name\tval1\tval2\n")
+        result = sam.read_tsv_to_dict(str(f))
+        assert "my-key-name" in result
+
+    def test_empty_file(self, sam, tmp_path):
+        f = tmp_path / "empty.tsv"
+        f.write_text("")
+        result = sam.read_tsv_to_dict(str(f))
+        assert result == {}

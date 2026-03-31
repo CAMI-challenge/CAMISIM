@@ -164,3 +164,59 @@ class TestWriteGsaContigMapping:
             gsf.write_gsa_contig_mapping(
                 out, seq_to_anon, seq_positions, seq_to_genome, genome_to_tax,
             )
+
+
+class TestGetDictUniqueIdToGenomeFilePath:
+    def test_basic_mapping(self, gsf, tmp_path):
+        f = tmp_path / "mapping.tsv"
+        f.write_text("genome1\t/path/to/g1.fa\ngenome2\t/path/to/g2.fa\n")
+        result = gsf.get_dict_unique_id_to_genome_file_path(str(f))
+        assert result == {"genome1": "/path/to/g1.fa", "genome2": "/path/to/g2.fa"}
+
+
+class TestGetDictGenomeIdToTaxId:
+    def test_basic_metadata(self, gsf, tmp_path):
+        f = tmp_path / "metadata.tsv"
+        f.write_text("genome_ID\tOTU\tNCBI_ID\tnovelty\ng1\totu1\t12345\tknown\ng2\totu2\t67890\tnovel\n")
+        result = gsf.get_dict_genome_id_to_tax_id(str(f))
+        assert result == {"g1": "12345", "g2": "67890"}
+
+
+class TestGetDictAnonymousToOriginalId:
+    def test_reverse_mapping(self, gsf, tmp_path):
+        f = tmp_path / "anon_map.tsv"
+        f.write_text("original_seq1\tanon_0\noriginal_seq2\tanon_1\n")
+        result = gsf.get_dict_anonymous_to_original_id(str(f))
+        assert result == {"anon_0": "original_seq1", "anon_1": "original_seq2"}
+
+
+class TestGetDictSequenceNameToAnonymous:
+    def test_forward_mapping(self, gsf, tmp_path):
+        f = tmp_path / "seq_map.tsv"
+        f.write_text("original_seq1\tanon_0\noriginal_seq2\tanon_1\n")
+        result = gsf.get_dict_sequence_name_to_anonymous(str(f))
+        assert result == {"original_seq1": "anon_0", "original_seq2": "anon_1"}
+
+
+class TestGetDictSequenceNameToPositions:
+    def test_basic_positions(self, gsf, tmp_path):
+        f = tmp_path / "positions.tsv"
+        f.write_text("seq1-0\t100\nseq1-1\t200\nseq2-0\t50\n")
+        result = gsf.get_dict_sequence_name_to_positions([str(f)])
+        assert "seq1" in result
+        assert sorted(result["seq1"]) == [100, 200]
+        assert result["seq2"] == [50]
+
+    def test_wgsim_format(self, gsf, tmp_path):
+        f = tmp_path / "positions.tsv"
+        f.write_text("seq1_100_200_0:0:0_0:0:0_1\t150\n")
+        result = gsf.get_dict_sequence_name_to_positions([str(f)], wgsim=True)
+        assert "seq1" in result
+
+    def test_multiple_files(self, gsf, tmp_path):
+        f1 = tmp_path / "pos1.tsv"
+        f1.write_text("seq1-0\t100\n")
+        f2 = tmp_path / "pos2.tsv"
+        f2.write_text("seq1-1\t200\n")
+        result = gsf.get_dict_sequence_name_to_positions([str(f1), str(f2)])
+        assert sorted(result["seq1"]) == [100, 200]

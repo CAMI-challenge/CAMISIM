@@ -242,3 +242,95 @@ class TestReadMergedFile:
         tax.read_merged_file(str(merged_file))
         assert tax.TAXID_OLD_TO_TAXID_NEW["111"] == "999"
         assert tax.TAXID_OLD_TO_TAXID_NEW["222"] == "888"
+
+
+class TestParseFile:
+    def test_reads_tsv(self, tmp_path):
+        f = tmp_path / "data.tsv"
+        f.write_text("a\tb\n# comment\nc\td\n")
+        rows = list(tax.parse_file(str(f)))
+        assert rows == [["a", "b"], ["c", "d"]]
+
+    def test_empty_file(self, tmp_path):
+        f = tmp_path / "empty.tsv"
+        f.write_text("")
+        rows = list(tax.parse_file(str(f)))
+        assert rows == []
+
+
+class TestGetPercentByRankByTaxid:
+    def test_legacy_mode(self):
+        tax.IS_LEGACY = True
+        _setup_simple_taxonomy()
+        # lineage aligned to LEGACY_RANKS: [superkingdom, phylum, class, order, family, genus, species, strain]
+        lineage = [None] * len(tax.LEGACY_RANKS)
+        lineage[tax.LEGACY_RANKS.index("species")] = "200"
+        lineage[tax.LEGACY_RANKS.index("genus")] = "100"
+        lineage[tax.LEGACY_RANKS.index("superkingdom")] = "2"
+
+        result = tax.get_percent_by_rank_by_taxid(
+            genome_id_to_lineage={"g1": lineage},
+            genome_id_to_percent={"g1": 0.75},
+            genome_id_is_plasmid={"g1": False},
+        )
+        assert "legacy" in result
+        assert result["legacy"]["species"]["200"] == 0.75
+        assert result["legacy"]["genus"]["100"] == 0.75
+
+    def test_two_genomes_same_species(self):
+        tax.IS_LEGACY = True
+        _setup_simple_taxonomy()
+        lineage = [None] * len(tax.LEGACY_RANKS)
+        lineage[tax.LEGACY_RANKS.index("species")] = "200"
+        lineage[tax.LEGACY_RANKS.index("superkingdom")] = "2"
+
+        result = tax.get_percent_by_rank_by_taxid(
+            genome_id_to_lineage={"g1": lineage, "g2": lineage},
+            genome_id_to_percent={"g1": 0.3, "g2": 0.7},
+            genome_id_is_plasmid={"g1": False, "g2": False},
+        )
+        assert abs(result["legacy"]["species"]["200"] - 1.0) < 1e-9
+
+
+class TestGetGenomeIdToLineage:
+    def test_regular_genome(self):
+        tax.IS_LEGACY = True
+        _setup_simple_taxonomy()
+        result = tax.get_genome_id_to_lineage(
+            list_of_genome_id=["g1"],
+            genome_id_to_taxid={"g1": "200"},
+            strain_id_to_genome_id={},
+            genome_id_to_strain_id={},
+            genome_id_is_plasmid={"g1": False},
+        )
+        assert "g1" in result
+        lineage = result["g1"]
+        species_idx = tax.LEGACY_RANKS.index("species")
+        assert lineage[species_idx] == "200"
+        # strain should be auto-assigned
+        strain_idx = tax.LEGACY_RANKS.index("strain")
+        assert lineage[strain_idx] is not None
+
+    def test_plasmid_genome(self):
+        _setup_simple_taxonomy()
+        result = tax.get_genome_id_to_lineage(
+            list_of_genome_id=["p1"],
+            genome_id_to_taxid={"p1": "200"},
+            strain_id_to_genome_id={},
+            genome_id_to_strain_id={},
+            genome_id_is_plasmid={"p1": True},
+        )
+        lineage = result["p1"]
+        assert lineage[0] == tax.OTHER_ENTRIES_TAXID
+        assert lineage[8] == tax.PLASMID_SPECIES_TAXID
+
+    def test_empty_taxid_raises(self):
+        _setup_simple_taxonomy()
+        with pytest.raises(KeyError, match="has no taxid"):
+            tax.get_genome_id_to_lineage(
+                list_of_genome_id=["g1"],
+                genome_id_to_taxid={"g1": ""},
+                strain_id_to_genome_id={},
+                genome_id_to_strain_id={},
+                genome_id_is_plasmid={"g1": False},
+            )
