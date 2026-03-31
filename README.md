@@ -1,4 +1,5 @@
-[![CI](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml/badge.svg)](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml)
+[![Smoke Test](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml/badge.svg)](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/ci.yml)
+[![Unit Tests](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/tests.yml/badge.svg)](https://github.com/CAMI-challenge/CAMISIM/actions/workflows/tests.yml)
 
 # CAMISIM
 
