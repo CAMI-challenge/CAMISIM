@@ -48,6 +48,62 @@ def read_taxonomic_profile(biom_profile, no_samples = None):
     return profile
 
 
+def normalize_genome_key(genome_path):
+    genome_path = genome_path.strip()
+    if "://" in genome_path:
+        return genome_path.rstrip("/")
+    return os.path.normpath(genome_path)
+
+
+def get_required_quality_column(columns, aliases):
+    for alias in aliases:
+        if alias in columns:
+            return columns[alias]
+    raise ValueError("Required column(s) missing from additional genome quality file: %s" % ", ".join(aliases))
+
+
+def read_additional_genomes_quality(quality_file):
+    quality_by_path = {}
+    with open(quality_file, 'r') as quality_stream:
+        header = quality_stream.readline().rstrip('\n').split('\t')
+        if not header or header == ['']:
+            raise ValueError("Additional genome quality file '%s' is empty" % quality_file)
+
+        columns = {column.strip().lower(): idx for idx, column in enumerate(header)}
+        idx_path = get_required_quality_column(columns, ['genome_path', 'path', 'genome'])
+        idx_completeness = get_required_quality_column(columns, ['completeness'])
+        idx_contamination = get_required_quality_column(columns, ['contamination'])
+        idx_num_contigs = get_required_quality_column(columns, ['num_contigs', 'contigs'])
+        max_idx = max(idx_path, idx_completeness, idx_contamination, idx_num_contigs)
+
+        for line in quality_stream:
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            parts = line.split('\t')
+            if len(parts) <= max_idx:
+                raise ValueError("Malformed row in additional genome quality file '%s': %s" % (quality_file, line))
+
+            genome_key = normalize_genome_key(parts[idx_path])
+            if genome_key in quality_by_path:
+                raise ValueError("Duplicate quality entry for additional genome '%s'" % parts[idx_path])
+
+            quality_by_path[genome_key] = {
+                "completeness": float(parts[idx_completeness]),
+                "contamination": float(parts[idx_contamination]),
+                "num_contigs": int(float(parts[idx_num_contigs]))
+            }
+    return quality_by_path
+
+
+def meets_additional_quality_requirements(quality_entry, max_contamination, min_completeness, max_num_contigs):
+    return (
+        quality_entry["contamination"] <= max_contamination and
+        quality_entry["completeness"] >= min_completeness and
+        quality_entry["num_contigs"] <= max_num_contigs
+    )
+
+
 """
 Reads list of available genomes in the (tsv) format:
 NCBI_ID Scientific_Name ftp_path
@@ -55,26 +111,56 @@ Additional files might be provided with:
 NCBI_ID Scientific_Name genome_path novelty_category
 were path might either be online or offline/local
 """
-def read_genomes_list(genomes_path, additional_file = None):
+def read_genomes_list(genomes_path, additional_file = None, additional_quality_file = None,
+                      max_contamination = 5, min_completeness = 95, max_num_contigs = 200):
     genomes_map = {}
     total_genomes = 0
+    additional_quality = {}
     if additional_file is not None:
+        if additional_quality_file is None:
+            raise ValueError("Parameter additional_genomes_quality_file is required when additional_references is set")
+        additional_quality = read_additional_genomes_quality(additional_quality_file)
         with open(additional_file,'r') as add:
             for line in add:
+                if not line.strip():
+                    continue
                 ncbi_id, sci_name, path, novelty = line.strip().split('\t')
+                path_key = normalize_genome_key(path)
+                if path_key not in additional_quality:
+                    raise ValueError("Missing quality entry for additional genome '%s' in '%s'" % (path, additional_quality_file))
+                quality_entry = additional_quality[path_key]
+                genome_record = {
+                    "path": path,
+                    "novelty": novelty,
+                    "source": "additional",
+                    "quality_pass": meets_additional_quality_requirements(
+                        quality_entry,
+                        max_contamination,
+                        min_completeness,
+                        max_num_contigs
+                    )
+                }
                 if ncbi_id in genomes_map:
-                    genomes_map[ncbi_id][1].append(path)
+                    genomes_map[ncbi_id]["genomes"].append(genome_record)
                 else:
-                    genomes_map[ncbi_id] = (sci_name, [path], novelty) # this might not be a http path
+                    genomes_map[ncbi_id] = {"scientific_name": sci_name, "genomes": [genome_record]}
                 total_genomes += 1
     with open(genomes_path,'r') as genomes:
         for line in genomes:
+            if not line.strip():
+                continue
             ncbi_id, sci_name, ftp = line.strip().split('\t')
             http = ftp.replace("ftp://","http://") # not using ftp address but http (proxies)
+            genome_record = {
+                "path": http,
+                "novelty": 'known_strain',
+                "source": "reference",
+                "quality_pass": True
+            }
             if ncbi_id in genomes_map:
-                genomes_map[ncbi_id][1].append(http)
+                genomes_map[ncbi_id]["genomes"].append(genome_record)
             else:
-                genomes_map[ncbi_id] = (sci_name, [http], 'known_strain') # sci_name is always the same for same taxid (?)
+                genomes_map[ncbi_id] = {"scientific_name": sci_name, "genomes": [genome_record]} # sci_name is always the same for same taxid (?)
             total_genomes += 1
     return genomes_map, total_genomes
 
@@ -89,6 +175,15 @@ def get_genomes_per_rank(genomes_map, ncbi):
         try:
             lineage = ncbi.get_lineage(genome) # this might contain some others ranks than ranks
             ranks_lin = ncbi.get_rank(lineage)
+            genome_records = []
+            for genome_record in genomes_map[genome]["genomes"]:
+                genome_records.append({
+                    "path": genome_record["path"],
+                    "genome_id": genome,
+                    "novelty": genome_record["novelty"],
+                    "source": genome_record["source"],
+                    "quality_pass": genome_record["quality_pass"]
+                })
             for tax_id in lineage: # go over the lineage
                 try:
                     check_rank = ranks_lin[tax_id]
@@ -98,8 +193,8 @@ def get_genomes_per_rank(genomes_map, ncbi):
                     rank_map = per_rank_map[ranks_lin[tax_id]]
                     if tax_id not in rank_map: # tax id doesn't have a genome yet
                         rank_map[tax_id] = []
-                    for strain in genomes_map[genome][1]:
-                        rank_map[tax_id].append((strain,genome)) # add http address
+                    for genome_record in genome_records:
+                        rank_map[tax_id].append(genome_record)
         except ValueError as e:
 #           log.warning(e)
             print(e) # ToDo
@@ -133,9 +228,10 @@ def transform_lineage(lineage, ncbi):
             if ncbi.get_rank([taxid])[taxid] in RANKS:
                 new_lineage.append(taxid) # should contain only one element
         else:
-            name = name.split()[0]
-            if name in mapping:
-                taxid = mapping[name][0]
+            fallback_name = name.split()[0]
+            fallback_mapping = ncbi.get_name_translator([fallback_name])
+            if fallback_name in fallback_mapping:
+                taxid = fallback_mapping[fallback_name][0]
                 if ncbi.get_rank([taxid])[taxid] in RANKS:
                     new_lineage.append(taxid) # retry if space in name destroys ID
     return new_lineage[::-1] # invert list, so lowest rank appears first (last in BIOM)
@@ -159,16 +255,38 @@ def truncated_geometric(p, l, u, max_tries=100000):
 def set_abundances(otu_genome_map, abundances, used_genomes, otu, tax_id, mu, sigma):
     log_normal_vals = np_rand.lognormal(mu, sigma, len(used_genomes))
     sum_log_normal = sum(log_normal_vals)
-    for i, (path, genome_id) in enumerate(used_genomes):
+    for i, genome in enumerate(used_genomes):
         otu_id = otu + "." + str(i)
-        otu_genome_map[otu_id] = (tax_id, genome_id, path, [])  # taxid, genomeid, http path, abundances per sample
+        otu_genome_map[otu_id] = (tax_id, genome["genome_id"], genome["path"], genome["novelty"], [])  # taxid, genomeid, http path, novelty, abundances per sample
         relative_abundance = log_normal_vals[i] / sum_log_normal
         for abundance in abundances:  # calculate abundance per sample
             current_abundance = relative_abundance * abundance
             otu_genome_map[otu_id][-1].append(current_abundance)
 
 
-def pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace):
+def sample_genomes(genomes, amount):
+    if amount <= 0 or not genomes:
+        return []
+    draw_count = min(len(genomes), amount)
+    used_indices = np_rand.choice(len(genomes), draw_count, replace=False)
+    return [genomes[i] for i in used_indices]
+
+
+def get_candidate_groups(available_genomes, prioritize_additional_genomes):
+    high_quality_additional = [genome for genome in available_genomes if genome["source"] == "additional" and genome["quality_pass"]]
+    reference_genomes = [genome for genome in available_genomes if genome["source"] == "reference"]
+    low_quality_additional = [genome for genome in available_genomes if genome["source"] == "additional" and not genome["quality_pass"]]
+
+    if prioritize_additional_genomes:
+        candidate_groups = [high_quality_additional, reference_genomes]
+    else:
+        candidate_groups = [high_quality_additional + reference_genomes]
+
+    candidate_groups.append(low_quality_additional)
+    return candidate_groups
+
+
+def pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace, prioritize_additional_genomes):
     rank = ncbi.get_rank([tax_id])[tax_id]
     if RANKS.index(rank) > RANKS.index(max_rank):
         return []
@@ -176,18 +294,19 @@ def pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi,
     if not available_genomes:
         return []
     strains_to_draw = truncated_geometric(2. / max_strains, min_strains, max_strains)
-    if len(available_genomes) >= strains_to_draw:
-        used_indices = np_rand.choice(len(available_genomes), strains_to_draw, replace=False)
-        used_genomes = [available_genomes[i] for i in used_indices]
-    else:
-        used_genomes = available_genomes[:]  # if not enough genomes: use all
+    used_genomes = []
+    for candidate_group in get_candidate_groups(available_genomes, prioritize_additional_genomes):
+        remaining = strains_to_draw - len(used_genomes)
+        if remaining <= 0:
+            break
+        used_genomes.extend(sample_genomes(candidate_group, remaining))
 
     if no_replace: # sampling without replacement:
-        for path, genome_id in used_genomes:
+        for genome in used_genomes:
             for new_rank in per_rank_map:
                 for taxid in per_rank_map[new_rank]:
-                    if (path, genome_id) in per_rank_map[new_rank][taxid]:
-                        per_rank_map[new_rank][taxid].remove((path, genome_id))
+                    if genome in per_rank_map[new_rank][taxid]:
+                        per_rank_map[new_rank][taxid].remove(genome)
 
     return used_genomes
 
@@ -195,7 +314,8 @@ def pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi,
 """
 Given the OTU to lineage/abundances map and the genomes to lineage map, create map otu: taxid, genome, abundances
 """
-def map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_strains, no_replace, max_genomes, max_rank, ncbi):
+def map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_strains, no_replace,
+                        max_genomes, max_rank, prioritize_additional_genomes, ncbi):
     unmatched_otus = []
     matched_otus = set()
     otu_genome_map = {}
@@ -226,7 +346,8 @@ def map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_s
             except IndexError:
                 continue
 
-            used_genomes = pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace)
+            used_genomes = pick_genomes(tax_id, max_rank, min_strains, max_strains, per_rank_map, ncbi, no_replace,
+                                        prioritize_additional_genomes)
             if not used_genomes:
                 continue
 
@@ -241,32 +362,36 @@ def map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma, min_strains, max_s
 
     return otu_genome_map, unmatched_otus
 
-def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug):
+def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug, prioritize_additional_genomes):
     genomes = {}
-    added_genomes = set()
     for rank in per_rank_map:
         for taxid in per_rank_map[rank]:
-            genomes[taxid] = []
-            for path, genome_id in per_rank_map[rank][taxid]:
-                if path not in added_genomes:
-                    genomes[taxid].append((path, genome_id))
-                    added_genomes.add(path)
+            for genome in per_rank_map[rank][taxid]:
+                genome_key = (genome["path"], genome["genome_id"])
+                if genome_key not in genomes:
+                    genomes[genome_key] = {
+                        "tax_id": taxid,
+                        "genome_id": genome["genome_id"],
+                        "path": genome["path"],
+                        "novelty": genome["novelty"],
+                        "source": genome["source"],
+                        "quality_pass": genome["quality_pass"]
+                    }
+
+    ordered_genomes = []
+    for candidate_group in get_candidate_groups(list(genomes.values()), prioritize_additional_genomes):
+        ordered_genomes.extend(sample_genomes(candidate_group, len(candidate_group)))
+
+    if not ordered_genomes:
+        return otu_genome_map
+
     otu_indices = np_rand.choice(len(unmatched_otus),len(unmatched_otus),replace=False)
-    i = 0
-    set_all = False
-    for tax_id in genomes:
-        for path, genome_id in genomes[tax_id]:
-            curr_otu = unmatched_otus[otu_indices[i]] #so we choose a random genome
-            lineage, abundances = tax_profile[curr_otu]
-            otu_genome_map[curr_otu] = (tax_id, genome_id, path, abundances)
-#            if debug:
-#                _log.warning("Filling up OTU %s (mapped tax id: %s) to genome with tax id %s" % (curr_otu, lin[0], tax_id))
-            i += 1
-            if (i >= len(unmatched_otus) or i >= len(added_genomes)):
-                set_all = True
-                break
-        if (set_all):
-            break
+    for i, genome in enumerate(ordered_genomes[:len(unmatched_otus)]):
+        curr_otu = unmatched_otus[otu_indices[i]] #so we choose a random genome
+        lineage, abundances = tax_profile[curr_otu]
+        otu_genome_map[curr_otu] = (genome["tax_id"], genome["genome_id"], genome["path"], genome["novelty"], abundances)
+#        if debug:
+#            _log.warning("Filling up OTU %s (mapped tax id: %s) to genome with tax id %s" % (curr_otu, lin[0], tax_id))
     return otu_genome_map
 
 """
@@ -305,7 +430,7 @@ def download_genome(genome, out_path, script):
 """
 Given the created maps and the old config files, creates the required files and new config
 """
-def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genomes):
+def write_config(otu_genome_map, no_samples, script, out_path_genomes):
     out_path = "./"
     genome_to_id = os.path.join(out_path, "genome_to_id.tsv")
     #config.set('community0','id_to_genome_file', genome_to_id)
@@ -323,7 +448,7 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
     if not os.path.exists(create_path):
         os.makedirs(create_path)
     for otu in otu_genome_map:
-        taxid, genome_id, path, curr_abundances = otu_genome_map[otu]
+        taxid, genome_id, path, novelty, curr_abundances = otu_genome_map[otu]
         counter = 0
         while counter < 10:
             try:
@@ -345,7 +470,6 @@ def write_config(otu_genome_map, genomes_map, no_samples, script, out_path_genom
         with open(genome_to_id,'a+') as gid:
             gid.write("%s\t%s\n" % (otu, genome_path))
         with open(metadata,'a+') as md:
-            novelty = genomes_map[genome_id][-1]
             md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
         i = 0
         for abundance in abundances:
@@ -376,10 +500,14 @@ def set_ranks(ncbi):
 
 def main(biom_profile, no_samples, reference_genomes, seed, mu, sigma,
          min_strains,  max_strains, debug, no_replace, fill_up, script,
-         genomes_out_dir, additional_references, ncbi_taxdump_file, max_rank):
+         genomes_out_dir, additional_references, additional_genomes_quality_file, ncbi_taxdump_file,
+         max_rank, prioritize_additional_genomes, additional_genomes_max_contamination,
+         additional_genomes_min_completeness, additional_genomes_max_num_contigs):
 
     if additional_references == "None":
         additional_references = None
+    if additional_genomes_quality_file == "None":
+        additional_genomes_quality_file = None
 
     np_rand.seed(seed)
 
@@ -387,16 +515,22 @@ def main(biom_profile, no_samples, reference_genomes, seed, mu, sigma,
     set_ranks(ncbi)
 
     tax_profile = read_taxonomic_profile(biom_profile, no_samples)
-    genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references)
+    genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references,
+                                                   additional_genomes_quality_file,
+                                                   additional_genomes_max_contamination,
+                                                   additional_genomes_min_completeness,
+                                                   additional_genomes_max_num_contigs)
     per_rank_map = get_genomes_per_rank(genomes_map, ncbi)
     otu_genome_map, unmatched_otus = map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma,
                                                          min_strains, max_strains, no_replace,
-                                                         total_genomes, max_rank, ncbi)
+                                                         total_genomes, max_rank,
+                                                         prioritize_additional_genomes, ncbi)
 
     if fill_up and len(unmatched_otus) > 0:
-        otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, debug)
+        otu_genome_map = fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile,
+                                         debug, prioritize_additional_genomes)
 
-    write_config(otu_genome_map, genomes_map, no_samples, script, genomes_out_dir)
+    write_config(otu_genome_map, no_samples, script, genomes_out_dir)
 
 
 if __name__ == "__main__":
@@ -414,5 +548,10 @@ if __name__ == "__main__":
         script = sys.argv[12],
         genomes_out_dir = sys.argv[13],
         additional_references = sys.argv[14],
-        ncbi_taxdump_file = sys.argv[15],
-        max_rank = sys.argv[16])
+        additional_genomes_quality_file = sys.argv[15],
+        ncbi_taxdump_file = sys.argv[16],
+        max_rank = sys.argv[17],
+        prioritize_additional_genomes = str2bool(sys.argv[18]),
+        additional_genomes_max_contamination = float(sys.argv[19]),
+        additional_genomes_min_completeness = float(sys.argv[20]),
+        additional_genomes_max_num_contigs = int(float(sys.argv[21])))

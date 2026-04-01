@@ -14,7 +14,10 @@ workflow metagenomesimulation_from_profile {
     main:
         
         get_genomes(params.biom_profile, params.number_of_samples, params.reference_genomes, params.seed, params.gauss_mu, params.gauss_sigma, 
-            params.min_strains_per_otu, params.max_strains_per_otu, params.no_replace, params.fill_up, params.ncbi_taxdump_file, params.max_rank)
+            params.min_strains_per_otu, params.max_strains_per_otu, params.no_replace, params.fill_up,
+            params.ncbi_taxdump_file, params.max_rank, params.prioritize_additional_genomes,
+            params.additional_genomes_quality_file, params.additional_genomes_max_contamination,
+            params.additional_genomes_min_completeness, params.additional_genomes_max_num_contigs)
 
         loc_ch = get_genomes.out[0]
         abundance_ch = get_genomes.out[1].flatten()
@@ -53,6 +56,11 @@ process get_genomes {
     val(fill_up)
     val(ncbi_taxdump_file)
     val(max_rank)
+    val(prioritize_additional_genomes)
+    val(additional_genomes_quality_file)
+    val(additional_genomes_max_contamination)
+    val(additional_genomes_min_completeness)
+    val(additional_genomes_max_num_contigs)
 
     output:
     path "genome_to_id.tsv"
@@ -62,16 +70,21 @@ process get_genomes {
     script:
 
     additional_references = "None"
+    additional_genomes_quality = "None"
 
     if(!params.additional_references.isEmpty()) {
         additional_references = params.additional_references
+    }
+
+    if(!additional_genomes_quality_file.isEmpty()) {
+        additional_genomes_quality = additional_genomes_quality_file
     }
 
     """
     mkdir --parents ${params.outdir}/source_genomes/
     mkdir --parents ${params.outdir}/internal/
 
-    python ${scripts_dir}/get_genomes.py ${biom_profile} ${number_of_samples} ${reference_genomes} ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} ${scripts_dir}/split_fasta.pl ${params.outdir}/source_genomes/ ${additional_references} ${ncbi_taxdump_file} "${max_rank}"
+    python ${scripts_dir}/get_genomes.py "${biom_profile}" ${number_of_samples} "${reference_genomes}" ${seed} ${mu} ${sigma} ${min_strains} ${max_strains} False ${no_replace} ${fill_up} "${scripts_dir}/split_fasta.pl" "${params.outdir}/source_genomes/" "${additional_references}" "${additional_genomes_quality}" "${ncbi_taxdump_file}" "${max_rank}" ${prioritize_additional_genomes} ${additional_genomes_max_contamination} ${additional_genomes_min_completeness} ${additional_genomes_max_num_contigs}
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     """
