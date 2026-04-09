@@ -175,7 +175,7 @@ workflow metagenomic {
         }
 
     // make all sequences from input genomes (also strain simulated ones) unique and move them to an output location
-    genome_location_file_ch = cleanup_and_filter_sequences(genome_location_file_ch, genome_location_ch.map { it[1] }.collect())
+    genome_location_file_ch = cleanup_and_filter_sequences(genome_location_file_ch, genome_location_ch.collect(flat: false))
     
     // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
     genome_location_ch = genome_location_file_ch
@@ -547,19 +547,30 @@ process cleanup_and_filter_sequences {
 
     input:
     path genome_id_to_file_path
-    path genomes
+    val genome_entries
 
     output:
-    path genome_id_to_file_path
+    path "internal_*"
 
     script:
+    normalized_genome_entries = genome_entries.collect { entry ->
+        if (entry instanceof List || entry instanceof Object[]) {
+            if (entry.size() >= 2) {
+                return [entry[0], entry[1]]
+            }
+        }
+        throw new IllegalArgumentException("cleanup_and_filter_sequences expected [genome_id, path] entries but received: ${entry}")
+    }
+    absolute_genome_id_to_file_path = normalized_genome_entries.collect { "${it[0]}\t${it[1]}" }.join('\n')
     """
     mkdir --parents ${params.outdir}/source_genomes/
     mkdir --parents ${params.outdir}/internal/
 
-    touch internal_${genome_id_to_file_path}
+cat > absolute_${genome_id_to_file_path} <<'EOF'
+${absolute_genome_id_to_file_path}
+EOF
 
-    python ${scripts_dir}/clean_up_sequences.py ${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
+    python ${scripts_dir}/clean_up_sequences.py absolute_${genome_id_to_file_path} ${params.outdir}/source_genomes/ internal_${genome_id_to_file_path}
 
     cp ./out_genomes/* ${params.outdir}/source_genomes/
     cp internal_${genome_id_to_file_path} ${params.outdir}/internal/genome_locations.tsv

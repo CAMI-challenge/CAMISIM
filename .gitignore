@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *.swp
 
+# Configs
+configs/
+camisim.cfg
+metax_bench_data.config
+
 # C extensions
 *.so
 
