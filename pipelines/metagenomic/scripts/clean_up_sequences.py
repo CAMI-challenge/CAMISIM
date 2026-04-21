@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 from Bio import SeqIO
 
 def get_new_name(name, set_of_sequence_names):
@@ -81,6 +82,23 @@ def parse_tsv_to_dict(file):
             result_dict[key] = value
     return result_dict
 
+
+def get_unique_output_file_path(file_path_input, directory_output, genome_id, used_output_file_names):
+    file_name = os.path.basename(file_path_input)
+    stem, extension = os.path.splitext(file_name)
+    candidate = file_name
+    safe_genome_id = re.sub(r'[^A-Za-z0-9._-]+', '_', genome_id)
+
+    if candidate in used_output_file_names:
+        candidate = "{}__{}{}".format(safe_genome_id, stem, extension)
+        index = 1
+        while candidate in used_output_file_names:
+            candidate = "{}__{}_{}{}".format(safe_genome_id, stem, index, extension)
+            index += 1
+
+    used_output_file_names.add(candidate)
+    return os.path.join(directory_output, candidate)
+
 def write_genome_id_to_path_map(genome_id_to_path_map, file_path_output, outdir):
     """
     Write mapping of genome id to genome file path to a file.
@@ -118,6 +136,7 @@ if __name__ == "__main__":
     set_of_sequence_names = set()
     directory_output = "./out_genomes/"
     genome_id_to_path_map = dict()
+    used_output_file_names = set()
 
     # Create the output directory if it does not exist
     os.makedirs(directory_output, exist_ok=True)
@@ -128,12 +147,12 @@ if __name__ == "__main__":
     with open(file_path_sequence_map, 'w') as stream_map:
 
         for genome_id, genome_file_path in genome_id_to_file_path.items():
-            file_name = os.path.basename(genome_file_path)
-
-            new_genome_file_path = os.path.join(directory_output, file_name)
+            new_genome_file_path = get_unique_output_file_path(
+                genome_file_path, directory_output, genome_id, used_output_file_names
+            )
 
             move_genome_file(
-                file_name, new_genome_file_path, stream_map, genome_id, sequence_min_length, set_of_sequence_names)
+                genome_file_path, new_genome_file_path, stream_map, genome_id, sequence_min_length, set_of_sequence_names)
             genome_id_to_path_map[genome_id] = new_genome_file_path
         
             

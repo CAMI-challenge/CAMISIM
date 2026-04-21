@@ -569,12 +569,13 @@ def write_distribution_file(stream_out, genome_id_to_abundance, sample_index):
 			stream_out.write("{id}\t{distr}\n".format(id=genome_id, distr=distribution))
 
 def str_to_bool(s):
-	if s == 'True':
+	value = str(s).strip().lower()
+	if value in ('true', '1', 'yes', 'y'):
 		return True
-	elif s == 'False':
+	elif value in ('false', '0', 'no', 'n'):
 		return False
 	else:
-		raise ValueError("Flag 'verbose' must either be set to True or False.")
+		raise ValueError("Flag 'verbose' must be a boolean value such as true/false.")
 
 def get_distribution_file_paths(directory, number_of_samples):
         """

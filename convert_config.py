@@ -76,6 +76,13 @@ def convert_to_nextflow_config(input_file, output_file):
                             nf_config.write(f"  {'verbose'} = false\n")
                     elif (key == 'distribution_file_paths'):
                         nf_config.write(f"  distribution_files = \"{value}\"\n")
+                    elif (key == 'prioritize_additional_genomes' or key == 'no_replace' or key == 'fill_up'):
+                        if(value == 'True'):
+                            nf_config.write(f"  {key} = true\n")
+                        else:
+                            nf_config.write(f"  {key} = false\n")
+                    elif (key == 'additional_references' or key == 'additional_genomes_quality_file' or key == 'reference_genomes' or key == 'biom_profile' or key == 'max_rank'):
+                        nf_config.write(f"  {key} = \"{value}\"\n")
                     else:
                         nf_config.write(f"  {key} = {value}\n")
 
@@ -84,6 +91,11 @@ def convert_to_nextflow_config(input_file, output_file):
         nf_config.write("  no_replace = true\n")
         nf_config.write("  no_replace = false\n")
         nf_config.write("  additional_references=\"\"\n")
+        nf_config.write("  prioritize_additional_genomes = false\n")
+        nf_config.write("  additional_genomes_quality_file=\"\"\n")
+        nf_config.write("  additional_genomes_max_contamination = 5\n")
+        nf_config.write("  additional_genomes_min_completeness = 95\n")
+        nf_config.write("  additional_genomes_max_num_contigs = 200\n")
         nf_config.write("  conda.enabled = true\n")
         nf_config.write("  conda.useMamba = true\n")
         nf_config.write("  conda.cacheDir=\"/home/jfunk/conda_cache\"\n")
