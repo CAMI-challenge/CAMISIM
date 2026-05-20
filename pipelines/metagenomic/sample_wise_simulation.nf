@@ -171,7 +171,7 @@ process generate_gold_standard_assembly {
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
     """
     samtools faidx ${reference_fasta_file}
-    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/
@@ -321,6 +321,8 @@ process remove_spaces_from_reference_genome {
  */
 process get_fastq_for_sample_single_end {
 
+    conda 'conda-forge::pigz'
+
     input:
     tuple val(sample_id), path(read_files)
 
@@ -340,6 +342,8 @@ process get_fastq_for_sample_single_end {
 * This process writes all fastq files into a single one.
  */
 process get_fastq_for_sample_paired_end {
+
+    conda 'conda-forge::pigz'
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files)

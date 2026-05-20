@@ -211,6 +211,24 @@ workflow metagenomic {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
     }
 
+    // Generate merged GSAs for custom sample combinations (e.g., patient-specific)
+    if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+        // Create a channel from the list of combinations with an index
+        combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex())
+            .map { combination, idx -> tuple(idx, combination*.toString()) }
+
+        // For each combination, filter and collect the relevant BAM files
+        merged_bam_per_combination = merge_bam_files_by_combination(
+            combinations_ch,
+            merged_bam_per_sample.map { it }.collect()
+        )
+
+        // Generate GSA for each custom combination
+        generate_merged_gold_standard_assembly(
+            merged_bam_per_combination.combine(reference_fasta_files_ch).groupTuple()
+        )
+    }
+
     if (params.pooled_gsa) {
         generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
         // if requested, anonymize reads, gsa and pooled gsa
@@ -332,6 +350,73 @@ process merge_bam_files {
 }
 
 /*
+* This process merges BAM files for a specific combination of samples.
+* Takes:
+*     combination_id: An identifier for the combination (index)
+*     sample_ids: List of sample IDs to include in this combination
+*     all_bam_tuples: All BAM file tuples (sample_id, bam_path)
+* Output:
+*     A tuple with combination_id and the path to the merged BAM file.
+*/
+process merge_bam_files_by_combination {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(combination_id), val(sample_ids)
+    val all_bam_tuples
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(file_name)
+
+    script:
+    file_name = "merged_combination_${combination_id}.bam"
+    compression = 5
+    memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
+
+    // Filter BAM files that belong to the specified sample IDs
+    bam_to_merge = all_bam_tuples
+        .findAll { sample_id, bam_path -> sample_ids.contains(sample_id.toString()) }
+        .collect { sample_id, bam_path -> bam_path }
+        .join(' ')
+    """
+    samtools merge -u - ${bam_to_merge} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    """
+}
+
+/*
+* This process generates a merged gold standard assembly for a custom sample combination.
+* Takes:
+*     A tuple with combination_id, sample_ids list, merged BAM file, and reference FASTA files.
+* Output:
+*     The path to the FASTA file with the merged gold standard assembly.
+*/
+process generate_merged_gold_standard_assembly {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(combination_id), val(sample_ids), path(bam_file), path(reference_fasta_files)
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(file_name)
+
+    script:
+    // Create a descriptive filename with the sample IDs
+    samples_str = sample_ids.join('_')
+    file_name = "gsa_merged_samples_${samples_str}.fasta"
+    """
+    cat ${reference_fasta_files} > reference.fasta
+    samtools faidx reference.fasta
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    mkdir --parents ${params.outdir}/merged_gsa
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${params.outdir}/merged_gsa/
+    """
+}
+
+/*
 * This process generates the pooled gold standard assembly for serveral samples.
 * Takes:
 *     A tuple with first_value = a sorted bam file and second value = the reference genome (fasta).
@@ -353,7 +438,7 @@ process generate_pooled_gold_standard_assembly {
     """
     cat ${reference_fasta_files} > reference.fasta
     samtools faidx reference.fasta
-    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/
