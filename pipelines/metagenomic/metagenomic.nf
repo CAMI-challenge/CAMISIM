@@ -226,9 +226,13 @@ workflow metagenomic {
             merged_bam_per_sample.collect(flat: false)
         )
 
-        // Generate GSA for each custom combination
+        // Generate GSA for each custom combination.
+        // Collect references once and pair each merged BAM with that single list.
+        // Do not combine with every reference and groupTuple(), because that
+        // repeats the same BAM path once per reference and causes Nextflow
+        // input file name collisions while staging.
         generate_merged_gold_standard_assembly(
-            merged_bam_per_combination.combine(reference_fasta_files_ch).groupTuple()
+            merged_bam_per_combination.combine(reference_fasta_files_ch.collect())
         )
     }
 
@@ -381,6 +385,7 @@ process merge_bam_files_by_combination {
     // Filter BAM files that belong to the specified sample IDs
     bam_to_merge = all_bam_tuples
         .findAll { sample_id, bam_path -> sample_ids.contains(sample_id.toString()) }
+        .sort { a, b -> sample_ids.indexOf(a[0].toString()) <=> sample_ids.indexOf(b[0].toString()) }
         .collect { sample_id, bam_path -> bam_path }
         .join(' ')
     """
