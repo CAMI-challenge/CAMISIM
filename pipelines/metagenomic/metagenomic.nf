@@ -218,9 +218,12 @@ workflow metagenomic {
             .map { combination, idx -> tuple(idx, combination*.toString()) }
 
         // For each combination, filter and collect the relevant BAM files
+        // NOTE: use collect(flat: false) so each [sample_id, bam_path] tuple is
+        // preserved as a list element instead of being flattened into a flat
+        // list of alternating ids/paths.
         merged_bam_per_combination = merge_bam_files_by_combination(
             combinations_ch,
-            merged_bam_per_sample.map { it }.collect()
+            merged_bam_per_sample.collect(flat: false)
         )
 
         // Generate GSA for each custom combination
