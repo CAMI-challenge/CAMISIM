@@ -232,7 +232,7 @@ workflow metagenomic {
         // repeats the same BAM path once per reference and causes Nextflow
         // input file name collisions while staging.
         generate_merged_gold_standard_assembly(
-            merged_bam_per_combination.combine(reference_fasta_files_ch.collect())
+            merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] })
         )
     }
 
