@@ -17,6 +17,7 @@ include { metagenomesimulation_from_profile } from "${projectDir}/pipelines/meta
 
 // include anonymization
 include { anonymization } from "${projectDir}/pipelines/shared/anonymization"
+include { anonymize_merged_gsa } from "${projectDir}/pipelines/shared/anonymization"
 
 // include binning
 include { binning } from "${projectDir}/pipelines/shared/binning"
@@ -231,7 +232,7 @@ workflow metagenomic {
         // Do not combine with every reference and groupTuple(), because that
         // repeats the same BAM path once per reference and causes Nextflow
         // input file name collisions while staging.
-        generate_merged_gold_standard_assembly(
+        merged_gsa_ch = generate_merged_gold_standard_assembly(
             merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] })
         )
     }
@@ -241,6 +242,10 @@ workflow metagenomic {
         // if requested, anonymize reads, gsa and pooled gsa
         if(params.anonymization) {
             anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+            // also anonymize merged gsa combinations (if any)
+            if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+                anonymize_merged_gsa(merged_gsa_ch, merged_bam_per_combination, get_seed.out[4], genome_location_file_ch, metadata_ch)
+            }
         } else { // if no anonymization is requested, create binning gold standard
             binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
         }
@@ -722,6 +727,7 @@ process get_seed {
     path ('seed_read_anonymisation.txt'), optional: true
     path ('seed_gsa_anonymisation.txt'), optional: true
     path ('seed_pooled_gsa_anonymisation.txt'), optional: true
+    path ('seed_merged_gsa_anonymisation.txt'), optional: true
 
     script:
     count_samples = params.number_of_samples
@@ -730,8 +736,12 @@ process get_seed {
     } else {
         param_anonym = ""
     }
+    merged_count = 0
+    if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List) {
+        merged_count = params.merged_gsa_combinations.size()
+    }
     """
-    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
+    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym} -merged_count ${merged_count}
     mkdir --parents ${params.outdir}/seed/
     cp seed*.txt ${params.outdir}/seed/
     """

@@ -443,3 +443,174 @@ process pooled_gs_contig_mapping {
     cp ${gsa_mapping_file}.gz ${params.outdir}
     """
 }
+
+/**
+* This sub-workflow anonymizes the merged gold standard assemblies (one per
+* custom combination defined via `merged_gsa_combinations`). For each
+* combination it shuffles the contigs of the merged GSA, anonymizes them and
+* produces a `gsa_mapping.tsv.gz` file mapping the anonymized contig ids back
+* to their original "labels".
+*
+* Takes:
+*   merged_gsa_ch              tuple val(combination_id), val(sample_ids), path(gsa_fasta)
+*   merged_bam_per_combination tuple val(combination_id), val(sample_ids), path(merged_bam)
+*   seed_file_merged_gsa_ch    path  seed_merged_gsa_anonymisation.txt
+*   genome_location_file_ch    path  genome_locations.tsv
+*   metadata_ch                path  metadata.tsv
+**/
+workflow anonymize_merged_gsa {
+
+    take: merged_gsa_ch
+    take: merged_bam_per_combination
+    take: seed_file_merged_gsa_ch
+    take: genome_location_file_ch
+    take: metadata_ch
+
+    main:
+
+        // parse seeds: header is 2 lines, then combination_id\tseed
+        seed_merged_ch = seed_file_merged_gsa_ch.splitCsv(sep:'\t', skip:2)
+            .map { combination_id, seed -> tuple(combination_id.toString(), seed) }
+
+        // index merged gsa channel by stringified combination_id for joining
+        merged_gsa_keyed_ch = merged_gsa_ch
+            .map { combination_id, sample_ids, gsa -> tuple(combination_id.toString(), sample_ids, gsa) }
+
+        merged_bam_keyed_ch = merged_bam_per_combination
+            .map { combination_id, sample_ids, bam -> tuple(combination_id.toString(), bam) }
+
+        // shuffle/anonymize the contigs of the merged GSA per combination
+        shuffle_input_ch = merged_gsa_keyed_ch
+            .map { combination_id, sample_ids, gsa -> tuple(combination_id, sample_ids, gsa) }
+            .join(seed_merged_ch)
+        shuffle_merged_gsa(shuffle_input_ch)
+
+        // start positions from the corresponding merged BAM
+        read_start_positions_from_merged_combination_bam(merged_bam_keyed_ch)
+
+        // build the gsa_mapping.tsv per combination
+        mapping_in_ch = shuffle_merged_gsa.out[1]
+            .join(read_start_positions_from_merged_combination_bam.out)
+            .combine(genome_location_file_ch)
+            .combine(metadata_ch)
+        merged_gs_contig_mapping(mapping_in_ch)
+}
+
+/*
+* This process shuffles and anonymizes the merged gsa of one custom sample
+* combination.
+* Takes:
+*    A tuple with the combination id, the list of sample ids, the merged gsa
+*    file and the generated seed.
+* Output:
+*    The anonymous merged gsa file (per combination).
+*    The temp contig mapping file (per combination), containing the original
+*    contig id and the anonymous contig id.
+*/
+process shuffle_merged_gsa {
+
+    conda "conda-forge::biopython=1.83"
+
+    input:
+    tuple val(combination_id), val(sample_ids), path(gsa_file), val(seed)
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(anonymous_gsa_file)
+    tuple val(combination_id), val(sample_ids), path(tmp_reads_mapping_file)
+
+    script:
+    samples_str = sample_ids.join('_')
+    anonymous_gsa_file = "anonymous_gsa_merged_samples_${samples_str}.fasta"
+    tmp_reads_mapping_file = "tmp_contig_mapping_merged_samples_${samples_str}.tsv"
+    """
+    touch ${anonymous_gsa_file}
+    touch ${tmp_reads_mapping_file}
+    get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
+    cat ${gsa_file} \\
+      | paste -d "\\t" - - \\
+      | shuf --random-source=<(get_seeded_random ${seed}) \\
+      | tr "\\t" "\\n" \\
+      | tr -d '\\000' \\
+      | python3 ${shared_scripts_dir}/anonymizer.py -prefix M${combination_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
+    mkdir --parents ${params.outdir}/merged_gsa
+    gzip -k ${anonymous_gsa_file}
+    cp ${anonymous_gsa_file}.gz ${params.outdir}/merged_gsa/
+    """
+}
+
+/*
+* This process parses 'read' start positions from a merged BAM file produced
+* for one custom sample combination.
+* Takes:
+*   A tuple with the combination id and the merged BAM file.
+* Output:
+*   A tuple with the combination id and the file containing the read start
+*   positions.
+*/
+process read_start_positions_from_merged_combination_bam {
+
+    conda 'bioconda::samtools=1.13'
+
+    input:
+    tuple val(combination_id), path(merged_bam_file)
+
+    output:
+    tuple val(combination_id), path(filename)
+
+    script:
+    filename = "read_start_positions_combination_${combination_id}"
+    """
+    set -o pipefail
+    samtools view ${merged_bam_file} | awk '{print \$3 "\\t" \$4}' >> ${filename}
+    """
+}
+
+/*
+* This process creates a gold standard contig mapping file for a merged gsa of
+* one custom sample combination.
+* Takes:
+*   The temp contig mapping file, the read start positions of the merged BAM,
+*   the genome locations file and the metadata file (all per combination).
+* Output:
+*   The gsa_mapping.tsv file for the given combination.
+*/
+process merged_gs_contig_mapping {
+
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+
+    input:
+    tuple val(combination_id), val(sample_ids), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(gsa_mapping_file)
+
+    script:
+    samples_str = sample_ids.join('_')
+    gsa_mapping_file = "gsa_mapping.tsv"
+    simulator = ""
+    real_fastq = ""
+    if(params.type.equals("nanosim3")) {
+        if(params.simulate_fastq_directly){
+            real_fastq = "-nanosim_real_fastq"
+        }
+    } else if(params.type.equals("wgsim")){
+            simulator = "-simulator wgsim"
+    } else if(params.type.equals("art_modern")){
+            simulator = "-simulator art_modern"
+    }
+
+    if(params.pipeline.equals("metatranscriptomic")){
+        metatranscriptomic = "-metatranscriptomic"
+    } else {
+        metatranscriptomic = ""
+    }
+    """
+    touch ${gsa_mapping_file}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
+    mkdir --parents ${params.outdir}/merged_gsa
+    gzip -k ${gsa_mapping_file}
+    # Use the descriptive per-combination name in the output directory to avoid
+    # collisions between combinations.
+    cp ${gsa_mapping_file}.gz ${params.outdir}/merged_gsa/gsa_mapping_merged_samples_${samples_str}.tsv.gz
+    """
+}
