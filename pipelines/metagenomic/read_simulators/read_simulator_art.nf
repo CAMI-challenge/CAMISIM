@@ -67,10 +67,10 @@ process simulate_reads_art {
         -o sample${sample_id}_${genome_id} \
         -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/art/
+    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/art/
     for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/art/
+    cp sample${sample_id}_${genome_id}*.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art/
     """
 }

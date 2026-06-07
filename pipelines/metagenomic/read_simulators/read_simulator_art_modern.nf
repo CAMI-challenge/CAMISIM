@@ -69,17 +69,17 @@ process simulate_reads_art_modern {
         --o-sam sample${sample_id}_${genome_id}.bam --o-sam-write_bam
     samtools sort -o tmp.bam sample${sample_id}_${genome_id}.bam
     mv tmp.bam sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/
-    for file in sample${sample_id}_${genome_id}*.fq; 
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/art_modern/
+    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/art_modern/
+    for file in sample${sample_id}_${genome_id}*.fq;
     do
     seqtk seq "\$file" -1 > "\${file%.fq}1.fq"
     seqtk seq "\$file" -2 > "\${file%.fq}2.fq"
-    gzip -c "\${file%.fq}1.fq" > "\${file%.fq}1.fq.gz"; 
-    gzip -c "\${file%.fq}2.fq" > "\${file%.fq}2.fq.gz"; 
+    gzip -c "\${file%.fq}1.fq" > "\${file%.fq}1.fq.gz";
+    gzip -c "\${file%.fq}2.fq" > "\${file%.fq}2.fq.gz";
     done
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*2.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/art_modern/
+    cp sample${sample_id}_${genome_id}*1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art_modern/
+    cp sample${sample_id}_${genome_id}*2.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art_modern/
     """
 }

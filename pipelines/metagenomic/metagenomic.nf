@@ -154,9 +154,10 @@ workflow metagenomic {
     // build ncbi taxonomy from given tax dump
     number_of_samples_ch = Channel.from(params.number_of_samples)
     buildTaxonomy(number_of_samples_ch.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
-    
 
-    if(params.type.equals("nanosim3")) {
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
+
+    if(types_list.contains("nanosim3")) {
         read_length_ch = calculate_Nanosim_read_length(params.base_profile_name) // this takes very long
     } else {
         read_length_ch = params.profile_read_length
@@ -198,56 +199,74 @@ workflow metagenomic {
 
     // simulate reads sample wise
     sample_wise_simulation(genome_location_ch, genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
-    // this workflow has two output channels: one bam file per sample and one fasta file per sample
-    merged_bam_per_sample = sample_wise_simulation.out[0]
-    gsa_for_all_reads_of_one_sample_ch = sample_wise_simulation.out[1]    
+
+    // out[0]: tuple(sim_type, sample_id, bam)      – per-type merged BAM per sample
+    // out[1]: tuple(sim_type, sample_id, gsa_fasta) – per-type GSA per sample
+    // out[2]: tuple(sim_type, sample_id, …reads…)   – reads per type per sample (grouped)
+    // out[3]: tuple(sim_type, sample_id, [bam_paths]) – per-type BAM list per sample
+    // out[4]: tuple(sample_id, bam)                 – all-types combined BAM per sample (for hybrid GSA)
+    merged_bam_per_type_per_sample_ch = sample_wise_simulation.out[0]
+    gsa_per_type_per_sample_ch        = sample_wise_simulation.out[1]
+    reads_per_type_ch                 = sample_wise_simulation.out[2]
+    bam_files_by_sample_per_type_ch   = sample_wise_simulation.out[3]
+    combined_bam_per_sample_ch        = sample_wise_simulation.out[4]
 
     // extract file paths from the tuples to create the reference_fasta_files_ch
     reference_fasta_files_ch = genome_location_ch.map { a -> a[1] }
 
-    // merge the bam files required for the pooled gsa
+    // ---- pooled GSA: collect all per-type merged BAMs across samples and types ----
     if (params.pooled_gsa instanceof Boolean && params.pooled_gsa) {
-        merged_bam_file = merge_bam_files(merged_bam_per_sample.map { it[1] }.collect())
+        merged_bam_file = merge_bam_files(merged_bam_per_type_per_sample_ch.map { sim_type, sid, bam -> bam }.collect())
     } else if (params.pooled_gsa instanceof List) {
-        merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
+        merged_bam_file = merge_bam_files(merged_bam_per_type_per_sample_ch
+            .filter { sim_type, sid, bam -> params.pooled_gsa*.toString().contains(sid.toString()) }.map { sim_type, sid, bam -> bam }.collect())
     }
 
-    // Generate merged GSAs for custom sample combinations (e.g., patient-specific)
+    // Generate merged GSAs for custom sample combinations
     if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
-        // Create a channel from the list of combinations with an index
-        combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex())
-            .map { combination, idx -> tuple(idx, combination*.toString()) }
+        combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex()).map { combination, idx -> tuple(idx, combination*.toString()) }
 
-        // For each combination, filter and collect the relevant BAM files
-        // NOTE: use collect(flat: false) so each [sample_id, bam_path] tuple is
-        // preserved as a list element instead of being flattened into a flat
-        // list of alternating ids/paths.
-        merged_bam_per_combination = merge_bam_files_by_combination(
-            combinations_ch,
-            merged_bam_per_sample.collect(flat: false)
-        )
+        // Use combined (all-types) BAMs for the cross-sample merged GSA
+        merged_bam_per_combination = merge_bam_files_by_combination(combinations_ch, combined_bam_per_sample_ch.collect(flat: false))
 
-        // Generate GSA for each custom combination.
-        // Collect references once and pair each merged BAM with that single list.
-        // Do not combine with every reference and groupTuple(), because that
-        // repeats the same BAM path once per reference and causes Nextflow
-        // input file name collisions while staging.
-        merged_gsa_ch = generate_merged_gold_standard_assembly(
-            merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] })
-        )
+        merged_gsa_ch = generate_merged_gold_standard_assembly(merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] }))
     }
 
     if (params.pooled_gsa) {
         generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
+
+        // ---- Resolve hybrid types ----
+        // hybrid = true  → use all simulated types
+        // hybrid = [..] → intersect with simulated types; only types present in both lists are hybridised
+        // hybrid = false (or absent) → no hybrid
+        def hybrid_types = []
+        if (params.containsKey('hybrid') && params.hybrid) {
+            if (params.hybrid instanceof Boolean) {
+                hybrid_types = types_list   // true: all types
+            } else if (params.hybrid instanceof List) {
+                hybrid_types = params.hybrid.intersect(types_list)  // list: only requested+simulated
+            }
+        }
+        // ---- Hybrid GSA per sample ----
+        if (hybrid_types.size() > 1) {
+            if (hybrid_types == types_list) {
+                // All types selected: reuse the already-merged combined BAM directly
+                hybrid_bam_ch = combined_bam_per_sample_ch
+            } else {
+                // Subset of types: filter per-type BAMs to the hybrid set, then merge per sample
+                filtered_bam_ch = merged_bam_per_type_per_sample_ch.filter { sim_type, sample_id, bam -> hybrid_types.contains(sim_type) }.map { sim_type, sample_id, bam -> tuple(sample_id, bam) }.groupTuple()
+                hybrid_bam_ch = merge_bam_files_hybrid(filtered_bam_ch)
+            }
+            generate_hybrid_gold_standard_assembly(hybrid_bam_ch.combine(reference_fasta_files_ch.collect().map { [it] }))
+        }
         // if requested, anonymize reads, gsa and pooled gsa
         if(params.anonymization) {
-            anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
-            // also anonymize merged gsa combinations (if any)
+            anonymization(reads_per_type_ch, get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_per_type_per_sample_ch, bam_files_by_sample_per_type_ch, generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
             if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
                 anonymize_merged_gsa(merged_gsa_ch, merged_bam_per_combination, get_seed.out[4], genome_location_file_ch, metadata_ch)
             }
         } else { // if no anonymization is requested, create binning gold standard
-            binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+            binning(gsa_per_type_per_sample_ch, bam_files_by_sample_per_type_ch, generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
         }
     }
 }
@@ -362,6 +381,30 @@ process merge_bam_files {
 }
 
 /*
+* This process merges BAM files from a selected subset of types for one sample,
+* used as input for the hybrid gold standard assembly.
+*/
+process merge_bam_files_hybrid {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(sample_id), path(bam_files)
+
+    output:
+    tuple val(sample_id), path(file_name)
+
+    script:
+    file_name = "sample_${sample_id}_hybrid.bam"
+    compression = 5
+    memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
+    """
+    samtools merge -u - ${bam_files} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    """
+}
+
+/*
 * This process merges BAM files for a specific combination of samples.
 * Takes:
 *     combination_id: An identifier for the combination (index)
@@ -455,6 +498,36 @@ process generate_pooled_gold_standard_assembly {
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/
+    """
+}
+
+/*
+* This process generates a hybrid gold standard assembly for one sample,
+* combining reads from all sequencing types via their merged BAM.
+* Input:
+*     tuple(sample_id, combined_bam, [reference_fasta_files])
+* Output:
+*     tuple(sample_id, hybrid_gsa_fasta)
+*/
+process generate_hybrid_gold_standard_assembly {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(sample_id), path(bam_file), path(reference_fasta_files)
+
+    output:
+    tuple val(sample_id), path(file_name)
+
+    script:
+    file_name = "sample${sample_id}_hybrid_gsa.fasta"
+    """
+    cat ${reference_fasta_files} > reference.fasta
+    samtools faidx reference.fasta
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    mkdir --parents ${params.outdir}/sample_${sample_id}/hybrid_gsa
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/hybrid_gsa/
     """
 }
 

@@ -178,9 +178,9 @@ process simulate_reads_fastq_nanosim3 {
 
     """
     simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
-    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }
 
@@ -207,11 +207,11 @@ process bam_from_reads_fasta {
     script:
     """
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     for file in sample${sample_id}_${genome_id}.fq; do gzip -k "\$file"; done
-    cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
+    cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }
 
@@ -236,7 +236,7 @@ process bam_from_reads_fastq {
     script:
     """
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS -F 4 | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
     """
 }

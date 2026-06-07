@@ -18,7 +18,7 @@ workflow anonymization {
     take: seed_file_read_simulation_ch
     take: seed_file_gsa_ch
     take: seed_file_pooled_gsa_ch
-    take: samplewise_gsa_ch // tuple val(sample_id), path(gsa)
+    take: samplewise_gsa_ch // tuple val(sim_type), val(sample_id), path(gsa)
     take: bam_file_list_per_sample_ch
     take: pooled_gsa_ch
     take: merged_bam_ch
@@ -27,26 +27,71 @@ workflow anonymization {
 
     main:
 
+        def types_list = (params.type instanceof List) ? params.type : [params.type]
+        def has_se_type = types_list.any { it == "nanosim3" || it == "pbsim3" }
+        def has_pe_type = types_list.any { it == "art" || it == "art_modern" || it == "wgsim" }
+
         // get the seed for every sample
         seed_ch = seed_file_read_simulation_ch.splitCsv(sep:'\t', skip:2)
 
-        reads_seed_ch = reads_ch.join(seed_ch)
+        // reads_ch carries tuple(sim_type, sample_id, …reads…)
+        // join on sample_id only – seed_ch is tuple(sample_id, seed)
+        reads_seed_ch = reads_ch
+            .map { row -> tuple(row[1], row) }   // key = sample_id
+            .combine(seed_ch, by: 0)             // attach seed
+            .map { sample_id, row, seed -> row + [seed] }  // append seed to original tuple
 
-        if(params.type=="nanosim3" || params.type=="pbsim3") {
-            out_shuffle = shuffle(reads_seed_ch)
-        } else if(params.type=="art" || params.type=="art_modern" || params.type=="wgsim") {
-            out_shuffle = shuffle_paired_end(reads_seed_ch)
+        // Route each type's reads to the correct shuffle process
+        se_reads_seed_ch = reads_seed_ch.filter { row ->
+            def sim_type = row[0]
+            sim_type == "nanosim3" || sim_type == "pbsim3"
+        }.map { row ->
+            // row: [sim_type, sample_id, reads_files..., seed]  – single end: 3 elements + seed
+            tuple(row[1], (row[2] instanceof List ? row[2].flatten() : row[2]), row[-1])  // (sample_id, read_files, seed)
         }
 
-        gs_read_ch = out_shuffle[1].combine(genome_location_file_ch).combine(metadata_ch)
-        gs_read_mapping(gs_read_ch)
+        pe_reads_seed_ch = reads_seed_ch.filter { row ->
+            def sim_type = row[0]
+            sim_type == "art" || sim_type == "art_modern" || sim_type == "wgsim"
+        }.map { row ->
+            // row: [sim_type, sample_id, r1_files, r2_files, seed]
+            // r1_files / r2_files may be nested lists after groupTuple → flatten them
+            tuple(
+                row[1],
+                (row[2] instanceof List ? row[2].flatten() : row[2]),
+                (row[3] instanceof List ? row[3].flatten() : row[3]),
+                row[-1]
+            )  // (sample_id, r1, r2, seed)
+        }
 
-        // anonymize assembly of every sample
+        if (has_se_type) {
+            out_shuffle_se = shuffle(se_reads_seed_ch)
+            gs_read_mapping(out_shuffle_se[1].combine(genome_location_file_ch).combine(metadata_ch))
+        }
+        if (has_pe_type) {
+            out_shuffle_pe = shuffle_paired_end(pe_reads_seed_ch)
+            gs_read_mapping(out_shuffle_pe[1].combine(genome_location_file_ch).combine(metadata_ch))
+        }
+
+        // anonymize assembly per type per sample
+        // samplewise_gsa_ch: tuple(sim_type, sample_id, gsa)
         seed_gsa_ch = seed_file_gsa_ch.splitCsv(sep:'\t', skip:2)
-        shuffle_gsa(samplewise_gsa_ch.join(seed_gsa_ch))
-        read_start_positions_from_dir_of_bam(bam_file_list_per_sample_ch)
+        // join on sample_id (index 1 of the gsa tuple)
+        gsa_seed_ch = samplewise_gsa_ch.map { sim_type, sample_id, gsa -> tuple(sample_id, sim_type, gsa) }.combine(seed_gsa_ch, by: 0)
+            .map { sample_id, sim_type, gsa, seed -> tuple(sim_type, sample_id, gsa, seed) }
+        shuffle_gsa_typed(gsa_seed_ch)
+        bam_for_read_positions_ch = bam_file_list_per_sample_ch.map { sim_type, sample_id, bams -> tuple(sample_id, bams) }.groupTuple()
+            .map { sample_id, bams_list -> tuple(sample_id, bams_list.flatten()) }
+        read_start_positions_from_dir_of_bam(bam_for_read_positions_ch)
 
-        gs_contig_ch = shuffle_gsa.out[1].join(read_start_positions_from_dir_of_bam.out).combine(genome_location_file_ch).combine(metadata_ch)
+        // bam_file_list_per_sample_ch: tuple(sim_type, sample_id, [bam_paths])
+        // join on (sim_type, sample_id) with shuffle_gsa_typed.out[1]: tuple(sim_type, sample_id, tmp_mapping)
+        gs_contig_ch = shuffle_gsa_typed.out[1]
+            .map { sim_type, sample_id, mapping -> tuple(sample_id, sim_type, mapping) }
+            .combine(read_start_positions_from_dir_of_bam.out, by: 0)
+            .map { sample_id, sim_type, mapping, read_pos -> tuple(sim_type, sample_id, mapping, read_pos) }
+            .combine(genome_location_file_ch)
+            .combine(metadata_ch)
         gs_contig_mapping(gs_contig_ch)
 
         // anonymize pooled gold standard assembly
@@ -128,23 +173,8 @@ process shuffle_paired_end {
 
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
-    # Build first/second reads from the provided input paths, supporting both .fq and .fq.gz
-    {
-      for f in ${first_read_files}; do
-        case "\$f" in
-          *.gz) zcat "\$f" ;;
-          *)    cat  "\$f" ;;
-        esac
-      done
-    } > first_reads.fq
-    {
-      for f in ${second_read_files}; do
-        case "\$f" in
-          *.gz) zcat "\$f" ;;
-          *)    cat  "\$f" ;;
-        esac
-      done
-    } > second_reads.fq
+    cat ${first_read_files} > first_reads.fq
+    cat ${second_read_files} > second_reads.fq
     paste -d " " - - - - <first_reads.fq > first_reads_clustered.fq
     paste -d " " - - - - <second_reads.fq > second_reads_clustered.fq
     paste -d ' ' first_reads_clustered.fq second_reads_clustered.fq  > sample${sample_id}_interweaved.fq
@@ -167,7 +197,6 @@ process shuffle_paired_end {
  */
 process gs_read_mapping {
 
-    //conda "conda-forge::biopython"
     conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
@@ -178,21 +207,21 @@ process gs_read_mapping {
 
     script:
     reads_mapping_file = 'reads_mapping.tsv'
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if(params.type.equals("nanosim3")) {
-        if(params.pipeline.equals("metatranscriptomic")){
+    if (types_list.contains("nanosim3")) {
+        if (params.pipeline.equals("metatranscriptomic")) {
             real_fastq = "-nanosim_real_fastq"
-
-        } else if(params.simulate_fastq_directly){
+        } else if (params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    } else if(params.type.equals("wgsim")){
-            simulator = "-simulator wgsim"
-    } else if(params.type.equals("art_modern")){
-            simulator = "-simulator art_modern"
     }
-        
+    if (types_list.contains("wgsim")) {
+        simulator = "-simulator wgsim"
+    } else if (types_list.contains("art_modern")) {
+        simulator = "-simulator art_modern"
+    }
 
     if(params.pipeline.equals("metatranscriptomic")){
         metatranscriptomic = "-metatranscriptomic"
@@ -243,6 +272,40 @@ process shuffle_gsa {
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
     gzip -k ${anonymous_gsa_file}
     cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
+    """
+}
+
+/*
+* Per-type variant of shuffle_gsa. Carries sim_type so outputs go into
+* type-specific subdirectories and file names don't collide across types.
+*/
+process shuffle_gsa_typed {
+
+    conda "conda-forge::biopython=1.83"
+
+    input:
+    tuple val(sim_type), val(sample_id), path(gsa_file), val(seed)
+
+    output:
+    tuple val(sim_type), val(sample_id), path(anonymous_gsa_file)
+    tuple val(sim_type), val(sample_id), path(tmp_reads_mapping_file)
+
+    script:
+    anonymous_gsa_file = "anonymous_gsa_${sim_type}.fasta"
+    tmp_reads_mapping_file = "tmp_reads_mapping_${sim_type}.tsv"
+    """
+    touch ${anonymous_gsa_file}
+    touch ${tmp_reads_mapping_file}
+    get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
+    cat ${gsa_file} \\
+      | paste -d "\\t" - - \\
+      | shuf --random-source=<(get_seeded_random ${seed}) \\
+      | tr "\\t" "\\n" \\
+      | tr -d '\\000' \\
+      | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
+    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs/${sim_type}
+    gzip -k ${anonymous_gsa_file}
+    cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/${sim_type}/
     """
 }
 
@@ -340,7 +403,8 @@ process read_start_positions_from_merged_bam {
 }
 
 /*
-* This process created a gold standard read mapping file for one sample.
+* This process created a gold standard contig mapping file for one sample per type.
+* Carries sim_type so outputs go into type-specific subdirectories.
 * Takes:
 *   The temp reads mapping file for the given sample, containing the read id and the anonymous read id.
 *   A file containing all reference genome locations.
@@ -350,29 +414,28 @@ process read_start_positions_from_merged_bam {
  */
 process gs_contig_mapping {
 
-    //conda "conda-forge::biopython"
     conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
-    tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
-
+    tuple val(sim_type), val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
 
     output:
-    tuple val(sample_id), path(gsa_mapping_file)
+    tuple val(sim_type), val(sample_id), path(gsa_mapping_file)
 
     script:
-    gsa_mapping_file = 'gsa_mapping.tsv'
-    reads_mapping_file = 'reads_mapping.tsv'
+    gsa_mapping_file = "gsa_mapping_${sim_type}.tsv"
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+    if (types_list.contains("nanosim3")) {
+        if (params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    } else if(params.type.equals("wgsim")){
-            simulator = "-simulator wgsim"
-    } else if(params.type.equals("art_modern")){
-            simulator = "-simulator art_modern"
+    }
+    if (types_list.contains("wgsim")) {
+        simulator = "-simulator wgsim"
+    } else if (types_list.contains("art_modern")) {
+        simulator = "-simulator art_modern"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -383,9 +446,9 @@ process gs_contig_mapping {
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
+    mkdir --parents ${params.outdir}/sample_${sample_id}/contigs/${sim_type}
     gzip -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
+    cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/${sim_type}/
     """
 }
 
@@ -400,7 +463,6 @@ process gs_contig_mapping {
  */
 process pooled_gs_contig_mapping {
 
-    //conda "conda-forge::biopython"
     conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
 
     input:
@@ -409,24 +471,23 @@ process pooled_gs_contig_mapping {
     path(genome_locations_file)
     path(metadata_file)
 
-
     output:
     path(gsa_mapping_file)
 
     script:
     gsa_mapping_file = 'gsa_pooled_mapping.tsv'
-    reads_mapping_file = 'reads_mapping.tsv'
-    params.simulate_fastq_directly = false
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+    if (types_list.contains("nanosim3")) {
+        if (params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    } else if(params.type.equals("wgsim")){
-            simulator = "-simulator wgsim"
-    } else if(params.type.equals("art_modern")){
-            simulator = "-simulator art_modern"
+    }
+    if (types_list.contains("wgsim")) {
+        simulator = "-simulator wgsim"
+    } else if (types_list.contains("art_modern")) {
+        simulator = "-simulator art_modern"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -587,16 +648,18 @@ process merged_gs_contig_mapping {
     script:
     samples_str = sample_ids.join('_')
     gsa_mapping_file = "gsa_mapping.tsv"
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+    if (types_list.contains("nanosim3")) {
+        if (params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    } else if(params.type.equals("wgsim")){
-            simulator = "-simulator wgsim"
-    } else if(params.type.equals("art_modern")){
-            simulator = "-simulator art_modern"
+    }
+    if (types_list.contains("wgsim")) {
+        simulator = "-simulator wgsim"
+    } else if (types_list.contains("art_modern")) {
+        simulator = "-simulator art_modern"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){

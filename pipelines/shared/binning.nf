@@ -100,7 +100,7 @@ process binning_per_sample {
     wgsim = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+        if(params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
@@ -137,7 +137,7 @@ process binning_pooled_gsa {
     wgsim = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+        if(params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
