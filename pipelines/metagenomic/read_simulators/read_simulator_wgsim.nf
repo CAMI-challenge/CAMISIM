@@ -32,7 +32,7 @@ workflow read_simulator_wgsim {
 
 process simulate_reads_wgsim {
 
-    conda 'conda-forge::biopython bioconda::wgsim bioconda::samtools'
+    conda 'conda-forge::biopython bioconda::wgsim bioconda::samtools conda-forge::pigz'
 
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed)
@@ -51,6 +51,7 @@ process simulate_reads_wgsim {
     number_of_reads = (total_size*(10**9)) * abundance.toFloat() / read_length_ch.toFloat()
     number_of_reads = number_of_reads.round(0).toInteger()
     create_cigar = params.create_cigar
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     /**
     String log = "---- sample id: ".concat(sample_id)
@@ -70,8 +71,8 @@ process simulate_reads_wgsim {
     ${scripts_dir}/wgsim_to_sam.py sample${sample_id}_${genome_id}1.fq sample${sample_id}_${genome_id}2.fq /dev/stdout ${fasta_file} ${create_cigar} | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/wgsim/
     cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/wgsim/
-    gzip -k sample${sample_id}_${genome_id}1.fq
-    gzip -k sample${sample_id}_${genome_id}2.fq
+    pigz -p ${threads} -k sample${sample_id}_${genome_id}1.fq
+    pigz -p ${threads} -k sample${sample_id}_${genome_id}2.fq
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/wgsim/
     cp sample${sample_id}_${genome_id}1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/wgsim/
     cp sample${sample_id}_${genome_id}2.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/wgsim/

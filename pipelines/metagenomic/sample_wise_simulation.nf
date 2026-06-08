@@ -171,7 +171,7 @@ workflow sample_wise_simulation {
  */
 process generate_gold_standard_assembly {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools conda-forge::pigz'
 
     input:
     tuple val(sample_id),val(genome_id), path(bam_file), path(reference_fasta_file)
@@ -183,11 +183,12 @@ process generate_gold_standard_assembly {
 
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_').concat(genome_id).concat('_gsa.fasta')
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     samtools faidx ${reference_fasta_file}
     python ${shared_scripts_dir}/bamToGold.py -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/
     """
 }
@@ -202,6 +203,8 @@ process generate_gold_standard_assembly {
  */
 process get_fasta_for_sample {
 
+    conda 'conda-forge::pigz'
+
     input:
     tuple val(sample_id), path(fasta_files)
 
@@ -210,6 +213,7 @@ process get_fasta_for_sample {
 
     script:
     file_name = 'sample'.concat(sample_id.toString()).concat('_gsa.fasta')
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     set -euo pipefail
 
@@ -217,7 +221,7 @@ process get_fasta_for_sample {
     printf '%s\\n' ${fasta_files} | sort | xargs -r cat -- > ${file_name}
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/contigs/gsa.fasta.gz
     """
 }
@@ -228,7 +232,7 @@ process get_fasta_for_sample {
 */
 process generate_gold_standard_assembly_typed {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools conda-forge::pigz'
 
     input:
     tuple val(sim_type), val(sample_id), val(genome_id), path(bam_file), path(reference_fasta_file)
@@ -240,11 +244,12 @@ process generate_gold_standard_assembly_typed {
 
     script:
     file_name = "sample${sample_id}_${genome_id}_${sim_type}_gsa.fasta"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     samtools faidx ${reference_fasta_file}
     python ${shared_scripts_dir}/bamToGold.py -st samtools -r ${reference_fasta_file} -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/gsa/${sim_type}
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/gsa/${sim_type}/
     """
 }
@@ -254,6 +259,8 @@ process generate_gold_standard_assembly_typed {
 */
 process get_fasta_for_sample_typed {
 
+    conda 'conda-forge::pigz'
+
     input:
     tuple val(sim_type), val(sample_id), path(fasta_files)
 
@@ -262,13 +269,14 @@ process get_fasta_for_sample_typed {
 
     script:
     file_name = "sample${sample_id}_${sim_type}_gsa.fasta"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     set -euo pipefail
 
     printf '%s\\n' ${fasta_files} | sort | xargs -r cat -- > ${file_name}
 
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs/${sim_type}
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/contigs/${sim_type}/gsa.fasta.gz
     """
 }

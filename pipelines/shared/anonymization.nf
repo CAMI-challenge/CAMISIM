@@ -111,7 +111,7 @@ workflow anonymization {
  */
 process shuffle {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
     tuple val(sample_id), path(read_files), val(seed)
@@ -123,25 +123,20 @@ process shuffle {
     script:
     anonymous_reads_file = 'anonymous_reads.fq'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     set -euo pipefail
 
     touch ${anonymous_reads_file}
     touch ${tmp_reads_mapping_file}
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
-    {
-      for f in ${read_files}; do
-        case "\$f" in
-          *.gz) zcat "\$f" ;;
-          *)    cat  "\$f" ;;
-        esac
-      done
-    } | paste -d "\\t" - - - - \
+    cat ${read_files} \
+      | paste -d "\\t" - - - - \
       | shuf --random-source=<(get_seeded_random ${seed}) \
       | tr "\\t" "\\n" \
       | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file} -s
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
-    gzip -k ${anonymous_reads_file}
+    pigz -p ${threads} -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
@@ -156,7 +151,7 @@ process shuffle {
  */
 process shuffle_paired_end {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     tuple val(sample_id), path(first_read_files), path(second_read_files), val(seed)
@@ -168,6 +163,7 @@ process shuffle_paired_end {
     script:
     anonymous_reads_file = 'anonymous_reads.fq'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     set -euo pipefail
 
@@ -181,7 +177,7 @@ process shuffle_paired_end {
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     shuf --random-source=<(get_seeded_random ${seed}) sample${sample_id}_interweaved.fq | tr " " "\\n" | tr -d '\\000' | python3 ${shared_scripts_dir}/anonymizer.py -prefix S${sample_id}R -format fastq -map ${tmp_reads_mapping_file} -out ${anonymous_reads_file}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
-    gzip -k ${anonymous_reads_file}
+    pigz -p ${threads} -k ${anonymous_reads_file}
     cp ${anonymous_reads_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
@@ -197,7 +193,7 @@ process shuffle_paired_end {
  */
 process gs_read_mapping {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     tuple val(sample_id), path(tmp_reads_mapping_file), path(genome_locations_file), path(metadata_file)
@@ -228,11 +224,12 @@ process gs_read_mapping {
     } else {
         metatranscriptomic = ""
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${reads_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads
-    gzip -k ${reads_mapping_file}
+    pigz -p ${threads} -k ${reads_mapping_file}
     cp ${reads_mapping_file}.gz ${params.outdir}/sample_${sample_id}/reads/
     """
 }
@@ -247,7 +244,7 @@ process gs_read_mapping {
  */
 process shuffle_gsa {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
     tuple val(sample_id), path(gsa_file), val(seed)
@@ -259,6 +256,7 @@ process shuffle_gsa {
     script:
     anonymous_gsa_file = 'anonymous_gsa.fasta'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_file}
     touch ${tmp_reads_mapping_file}
@@ -270,7 +268,7 @@ process shuffle_gsa {
       | tr -d '\\000' \\
       | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
-    gzip -k ${anonymous_gsa_file}
+    pigz -p ${threads} -k ${anonymous_gsa_file}
     cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
     """
 }
@@ -281,7 +279,7 @@ process shuffle_gsa {
 */
 process shuffle_gsa_typed {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
     tuple val(sim_type), val(sample_id), path(gsa_file), val(seed)
@@ -293,6 +291,7 @@ process shuffle_gsa_typed {
     script:
     anonymous_gsa_file = "anonymous_gsa_${sim_type}.fasta"
     tmp_reads_mapping_file = "tmp_reads_mapping_${sim_type}.tsv"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_file}
     touch ${tmp_reads_mapping_file}
@@ -304,7 +303,7 @@ process shuffle_gsa_typed {
       | tr -d '\\000' \\
       | python3 ${shared_scripts_dir}/anonymizer.py  -prefix S${sample_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs/${sim_type}
-    gzip -k ${anonymous_gsa_file}
+    pigz -p ${threads} -k ${anonymous_gsa_file}
     cp ${anonymous_gsa_file}.gz ${params.outdir}/sample_${sample_id}/contigs/${sim_type}/
     """
 }
@@ -319,7 +318,7 @@ process shuffle_gsa_typed {
  */
 process shuffle_pooled_gsa {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
     path gsa_file
@@ -332,6 +331,7 @@ process shuffle_pooled_gsa {
     script:
     anonymous_gsa_pooled = 'anonymous_gsa_pooled.fasta'
     tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_pooled}
     touch ${tmp_reads_mapping_file}
@@ -343,7 +343,7 @@ process shuffle_pooled_gsa {
       | tr -d '\\000' \\
       | python3 ${shared_scripts_dir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
     mkdir --parents ${params.outdir}
-    gzip -k ${anonymous_gsa_pooled}
+    pigz -p ${threads} -k ${anonymous_gsa_pooled}
     cp ${anonymous_gsa_pooled}.gz ${params.outdir}
     """
 }
@@ -414,7 +414,7 @@ process read_start_positions_from_merged_bam {
  */
 process gs_contig_mapping {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     tuple val(sim_type), val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
@@ -443,11 +443,12 @@ process gs_contig_mapping {
     } else {
         metatranscriptomic = ""
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs/${sim_type}
-    gzip -k ${gsa_mapping_file}
+    pigz -p ${threads} -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/${sim_type}/
     """
 }
@@ -463,7 +464,7 @@ process gs_contig_mapping {
  */
 process pooled_gs_contig_mapping {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     path(tmp_contig_mapping_file)
@@ -495,12 +496,13 @@ process pooled_gs_contig_mapping {
     } else {
         metatranscriptomic = ""
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}
-    gzip -k ${gsa_mapping_file}
+    pigz -p ${threads} -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}
     """
 }
@@ -570,7 +572,7 @@ workflow anonymize_merged_gsa {
 */
 process shuffle_merged_gsa {
 
-    conda "conda-forge::biopython=1.83"
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
     tuple val(combination_id), val(sample_ids), path(gsa_file), val(seed)
@@ -583,6 +585,7 @@ process shuffle_merged_gsa {
     samples_str = sample_ids.join('_')
     anonymous_gsa_file = "anonymous_gsa_merged_samples_${samples_str}.fasta"
     tmp_reads_mapping_file = "tmp_contig_mapping_merged_samples_${samples_str}.tsv"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_file}
     touch ${tmp_reads_mapping_file}
@@ -594,7 +597,7 @@ process shuffle_merged_gsa {
       | tr -d '\\000' \\
       | python3 ${shared_scripts_dir}/anonymizer.py -prefix M${combination_id}C -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_file} -s
     mkdir --parents ${params.outdir}/merged_gsa
-    gzip -k ${anonymous_gsa_file}
+    pigz -p ${threads} -k ${anonymous_gsa_file}
     cp ${anonymous_gsa_file}.gz ${params.outdir}/merged_gsa/
     """
 }
@@ -637,7 +640,7 @@ process read_start_positions_from_merged_combination_bam {
 */
 process merged_gs_contig_mapping {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     tuple val(combination_id), val(sample_ids), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
@@ -667,11 +670,12 @@ process merged_gs_contig_mapping {
     } else {
         metatranscriptomic = ""
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
     mkdir --parents ${params.outdir}/merged_gsa
-    gzip -k ${gsa_mapping_file}
+    pigz -p ${threads} -k ${gsa_mapping_file}
     # Use the descriptive per-combination name in the output directory to avoid
     # collisions between combinations.
     cp ${gsa_mapping_file}.gz ${params.outdir}/merged_gsa/gsa_mapping_merged_samples_${samples_str}.tsv.gz

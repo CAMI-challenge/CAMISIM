@@ -30,7 +30,7 @@ process simulate_reads_art_modern {
 
     scratch true
     
-    conda 'bioconda::art_modern bioconda::seqtk bioconda::samtools bioconda::seqkit'
+    conda 'bioconda::art_modern bioconda::seqtk bioconda::samtools bioconda::seqkit conda-forge::pigz'
     
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
@@ -46,6 +46,7 @@ process simulate_reads_art_modern {
     profile = params.base_profile_name
     factor_float_value = Double.valueOf(factor)
     fold_coverage = Double.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     /**
     String log = "---- sample id: ".concat(sample_id)
@@ -75,8 +76,8 @@ process simulate_reads_art_modern {
     do
     seqtk seq "\$file" -1 > "\${file%.fq}1.fq"
     seqtk seq "\$file" -2 > "\${file%.fq}2.fq"
-    gzip -c "\${file%.fq}1.fq" > "\${file%.fq}1.fq.gz";
-    gzip -c "\${file%.fq}2.fq" > "\${file%.fq}2.fq.gz";
+    pigz -p ${threads} -c "\${file%.fq}1.fq" > "\${file%.fq}1.fq.gz";
+    pigz -p ${threads} -c "\${file%.fq}2.fq" > "\${file%.fq}2.fq.gz";
     done
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/art_modern/
     cp sample${sample_id}_${genome_id}*1.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art_modern/

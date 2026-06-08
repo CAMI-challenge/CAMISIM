@@ -450,7 +450,7 @@ process merge_bam_files_by_combination {
 */
 process generate_merged_gold_standard_assembly {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools conda-forge::pigz'
 
     input:
     tuple val(combination_id), val(sample_ids), path(bam_file), path(reference_fasta_files)
@@ -462,12 +462,13 @@ process generate_merged_gold_standard_assembly {
     // Create a descriptive filename with the sample IDs
     samples_str = sample_ids.join('_')
     file_name = "gsa_merged_samples_${samples_str}.fasta"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     cat ${reference_fasta_files} > reference.fasta
     samtools faidx reference.fasta
     python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/merged_gsa
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/merged_gsa/
     """
 }
@@ -481,7 +482,7 @@ process generate_merged_gold_standard_assembly {
  */
 process generate_pooled_gold_standard_assembly {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools conda-forge::pigz'
 
     input:
     tuple path(bam_file), path(reference_fasta_files)
@@ -491,12 +492,13 @@ process generate_pooled_gold_standard_assembly {
     
     script:
     file_name = 'gsa_pooled.fasta'
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     cat ${reference_fasta_files} > reference.fasta
     samtools faidx reference.fasta
     python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/
     """
 }
@@ -511,7 +513,7 @@ process generate_pooled_gold_standard_assembly {
 */
 process generate_hybrid_gold_standard_assembly {
 
-    conda 'bioconda::samtools'
+    conda 'bioconda::samtools conda-forge::pigz'
 
     input:
     tuple val(sample_id), path(bam_file), path(reference_fasta_files)
@@ -521,12 +523,13 @@ process generate_hybrid_gold_standard_assembly {
 
     script:
     file_name = "sample${sample_id}_hybrid_gsa.fasta"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     cat ${reference_fasta_files} > reference.fasta
     samtools faidx reference.fasta
     python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/sample_${sample_id}/hybrid_gsa
-    gzip -k ${file_name}
+    pigz -p ${threads} -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/sample_${sample_id}/hybrid_gsa/
     """
 }

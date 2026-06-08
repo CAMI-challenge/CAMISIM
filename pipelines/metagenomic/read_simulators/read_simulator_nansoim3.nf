@@ -143,7 +143,7 @@ process simulate_reads_fasta_nanosim3 {
 **/
 process simulate_reads_fastq_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2 conda-forge::pigz'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
@@ -179,7 +179,7 @@ process simulate_reads_fastq_nanosim3 {
     """
     simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
-    for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
+    for file in *_aligned_reads.fastq; do pigz -p ${threads} -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }
@@ -195,7 +195,7 @@ process simulate_reads_fastq_nanosim3 {
 **/
 process bam_from_reads_fasta {
 
-    conda "conda-forge::biopython bioconda::samtools"
+    conda "conda-forge::biopython bioconda::samtools conda-forge::pigz"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
@@ -205,12 +205,14 @@ process bam_from_reads_fasta {
     tuple val(sample_id), path("sample${sample_id}_${genome_id}.fq")
 
     script:
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
+
     """
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
     cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
-    for file in sample${sample_id}_${genome_id}.fq; do gzip -k "\$file"; done
+    for file in sample${sample_id}_${genome_id}.fq; do pigz -p ${threads} -k "\$file"; done
     cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }

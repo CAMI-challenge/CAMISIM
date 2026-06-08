@@ -30,7 +30,7 @@ process simulate_reads_art {
 
     scratch true
     
-    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
+    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools conda-forge::pigz' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
@@ -46,6 +46,7 @@ process simulate_reads_art {
     profile = params.base_profile_name
     factor_float_value = Double.valueOf(factor)
     fold_coverage = Double.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     /**
     String log = "---- sample id: ".concat(sample_id)
@@ -69,7 +70,7 @@ process simulate_reads_art {
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/art/
     cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/art/
-    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
+    for file in sample${sample_id}_${genome_id}*.fq; do pigz -p ${threads} -k "\$file"; done
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/art/
     cp sample${sample_id}_${genome_id}*.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art/
     """
