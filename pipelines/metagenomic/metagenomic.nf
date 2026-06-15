@@ -17,6 +17,7 @@ include { metagenomesimulation_from_profile } from "${projectDir}/pipelines/meta
 
 // include anonymization
 include { anonymization } from "${projectDir}/pipelines/shared/anonymization"
+include { anonymize_merged_gsa } from "${projectDir}/pipelines/shared/anonymization"
 
 // include binning
 include { binning } from "${projectDir}/pipelines/shared/binning"
@@ -211,11 +212,46 @@ workflow metagenomic {
         merged_bam_file = merge_bam_files(merged_bam_per_sample.filter { params.pooled_gsa*.toString().contains(it[0]) }.map { it[1] }.collect())
     }
 
+    // Generate merged GSAs for custom sample combinations (e.g., patient-specific)
+    if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+        def valid_sample_ids = (0..<params.number_of_samples).collect { it.toString() } as Set
+        def invalid_sample_ids = params.merged_gsa_combinations.flatten().collect { it.toString() }.findAll { !valid_sample_ids.contains(it) } as Set
+        if (invalid_sample_ids) {
+            error "Invalid sample id(s) in params.merged_gsa_combinations: ${invalid_sample_ids}. Valid sample ids are: ${valid_sample_ids}."
+        }
+
+        // Create a channel from the list of combinations with an index
+        combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex())
+            .map { combination, idx -> tuple(idx, combination*.toString()) }
+
+        // For each combination, filter and collect the relevant BAM files
+        // NOTE: use collect(flat: false) so each [sample_id, bam_path] tuple is
+        // preserved as a list element instead of being flattened into a flat
+        // list of alternating ids/paths.
+        merged_bam_per_combination = merge_bam_files_by_combination(
+            combinations_ch,
+            merged_bam_per_sample.collect(flat: false)
+        )
+
+        // Generate GSA for each custom combination.
+        // Collect references once and pair each merged BAM with that single list.
+        // Do not combine with every reference and groupTuple(), because that
+        // repeats the same BAM path once per reference and causes Nextflow
+        // input file name collisions while staging.
+        merged_gsa_ch = generate_merged_gold_standard_assembly(
+            merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] })
+        )
+    }
+
     if (params.pooled_gsa) {
         generate_pooled_gold_standard_assembly(merged_bam_file.combine(reference_fasta_files_ch).groupTuple())
         // if requested, anonymize reads, gsa and pooled gsa
         if(params.anonymization) {
             anonymization(sample_wise_simulation.out[2], get_seed.out[1], get_seed.out[2], get_seed.out[3], gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
+            // also anonymize merged gsa combinations (if any)
+            if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+                anonymize_merged_gsa(merged_gsa_ch, merged_bam_per_combination, get_seed.out[4], genome_location_file_ch, metadata_ch)
+            }
         } else { // if no anonymization is requested, create binning gold standard
             binning(gsa_for_all_reads_of_one_sample_ch, sample_wise_simulation.out[3], generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
         }
@@ -332,6 +368,74 @@ process merge_bam_files {
 }
 
 /*
+* This process merges BAM files for a specific combination of samples.
+* Takes:
+*     combination_id: An identifier for the combination (index)
+*     sample_ids: List of sample IDs to include in this combination
+*     all_bam_tuples: All BAM file tuples (sample_id, bam_path)
+* Output:
+*     A tuple with combination_id and the path to the merged BAM file.
+*/
+process merge_bam_files_by_combination {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(combination_id), val(sample_ids)
+    val all_bam_tuples
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(file_name)
+
+    script:
+    file_name = "merged_combination_${combination_id}.bam"
+    compression = 5
+    memory = 1
+    threads_for_sort = Math.max(1, ((task.cpus ?: 1) as int))
+
+    // Filter BAM files that belong to the specified sample IDs
+    bam_to_merge = all_bam_tuples
+        .findAll { sample_id, bam_path -> sample_ids.contains(sample_id.toString()) }
+        .sort { a, b -> sample_ids.indexOf(a[0].toString()) <=> sample_ids.indexOf(b[0].toString()) }
+        .collect { sample_id, bam_path -> bam_path }
+        .join(' ')
+    """
+    samtools merge -u - ${bam_to_merge} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
+    """
+}
+
+/*
+* This process generates a merged gold standard assembly for a custom sample combination.
+* Takes:
+*     A tuple with combination_id, sample_ids list, merged BAM file, and reference FASTA files.
+* Output:
+*     The path to the FASTA file with the merged gold standard assembly.
+*/
+process generate_merged_gold_standard_assembly {
+
+    conda 'bioconda::samtools'
+
+    input:
+    tuple val(combination_id), val(sample_ids), path(bam_file), path(reference_fasta_files)
+
+    output:
+    tuple val(combination_id), val(sample_ids), path(file_name)
+
+    script:
+    // Create a descriptive filename with the sample IDs
+    samples_str = sample_ids.join('_')
+    file_name = "gsa_merged_samples_${samples_str}.fasta"
+    """
+    cat ${reference_fasta_files} > reference.fasta
+    samtools faidx reference.fasta
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    mkdir --parents ${params.outdir}/merged_gsa
+    gzip -k ${file_name}
+    cp ${file_name}.gz ${params.outdir}/merged_gsa/
+    """
+}
+
+/*
 * This process generates the pooled gold standard assembly for serveral samples.
 * Takes:
 *     A tuple with first_value = a sorted bam file and second value = the reference genome (fasta).
@@ -353,7 +457,7 @@ process generate_pooled_gold_standard_assembly {
     """
     cat ${reference_fasta_files} > reference.fasta
     samtools faidx reference.fasta
-    perl -- ${shared_scripts_dir}/bamToGold.pl -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
+    python ${shared_scripts_dir}/bamToGold.py -st samtools -r reference.fasta -b ${bam_file} -l 1 -c 1 >> ${file_name}
     mkdir --parents ${params.outdir}/pooled_gsa
     gzip -k ${file_name}
     cp ${file_name}.gz ${params.outdir}/pooled_gsa/
@@ -629,6 +733,7 @@ process get_seed {
     path ('seed_read_anonymisation.txt'), optional: true
     path ('seed_gsa_anonymisation.txt'), optional: true
     path ('seed_pooled_gsa_anonymisation.txt'), optional: true
+    path ('seed_merged_gsa_anonymisation.txt'), optional: true
 
     script:
     count_samples = params.number_of_samples
@@ -637,8 +742,12 @@ process get_seed {
     } else {
         param_anonym = ""
     }
+    merged_count = 0
+    if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List) {
+        merged_count = params.merged_gsa_combinations.size()
+    }
     """
-    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym}
+    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym} -merged_count ${merged_count}
     mkdir --parents ${params.outdir}/seed/
     cp seed*.txt ${params.outdir}/seed/
     """
