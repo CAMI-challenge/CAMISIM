@@ -219,6 +219,12 @@ workflow metagenomic {
 
     // Generate merged GSAs for custom sample combinations
     if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+        def valid_sample_ids = (0..<params.number_of_samples).collect { it.toString() } as Set
+        def invalid_sample_ids = params.merged_gsa_combinations.flatten().collect { it.toString() }.findAll { !valid_sample_ids.contains(it) } as Set
+        if (invalid_sample_ids) {
+            error "Invalid sample id(s) in params.merged_gsa_combinations: ${invalid_sample_ids}. Valid sample ids are: ${valid_sample_ids}."
+        }
+
         combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex()).map { combination, idx -> tuple(idx, combination*.toString()) }
 
         // Use combined (all-types) BAMs for the cross-sample merged GSA
