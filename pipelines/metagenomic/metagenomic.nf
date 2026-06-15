@@ -18,6 +18,7 @@ include { metagenomesimulation_from_profile } from "${projectDir}/pipelines/meta
 // include anonymization
 include { anonymization } from "${projectDir}/pipelines/shared/anonymization"
 include { anonymize_merged_gsa } from "${projectDir}/pipelines/shared/anonymization"
+include { anonymize_hybrid_gsa } from "${projectDir}/pipelines/shared/anonymization"
 
 // include binning
 include { binning } from "${projectDir}/pipelines/shared/binning"
@@ -157,12 +158,6 @@ workflow metagenomic {
 
     def types_list = (params.type instanceof List) ? params.type : [params.type]
 
-    if(types_list.contains("nanosim3")) {
-        read_length_ch = calculate_Nanosim_read_length(params.base_profile_name) // this takes very long
-    } else {
-        read_length_ch = params.profile_read_length
-    }
-
     // this channel holds the genome location map (key = genome_id, value = absolute path to genome)
     genome_location_ch = genome_location_file_ch
         .splitCsv(sep:'\t') // get genome id and relatvie path from genome location file
@@ -198,7 +193,7 @@ workflow metagenomic {
     seed_file_read_simulation_ch = get_seed.out[0]
 
     // simulate reads sample wise
-    sample_wise_simulation(genome_location_ch, genome_location_file_ch, genome_distribution_file_ch, read_length_ch, seed_file_read_simulation_ch)
+    sample_wise_simulation(genome_location_ch, genome_location_file_ch, genome_distribution_file_ch, seed_file_read_simulation_ch)
 
     // out[0]: tuple(sim_type, sample_id, bam)      – per-type merged BAM per sample
     // out[1]: tuple(sim_type, sample_id, gsa_fasta) – per-type GSA per sample
@@ -265,6 +260,9 @@ workflow metagenomic {
             if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
                 anonymize_merged_gsa(merged_gsa_ch, merged_bam_per_combination, get_seed.out[4], genome_location_file_ch, metadata_ch)
             }
+            if (hybrid_types.size() > 1) {
+                anonymize_hybrid_gsa(generate_hybrid_gold_standard_assembly.out, hybrid_bam_ch, get_seed.out[5], genome_location_file_ch, metadata_ch)
+            }
         } else { // if no anonymization is requested, create binning gold standard
             binning(gsa_per_type_per_sample_ch, bam_files_by_sample_per_type_ch, generate_pooled_gold_standard_assembly.out, merged_bam_file, genome_location_file_ch, metadata_ch)
         }
@@ -301,43 +299,6 @@ process download_NCBI_taxdump {
     # Copy the downloaded taxdump to the output directory
     taxdump_file = "./*.tar.gz"
     os.system(f"cp {taxdump_file} {output_dir}")
-    """
-}
-
-
-/*
-* This process calculates the average read length of Nanosim reads from the pickle of the predefined profile
-*
-*/
-process calculate_Nanosim_read_length {
-    // TODO: Packages which are needed multiple times should be loaded only once
-    conda 'conda-forge::scikit-learn=0.23 conda-forge::numpy=1.23 conda-forge::joblib=1.2.0'
-
-    input:
-    val profile
-
-    output:
-    stdout
-
-    script:
-    """
-    #!/usr/bin/env python
-    import joblib
-    import sys
-    import numpy as np
-    from scipy.integrate import quad
-    from sklearn.neighbors import KernelDensity
-
-    read_length_file = "${profile}_aligned_reads.pkl"
-    #default is {prefix}_aligned_reads.pkl
-
-    kde = joblib.load(read_length_file) # length is stored as joblib pkl
-
-    # the kd has a probability density function from which we can get mean and variance via integration
-    # it is the log density function though, need to np.exp
-    pdf = lambda x : np.exp(kde.score_samples([[x]]))[0]
-    mean = quad(lambda x: x * pdf(x), a=-np.inf, b=np.inf)[0]
-    print(mean)
     """
 }
 
@@ -804,6 +765,7 @@ process get_seed {
     path ('seed_gsa_anonymisation.txt'), optional: true
     path ('seed_pooled_gsa_anonymisation.txt'), optional: true
     path ('seed_merged_gsa_anonymisation.txt'), optional: true
+    path ('seed_hybrid_gsa_anonymisation.txt'), optional: true
 
     script:
     count_samples = params.number_of_samples
@@ -816,8 +778,12 @@ process get_seed {
     if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List) {
         merged_count = params.merged_gsa_combinations.size()
     }
+    hybrid_count = 0
+    if (params.containsKey('hybrid') && params.hybrid) {
+        hybrid_count = params.number_of_samples
+    }
     """
-    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym} -merged_count ${merged_count}
+    ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym} -merged_count ${merged_count} -hybrid_count ${hybrid_count}
     mkdir --parents ${params.outdir}/seed/
     cp seed*.txt ${params.outdir}/seed/
     """
