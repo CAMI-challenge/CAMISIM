@@ -17,6 +17,8 @@ number_of_samples = 0
 LEGACY_RANKS = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
 NEW_RANKS = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'kingdom', 'realm', 'domain', 'acellular root', 'cellular root']
 RANKS = []
+LINUX_FILENAME_MAX_BYTES = 255
+MAX_GENOME_PATH_ERRORS_TO_SHOW = 10
 
 
 """
@@ -60,38 +62,121 @@ def normalize_genome_key(genome_path):
     return os.path.normpath(genome_path)
 
 
+def is_remote_path(path):
+    return path.startswith("http://") or path.startswith("https://") or path.startswith("ftp://")
+
+
+def normalize_mapping_path(path):
+    if is_remote_path(path):
+        return path
+    return os.path.abspath(path)
+
+
 def sanitize_filename_component(value):
-    value = re.sub(r'[^A-Za-z0-9._-]+', '_', value.strip())
+    value = value.strip()
+    # In taxonomy, square brackets often mark provisional or disputed placement;
+    # drop the annotation brackets rather than turning them into separators.
+    value = value.replace("[", "").replace("]", "")
+    value = re.sub(r'[^A-Za-z0-9._-]+', '_', value)
     value = value.strip('._')
     return value or "genome"
 
 
-def strip_known_fasta_extensions(file_name):
-    file_name = file_name.strip()
-    for extension in ['.fasta.gz', '.fa.gz', '.fna.gz', '.fas.gz', '.gz', '.fasta', '.fa', '.fna', '.fas']:
-        if file_name.lower().endswith(extension):
-            return file_name[:-len(extension)]
-    return os.path.splitext(file_name)[0]
+def validate_linux_filename_component(file_name, genome_label):
+    if file_name in ("", ".", ".."):
+        raise ValueError(
+            "Invalid genome output filename '{}' from label '{}'. Linux filenames cannot "
+            "be empty, '.' or '..'.".format(file_name, genome_label)
+        )
+    if "/" in file_name or "\0" in file_name:
+        raise ValueError(
+            "Invalid genome output filename '{}' from label '{}'. Linux filenames cannot "
+            "contain '/' or NUL bytes after sanitization.".format(file_name, genome_label)
+        )
+
+    file_name_length = len(file_name.encode("utf-8"))
+    if file_name_length > LINUX_FILENAME_MAX_BYTES:
+        raise ValueError(
+            "Invalid genome output filename '{}' from label '{}'. The filename is {} bytes, "
+            "but Linux filename components are limited to {} bytes; use a shorter unique "
+            "genome label.".format(
+                file_name, genome_label, file_name_length, LINUX_FILENAME_MAX_BYTES
+            )
+        )
 
 
-def build_output_genome_path(output_dir, genome_label, source_path, used_output_names):
-    label_component = sanitize_filename_component(genome_label)
-    source_name_component = sanitize_filename_component(
-        strip_known_fasta_extensions(os.path.basename(source_path.rstrip("/")))
-    )
+def get_output_genome_file_name(genome_label):
+    file_name = "{}.fa".format(sanitize_filename_component(genome_label))
+    validate_linux_filename_component(file_name, genome_label)
+    return file_name
 
-    if source_name_component.lower() in label_component.lower():
-        base_name = label_component
-    else:
-        base_name = "{}__{}".format(label_component, source_name_component)
 
-    file_name = base_name + ".fa"
+def allocate_output_genome_file_name(used_output_names, output_entry):
+    genome_label = output_entry["label"]
+    output_name = get_output_genome_file_name(genome_label)
+    stem, extension = os.path.splitext(output_name)
     suffix = 1
-    while file_name in used_output_names:
-        file_name = "{}_{}.fa".format(base_name, suffix)
+
+    while output_name in used_output_names:
+        output_name = "{}_{}{}".format(stem, suffix, extension)
+        validate_linux_filename_component(output_name, genome_label)
         suffix += 1
-    used_output_names.add(file_name)
+
+    used_output_names[output_name] = output_entry
+    return output_name
+
+
+def build_output_genome_path(output_dir, output_entry, used_output_names):
+    file_name = allocate_output_genome_file_name(used_output_names, output_entry)
     return os.path.join(output_dir, file_name)
+
+
+def format_genome_record_source(record):
+    source_file = record.get("source_file")
+    source_line = record.get("source_line")
+    if source_file and source_line:
+        return "{} line {}".format(source_file, source_line)
+    if source_file:
+        return source_file
+    return "unknown input location"
+
+
+def format_missing_local_genome_paths_error(missing_entries):
+    lines = [
+        "{} quality-passing local genome FASTA path(s) do not exist. Fix the "
+        "input genome list paths or make these files visible to the worker before "
+        "running CAMISIM.".format(len(missing_entries))
+    ]
+    for taxid, record in missing_entries[:MAX_GENOME_PATH_ERRORS_TO_SHOW]:
+        lines.append(
+            "- {}: taxid '{}', label '{}', path '{}'".format(
+                format_genome_record_source(record),
+                taxid,
+                record.get("label", ""),
+                record.get("path", "")
+            )
+        )
+    if len(missing_entries) > MAX_GENOME_PATH_ERRORS_TO_SHOW:
+        lines.append(
+            "... {} more missing local genome path(s) not shown.".format(
+                len(missing_entries) - MAX_GENOME_PATH_ERRORS_TO_SHOW
+            )
+        )
+    return "\n".join(lines)
+
+
+def validate_local_genome_paths(genomes_map):
+    missing_entries = []
+    for taxid in genomes_map:
+        for record in genomes_map[taxid]["genomes"]:
+            if not record.get("quality_pass", True):
+                continue
+            path = record["path"]
+            if not is_remote_path(path) and not os.path.exists(path):
+                missing_entries.append((taxid, record))
+
+    if missing_entries:
+        raise ValueError(format_missing_local_genome_paths_error(missing_entries))
 
 
 def get_table_columns(header_parts, aliases):
@@ -108,7 +193,7 @@ def get_table_columns(header_parts, aliases):
 def iter_tabular_rows(file_path, aliases, default_indices, required_columns, optional_defaults = None):
     optional_defaults = optional_defaults or {}
 
-    def build_row(parts, column_map, line):
+    def build_row(parts, column_map, line, line_number):
         row = {}
         for column in required_columns:
             index = column_map[column]
@@ -122,6 +207,7 @@ def iter_tabular_rows(file_path, aliases, default_indices, required_columns, opt
                 row[column] = parts[index].strip()
             else:
                 row[column] = default_value
+        row["__line_number"] = line_number
         return row
 
     with open(file_path, 'r') as stream:
@@ -145,13 +231,13 @@ def iter_tabular_rows(file_path, aliases, default_indices, required_columns, opt
                 index = default_indices.get(column)
                 if index is not None and len(first_parts) > index:
                     column_map[column] = index
-            yield build_row(first_parts, column_map, first_line)
+            yield build_row(first_parts, column_map, first_line, 1)
 
-        for line in stream:
+        for line_number, line in enumerate(stream, start=2):
             if not line.strip():
                 continue
             parts = line.rstrip('\n').split('\t')
-            yield build_row(parts, column_map, line)
+            yield build_row(parts, column_map, line, line_number)
 
 
 def get_required_quality_column(columns, aliases):
@@ -205,12 +291,15 @@ def meets_additional_quality_requirements(quality_entry, max_contamination, min_
 
 """
 Reads list of available genomes in the (tsv) format:
-NCBI_ID Scientific_Name ftp_path
+NCBI_ID Genome_Label ftp_path
 Additional files might be provided with either:
-NCBI_ID Scientific_Name genome_path
+NCBI_ID Genome_Label genome_path
 or:
-NCBI_ID Scientific_Name genome_path novelty_category
+NCBI_ID Genome_Label genome_path novelty_category
 were path might either be online or offline/local
+Copied genome files are named <sanitized_genome_label>.fa. If multiple selected
+genomes produce the same output filename, later files get _1, _2, ...
+suffixes before .fa.
 """
 def read_genomes_list(genomes_path, additional_file = None, additional_quality_file = None,
                       max_contamination = 5, min_completeness = 95, max_num_contigs = 200):
@@ -250,6 +339,9 @@ def read_genomes_list(genomes_path, additional_file = None, additional_quality_f
             quality_entry = additional_quality[path_key]
             genome_record = {
                 "path": path,
+                "original_path": path,
+                "source_file": additional_file,
+                "source_line": row["__line_number"],
                 "novelty": novelty,
                 "source": "additional",
                 "label": sci_name,
@@ -277,6 +369,9 @@ def read_genomes_list(genomes_path, additional_file = None, additional_quality_f
         http = ftp.replace("ftp://","http://") # not using ftp address but http (proxies)
         genome_record = {
             "path": http,
+            "original_path": ftp,
+            "source_file": genomes_path,
+            "source_line": row["__line_number"],
             "novelty": 'known_strain',
             "source": "reference",
             "label": sci_name,
@@ -341,6 +436,9 @@ def get_genomes_per_rank(genomes_map, ncbi, rank_cache):
             for genome_record in genomes_map[genome]["genomes"]:
                 bucketed_genome_record = {
                     "path": genome_record["path"],
+                    "original_path": genome_record["original_path"],
+                    "source_file": genome_record["source_file"],
+                    "source_line": genome_record["source_line"],
                     "genome_id": genome,
                     "novelty": genome_record["novelty"],
                     "source": genome_record["source"],
@@ -449,7 +547,7 @@ def set_abundances(otu_genome_map, abundances, used_genomes, otu, tax_id, mu, si
     sum_log_normal = sum(log_normal_vals)
     for i, genome in enumerate(used_genomes):
         otu_id = otu + "." + str(i)
-        otu_genome_map[otu_id] = (tax_id, genome["genome_id"], genome["path"], genome["novelty"], genome["label"], [])  # taxid, genomeid, http path, novelty, label, abundances per sample
+        otu_genome_map[otu_id] = (tax_id, genome["genome_id"], genome["path"], genome["original_path"], genome["source_file"], genome["source_line"], genome["novelty"], genome["label"], [])  # taxid, genomeid, copy path, original path, source file, source line, novelty, label, abundances per sample
         relative_abundance = log_normal_vals[i] / sum_log_normal
         for abundance in abundances:  # calculate abundance per sample
             current_abundance = relative_abundance * abundance
@@ -578,6 +676,9 @@ def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, d
                         "tax_id": taxid,
                         "genome_id": genome["genome_id"],
                         "path": genome["path"],
+                        "original_path": genome["original_path"],
+                        "source_file": genome["source_file"],
+                        "source_line": genome["source_line"],
                         "novelty": genome["novelty"],
                         "source": genome["source"],
                         "label": genome["label"],
@@ -595,7 +696,7 @@ def fill_up_genomes(otu_genome_map, unmatched_otus, per_rank_map, tax_profile, d
     for i, genome in enumerate(ordered_genomes[:len(unmatched_otus)]):
         curr_otu = unmatched_otus[otu_indices[i]] #so we choose a random genome
         lineage, abundances = tax_profile[curr_otu]
-        otu_genome_map[curr_otu] = (genome["tax_id"], genome["genome_id"], genome["path"], genome["novelty"], genome["label"], abundances)
+        otu_genome_map[curr_otu] = (genome["tax_id"], genome["genome_id"], genome["path"], genome["original_path"], genome["source_file"], genome["source_line"], genome["novelty"], genome["label"], abundances)
 #        if debug:
 #            _log.warning("Filling up OTU %s (mapped tax id: %s) to genome with tax id %s" % (curr_otu, lin[0], tax_id))
     return otu_genome_map
@@ -632,6 +733,37 @@ def download_genome(genome, output_path, script):
     split_by_N(tmp_out, out, script)
     return out
 
+
+def format_genome_transfer_error(error, otu, taxid, genome_id, genome_label, source_file,
+                                 source_line, path, original_path, target_genome_path):
+    source_entry = {
+        "source_file": source_file,
+        "source_line": source_line
+    }
+    return (
+        "Could not copy/download selected genome after 10 tries.\n"
+        "OTU: {otu}\n"
+        "TaxID: {taxid}\n"
+        "Genome ID: {genome_id}\n"
+        "Genome label: {genome_label}\n"
+        "Input entry: {input_entry}\n"
+        "Original path: {original_path}\n"
+        "Resolved path: {path}\n"
+        "Target path: {target_path}\n"
+        "Last error: {error}"
+    ).format(
+        otu=otu,
+        taxid=taxid,
+        genome_id=genome_id,
+        genome_label=genome_label,
+        input_entry=format_genome_record_source(source_entry),
+        original_path=original_path,
+        path=path,
+        target_path=target_genome_path,
+        error=repr(error)
+    )
+
+
 """
 Given the created maps and the old config files, creates the required files and new config
 """
@@ -641,6 +773,7 @@ def write_config(otu_genome_map, no_samples, script, out_path_genomes):
     #config.set('community0','id_to_genome_file', genome_to_id)
     metadata = os.path.join(out_path, "metadata.tsv")
     #config.set('community0','metadata',metadata)
+    genome_filename_mapping = os.path.join(out_path, "genome_filename_mapping.tsv")
     #no_samples = int(config.get("Main","number_of_samples"))
     abundances = [os.path.join(out_path,"abundance_%s.tsv" % i) for i in range(no_samples)]
     #log.info("Downloading %s genomes" % len(otu_genome_map))
@@ -650,33 +783,89 @@ def write_config(otu_genome_map, no_samples, script, out_path_genomes):
 
     if not os.path.exists(create_path):
         os.makedirs(create_path)
-    used_output_names = set()
+    used_output_names = {}
+    selected_genomes = []
+    for otu in otu_genome_map:
+        taxid, genome_id, path, original_path, source_file, source_line, novelty, genome_label, curr_abundances = otu_genome_map[otu]
+        output_entry = {
+            "source": "selected genome",
+            "file": source_file,
+            "line": source_line,
+            "label": genome_label,
+            "path": original_path
+        }
+        target_genome_path = build_output_genome_path(create_path, output_entry, used_output_names)
+        selected_genomes.append(
+            (
+                otu,
+                taxid,
+                genome_id,
+                path,
+                original_path,
+                source_file,
+                source_line,
+                novelty,
+                genome_label,
+                curr_abundances,
+                target_genome_path
+            )
+        )
+
     abundance_streams = [open(abundance, 'w') for abundance in abundances]
     try:
-        with open(genome_to_id, 'w') as gid, open(metadata,'w') as md:
+        with open(genome_to_id, 'w') as gid, open(metadata,'w') as md, open(genome_filename_mapping, 'w') as mapping:
             md.write("genome_ID\tOTU\tNCBI_ID\tnovelty_category\n") # write header
-            for otu in otu_genome_map:
-                taxid, genome_id, path, novelty, genome_label, curr_abundances = otu_genome_map[otu]
-                target_genome_path = build_output_genome_path(create_path, genome_label, path, used_output_names)
+            mapping.write("original_path\tworkdir_path\n")
+            for (otu, taxid, genome_id, path, original_path, source_file, source_line,
+                 novelty, genome_label, curr_abundances, target_genome_path) in selected_genomes:
                 counter = 0
+                last_error = None
                 while counter < 10:
                     try:
-                        if path.startswith('http') or path.startswith('ftp'):
+                        if is_remote_path(path):
                             genome_path = download_genome(path, target_genome_path, script)
                         else:
                             genome_path = target_genome_path
                             shutil.copy2(path, genome_path)
                         break
                     except Exception as e:
+                        last_error = e
                         counter += 1
                         #log.error("Caught exception %s while moving/downloading genomes" % repr(e))
                         if counter >= 10:
-                            raise ValueError("Caught exception %s while moving/downloading genomes" % repr(e))
+                            raise ValueError(
+                                format_genome_transfer_error(
+                                    e,
+                                    otu,
+                                    taxid,
+                                    genome_id,
+                                    genome_label,
+                                    source_file,
+                                    source_line,
+                                    path,
+                                    original_path,
+                                    target_genome_path
+                                )
+                            )
                 if counter == 10:
     #            log.error("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
-                    raise ValueError("Genome %s (from %s, path %s) could not be downloaded after 10 tries, check your connection settings" % (otu, genome_id, path))
+                    raise ValueError(
+                        format_genome_transfer_error(
+                            last_error,
+                            otu,
+                            taxid,
+                            genome_id,
+                            genome_label,
+                            source_file,
+                            source_line,
+                            path,
+                            original_path,
+                            target_genome_path
+                        )
+                    )
                 gid.write("%s\t%s\n" % (otu, genome_path))
                 md.write("%s\t%s\t%s\t%s\n" % (otu,taxid,genome_id,novelty))
+                mapping.write("%s\t%s\n" % (normalize_mapping_path(original_path), normalize_mapping_path(genome_path)))
                 for abundance_stream, abundance_value in zip(abundance_streams, curr_abundances):
                     abundance_stream.write("%s\t%s\n" % (otu, abundance_value))
     finally:
@@ -719,16 +908,18 @@ def main(biom_profile, no_samples, reference_genomes, seed, mu, sigma,
 
     np_rand.seed(seed)
 
-    ncbi = NCBITaxa(taxdump_file=ncbi_taxdump_file)
-    set_ranks(ncbi)
-    rank_cache = {}
-
-    tax_profile = read_taxonomic_profile(biom_profile, no_samples)
     genomes_map, total_genomes = read_genomes_list(reference_genomes, additional_references,
                                                    additional_genomes_quality_file,
                                                    additional_genomes_max_contamination,
                                                    additional_genomes_min_completeness,
                                                    additional_genomes_max_num_contigs)
+    validate_local_genome_paths(genomes_map)
+
+    ncbi = NCBITaxa(taxdump_file=ncbi_taxdump_file)
+    set_ranks(ncbi)
+    rank_cache = {}
+
+    tax_profile = read_taxonomic_profile(biom_profile, no_samples)
     per_rank_map, genome_bucket_map = get_genomes_per_rank(genomes_map, ncbi, rank_cache)
     otu_genome_map, unmatched_otus = map_otus_to_genomes(tax_profile, per_rank_map, mu, sigma,
                                                          min_strains, max_strains, no_replace,
@@ -744,24 +935,28 @@ def main(biom_profile, no_samples, reference_genomes, seed, mu, sigma,
 
 
 if __name__ == "__main__":
-    main(biom_profile = sys.argv[1],
-        no_samples = int(sys.argv[2]),
-        reference_genomes = sys.argv[3],
-        seed = int(sys.argv[4]),
-        mu = int(sys.argv[5]),
-        sigma = int(sys.argv[6]),
-        min_strains = int(sys.argv[7]),
-        max_strains = int(sys.argv[8]),
-        debug = str2bool(sys.argv[9]),
-        no_replace = str2bool(sys.argv[10]),
-        fill_up = str2bool(sys.argv[11]),
-        script = sys.argv[12],
-        genomes_out_dir = sys.argv[13],
-        additional_references = sys.argv[14],
-        additional_genomes_quality_file = sys.argv[15],
-        ncbi_taxdump_file = sys.argv[16],
-        max_rank = sys.argv[17],
-        prioritize_additional_genomes = str2bool(sys.argv[18]),
-        additional_genomes_max_contamination = float(sys.argv[19]),
-        additional_genomes_min_completeness = float(sys.argv[20]),
-        additional_genomes_max_num_contigs = int(float(sys.argv[21])))
+    try:
+        main(biom_profile = sys.argv[1],
+            no_samples = int(sys.argv[2]),
+            reference_genomes = sys.argv[3],
+            seed = int(sys.argv[4]),
+            mu = int(sys.argv[5]),
+            sigma = int(sys.argv[6]),
+            min_strains = int(sys.argv[7]),
+            max_strains = int(sys.argv[8]),
+            debug = str2bool(sys.argv[9]),
+            no_replace = str2bool(sys.argv[10]),
+            fill_up = str2bool(sys.argv[11]),
+            script = sys.argv[12],
+            genomes_out_dir = sys.argv[13],
+            additional_references = sys.argv[14],
+            additional_genomes_quality_file = sys.argv[15],
+            ncbi_taxdump_file = sys.argv[16],
+            max_rank = sys.argv[17],
+            prioritize_additional_genomes = str2bool(sys.argv[18]),
+            additional_genomes_max_contamination = float(sys.argv[19]),
+            additional_genomes_min_completeness = float(sys.argv[20]),
+            additional_genomes_max_num_contigs = int(float(sys.argv[21])))
+    except ValueError as e:
+        print("ERROR: {}".format(e), file=sys.stderr)
+        sys.exit(1)

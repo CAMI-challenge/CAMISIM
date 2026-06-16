@@ -78,6 +78,7 @@ process get_genomes {
     path "genome_to_id.tsv"
     path "abundance_*.tsv"
     path "metadata.tsv"
+    path "genome_filename_mapping.tsv"
 
     script:
 
@@ -101,6 +102,7 @@ process get_genomes {
     cp metadata.tsv ${params.outdir}/internal/metadata.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_to_id.tsv
     cp genome_to_id.tsv ${params.outdir}/internal/genome_locations.tsv
+    cp genome_filename_mapping.tsv ${params.outdir}/internal/genome_filename_mapping.tsv
     cp abundance_*.tsv ${params.outdir}/distributions/
     """
 }

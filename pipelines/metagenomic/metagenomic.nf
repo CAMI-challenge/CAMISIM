@@ -24,9 +24,61 @@ include { anonymize_hybrid_gsa } from "${projectDir}/pipelines/shared/anonymizat
 include { binning } from "${projectDir}/pipelines/shared/binning"
 
 /*
+ * Resolves which pipeline step(s) to run.
+ *
+ * "step" is the primary control and must be one of:
+ *   "community_design" - only design the community, then stop.
+ *   "reads_simulate"   - skip the community design and simulate reads from pre-generated files.
+ *   "all"              - community design followed by read simulation.
+ *
+ * When "step" is empty/unset the value is derived from the legacy
+ * biom_profile / distribution_files / just_community_design parameters, so existing
+ * configs keep behaving exactly as before.
+ */
+def resolve_step() {
+
+    def valid_steps = ['community_design', 'reads_simulate', 'all']
+
+    def requested = params.containsKey('step') ? params.step?.toString()?.trim() : ''
+
+    def step
+    if (requested) {
+        step = requested
+    } else if (params.biom_profile.isEmpty() && !params.distribution_files.isEmpty()) {
+        // legacy: no profile + provided distribution files => resume into read simulation
+        step = 'reads_simulate'
+    } else if (params.containsKey('just_community_design') && params.just_community_design) {
+        // legacy: stop after the community design
+        step = 'community_design'
+    } else {
+        step = 'all'
+    }
+
+    if (!valid_steps.contains(step)) {
+        throw new IllegalArgumentException("Invalid 'step' value: '${step}'. Must be one of ${valid_steps}.")
+    }
+
+    // "reads_simulate" consumes the files produced by a previous community design run.
+    if (step == 'reads_simulate') {
+        ['distribution_files', 'genome_locations_file', 'metadata_file'].each { key ->
+            def value = params.containsKey(key) ? params[key]?.toString()?.trim() : ''
+            if (!value) {
+                throw new IllegalArgumentException("step='reads_simulate' requires '${key}' to point to the pre-generated file(s) from the community design step.")
+            }
+        }
+    }
+
+    return step
+}
+
+/*
  * This is the main workflow and starting point of this nextflow pipeline.
  */
 workflow metagenomic {
+
+    // Resolve which step(s) to run (see resolve_step for the mapping of the
+    // legacy biom_profile / distribution_files / just_community_design parameters).
+    step = resolve_step()
 
     if(params.seed != null) {
             seed = params.seed
@@ -40,10 +92,13 @@ workflow metagenomic {
     } else {
         // this channel holds the ncbi tax dump
         ncbi_taxdump_file_ch = Channel.fromPath(params.ncbi_taxdump_file)
-    }    
+    }
 
-    // if this parameter is set, the metagenome simulation hast to be from the given profile
-    if(!params.biom_profile.isEmpty()) {
+    // ============================ COMMUNITY DESIGN ============================
+    // Community design runs for steps "community_design" and "all".
+
+    // Community design from a given biom profile.
+    if((step == 'community_design' || step == 'all') && !params.biom_profile.isEmpty()) {
 
         // start the simulation
         metagenomesimulation_from_profile()
@@ -52,22 +107,15 @@ workflow metagenomic {
         genome_distribution_file_ch = metagenomesimulation_from_profile.out[0]
         genome_location_file_ch = metagenomesimulation_from_profile.out[1]
         metadata_ch = metagenomesimulation_from_profile.out[2]
+    }
 
-        // Stop the pipeline if just community design steps are needed
-        if(params.just_community_design){
-            println "Simulation stopping after community design steps."
-            return
-        }
-
-    } else { // not from profile
+    // Community design from a given genome list (optionally with strain simulation).
+    if((step == 'community_design' || step == 'all') && params.biom_profile.isEmpty()) {
 
         // this channel holds the file with the specified locations of the genomes
         genome_location_file_ch = Channel.fromPath(params.genome_locations_file)
 
-        metadata_ch = Channel.fromPath(params.metadata_file) 
-
-        // if there are distribution files given for each sample use those
-        if(params.distribution_files.isEmpty()) {
+        metadata_ch = Channel.fromPath(params.metadata_file)
 
             // if there are more genomes requested than inputted, simulate strains
             if (! (params.genomes_total==params.genomes_real)){
@@ -137,21 +185,28 @@ workflow metagenomic {
 
             // calculate the genome distributions for each sample for one community
             genome_distribution_file_ch = getCommunityDistribution(genome_location_file_ch, seed).flatten()
+    }
 
-            // Stop the pipeline if just community design steps are needed
-            if(params.just_community_design){
-                println "Simulation stopping after community design steps."
-                return
-            }
+    // Stop the pipeline if only the community design step is requested.
+    if(step == 'community_design'){
+        println "Simulation stopping after community design steps."
+        return
+    }
 
-        // otherwise, create distribution files for each sample
-        } else {
-        
-            // this channel holds the files with the specified distributions for every sample
-            genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
-        }
+    // ============================ READ SIMULATION INPUTS ============================
+    // For "reads_simulate" the community design is skipped and the files produced by a previous
+    // community design run are used directly (their presence is validated in resolve_step).
+    if(step == 'reads_simulate') {
 
-    }    
+        // this channel holds the files with the specified distributions for every sample
+        genome_distribution_file_ch = Channel.fromPath(params.distribution_files)
+
+        // this channel holds the file with the specified locations of the genomes
+        genome_location_file_ch = Channel.fromPath(params.genome_locations_file)
+
+        metadata_ch = Channel.fromPath(params.metadata_file)
+    }
+
     // build ncbi taxonomy from given tax dump
     number_of_samples_ch = Channel.from(params.number_of_samples)
     buildTaxonomy(number_of_samples_ch.concat(ncbi_taxdump_file_ch.concat(genome_distribution_file_ch)).toList().map { it -> [ it[0], it[1], it[2..-1] ] }, metadata_ch)
@@ -219,10 +274,20 @@ workflow metagenomic {
 
     // Generate merged GSAs for custom sample combinations
     if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
+        // Fail fast on malformed combinations. Without this, an unknown sample id
+        // is silently dropped during the BAM merge: if some ids in an entry are
+        // valid the merged GSA is built from only those (yet still named after the
+        // full requested list), and only an entry whose ids are *all* invalid would
+        // incidentally fail later in samtools merge. Validate up front instead.
         def valid_sample_ids = (0..<params.number_of_samples).collect { it.toString() } as Set
-        def invalid_sample_ids = params.merged_gsa_combinations.flatten().collect { it.toString() }.findAll { !valid_sample_ids.contains(it) } as Set
-        if (invalid_sample_ids) {
-            error "Invalid sample id(s) in params.merged_gsa_combinations: ${invalid_sample_ids}. Valid sample ids are: ${valid_sample_ids}."
+        params.merged_gsa_combinations.eachWithIndex { combination, idx ->
+            if (!(combination instanceof List) || combination.isEmpty()) {
+                error "merged_gsa_combinations entry ${idx} (${combination}) must be a non-empty list of sample ids."
+            }
+            def invalid_sample_ids = combination.collect { it.toString() }.findAll { !valid_sample_ids.contains(it) } as Set
+            if (invalid_sample_ids) {
+                error "merged_gsa_combinations entry ${idx} (${combination}) references invalid sample id(s) ${invalid_sample_ids}. Valid sample ids are 0..${params.number_of_samples - 1}."
+            }
         }
 
         combinations_ch = Channel.fromList(params.merged_gsa_combinations.withIndex()).map { combination, idx -> tuple(idx, combination*.toString()) }
