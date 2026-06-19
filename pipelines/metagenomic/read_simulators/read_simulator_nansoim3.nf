@@ -27,7 +27,7 @@ workflow read_simulator_nanosim3 {
         if(params.nanosim3.simulate_fastq_directly) {
 
             simulate_reads_fastq_nanosim3(ch_with_limit, read_length_ch)
-            read_ch = simulate_reads_fastq_nanosim3.out[1].groupTuple()
+            read_ch = simulate_reads_fastq_nanosim3.out[1]
 
             bam_ch = bam_from_reads_fastq(simulate_reads_fastq_nanosim3.out[0])
 
@@ -35,7 +35,7 @@ workflow read_simulator_nanosim3 {
             simulate_reads_fasta_nanosim3(ch_with_limit, read_length_ch)
 
             bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])[0]
-            read_ch = bam_from_reads_fasta.out[1].groupTuple()
+            read_ch = bam_from_reads_fasta.out[1]
         }
         
     emit:

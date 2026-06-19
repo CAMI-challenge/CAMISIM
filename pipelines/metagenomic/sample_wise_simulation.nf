@@ -12,6 +12,7 @@ include { read_simulator_nanosim3 } from "${read_simulator_folder}/read_simulato
 include { read_simulator_art } from "${read_simulator_folder}/read_simulator_art"
 include { read_simulator_art_modern } from "${read_simulator_folder}/read_simulator_art_modern"
 include { read_simulator_wgsim } from "${read_simulator_folder}/read_simulator_wgsim"
+include { read_simulator_iss } from "${read_simulator_folder}/read_simulator_iss"
 include {
     normalise_abundance as normalise_abundance_standard
     normalise_abundance as normalise_abundance_size_norm
@@ -43,8 +44,8 @@ workflow sample_wise_simulation {
         // get tuple with key = sample id, first value = genome_id, second value = distribution from distribution files
         distribution_file_ch = genome_distribution_file_ch.flatten().map { file -> tuple(file.baseName.split('_')[1], file) }.splitCsv(sep:'\t').map { a -> tuple(a[1][0], a[0], a[1][1]) }
 
-        // for read simulators that need size-normalised abundance (nanosim3, wgsim):
-        def needs_size_norm = types_list.any { it == "nanosim3" || it == "wgsim" }
+        // for read simulators that need size-normalised abundance (nanosim3, wgsim, iss):
+        def needs_size_norm = types_list.any { it == "nanosim3" || it == "wgsim" || it == "iss" }
         if (needs_size_norm) {
             genome_location_distribution_ch_tmp = genome_location_ch.combine(distribution_file_ch, by: 0)
             counted_bases_ch = count_bases(genome_location_distribution_ch_tmp)
@@ -130,6 +131,15 @@ workflow sample_wise_simulation {
                 type_reads_ch = read_simulator_wgsim.out[1].map { sid, r1, r2 -> tuple("wgsim", sid, r1, r2) }
 
                 // get_fastq_for_sample_paired_end_typed(read_simulator_wgsim.out[1], sim_type)
+                paired_end_reads_to_write_ch = paired_end_reads_to_write_ch.mix(type_reads_ch)
+                all_type_bam_ch   = all_type_bam_ch.mix(type_bam_ch)
+                all_type_reads_ch = all_type_reads_ch.mix(type_reads_ch)
+
+            } else if (sim_type == "iss") {
+                read_simulator_iss(location_distribution_seed_size_norm_ch)
+                type_bam_ch   = read_simulator_iss.out[0].map { sid, gid, bam, ref -> tuple("iss", sid, gid, bam, ref) }
+                type_reads_ch = read_simulator_iss.out[1].map { sid, r1, r2 -> tuple("iss", sid, r1, r2) }
+
                 paired_end_reads_to_write_ch = paired_end_reads_to_write_ch.mix(type_reads_ch)
                 all_type_bam_ch   = all_type_bam_ch.mix(type_bam_ch)
                 all_type_reads_ch = all_type_reads_ch.mix(type_reads_ch)

@@ -214,6 +214,8 @@ class GoldStandardFileFormat():
                     # ValueError: missing '-' reads2anonymous: CP001958.1_986000_986310_0:0:0_0:0:0_1167/1
                     # This is because the read ID in the simulated wgsim reads do not contain any '-' anymore.
                     seq_without_index = key.rsplit('_', 5)[0]
+                elif simulator == "iss":
+                    seq_without_index = key
                 elif simulator == "art_modern":
                     seq_without_index = key.split(':', 1)[0]
                 else:
@@ -269,7 +271,7 @@ class GoldStandardFileFormat():
 
                 # If fastq files are generated directly with nanosim, the sequence id does not any "-" but "_".
                 tmp = read_id.rsplit('_', 7)[0]
-                
+
                 # If fastq files are generated directly with nanosim, the sequence id does not contain the version of the sequence record anymore.
                 # To still be able to print the version of the sequence record to the read mapping file, we retrieve the whole sequence id from the dict.
                 try:
@@ -287,13 +289,19 @@ class GoldStandardFileFormat():
                     msg = "missing '_' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
                     raise ValueError(msg)
+            elif simulator == "iss":
+                if '_' in read_id:
+                    sequence_id = read_id.rsplit('_', 2)[0]
+                else:
+                    msg = "missing '_' reads2anonymous: {}\n".format(read_id)
+                    raise ValueError(msg)
             elif simulator == "art_modern":
                 sequence_id = read_id.split(':',1)[0]
             else:
                 if '-' not in read_id:
                     msg = "missing '-' reads2anonymous: {}\n".format(read_id)
                     #self._logger.error(msg)
-                    raise ValueError(msg)  
+                    raise ValueError(msg)
                 sequence_id = read_id.rsplit('-', 1)[0]
 
                 if(metatranscriptomic and not nanosim_real_fastq):

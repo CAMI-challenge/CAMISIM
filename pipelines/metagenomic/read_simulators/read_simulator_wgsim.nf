@@ -17,7 +17,7 @@ workflow read_simulator_wgsim {
         simulate_reads_wgsim(genome_location_distribution_ch)
     emit:
         simulate_reads_wgsim.out[0]
-        simulate_reads_wgsim.out[1].groupTuple()
+        simulate_reads_wgsim.out[1]
 }
 
 /**

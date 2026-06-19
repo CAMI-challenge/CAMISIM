@@ -14,7 +14,7 @@ workflow read_simulator_art {
         simulate_reads_art(genome_location_distribution_ch)
     emit:
         simulate_reads_art.out[0]
-        simulate_reads_art.out[1].groupTuple()
+        simulate_reads_art.out[1]
 }
 
 /**

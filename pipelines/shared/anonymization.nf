@@ -29,7 +29,7 @@ workflow anonymization {
 
         def types_list = (params.type instanceof List) ? params.type : [params.type]
         def has_se_type = types_list.any { it == "nanosim3" || it == "pbsim3" }
-        def has_pe_type = types_list.any { it == "art" || it == "art_modern" || it == "wgsim" }
+        def has_pe_type = types_list.any { it == "art" || it == "art_modern" || it == "wgsim" || it == "iss" }
 
         // get the seed for every sample
         seed_ch = seed_file_read_simulation_ch.splitCsv(sep:'\t', skip:2)
@@ -57,7 +57,7 @@ workflow anonymization {
 
         pe_reads_seed_ch = reads_seed_ch.filter { row ->
             def sim_type = row[0]
-            sim_type == "art" || sim_type == "art_modern" || sim_type == "wgsim"
+            sim_type == "art" || sim_type == "art_modern" || sim_type == "wgsim" || sim_type == "iss"
         }.map { row ->
             // row: [sim_type, sample_id, r1_files, r2_files, seed]
             tuple(
@@ -225,6 +225,8 @@ process gs_read_mapping {
         simulator = "-simulator wgsim"
     } else if (sim_type == "art_modern") {
         simulator = "-simulator art_modern"
+    } else if (sim_type == "iss") {
+        simulator = "-simulator iss"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -444,6 +446,8 @@ process gs_contig_mapping {
         simulator = "-simulator wgsim"
     } else if (types_list.contains("art_modern")) {
         simulator = "-simulator art_modern"
+    } else if (types_list.contains("iss")) {
+        simulator = "-simulator iss"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -497,6 +501,8 @@ process pooled_gs_contig_mapping {
         simulator = "-simulator wgsim"
     } else if (types_list.contains("art_modern")) {
         simulator = "-simulator art_modern"
+    } else if (types_list.contains("iss")) {
+        simulator = "-simulator iss"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -668,6 +674,8 @@ process merged_gs_contig_mapping {
         simulator = "-simulator wgsim"
     } else if (types_list.contains("art_modern")) {
         simulator = "-simulator art_modern"
+    } else if (types_list.contains("iss")) {
+        simulator = "-simulator iss"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -832,6 +840,8 @@ process hybrid_gs_contig_mapping {
         simulator = "-simulator wgsim"
     } else if (types_list.contains("art_modern")) {
         simulator = "-simulator art_modern"
+    } else if (types_list.contains("iss")) {
+        simulator = "-simulator iss"
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
