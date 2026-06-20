@@ -130,6 +130,6 @@ process count_bases {
     // bash variables need to be escaped
     // if not, nextflow considers it a nextflow variable
     """
-    grep -v ">" ${genome_location} | wc | awk '{print \$3-\$1}'
+    grep -v '^>' ${genome_location} | wc -cl | awk '{ print \$2 - \$1 }'
     """
 }
