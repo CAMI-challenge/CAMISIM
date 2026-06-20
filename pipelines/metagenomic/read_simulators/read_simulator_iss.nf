@@ -35,8 +35,8 @@ process simulate_reads_iss {
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed)
 
     output:
-    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}_iss.bam"), path(fasta_file)
-    tuple val(sample_id), path("sample${sample_id}_${genome_id}_iss1.fq"), path("sample${sample_id}_${genome_id}_iss2.fq")
+    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}_iss.bam"), path(fasta_file), optional: true
+    tuple val(sample_id), path("sample${sample_id}_${genome_id}_iss1.fq"), path("sample${sample_id}_${genome_id}_iss2.fq"), optional: true
 
     script:
     total_size = params.size
@@ -52,8 +52,20 @@ process simulate_reads_iss {
     echo "DEBUG: read_length = \$read_length"
     echo "DEBUG: number_of_reads = \$number_of_reads"
 
+    if [ "\$number_of_reads" -eq 0 ]; then
+        echo "INFO: Skipping ISS for sample${sample_id}_${genome_id} because number_of_reads is 0."
+        exit 0
+    fi
+
+    # iss requires number_of_reads >= 2
+    if [ "\$number_of_reads" -eq 1 ]; then
+        echo "INFO: Increasing ISS number_of_reads from 1 to 2 for sample${sample_id}_${genome_id}."
+        number_of_reads=2
+    fi
+
     # Run InSilicoSeq simulator
-    iss generate --genomes ${fasta_file} --model ${model} --n_reads \${number_of_reads} --seed ${used_seed} --cpus ${threads} --output sample${sample_id}_${genome_id}_iss_temp
+    # Use one cpu because parallel iss can fail for read counts < cpus
+    iss generate --genomes ${fasta_file} --model ${model} --n_reads \${number_of_reads} --seed ${used_seed} --cpus 1 --output sample${sample_id}_${genome_id}_iss_temp
 
     if [ ! -s sample${sample_id}_${genome_id}_iss_temp_R1.fastq ] || [ ! -s sample${sample_id}_${genome_id}_iss_temp_R2.fastq ]; then
         echo "ERROR: ISS did not create non-empty paired FASTQ files for sample${sample_id}_${genome_id}." >&2
