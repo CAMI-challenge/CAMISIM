@@ -20,12 +20,15 @@ workflow anonymization {
     take: seed_file_pooled_gsa_ch
     take: samplewise_gsa_ch // tuple val(sim_type), val(sample_id), path(gsa)
     take: bam_file_list_per_sample_ch
-    take: pooled_gsa_ch
-    take: merged_bam_ch
+    take: pooled_gsa_ch        // tuple val(sim_type), path(gsa_fasta)  – one per type
+    take: merged_bam_ch        // tuple val(sim_type), path(bam)        – one per type
     take: genome_location_file_ch
     take: metadata_ch
 
     main:
+
+        genome_location_file_val_ch = genome_location_file_ch.first()
+        metadata_val_ch = metadata_ch.first()
 
         def types_list = (params.type instanceof List) ? params.type : [params.type]
         def has_se_type = types_list.any { it == "nanosim3" || it == "pbsim3" }
@@ -72,15 +75,15 @@ workflow anonymization {
         read_mapping_input_ch = Channel.empty()
         if (has_se_type) {
             out_shuffle_se = shuffle(se_reads_seed_ch)
-            // gs_read_mapping(out_shuffle_se[1].combine(genome_location_file_ch).combine(metadata_ch))
+            // gs_read_mapping(out_shuffle_se[1].combine(genome_location_file_val_ch).combine(metadata_val_ch))
             read_mapping_input_ch = read_mapping_input_ch.mix(out_shuffle_se[1])
         }
         if (has_pe_type) {
             out_shuffle_pe = shuffle_paired_end(pe_reads_seed_ch)
-            // gs_read_mapping(out_shuffle_pe[1].combine(genome_location_file_ch).combine(metadata_ch))
+            // gs_read_mapping(out_shuffle_pe[1].combine(genome_location_file_val_ch).combine(metadata_val_ch))
             read_mapping_input_ch = read_mapping_input_ch.mix(out_shuffle_pe[1])
         }
-        gs_read_mapping(read_mapping_input_ch.combine(genome_location_file_ch).combine(metadata_ch))
+        gs_read_mapping(read_mapping_input_ch.combine(genome_location_file_val_ch).combine(metadata_val_ch))
 
         // anonymize assembly per type per sample
         // samplewise_gsa_ch: tuple(sim_type, sample_id, gsa)
@@ -99,15 +102,19 @@ workflow anonymization {
             .map { sim_type, sample_id, mapping -> tuple(sample_id, sim_type, mapping) }
             .combine(read_start_positions_from_dir_of_bam.out, by: 0)
             .map { sample_id, sim_type, mapping, read_pos -> tuple(sim_type, sample_id, mapping, read_pos) }
-            .combine(genome_location_file_ch)
-            .combine(metadata_ch)
+            .combine(genome_location_file_val_ch)
+            .combine(metadata_val_ch)
         gs_contig_mapping(gs_contig_ch)
 
-        // anonymize pooled gold standard assembly
+        // anonymize pooled gold standard assembly – one per type
         seed_pooled_gsa_ch = seed_file_pooled_gsa_ch.splitCsv(sep:'\t', skip:2)
-        shuffle_pooled_gsa(pooled_gsa_ch, seed_pooled_gsa_ch)
+        // Extract just the seed scalar and wrap it in a value channel so it can
+        // be broadcast to all sim_types without the channel closing after one use.
+        pooled_seed_val_ch = seed_pooled_gsa_ch.map { row -> row[0] }.first()
+        pooled_gsa_with_seed_ch = pooled_gsa_ch.combine(pooled_seed_val_ch)
+        shuffle_pooled_gsa(pooled_gsa_with_seed_ch)
         read_start_positions_from_merged_bam(merged_bam_ch)
-        pooled_gs_contig_mapping(shuffle_pooled_gsa.out[1], read_start_positions_from_merged_bam.out, genome_location_file_ch, metadata_ch)
+        pooled_gs_contig_mapping(shuffle_pooled_gsa.out[1].join(read_start_positions_from_merged_bam.out), genome_location_file_val_ch, metadata_val_ch)
 }
 
 /*
@@ -331,16 +338,15 @@ process shuffle_pooled_gsa {
     conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
-    path gsa_file
-    val seed
+    tuple val(sim_type), path(gsa_file), val(seed)
 
     output:
-    path anonymous_gsa_pooled
-    path tmp_reads_mapping_file
+    tuple val(sim_type), path(anonymous_gsa_pooled)
+    tuple val(sim_type), path(tmp_reads_mapping_file)
 
     script:
-    anonymous_gsa_pooled = 'anonymous_gsa_pooled.fasta'
-    tmp_reads_mapping_file = 'tmp_reads_mapping.tsv'
+    anonymous_gsa_pooled = "anonymous_gsa_pooled_${sim_type}.fasta"
+    tmp_reads_mapping_file = "tmp_reads_mapping_pooled_${sim_type}.tsv"
     threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_pooled}
@@ -348,13 +354,13 @@ process shuffle_pooled_gsa {
     get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
     cat ${gsa_file} \\
       | paste -d "\\t" - - \\
-      | shuf --random-source=<(get_seeded_random ${seed[0]}) \\
+      | shuf --random-source=<(get_seeded_random ${seed}) \\
       | tr "\\t" "\\n" \\
       | tr -d '\\000' \\
       | python3 ${shared_scripts_dir}/anonymizer.py -prefix PC -format fasta -map ${tmp_reads_mapping_file} -out ${anonymous_gsa_pooled} -s
-    mkdir --parents ${params.outdir}
+    mkdir --parents ${params.outdir}/pooled_gsa
     pigz -p ${threads} -k ${anonymous_gsa_pooled}
-    cp ${anonymous_gsa_pooled}.gz ${params.outdir}
+    cp ${anonymous_gsa_pooled}.gz ${params.outdir}/pooled_gsa/
     """
 }
 
@@ -397,15 +403,15 @@ process read_start_positions_from_dir_of_bam {
 process read_start_positions_from_merged_bam {
 
     conda 'bioconda::samtools=1.13'
-    
+
     input:
-    path(merged_bam_files)
+    tuple val(sim_type), path(merged_bam_files)
 
     output:
-    path(filename)
+    tuple val(sim_type), path(filename)
 
     script:
-    filename = "read_start_positions"
+    filename = "read_start_positions_pooled_${sim_type}"
     """
     set -o pipefail
     samtools view ${merged_bam_files} | awk '{print \$3 "\\t" \$4}' >> ${filename}
@@ -434,19 +440,17 @@ process gs_contig_mapping {
 
     script:
     gsa_mapping_file = "gsa_mapping_${sim_type}.tsv"
-    def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if (types_list.contains("nanosim3")) {
+    if (sim_type == "nanosim3") {
         if (params.nanosim3 && params.nanosim3.containsKey('simulate_fastq_directly') && params.nanosim3.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    }
-    if (types_list.contains("wgsim")) {
+    } else if (sim_type == "wgsim") {
         simulator = "-simulator wgsim"
-    } else if (types_list.contains("art_modern")) {
+    } else if (sim_type == "art_modern") {
         simulator = "-simulator art_modern"
-    } else if (types_list.contains("iss")) {
+    } else if (sim_type == "iss") {
         simulator = "-simulator iss"
     }
 
@@ -479,29 +483,26 @@ process pooled_gs_contig_mapping {
     conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
-    path(tmp_contig_mapping_file)
-    path(read_start_positions)
+    tuple val(sim_type), path(tmp_contig_mapping_file), path(read_start_positions)
     path(genome_locations_file)
     path(metadata_file)
 
     output:
-    path(gsa_mapping_file)
+    tuple val(sim_type), path(gsa_mapping_file)
 
     script:
-    gsa_mapping_file = 'gsa_pooled_mapping.tsv'
-    def types_list = (params.type instanceof List) ? params.type : [params.type]
+    gsa_mapping_file = "gsa_pooled_${sim_type}_mapping.tsv"
     simulator = ""
     real_fastq = ""
-    if (types_list.contains("nanosim3")) {
+    if (sim_type == "nanosim3") {
         if (params.nanosim3 && params.nanosim3.containsKey('simulate_fastq_directly') && params.nanosim3.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
-    }
-    if (types_list.contains("wgsim")) {
+    } else if (sim_type == "wgsim") {
         simulator = "-simulator wgsim"
-    } else if (types_list.contains("art_modern")) {
+    } else if (sim_type == "art_modern") {
         simulator = "-simulator art_modern"
-    } else if (types_list.contains("iss")) {
+    } else if (sim_type == "iss") {
         simulator = "-simulator iss"
     }
 
@@ -515,9 +516,9 @@ process pooled_gs_contig_mapping {
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
-    mkdir --parents ${params.outdir}
+    mkdir --parents ${params.outdir}/pooled_gsa
     pigz -p ${threads} -k ${gsa_mapping_file}
-    cp ${gsa_mapping_file}.gz ${params.outdir}
+    cp ${gsa_mapping_file}.gz ${params.outdir}/pooled_gsa/
     """
 }
 
@@ -545,18 +546,22 @@ workflow anonymize_merged_gsa {
 
     main:
 
+        genome_location_file_val_ch = genome_location_file_ch.first()
+        metadata_val_ch = metadata_ch.first()
+
         // parse seeds: header is 2 lines, then combination_id\tseed
         seed_merged_ch = seed_file_merged_gsa_ch.splitCsv(sep:'\t', skip:2).map { combination_id, seed -> tuple(combination_id.toString(), seed) }
 
         // index merged gsa channel by stringified combination_id for joining
-        merged_gsa_keyed_ch = merged_gsa_ch.map { combination_id, sample_ids, gsa -> tuple(combination_id.toString(), sample_ids, gsa) }
+        merged_gsa_keyed_ch = merged_gsa_ch.map { sim_label, combination_id, sample_ids, gsa -> tuple(combination_id.toString(), sim_label, sample_ids, gsa) }
 
-        merged_bam_keyed_ch = merged_bam_per_combination.map { combination_id, sample_ids, bam -> tuple(combination_id.toString(), bam) }
+        merged_bam_keyed_ch = merged_bam_per_combination.map { sim_label, combination_id, sample_ids, bam -> tuple(combination_id.toString(), sim_label, bam) }
 
         // shuffle/anonymize the contigs of the merged GSA per combination
         shuffle_input_ch = merged_gsa_keyed_ch
-            .map { combination_id, sample_ids, gsa -> tuple(combination_id, sample_ids, gsa) }
-            .join(seed_merged_ch)
+            .map { combination_id, sim_label, sample_ids, gsa -> tuple(combination_id, sim_label, sample_ids, gsa) }
+            .combine(seed_merged_ch, by: 0)
+            .map { combination_id, sim_label, sample_ids, gsa, seed -> tuple(sim_label, combination_id, sample_ids, gsa, seed) }
         shuffle_merged_gsa(shuffle_input_ch)
 
         // start positions from the corresponding merged BAM
@@ -564,9 +569,11 @@ workflow anonymize_merged_gsa {
 
         // build the gsa_mapping.tsv per combination
         mapping_in_ch = shuffle_merged_gsa.out[1]
-            .join(read_start_positions_from_merged_combination_bam.out)
-            .combine(genome_location_file_ch)
-            .combine(metadata_ch)
+            .map { sim_label, combination_id, sample_ids, mapping -> tuple(tuple(sim_label, combination_id), sample_ids, mapping) }
+            .join(read_start_positions_from_merged_combination_bam.out.map { sim_label, combination_id, read_pos -> tuple(tuple(sim_label, combination_id), read_pos) })
+            .map { key, sample_ids, mapping, read_pos -> tuple(key[0], key[1], sample_ids, mapping, read_pos) }
+            .combine(genome_location_file_val_ch)
+            .combine(metadata_val_ch)
         merged_gs_contig_mapping(mapping_in_ch)
 }
 
@@ -586,16 +593,16 @@ process shuffle_merged_gsa {
     conda "conda-forge::biopython=1.83 conda-forge::pigz"
 
     input:
-    tuple val(combination_id), val(sample_ids), path(gsa_file), val(seed)
+    tuple val(sim_label), val(combination_id), val(sample_ids), path(gsa_file), val(seed)
 
     output:
-    tuple val(combination_id), val(sample_ids), path(anonymous_gsa_file)
-    tuple val(combination_id), val(sample_ids), path(tmp_reads_mapping_file)
+    tuple val(sim_label), val(combination_id), val(sample_ids), path(anonymous_gsa_file)
+    tuple val(sim_label), val(combination_id), val(sample_ids), path(tmp_reads_mapping_file)
 
     script:
     samples_str = sample_ids.join('_')
-    anonymous_gsa_file = "anonymous_gsa_merged_samples_${samples_str}.fasta"
-    tmp_reads_mapping_file = "tmp_contig_mapping_merged_samples_${samples_str}.tsv"
+    anonymous_gsa_file = "anonymous_gsa_merged_samples_${samples_str}_${sim_label}.fasta"
+    tmp_reads_mapping_file = "tmp_contig_mapping_merged_samples_${samples_str}_${sim_label}.tsv"
     threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_file}
@@ -627,13 +634,13 @@ process read_start_positions_from_merged_combination_bam {
     conda 'bioconda::samtools=1.13'
 
     input:
-    tuple val(combination_id), path(merged_bam_file)
+    tuple val(combination_id), val(sim_label), path(merged_bam_file)
 
     output:
-    tuple val(combination_id), path(filename)
+    tuple val(sim_label), val(combination_id), path(filename)
 
     script:
-    filename = "read_start_positions_combination_${combination_id}"
+    filename = "read_start_positions_combination_${combination_id}_${sim_label}"
     """
     set -o pipefail
     samtools view ${merged_bam_file} | awk '{print \$3 "\\t" \$4}' >> ${filename}
@@ -654,28 +661,42 @@ process merged_gs_contig_mapping {
     conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
-    tuple val(combination_id), val(sample_ids), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
+    tuple val(sim_label), val(combination_id), val(sample_ids), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
 
     output:
-    tuple val(combination_id), val(sample_ids), path(gsa_mapping_file)
+    tuple val(sim_label), val(combination_id), val(sample_ids), path(gsa_mapping_file)
 
     script:
     samples_str = sample_ids.join('_')
     gsa_mapping_file = "gsa_mapping.tsv"
+
+    // Resolve target types
+    // If this label is hybrid (starts with "hybrid_"), we parse the hybridized types
+    def is_hybrid = sim_label.startsWith("hybrid_")
+    def current_types = []
+    if (is_hybrid) {
+        current_types = sim_label.substring(7).split('_') as List
+    } else {
+        current_types = [sim_label]
+    }
+
     def types_list = (params.type instanceof List) ? params.type : [params.type]
     simulator = ""
     real_fastq = ""
-    if (types_list.contains("nanosim3")) {
+    if (current_types.contains("nanosim3")) {
         if (params.nanosim3 && params.nanosim3.containsKey('simulate_fastq_directly') && params.nanosim3.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
     }
-    if (types_list.contains("wgsim")) {
-        simulator = "-simulator wgsim"
-    } else if (types_list.contains("art_modern")) {
-        simulator = "-simulator art_modern"
-    } else if (types_list.contains("iss")) {
-        simulator = "-simulator iss"
+    if (current_types.size() == 1) {
+        def sim_type = current_types[0]
+        if (sim_type == "wgsim") {
+            simulator = "-simulator wgsim"
+        } else if (sim_type == "art_modern") {
+            simulator = "-simulator art_modern"
+        } else if (sim_type == "iss") {
+            simulator = "-simulator iss"
+        }
     }
 
     if(params.pipeline.equals("metatranscriptomic")){
@@ -691,7 +712,7 @@ process merged_gs_contig_mapping {
     pigz -p ${threads} -k ${gsa_mapping_file}
     # Use the descriptive per-combination name in the output directory to avoid
     # collisions between combinations.
-    cp ${gsa_mapping_file}.gz ${params.outdir}/merged_gsa/gsa_mapping_merged_samples_${samples_str}.tsv.gz
+    cp ${gsa_mapping_file}.gz ${params.outdir}/merged_gsa/gsa_mapping_merged_samples_${samples_str}_${sim_label}.tsv.gz
     """
 }
 
@@ -715,8 +736,15 @@ workflow anonymize_hybrid_gsa {
     take: seed_file_hybrid_gsa_ch
     take: genome_location_file_ch
     take: metadata_ch
+    take: hybrid_types
 
     main:
+
+        genome_location_file_val_ch = genome_location_file_ch.first()
+        metadata_val_ch = metadata_ch.first()
+
+        // build a stable label from the type names, e.g. "iss_nanosim3"
+        types_label = (hybrid_types instanceof List ? hybrid_types : [hybrid_types]).join('_')
 
         // parse seeds: header is 2 lines, then sample_id\tseed
         seed_hybrid_ch = seed_file_hybrid_gsa_ch.splitCsv(sep:'\t', skip:2).map { sample_id, seed -> tuple(sample_id.toString(), seed) }
@@ -728,7 +756,7 @@ workflow anonymize_hybrid_gsa {
 
         // shuffle/anonymize the contigs of the hybrid GSA per sample
         shuffle_input_ch = hybrid_gsa_keyed_ch.join(seed_hybrid_ch)
-        shuffle_hybrid_gsa(shuffle_input_ch)
+        shuffle_hybrid_gsa(shuffle_input_ch, types_label)
 
         // start positions from the hybrid BAM
         read_start_positions_from_hybrid_bam(hybrid_bam_keyed_ch)
@@ -736,9 +764,9 @@ workflow anonymize_hybrid_gsa {
         // build the gsa_mapping.tsv per sample
         mapping_in_ch = shuffle_hybrid_gsa.out[1]
             .join(read_start_positions_from_hybrid_bam.out)
-            .combine(genome_location_file_ch)
-            .combine(metadata_ch)
-        hybrid_gs_contig_mapping(mapping_in_ch)
+            .combine(genome_location_file_val_ch)
+            .combine(metadata_val_ch)
+        hybrid_gs_contig_mapping(mapping_in_ch, types_label)
 }
 
 /*
@@ -756,14 +784,15 @@ process shuffle_hybrid_gsa {
 
     input:
     tuple val(sample_id), path(gsa_file), val(seed)
+    val types_label
 
     output:
     tuple val(sample_id), path(anonymous_gsa_file)
     tuple val(sample_id), path(tmp_contig_mapping_file)
 
     script:
-    anonymous_gsa_file = "anonymous_gsa_hybrid_sample_${sample_id}.fasta"
-    tmp_contig_mapping_file = "tmp_contig_mapping_hybrid_sample_${sample_id}.tsv"
+    anonymous_gsa_file = "anonymous_gsa_hybrid_${types_label}_sample_${sample_id}.fasta"
+    tmp_contig_mapping_file = "tmp_contig_mapping_hybrid_${types_label}_sample_${sample_id}.tsv"
     threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${anonymous_gsa_file}
@@ -822,27 +851,25 @@ process hybrid_gs_contig_mapping {
 
     input:
     tuple val(sample_id), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
+    val types_label
 
     output:
     tuple val(sample_id), path(gsa_mapping_file)
 
     script:
-    gsa_mapping_file = "gsa_hybrid_mapping_sample_${sample_id}.tsv"
+    gsa_mapping_file = "gsa_hybrid_${types_label}_mapping_sample_${sample_id}.tsv"
     def types_list = (params.type instanceof List) ? params.type : [params.type]
+    def hybrid_param = params.containsKey('hybrid') && params.hybrid ? (params.hybrid instanceof Boolean ? types_list : (params.hybrid instanceof List ? params.hybrid : [params.hybrid])) : []
+    def hybrid_types = hybrid_param.intersect(types_list)
     simulator = ""
     real_fastq = ""
-    if (types_list.contains("nanosim3")) {
+    if (hybrid_types.contains("nanosim3")) {
         if (params.nanosim3 && params.nanosim3.containsKey('simulate_fastq_directly') && params.nanosim3.simulate_fastq_directly) {
             real_fastq = "-nanosim_real_fastq"
         }
     }
-    if (types_list.contains("wgsim")) {
-        simulator = "-simulator wgsim"
-    } else if (types_list.contains("art_modern")) {
-        simulator = "-simulator art_modern"
-    } else if (types_list.contains("iss")) {
-        simulator = "-simulator iss"
-    }
+    // Since hybrid processes are only run when hybrid_types.size() > 1,
+    // we never have a single simulator type, so simulator remains "".
 
     if(params.pipeline.equals("metatranscriptomic")){
         metatranscriptomic = "-metatranscriptomic"
@@ -856,5 +883,149 @@ process hybrid_gs_contig_mapping {
     mkdir --parents ${params.outdir}/sample_${sample_id}/hybrid_gsa
     pigz -p ${threads} -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/hybrid_gsa/
+    """
+}
+
+/**
+* This sub-workflow anonymizes the hybrid pooled gold standard assembly.
+* It shuffles the contigs of the hybrid pooled GSA, anonymizes them and
+* produces a `gsa_pooled_hybrid_<types>_mapping.tsv.gz` file mapping the
+* anonymized contig ids back to their original labels.
+**/
+workflow anonymize_hybrid_pooled_gsa {
+
+    take: hybrid_pooled_gsa_ch
+    take: hybrid_pooled_bam_ch
+    take: seed_file_pooled_gsa_ch
+    take: genome_location_file_ch
+    take: metadata_ch
+    take: hybrid_types
+
+    main:
+
+        genome_location_file_val_ch = genome_location_file_ch.first()
+        metadata_val_ch = metadata_ch.first()
+
+        // build a stable label from the type names, e.g. "iss_nanosim3"
+        types_label = (hybrid_types instanceof List ? hybrid_types : [hybrid_types]).join('_')
+
+        // parse seeds: same seed as pooled gsa
+        seed_pooled_gsa_ch = seed_file_pooled_gsa_ch.splitCsv(sep:'\t', skip:2)
+        pooled_seed_val_ch = seed_pooled_gsa_ch.map { row -> row[0] }.first()
+
+        // shuffle/anonymize the contigs of the hybrid pooled GSA
+        shuffle_hybrid_pooled_gsa(hybrid_pooled_gsa_ch.combine(pooled_seed_val_ch), types_label)
+
+        // start positions from the hybrid pooled BAM
+        read_start_positions_from_hybrid_pooled_bam(hybrid_pooled_bam_ch, types_label)
+
+        // build the gsa_mapping.tsv for hybrid pooled
+        mapping_in_ch = shuffle_hybrid_pooled_gsa.out[1]
+            .join(read_start_positions_from_hybrid_pooled_bam.out)
+            .combine(genome_location_file_val_ch)
+            .combine(metadata_val_ch)
+        hybrid_pooled_gs_contig_mapping(mapping_in_ch, types_label)
+}
+
+/*
+* This process shuffles and anonymizes the hybrid pooled gsa.
+*/
+process shuffle_hybrid_pooled_gsa {
+
+    conda "conda-forge::biopython=1.83 conda-forge::pigz"
+
+    input:
+    tuple path(gsa_file), val(seed)
+    val types_label
+
+    output:
+    path anonymous_gsa_file
+    tuple val(types_label), path(tmp_contig_mapping_file)
+
+    script:
+    anonymous_gsa_file = "anonymous_gsa_pooled_hybrid_${types_label}.fasta"
+    tmp_contig_mapping_file = "tmp_contig_mapping_pooled_hybrid_${types_label}.tsv"
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
+    """
+    touch ${anonymous_gsa_file}
+    touch ${tmp_contig_mapping_file}
+    get_seeded_random() { seed="\$1"; openssl enc -aes-256-ctr -pass pass:"\$seed" -nosalt < /dev/zero 2>/dev/null; };
+    cat ${gsa_file} \\
+      | paste -d "\\t" - - \\
+      | shuf --random-source=<(get_seeded_random ${seed}) \\
+      | tr "\\t" "\\n" \\
+      | tr -d '\\000' \\
+      | python3 ${shared_scripts_dir}/anonymizer.py -prefix HPC -format fasta -map ${tmp_contig_mapping_file} -out ${anonymous_gsa_file} -s
+    mkdir --parents ${params.outdir}/hybrid_pooled_gsa
+    pigz -p ${threads} -k ${anonymous_gsa_file}
+    cp ${anonymous_gsa_file}.gz ${params.outdir}/hybrid_pooled_gsa/
+    """
+}
+
+/*
+* This process parses 'read' start positions from the hybrid pooled BAM file.
+*/
+process read_start_positions_from_hybrid_pooled_bam {
+
+    conda 'bioconda::samtools=1.13'
+
+    input:
+    path hybrid_pooled_bam_file
+    val types_label
+
+    output:
+    tuple val(types_label), path(filename)
+
+    script:
+    filename = "read_start_positions_hybrid_pooled_${types_label}"
+    """
+    set -o pipefail
+    samtools view ${hybrid_pooled_bam_file} | awk '{print \$3 "\\t" \$4}' >> ${filename}
+    """
+}
+
+/*
+* This process creates a gold standard contig mapping file for the hybrid pooled gsa.
+*/
+process hybrid_pooled_gs_contig_mapping {
+
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
+
+    input:
+    tuple val(types_label), path(tmp_contig_mapping_file), path(read_start_positions), path(genome_locations_file), path(metadata_file)
+    val types_label_val
+
+    output:
+    path gsa_mapping_file
+
+    script:
+    gsa_mapping_file = "gsa_pooled_hybrid_${types_label}_mapping.tsv"
+    def types_list = (params.type instanceof List) ? params.type : [params.type]
+    def hybrid_param = params.containsKey('hybrid') && params.hybrid ? (params.hybrid instanceof Boolean ? types_list : (params.hybrid instanceof List ? params.hybrid : [params.hybrid])) : []
+    def hybrid_types = hybrid_param.intersect(types_list)
+    simulator = ""
+    real_fastq = ""
+
+    // Nanosim FastQ check is preserved if nanosim3 is a part of the hybridized types
+    if (hybrid_types.contains("nanosim3")) {
+        if (params.nanosim3 && params.nanosim3.containsKey('simulate_fastq_directly') && params.nanosim3.simulate_fastq_directly) {
+            real_fastq = "-nanosim_real_fastq"
+        }
+    }
+    // Since hybrid processes are only ran when hybrid_types.size() > 1,
+    // we never have a single simulator type, so simulator remains "".
+
+    if(params.pipeline.equals("metatranscriptomic")){
+        metatranscriptomic = "-metatranscriptomic"
+    } else {
+        metatranscriptomic = ""
+    }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
+    """
+    touch ${gsa_mapping_file}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -contig -input ${tmp_contig_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -read_positions ${read_start_positions}
+    mkdir --parents ${params.outdir}/hybrid_pooled_gsa
+    pigz -p ${threads} -k ${gsa_mapping_file}
+    cp ${gsa_mapping_file}.gz ${params.outdir}/hybrid_pooled_gsa/
     """
 }
