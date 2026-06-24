@@ -146,8 +146,8 @@ workflow sample_wise_simulation {
             }
         }
 
-        get_fastq_for_sample_paired_end_typed(paired_end_reads_to_write_ch)
-        get_fastq_for_sample_single_end_typed(single_end_reads_to_write_ch)
+        get_fastq_for_sample_paired_end_typed(paired_end_reads_to_write_ch.groupTuple(by: [0, 1]))
+        get_fastq_for_sample_single_end_typed(single_end_reads_to_write_ch.groupTuple(by: [0, 1]))
 
         // ---- per-type: generate GSA per genome, then merge to per-type per-sample GSA ----
         // strip sim_type from the BAM tuples for generate_gold_standard_assembly (unchanged process signature)
