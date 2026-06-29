@@ -11,7 +11,6 @@ shared_scripts_dir = "${projectDir}/pipelines/shared/scripts"
 workflow read_simulator_nanosim3 {
 
     take: genome_location_distribution_ch
-    take: read_length_ch
     main:
         // simulate reads via nanosim3
 
@@ -22,11 +21,13 @@ workflow read_simulator_nanosim3 {
         // with [genome_id, sample_id, safe_max]
         ch_with_limit = genome_location_distribution_ch.join(precompute_limit.out, by: [0, 1])
 
+        read_length_ch = calculate_Nanosim_read_length(params.nanosim3.base_profile_name) // this takes very long
+
         // simulate reads in fastq format with nanosim directly
-        if(params.simulate_fastq_directly) {
+        if(params.nanosim3.simulate_fastq_directly) {
 
             simulate_reads_fastq_nanosim3(ch_with_limit, read_length_ch)
-            read_ch = simulate_reads_fastq_nanosim3.out[1].groupTuple()
+            read_ch = simulate_reads_fastq_nanosim3.out[1]
 
             bam_ch = bam_from_reads_fastq(simulate_reads_fastq_nanosim3.out[0])
 
@@ -34,7 +35,7 @@ workflow read_simulator_nanosim3 {
             simulate_reads_fasta_nanosim3(ch_with_limit, read_length_ch)
 
             bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])[0]
-            read_ch = bam_from_reads_fasta.out[1].groupTuple()
+            read_ch = bam_from_reads_fasta.out[1]
         }
         
     emit:
@@ -110,7 +111,7 @@ process simulate_reads_fasta_nanosim3 {
     
     script:
     total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
-    profile = params.base_profile_name
+    profile = params.nanosim3.base_profile_name
     coverage = total_size.multiply(new BigDecimal(abundance.toString())).divide(new BigDecimal(genome_size.toString()), java.math.MathContext.DECIMAL64)
     coverage = coverage.stripTrailingZeros()
     // nanosim seed cannot be > 2**32 -1
@@ -129,7 +130,7 @@ process simulate_reads_fasta_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear -max ${safe_max}
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear -max ${safe_max}
     """
 }
 
@@ -143,7 +144,7 @@ process simulate_reads_fasta_nanosim3 {
 **/
 process simulate_reads_fastq_nanosim3 {
 
-    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2 conda-forge::pigz'
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
@@ -155,7 +156,7 @@ process simulate_reads_fastq_nanosim3 {
     
     script:
     total_size = new BigDecimal(params.size).multiply(new BigDecimal(10**9))
-    profile = params.base_profile_name
+    profile = params.nanosim3.base_profile_name
     coverage = total_size.multiply(new BigDecimal(abundance.toString())).divide(new BigDecimal(genome_size.toString()), java.math.MathContext.DECIMAL64)
     coverage = coverage.stripTrailingZeros()
     // nanosim seed cannot be > 2**32 -1
@@ -177,10 +178,10 @@ process simulate_reads_fastq_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id} -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    for file in *_aligned_reads.fastq; do gzip -k "\$file"; done
-    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
+    for file in *_aligned_reads.fastq; do pigz -p ${threads} -k "\$file"; done
+    cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }
 
@@ -195,23 +196,25 @@ process simulate_reads_fastq_nanosim3 {
 **/
 process bam_from_reads_fasta {
 
-    conda "conda-forge::biopython bioconda::samtools"
+    conda "conda-forge::biopython bioconda::samtools conda-forge::pigz"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
 
     output:
     tuple val(sample_id), val(genome_id), path('sample*.bam'), path(fasta_file)
-    tuple val(sample_id), path("sample${sample_id}_${genome_id}.fq")
+    tuple val(sample_id), path("sample${sample_id}_${genome_id}_nanosim3.fq")
 
     script:
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
+
     """
-    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    for file in sample${sample_id}_${genome_id}.fq; do gzip -k "\$file"; done
-    cp sample${sample_id}_${genome_id}.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}_nanosim3.bam
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
+    for file in sample${sample_id}_${genome_id}_nanosim3.fq; do pigz -p ${threads} -k "\$file"; done
+    cp sample${sample_id}_${genome_id}_nanosim3.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     """
 }
 
@@ -235,8 +238,44 @@ process bam_from_reads_fastq {
 
     script:
     """
-    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS -F 4 | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/
+    ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS -F 4 | samtools sort -o sample${sample_id}_${genome_id}_nanosim3.bam
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
+    """
+}
+
+/*
+* This process calculates the average read length of Nanosim reads from the pickle of the predefined profile
+*
+*/
+process calculate_Nanosim_read_length {
+    // TODO: Packages which are needed multiple times should be loaded only once
+    conda 'conda-forge::scikit-learn=0.23 conda-forge::numpy=1.23 conda-forge::joblib=1.2.0'
+
+    input:
+    val profile
+
+    output:
+    stdout
+
+    script:
+    """
+    #!/usr/bin/env python
+    import joblib
+    import sys
+    import numpy as np
+    from scipy.integrate import quad
+    from sklearn.neighbors import KernelDensity
+
+    read_length_file = "${profile}_aligned_reads.pkl"
+    #default is {prefix}_aligned_reads.pkl
+
+    kde = joblib.load(read_length_file) # length is stored as joblib pkl
+
+    # the kd has a probability density function from which we can get mean and variance via integration
+    # it is the log density function though, need to np.exp
+    pdf = lambda x : np.exp(kde.score_samples([[x]]))[0]
+    mean = quad(lambda x: x * pdf(x), a=-np.inf, b=np.inf)[0]
+    print(mean)
     """
 }

@@ -90,7 +90,7 @@ process read_start_positions_from_merged_bam {
  */
 process binning_per_sample {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     tuple val(sample_id), path(gsa), path(read_positions), path(genome_locations_file), path(metadata_file)
@@ -100,17 +100,18 @@ process binning_per_sample {
     wgsim = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+        if(params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     mkdir --parents ${params.outdir}/sample_${sample_id}/contigs
-    gzip -k ${gsa_mapping_file}
+    pigz -p ${threads} -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/sample_${sample_id}/contigs/
     """
 }
@@ -124,7 +125,7 @@ process binning_per_sample {
  */
 process binning_pooled_gsa {
 
-    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5"
+    conda "conda-forge::biopython=1.83 conda-forge::python=3.11.5 conda-forge::pigz"
 
     input:
     path(gsa)
@@ -137,17 +138,18 @@ process binning_pooled_gsa {
     wgsim = ""
     real_fastq = ""
     if(params.type.equals("nanosim3")) {
-        if(params.simulate_fastq_directly){
+        if(params.containsKey('simulate_fastq_directly') && params.simulate_fastq_directly){
             real_fastq = "-nanosim_real_fastq"
         }
     } else if(params.type.equals("wgsim")){
             wgsim = "-wgsim"
     }
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
     """
     touch ${gsa_mapping_file}
     python ${shared_scripts_dir}/goldstandardfileformat.py -binning -read_positions ${read_positions} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${gsa_mapping_file} -projectDir ${projectDir} -input ${gsa} ${real_fastq} ${wgsim}
     mkdir --parents ${params.outdir}/pooled_gsa/
-    gzip -k ${gsa_mapping_file}
+    pigz -p ${threads} -k ${gsa_mapping_file}
     cp ${gsa_mapping_file}.gz ${params.outdir}/pooled_gsa/
     """
 }

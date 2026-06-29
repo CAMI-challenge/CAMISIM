@@ -32,6 +32,11 @@ if __name__ == "__main__":
         help="number of merged gsa combinations that need a dedicated anonymization seed",
         action='store',
         default="0")
+    parser.add_argument(
+        "-hybrid_count",
+        help="number of samples for which a hybrid GSA anonymization seed is needed",
+        action='store',
+        default="0")
     options = parser.parse_args()
 
     seed = int(options.seed)
@@ -39,6 +44,7 @@ if __name__ == "__main__":
     file_genome_locations = options.file_genome_locations
     anonym_seed = options.anonym_seed
     merged_count = int(options.merged_count)
+    hybrid_count = int(options.hybrid_count)
 
     genome_id_list = []
 
@@ -120,3 +126,16 @@ if __name__ == "__main__":
             f.write(text)
             f.close()
 
+        # file with seeds for hybrid gsa anonymization (one seed per sample)
+        if hybrid_count > 0:
+            text = "used_initial_seed" + '\t' + str(seed) + '\n'
+            text = text + "sample_id" + '\t' + "seed" + '\n'
+
+            f = open("seed_hybrid_gsa_anonymisation.txt", "w")
+
+            for i in range(hybrid_count):
+                sample_seed = random.randint(0, sys.maxsize)
+                text = text + str(i) + '\t' + str(sample_seed) + '\n'
+
+            f.write(text)
+            f.close()

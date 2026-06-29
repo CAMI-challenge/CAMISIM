@@ -10,12 +10,11 @@
 workflow read_simulator_art {
 
     take: genome_location_distribution_ch
-    take: read_length_ch
     main:
-        simulate_reads_art(genome_location_distribution_ch, read_length_ch)
+        simulate_reads_art(genome_location_distribution_ch)
     emit:
         simulate_reads_art.out[0]
-        simulate_reads_art.out[1].groupTuple()
+        simulate_reads_art.out[1]
 }
 
 /**
@@ -30,22 +29,23 @@ process simulate_reads_art {
 
     scratch true
     
-    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
+    conda 'bioconda::art=2016.06.05=h589041f_9 conda-forge::gsl=2.7 bioconda::samtools conda-forge::pigz' // TODO: check version and dependencies (gsl, libcblas, libgcc-ng, libstdcxx-ng)
     
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val(seed), val(factor)
-    val(read_length_ch)
     
     output:
-    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}.bam"), path(fasta_file)
+    tuple val(sample_id), val(genome_id), path("sample${sample_id}_${genome_id}_art.bam"), path(fasta_file)
     tuple val(sample_id), path('*1.fq'), path('*2.fq')
    
     script:
-    fragment_size_mean = params.fragment_size_mean
-    fragment_size_sd = params.fragment_size_sd
-    profile = params.base_profile_name
+    fragment_size_mean = params.art.fragment_size_mean
+    fragment_size_sd = params.art.fragment_size_sd
+    profile = params.art.base_profile_name
+    read_length = params.art.profile_read_length
     factor_float_value = Double.valueOf(factor)
     fold_coverage = Double.valueOf(abundance) * factor_float_value // TODO is the abundance already normalised?
+    threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     /**
     String log = "---- sample id: ".concat(sample_id)
@@ -61,16 +61,16 @@ process simulate_reads_art {
     **/
 
     """
-    art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} \
+    art_illumina -sam -na -i ${fasta_file} -l ${read_length} \
         -m ${fragment_size_mean} -s ${fragment_size_sd} \
         -f ${fold_coverage} -p \
         -o sample${sample_id}_${genome_id} \
         -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
-    samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
-    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/
-    cp sample${sample_id}_${genome_id}.bam ${params.outdir}/sample_${sample_id}/bam/
-    for file in sample${sample_id}_${genome_id}*.fq; do gzip -k "\$file"; done
-    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/
-    cp sample${sample_id}_${genome_id}*.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/
+    samtools view -bS sample${sample_id}_${genome_id}_art.sam | samtools sort -o sample${sample_id}_${genome_id}_art.bam
+    mkdir --parents ${params.outdir}/sample_${sample_id}/bam/art/
+    cp sample${sample_id}_${genome_id}_art.bam ${params.outdir}/sample_${sample_id}/bam/art/
+    for file in sample${sample_id}_${genome_id}_art*.fq; do pigz -p ${threads} -k "\$file"; done
+    mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/art/
+    cp sample${sample_id}_${genome_id}_art*.fq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/art/
     """
 }
