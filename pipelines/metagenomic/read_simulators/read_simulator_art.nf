@@ -64,7 +64,7 @@ process simulate_reads_art {
     art_illumina -sam -na -i ${fasta_file} -l ${read_length} \
         -m ${fragment_size_mean} -s ${fragment_size_sd} \
         -f ${fold_coverage} -p \
-        -o sample${sample_id}_${genome_id} \
+        -o sample${sample_id}_${genome_id}_art \
         -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
     samtools view -bS sample${sample_id}_${genome_id}_art.sam | samtools sort -o sample${sample_id}_${genome_id}_art.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/art/
