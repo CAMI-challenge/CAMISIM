@@ -63,7 +63,7 @@ process simulate_reads_art_modern {
     """
     art_modern --mode wgs --i-file ${fasta_file} --read_len ${read_length} \
         --pe_frag_dist_mean ${fragment_size_mean} --pe_frag_dist_std_dev ${fragment_size_sd} \
-        --i-fcov ${fold_coverage} --min_qual 15 \
+        --i-fcov ${fold_coverage} \
         --qual_file_1 ${profile}1.txt --qual_file_2 ${profile}2.txt --i-seed ${seed} \
         --o-fastq sample${sample_id}_${genome_id}_art_modern.fq \
         --o-sam sample${sample_id}_${genome_id}_art_modern.bam --o-sam-write_bam

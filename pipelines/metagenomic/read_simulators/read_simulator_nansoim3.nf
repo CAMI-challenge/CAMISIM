@@ -21,18 +21,20 @@ workflow read_simulator_nanosim3 {
         // with [genome_id, sample_id, safe_max]
         ch_with_limit = genome_location_distribution_ch.join(precompute_limit.out, by: [0, 1])
 
-        read_length_ch = calculate_Nanosim_read_length(params.nanosim3.base_profile_name) // this takes very long
+        // NanoSim derives read length from the trained model (-c) and the -max cap;
+        // the previously-computed mean read length was never used by simulator.py, so it
+        // (and the sklearn-pickle load it required) has been removed.
 
         // simulate reads in fastq format with nanosim directly
         if(params.nanosim3.simulate_fastq_directly) {
 
-            simulate_reads_fastq_nanosim3(ch_with_limit, read_length_ch)
+            simulate_reads_fastq_nanosim3(ch_with_limit)
             read_ch = simulate_reads_fastq_nanosim3.out[1]
 
             bam_ch = bam_from_reads_fastq(simulate_reads_fastq_nanosim3.out[0])
 
         } else { // simulate reads in fasta format with nanosim and convert them later
-            simulate_reads_fasta_nanosim3(ch_with_limit, read_length_ch)
+            simulate_reads_fasta_nanosim3(ch_with_limit)
 
             bam_ch = bam_from_reads_fasta(simulate_reads_fasta_nanosim3.out[0])[0]
             read_ch = bam_from_reads_fasta.out[1]
@@ -104,8 +106,7 @@ process simulate_reads_fasta_nanosim3 {
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
-    val(read_length_ch)
-    
+
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fasta"), path("*_unaligned_reads.fasta"), path(fasta_file)
     
@@ -148,8 +149,7 @@ process simulate_reads_fastq_nanosim3 {
 	
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
-    val(read_length_ch)
-    
+
     output:
     tuple val(sample_id), val(genome_id), path('*_error_profile'), path("*_aligned_reads.fastq"), path("*_unaligned_reads.fastq"), path(fasta_file)
     tuple val(sample_id), path("*_aligned_reads.fastq")
@@ -250,7 +250,9 @@ process bam_from_reads_fastq {
 */
 process calculate_Nanosim_read_length {
     // TODO: Packages which are needed multiple times should be loaded only once
-    conda 'conda-forge::scikit-learn=0.23 conda-forge::numpy=1.23 conda-forge::joblib=1.2.0'
+    // conda 'conda-forge::scikit-learn=0.23 conda-forge::numpy=1.23 conda-forge::joblib=1.2.0'
+    conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
+
 
     input:
     val profile
