@@ -103,7 +103,7 @@ process precompute_limit {
 process simulate_reads_fasta_nanosim3 {
 
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2'
-	
+
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
 
@@ -131,7 +131,7 @@ process simulate_reads_fasta_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear -max ${safe_max}
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear -min ${params.nanosim3.min_read_length} -max ${safe_max}
     """
 }
 
@@ -146,7 +146,7 @@ process simulate_reads_fasta_nanosim3 {
 process simulate_reads_fastq_nanosim3 {
 
     conda 'conda-forge::scikit-learn=0.23.2 conda-forge::numpy=1.23.5 bioconda::nanosim=3.2 conda-forge::pigz'
-	
+
     input:
     tuple val(genome_id), val(sample_id), path(fasta_file), val(abundance), val (seed), val(genome_size), val(safe_max)
 
@@ -178,7 +178,7 @@ process simulate_reads_fastq_nanosim3 {
     **/
 
     """
-    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -max ${safe_max}
+    simulator.py genome -x ${coverage} -rg ${fasta_file} -o sample${sample_id}_${genome_id}_nanosim3 -c ${profile} --seed ${used_seed} -dna_type linear --fastq -t ${threads} -min ${params.nanosim3.min_read_length} -max ${safe_max}
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
     for file in *_aligned_reads.fastq; do pigz -p ${threads} -k "\$file"; done
     cp *_aligned_reads.fastq.gz ${params.outdir}/sample_${sample_id}/reads/fastq/nanosim3/
