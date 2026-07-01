@@ -490,7 +490,6 @@ process merge_bam_files {
     }
     """
     samtools merge -u - ${bam_to_merge} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
-    samtools index ${file_name}
     """
 }
 
@@ -600,7 +599,6 @@ process merge_bam_files_by_combination {
         .join(' ')
     """
     samtools merge -u - ${bam_to_merge} | samtools sort -@ ${threads_for_sort} -l ${compression} -m ${memory}G -o ${file_name} -O bam
-    samtools index ${file_name}
     """
 }
 
