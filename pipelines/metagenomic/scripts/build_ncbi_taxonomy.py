@@ -63,12 +63,24 @@ def read_merged_file(file_path_ncbi_merged):
             TAXID_OLD_TO_TAXID_NEW[old_taxid.strip()] = new_taxid.strip()
 
 
-def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_file_path):
+def is_contamination_genome(genome_id, contamination_asvs):
+    """A genome_id is contamination if it equals a listed ASV or is one of its strains
+    '<asv>.<n>'. The trailing '.' prevents 'hASV1' from matching 'hASV10'. Mirrors the
+    Groovy is_contamination_genome (sample_wise_simulation.nf) and the goldstandardfileformat.py helper."""
+    if not contamination_asvs:
+        return False
+    genome_id = str(genome_id)
+    return any(genome_id == asv or genome_id.startswith(asv + '.') for asv in contamination_asvs)
+
+
+def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_file_path, contamination_asvs=None):
     """
     Write a taxonomic profile file for each relative abundance file
 
     @param list_of_file_paths: List of abundance file paths
     @type list_of_file_paths: list[str | unicode]
+    @param contamination_asvs: ASV ids to exclude from the profile (still simulated as reads).
+    @type contamination_asvs: list[str] | None
     """
 
     for file_path in list_of_file_paths:
@@ -79,10 +91,10 @@ def write_taxonomic_profile_from_abundance_files(list_of_file_paths, metadata_fi
         community_abundance = parse_file(file_path)
         file_path_output = os.path.join("./", FILENAME_TAXONOMIC_PROFILE.format(sample_index=index_abundance))
         with open(file_path_output, 'w') as stream_output:
-            write_taxonomic_profile(community_abundance, stream_output, index_abundance, metadata_file_path)
+            write_taxonomic_profile(community_abundance, stream_output, index_abundance, metadata_file_path, contamination_asvs)
 
 
-def write_taxonomic_profile(community_abundance, stream_output, sample_id, metadata_file_path):
+def write_taxonomic_profile(community_abundance, stream_output, sample_id, metadata_file_path, contamination_asvs=None):
     """
     Stream a taxonomic profile by list of relative abundances
 
@@ -97,6 +109,10 @@ def write_taxonomic_profile(community_abundance, stream_output, sample_id, metad
     genome_abundance = {}
     total_abundance = 0.0
     for genome_id, abundance in community_abundance:
+        # Skip contamination ASVs: they are still simulated as reads but must not appear
+        # in the profile. Excluding them before summing renormalizes the remaining taxa to 1.0.
+        if is_contamination_genome(genome_id, contamination_asvs):
+            continue
         if genome_id in genome_abundance:
             raise IOError("genome id '{}' is not unique!".format(genome_id))
         genome_abundance[genome_id] = float(abundance)
@@ -560,10 +576,12 @@ if __name__ == "__main__":
     file_path_ncbi_nodes = sys.argv[3]
     sample_size = int(sys.argv[4])
     metadata_file_path = sys.argv[5]
-    list_of_file_paths_distribution = [sys.argv[6 + i] for i in range(sample_size)]
+    # Comma-separated contamination ASV ids (may be ""); excluded from the profile.
+    contamination_asvs = [a for a in sys.argv[6].split(',') if a]
+    list_of_file_paths_distribution = [sys.argv[7 + i] for i in range(sample_size)]
 
     build_ncbi_taxonomy(file_path_ncbi_nodes)
     read_names_file(file_path_ncbi_names)
     read_merged_file(file_path_ncbi_merged)
 
-    write_taxonomic_profile_from_abundance_files(list_of_file_paths_distribution, metadata_file_path)
+    write_taxonomic_profile_from_abundance_files(list_of_file_paths_distribution, metadata_file_path, contamination_asvs)

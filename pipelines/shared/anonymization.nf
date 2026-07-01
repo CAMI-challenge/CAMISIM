@@ -242,9 +242,11 @@ process gs_read_mapping {
         metatranscriptomic = ""
     }
     threads = Math.max(1, ((task.cpus ?: 1) as int))
+    // Contamination ASVs: their reads stay in the anonymized FASTQ but are dropped from this read mapping.
+    contamination_csv = (params.containsKey('contamination_asvs') && params.contamination_asvs) ? params.contamination_asvs.join(',') : ''
     """
     touch ${reads_mapping_file}
-    python ${shared_scripts_dir}/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic}
+    python ${shared_scripts_dir}/goldstandardfileformat.py -input ${tmp_reads_mapping_file} -genomes ${genome_locations_file} -metadata ${metadata_file} -out ${reads_mapping_file} -projectDir ${projectDir} ${real_fastq} ${simulator} ${metatranscriptomic} -contamination_asvs "${contamination_csv}"
     mkdir --parents ${params.outdir}/sample_${sample_id}/reads/${sim_type}
     pigz -p ${threads} -k ${reads_mapping_file}
     cp ${reads_mapping_file}.gz ${params.outdir}/sample_${sample_id}/reads/${sim_type}/

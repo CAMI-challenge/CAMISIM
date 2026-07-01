@@ -233,8 +233,18 @@ class GoldStandardFileFormat():
     # write gold standard assembly mapping
     # ###############
 
+    @staticmethod
+    def _is_contamination_genome(genome_id, contamination_asvs):
+        """genome_id equals a listed ASV or is one of its strains '<asv>.<n>' (the
+        trailing '.' prevents 'hASV1' matching 'hASV10'). Mirrors the Groovy
+        is_contamination_genome and build_ncbi_taxonomy.py."""
+        if not contamination_asvs:
+            return False
+        genome_id = str(genome_id)
+        return any(genome_id == a or genome_id.startswith(a + '.') for a in contamination_asvs)
+
     def write_gs_read_mapping(
-        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, simulator, metatranscriptomic=False):
+        self, stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq, simulator, metatranscriptomic=False, contamination_asvs=None):
         """
             Write the gold standard for every read
 
@@ -319,6 +329,10 @@ class GoldStandardFileFormat():
                     #self._logger.error(msg)
                     raise KeyError(msg)
                 genome_id = dict_sequence_to_genome_id[sequence_id]
+
+            # Contamination reads remain in the anonymized FASTQ but get no ground-truth row.
+            if self._is_contamination_genome(genome_id, contamination_asvs):
+                continue
 
             tax_id = dict_genome_id_to_tax_id[genome_id]
             # final_dict[anonymous_id]= (genome_id,meta_tax_id,seq_id)
@@ -470,7 +484,7 @@ class GoldStandardFileFormat():
             stream_output, dict_sequence_name_to_anonymous, dict_original_seq_pos,
             dict_sequence_to_genome_id, dict_genome_id_to_tax_id, metatranscriptomic=metatranscriptomic)
 
-    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic):
+    def gs_read_mapping(self, file_path_genome_locations, file_path_metadata, file_path_id_map, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic, contamination_asvs=None):
         """
             Write the gold standard for every read
 
@@ -492,7 +506,7 @@ class GoldStandardFileFormat():
         dict_genome_id_to_tax_id = self.get_dict_genome_id_to_tax_id(file_path_metadata)
         dict_anonymous_to_read_id = self.get_dict_anonymous_to_original_id(file_path_id_map)
         self.write_gs_read_mapping(
-            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, simulator=simulator, metatranscriptomic=metatranscriptomic)
+            stream_output, dict_anonymous_to_read_id, dict_sequence_to_genome_id, dict_genome_id_to_tax_id, nanosim_real_fastq=nanosim_real_fastq, simulator=simulator, metatranscriptomic=metatranscriptomic, contamination_asvs=contamination_asvs)
 
 
     def read(self, file_path, separator=None, column_names=False, comment_line=None):
@@ -761,7 +775,12 @@ if __name__ == "__main__":
 		help="file with 'read' start positions from bam files of this sample, needed for contig mapping",
         action='store',
 		type=argparse.FileType('r'),
-		default=None)  
+		default=None)
+    parser.add_argument(
+		"-contamination_asvs",
+		help="comma-separated ASV ids whose reads are excluded from the read mapping (still present in the FASTQ)",
+		action='store',
+		default="")
     options = parser.parse_args()
 
     input_file_stream = options.input
@@ -774,6 +793,7 @@ if __name__ == "__main__":
     nanosim_real_fastq = options.nanosim_real_fastq
     simulator = options.simulator
     metatranscriptomic = options.metatranscriptomic
+    contamination_asvs = [a for a in options.contamination_asvs.split(',') if a]
 
     goldStandardFileFormat = GoldStandardFileFormat()
 
@@ -783,5 +803,5 @@ if __name__ == "__main__":
     elif(binning):
         list_file_paths_read_positions = [options.read_positions]
         goldStandardFileFormat.binning_per_sample(file_path_genome_locations, file_path_metadata, list_file_paths_read_positions, project_dir, stream_output, input_file_stream, nanosim_real_fastq, simulator)
-    else:    
-        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic)
+    else:
+        goldStandardFileFormat.gs_read_mapping(file_path_genome_locations, file_path_metadata, input_file_stream, stream_output, project_dir, nanosim_real_fastq, simulator, metatranscriptomic, contamination_asvs)

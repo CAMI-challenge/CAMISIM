@@ -81,6 +81,17 @@ workflow metagenomic {
     // legacy biom_profile / distribution_files / just_community_design parameters).
     step = resolve_step()
 
+    // contamination_asvs: reads are still simulated for these ASVs, but they are excluded
+    // from all ground-truth files. Matching is on the genome_id ('<asv>' or '<asv>.<strain>'),
+    // so it applies to biom-designed communities AND to step='reads_simulate' runs whose
+    // pre-generated genome_locations/metadata/abundance files use that ASV naming.
+    if (params.containsKey('contamination_asvs') && params.contamination_asvs) {
+        if (!(params.contamination_asvs instanceof List)) {
+            error "params.contamination_asvs must be a list of ASV ids, e.g. ['hASV1'], but got '${params.contamination_asvs}' (${params.contamination_asvs.getClass().name})."
+        }
+        log.info "contamination_asvs=${params.contamination_asvs}: reads for these ASVs (and their '<asv>.<strain>' genomes) will be simulated but excluded from all gold standards, mappings, per-genome coverage, and the (renormalized) taxonomic profile."
+    }
+
     if(params.seed != null) {
             seed = params.seed
         } else {
@@ -770,12 +781,15 @@ process buildTaxonomy {
 
     script:
     index_number_of_samples = number_of_samples - 1
+    // Contamination ASVs are excluded from the taxonomic profile (and the remaining
+    // taxa are renormalized). Passed as a comma-separated string; "" disables it.
+    contamination_csv = (params.containsKey('contamination_asvs') && params.contamination_asvs) ? params.contamination_asvs.join(',') : ''
     """
     tar -xf ${dmp}
     [ -f **/names.dmp ] && mv **/names.dmp ./names.dmp
     [ -f **/merged.dmp ] && mv **/merged.dmp ./merged.dmp
     [ -f **/nodes.dmp ] && mv **/nodes.dmp ./nodes.dmp
-    ${scripts_dir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} ${distribution_files}
+    ${scripts_dir}/build_ncbi_taxonomy.py names.dmp merged.dmp nodes.dmp ${number_of_samples} ${metadata_ch} "${contamination_csv}" ${distribution_files}
     mkdir --parents ${params.outdir}
     cp taxonomic_profile_*.txt ${params.outdir}
     """

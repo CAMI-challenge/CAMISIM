@@ -28,6 +28,16 @@ include {
 * Emits: 
 *     A channel containing the merged fastq file and the merged bam file over all genomes for every sample.
 **/
+/*
+* A genome_id belongs to a contamination ASV when it equals the ASV id or is one of
+* its strain genomes '<asv>.<n>'. The trailing '.' prevents 'hASV1' matching 'hASV10'.
+* Mirrors _is_contamination_genome in build_ncbi_taxonomy.py / goldstandardfileformat.py.
+*/
+def is_contamination_genome(genome_id, contamination_asvs) {
+    def gid = genome_id.toString()
+    return contamination_asvs.any { asv -> def a = asv.toString(); gid == a || gid.startsWith(a + '.') }
+}
+
 workflow sample_wise_simulation {
 
     take: genome_location_ch
@@ -144,6 +154,14 @@ workflow sample_wise_simulation {
                 all_type_bam_ch   = all_type_bam_ch.mix(type_bam_ch)
                 all_type_reads_ch = all_type_reads_ch.mix(type_reads_ch)
             }
+        }
+
+        // Contamination ASVs: their reads remain in all_type_reads_ch and the fastq
+        // channels above, but drop their per-genome BAMs here so they are excluded from
+        // every downstream gold standard assembly, gsa_mapping, and coverage file (all of
+        // which derive from all_type_bam_ch). Reads output is intentionally left untouched.
+        if (params.containsKey('contamination_asvs') && params.contamination_asvs) {
+            all_type_bam_ch = all_type_bam_ch.filter { read_type, sid, gid, bam, ref -> !is_contamination_genome(gid, params.contamination_asvs) }
         }
 
         get_fastq_for_sample_paired_end_typed(paired_end_reads_to_write_ch.groupTuple(by: [0, 1]))
