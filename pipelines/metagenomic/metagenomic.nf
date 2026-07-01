@@ -297,6 +297,14 @@ workflow metagenomic {
             .filter { sim_type, sid, bam -> params.pooled_gsa*.toString().contains(sid.toString()) }.map { sim_type, sid, bam -> bam }.collect())
     }
 
+    // Initialize a single channel to accumulate all BAMs requiring coverage calculations
+    coverages_input_ch = Channel.empty()
+
+    if (params.gsa) {
+        coverages_input_ch = coverages_input_ch.mix(merged_bam_per_type_per_sample_ch.map { sim_type, sample_id, bam ->
+            tuple(bam, "sample_${sample_id}_${sim_type}", "${params.outdir}/sample_${sample_id}/contigs/${sim_type}") }.combine(genome_location_file_ch.first()))
+    }
+
     // Generate merged GSAs for custom sample combinations
     if (params.containsKey('merged_gsa_combinations') && params.merged_gsa_combinations instanceof List && params.merged_gsa_combinations.size() > 0) {
         // Fail fast on malformed combinations. Without this, an unknown sample id
@@ -338,6 +346,11 @@ workflow metagenomic {
         merged_bam_per_combination = merge_bam_files_by_combination_typed(bams_to_merge_ch)
 
         merged_gsa_ch = generate_merged_gold_standard_assembly(merged_bam_per_combination.combine(reference_fasta_files_ch.collect().map { [it] }))
+
+        // ---- Coverage for merged-combo GSAs ----
+        coverages_input_ch = coverages_input_ch.mix(merged_bam_per_combination.map { sim_label, combination_id, sample_ids, bam ->
+            def samples_str = sample_ids.join('_')
+            tuple(bam, "merged_samples_${samples_str}_${sim_label}", "${params.outdir}/merged_gsa") }.combine(genome_location_file_ch.first()))
     }
 
     if (params.pooled_gsa) {
@@ -353,6 +366,10 @@ workflow metagenomic {
         per_type_pooled_merged_bam_ch = merge_bam_files_per_type_pooled(per_type_pooled_bam_ch)
         generate_pooled_gold_standard_assembly_per_type(per_type_pooled_merged_bam_ch.combine(reference_fasta_files_ch.collect().map { [it] }))
 
+        // ---- Coverage for per-type pooled GSAs ----
+        coverages_input_ch = coverages_input_ch.mix(per_type_pooled_merged_bam_ch.map { sim_type, bam ->
+            tuple(bam, "pooled_${sim_type}", "${params.outdir}/pooled_gsa") }.combine(genome_location_file_ch.first()))
+
         // ---- Hybrid pooled GSA ----
         // Only combine the types listed in `hybrid`; save to hybrid_pooled_gsa/ directory.
         if (hybrid_types.size() > 1) {
@@ -364,14 +381,22 @@ workflow metagenomic {
                 hybrid_type_bams_ch = per_type_pooled_merged_bam_ch.filter { sim_type, bam -> hybrid_types.contains(sim_type) }.map { sim_type, bam -> bam }.collect()
                 hybrid_pooled_bam_ch = merge_bam_files_hybrid_pooled(hybrid_type_bams_ch)
             }
-            generate_hybrid_pooled_gold_standard_assembly(
-                hybrid_pooled_bam_ch.combine(reference_fasta_files_ch.collect().map { [it] }), hybrid_types
-            )
+            generate_hybrid_pooled_gold_standard_assembly(hybrid_pooled_bam_ch.combine(reference_fasta_files_ch.collect().map { [it] }), hybrid_types)
+
+            // ---- Coverage for hybrid pooled GSA ----
+            coverages_input_ch = coverages_input_ch.mix(hybrid_pooled_bam_ch.map { bam ->
+                def types_suffix = (hybrid_types instanceof List ? hybrid_types : [hybrid_types]).join('_')
+                tuple(bam, "pooled_hybrid_${types_suffix}", "${params.outdir}/hybrid_pooled_gsa") }.combine(genome_location_file_ch.first()))
         }
 
         // ---- Hybrid GSA per sample ----
         if (hybrid_types.size() > 1) {
             generate_hybrid_gold_standard_assembly(hybrid_bam_ch.combine(reference_fasta_files_ch.collect().map { [it] }), hybrid_types)
+
+            // ---- Coverage for hybrid per-sample GSAs ----
+            coverages_input_ch = coverages_input_ch.mix(hybrid_bam_ch.map { sample_id, bam ->
+                def types_suffix = (hybrid_types instanceof List ? hybrid_types : [hybrid_types]).join('_')
+                tuple(bam, "sample_${sample_id}_hybrid_${types_suffix}", "${params.outdir}/sample_${sample_id}/hybrid_gsa") }.combine(genome_location_file_ch.first()))
         }
 
         // if requested, anonymize reads, gsa and pooled gsa
@@ -391,6 +416,9 @@ workflow metagenomic {
             binning(gsa_per_type_per_sample_ch, bam_files_by_sample_per_type_ch, generate_pooled_gold_standard_assembly_per_type.out.map { sim_type, f -> f }.first(), per_type_pooled_merged_bam_ch.map { sim_type, bam -> bam }.first(), genome_location_file_ch, metadata_ch)
         }
     }
+
+    // Trigger all coverage computations at once through a single channel
+    compute_coverage(coverages_input_ch)
 }
 
 /*
@@ -1011,5 +1039,44 @@ process get_seed {
     ${shared_scripts_dir}/get_seed.py -seed ${seed} -count_samples ${count_samples} -file_genome_locations ${genome_locations} ${param_anonym} -merged_count ${merged_count} -hybrid_count ${hybrid_count}
     mkdir --parents ${params.outdir}/seed/
     cp seed*.txt ${params.outdir}/seed/
+    """
+}
+
+/*
+* This process computes the mean coverage per genome from a BAM file and writes
+* a TSV file <label>_coverage.tsv with two columns:
+*   genome_fasta_basename  mean_coverage
+*
+* It mirrors the logic of get_coverage.sh but runs inside the Nextflow workflow
+* so it is automatically triggered for every gold standard assembly BAM.
+*
+* Input:
+*   bam              – path to the (sorted, indexed) BAM file
+*   label            – string used to name the output file, e.g. "sample_0_art"
+*   out_subdir       – output directory path (e.g. ${params.outdir}/sample_0/contigs/art)
+*   genome_locations – the genome_locations.tsv file (genome_id <TAB> fasta_path)
+* Output:
+*   The coverage TSV file.
+*/
+process compute_coverage {
+
+    conda 'bioconda::samtools conda-forge::python'
+
+    input:
+    tuple path(bam_file), val(label), val(out_subdir), path(genome_locations)
+
+    output:
+    path(cov_file)
+
+    script:
+    cov_file = "${label}_coverage.tsv"
+    """
+    set -euo pipefail
+
+    samtools coverage ${bam_file} \
+      | python3 ${scripts_dir}/aggregate_coverage.py "${genome_locations}" "${cov_file}"
+
+    mkdir --parents "${out_subdir}"
+    cp "${cov_file}" "${out_subdir}/"
     """
 }
