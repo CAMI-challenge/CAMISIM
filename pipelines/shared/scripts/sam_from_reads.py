@@ -153,6 +153,43 @@ class SamFromReads() :
             cigars[sequence] = (CIGAR, int(pos) + int(length))
         return cigars
 
+    def build_gsa_cigar(self, soffset, align_length, eoffset, seq_len):
+        """
+        Build a length-consistent SAM CIGAR for a NanoSim *aligned* read.
+
+        NanoSim emits no SAM; the read header gives soffset/eoffset (unaligned head/tail query
+        bases) and align_length (reference bases spanned). The previous code rebuilt the CIGAR from
+        the error profile, which could yield a CIGAR whose query length != len(SEQ); samtools then
+        rejected those records (`[E::sam_parse1] CIGAR and query sequence are of different length`)
+        and silently dropped the reads from the BAM -> understated NanoSim gold-standard coverage.
+
+        Here the unaligned flanks are soft-clipped and the aligned middle is written so it consumes
+        exactly `seq_len - soffset - eoffset` query bases and exactly `align_length` reference bases:
+            q_mid == align_length -> {al}M
+            q_mid  > align_length -> {al}M{q_mid-al}I    (net insertions: extra query bases)
+            q_mid  < align_length -> {q_mid}M{al-q_mid}D (net deletions: extra reference bases)
+        This is always valid (sum of query-consuming ops == seq_len) and the read covers exactly
+        [start, start+align_length) on the reference -- all bamToGold needs (samtools mpileup counts
+        deletion-spanned positions in its depth column). Exact indel placement is not preserved,
+        which is irrelevant for a coverage-based gold standard.
+
+        Returns the CIGAR string, or None if the read cannot be placed (degenerate header) so the
+        caller can emit it as unmapped instead of an invalid record.
+        """
+        so, eo, al = int(soffset), int(eoffset), int(align_length)
+        if so < 0 or eo < 0 or al < 1:
+            return None
+        q_mid = int(seq_len) - so - eo
+        if q_mid < 1:
+            return None
+        if q_mid == al:
+            mid = "%dM" % al
+        elif q_mid > al:
+            mid = "%dM%dI" % (al, q_mid - al)
+        else:
+            mid = "%dM%dD" % (q_mid, al - q_mid)
+        return ("%dS" % so if so else "") + mid + ("%dS" % eo if eo else "")
+
     # this function writes the sam file from fasta files simulated with nanosim
     def write_sam_from_fasta(self, read_file, id_to_cigar_map, reference_path, orig_prefix, stdout=False):
 
@@ -207,13 +244,15 @@ class SamFromReads() :
                 else:
                     SEQ = line.strip()
                     TLEN = str(len(SEQ))
-                    if CIGAR != '*': # unmapped bases counted as insertions in read
-
-                        # CIGAR = str(len(SEQ)) + "M"
-
-                        # use real CIGAR for sam file
-                        CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
-                        ### temporarily disabled ###
+                    if CIGAR != '*':  # aligned read: build a length-consistent CIGAR
+                        # The previous header-derived reconstruction could yield a CIGAR whose length
+                        # != len(SEQ), so samtools dropped the record. Build a self-consistent CIGAR
+                        # instead (see build_gsa_cigar); it covers [start, start+align_length).
+                        _c = self.build_gsa_cigar(soffset, align_length, eoffset, len(SEQ))
+                        if _c is None:  # degenerate header -> emit as unmapped, not an invalid record
+                            POS, RNAME, CIGAR, FLAG = "0", "*", "*", "4"
+                        else:
+                            CIGAR = _c
 
                     sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
                     if stdout:
@@ -275,14 +314,15 @@ class SamFromReads() :
             QUAL = "".join(chr(q + 33) for q in record.letter_annotations["phred_quality"])
             TLEN = str(len(SEQ))
 
-
-            if CIGAR != '*': # unmapped bases counted as insertions in read
-
-                # CIGAR = str(len(SEQ)) + "M"
-
-                # use real CIGAR for sam file
-                CIGAR = soffset + "I" + CIGAR + str(int(align_length) - int(pos)) + "M" + eoffset + "I"
-                ### temporarily disabled ###
+            if CIGAR != '*':  # aligned read: build a length-consistent CIGAR
+                # The previous header-derived reconstruction could yield a CIGAR whose length
+                # != len(SEQ), so samtools dropped the record. Build a self-consistent CIGAR
+                # instead (see build_gsa_cigar); it covers [start, start+align_length).
+                _c = self.build_gsa_cigar(soffset, align_length, eoffset, len(SEQ))
+                if _c is None:  # degenerate header -> emit as unmapped, not an invalid record
+                    POS, RNAME, CIGAR, FLAG = "0", "*", "*", "4"
+                else:
+                    CIGAR = _c
 
             sam_line = [QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL]
             if stdout:
