@@ -196,7 +196,7 @@ process simulate_reads_fastq_nanosim3 {
 **/
 process bam_from_reads_fasta {
 
-    conda "conda-forge::biopython bioconda::samtools conda-forge::pigz"
+    conda "conda-forge::biopython=1.87 conda-forge::python=3.13 bioconda::samtools=1.23.1 conda-forge::pigz"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
@@ -209,6 +209,8 @@ process bam_from_reads_fasta {
     threads = Math.max(1, ((task.cpus ?: 1) as int))
 
     """
+    set -o pipefail
+
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --stdout | samtools view -bS | samtools sort -o sample${sample_id}_${genome_id}_nanosim3.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
     cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
@@ -228,7 +230,7 @@ process bam_from_reads_fasta {
 **/
 process bam_from_reads_fastq {
 
-    conda "conda-forge::biopython bioconda::samtools"
+    conda "conda-forge::biopython=1.87 conda-forge::python=3.13 bioconda::samtools=1.23.1"
 
     input:
     tuple val(sample_id), val(genome_id), val(error_profile), path(aligned_reads), path(unaligned_reads), path(fasta_file)
@@ -238,6 +240,8 @@ process bam_from_reads_fastq {
 
     script:
     """
+    set -o pipefail
+
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --fastq --stdout | samtools view -bS -F 4 | samtools sort -o sample${sample_id}_${genome_id}_nanosim3.bam
     mkdir --parents ${params.outdir}/sample_${sample_id}/bam/nanosim3/
     cp sample*.bam ${params.outdir}/sample_${sample_id}/bam/nanosim3/
