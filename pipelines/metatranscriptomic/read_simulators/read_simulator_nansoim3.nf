@@ -114,7 +114,7 @@ process simulate_reads_nanosim3 {
 **/
 process bam_from_reads {
 
-    conda "conda-forge::biopython=1.70 conda-forge::python=3.5.6 bioconda::samtools=1.13 bioconda::gffutils=0.9"
+    conda "conda-forge::biopython=1.87 conda-forge::python=3.13 bioconda::samtools=1.23.1"
 
     publishDir "${params.outdir}/sample_${sample_id}/bam/", pattern: "sample*.bam", mode: 'copy'
 
@@ -127,6 +127,8 @@ process bam_from_reads {
 
     script:
     """
+    set -o pipefail
+
     ${shared_scripts_dir}/sam_from_reads.py ${error_profile} ${aligned_reads} ${unaligned_reads} ${fasta_file} --transcript_seq_id_map ${map_transcript_seq_file} --transcriptome
     samtools view -bS *.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
 
