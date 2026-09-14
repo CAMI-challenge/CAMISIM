@@ -60,10 +60,21 @@ process simulate_reads_art {
     print(log)
     **/
 
+    // Optional flags, added for the coverage-matrix project. An empty parameter
+    // omits the flag entirely, so the default behaviour is ART's own.
+    qs_flags  = " -qs ${params.quality_shift} -qs2 ${params.quality_shift2}"
+    ql_flag   = params.min_quality?.toString()?.trim() ? " -qL ${params.min_quality}" : ""
+    ir_flag   = params.insertion_rate?.toString()?.trim()  ? " -ir ${params.insertion_rate}"   : ""
+    ir2_flag  = params.insertion_rate2?.toString()?.trim() ? " -ir2 ${params.insertion_rate2}" : ""
+    dr_flag   = params.deletion_rate?.toString()?.trim()   ? " -dr ${params.deletion_rate}"    : ""
+    dr2_flag  = params.deletion_rate2?.toString()?.trim()  ? " -dr2 ${params.deletion_rate2}"  : ""
+    extra     = qs_flags + ql_flag + ir_flag + ir2_flag + dr_flag + dr2_flag
+
     """
+    echo "ART extra flags:${extra}"
     art_illumina -sam -na -i ${fasta_file} -l ${read_length_ch} \
         -m ${fragment_size_mean} -s ${fragment_size_sd} \
-        -f ${fold_coverage} -qL 15 -p \
+        -f ${fold_coverage}${extra} -p \
         -o sample${sample_id}_${genome_id} \
         -1 ${profile}1.txt -2 ${profile}2.txt -rs ${seed}
     samtools view -bS sample${sample_id}_${genome_id}.sam | samtools sort -o sample${sample_id}_${genome_id}.bam
